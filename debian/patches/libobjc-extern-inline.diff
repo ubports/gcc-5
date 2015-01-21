@@ -1,0 +1,22 @@
+# DP: libobjc: still export __objc_get_forward_imp and get_imp
+
+--- a/src/libobjc/sendmsg.c
++++ b/src/libobjc/sendmsg.c
+@@ -105,7 +105,7 @@
+ id nil_method (id, SEL);
+ 
+ /* Given a selector, return the proper forwarding implementation.  */
+-inline
++extern inline
+ IMP
+ __objc_get_forward_imp (id rcv, SEL sel)
+ {
+@@ -320,7 +320,7 @@
+   return res;
+ }
+ 
+-inline
++extern inline
+ IMP
+ get_imp (Class class, SEL sel)
+ {

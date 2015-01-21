@@ -1,0 +1,6 @@
+# DP: Changes for the Linaro 5-2015.xx release.
+
+LANG=C svn diff svn://gcc.gnu.org/svn/gcc/branches/gcc-5-branch@219502 \
+    svn://gcc.gnu.org/svn/gcc/branches/linaro/gcc-5-branch@219643 \
+ | filterdiff --remove-timestamps --addoldprefix=a/src/ --addnewprefix=b/src/
+

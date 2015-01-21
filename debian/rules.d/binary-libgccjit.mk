@@ -1,0 +1,85 @@
+$(lib_binaries)  += libgccjit
+
+ifneq ($(DEB_CROSS),yes)
+  indep_binaries := $(indep_binaries) libgccjitdoc
+endif
+
+p_jitlib	= libgccjit$(GCCJIT_SONAME)
+p_jitdev	= libgccjit$(pkg_ver)-dev
+p_jitdbg	= libgccjit$(pkg_ver)-dbg
+p_jitdoc	= libgccjit$(pkg_ver)-doc
+
+d_jitlib	= debian/$(p_jitlib)
+d_jitdev	= debian/$(p_jitdev)
+d_jitdbg	= debian/$(p_jitdbg)
+d_jitdoc	= debian/$(p_jitdoc)
+
+$(binary_stamp)-libgccjit: $(install_jit_stamp)
+	dh_testdir
+	dh_testroot
+	mv $(install_stamp) $(install_stamp)-tmp
+
+	rm -rf $(d_jitlib) $(d_jitdev) $(d_jitdbg)
+	dh_installdirs -p$(p_jitlib) \
+		$(usr_lib)
+
+	dh_installdirs -p$(p_jitdev) \
+		$(usr_lib) \
+		$(gcc_lib_dir)/include
+
+	dh_installdirs -p$(p_jitdbg)
+
+	DH_COMPAT=2 dh_movefiles -p$(p_jitlib) \
+		$(usr_lib)/libgccjit.so.*
+	rm -f $(d)/$(usr_lib)/libgccjit.so
+
+	DH_COMPAT=2 dh_movefiles -p$(p_jitdev) \
+		$(gcc_lib_dir)/include/libgccjit*.h
+	dh_link -p$(p_jitdev) \
+		$(usr_lib)/libgccjit.so $(gcc_lib_dir)/libgccjit.so
+
+	debian/dh_doclink -p$(p_jitlib) $(p_base)
+	debian/dh_doclink -p$(p_jitdev) $(p_base)
+	debian/dh_doclink -p$(p_jitdbg) $(p_base)
+
+	dh_strip -p$(p_jitlib) --dbg-package=$(p_jitdbg)
+	dh_compress -p$(p_jitlib) -p$(p_jitdev) -p$(p_jitdbg)
+	dh_fixperms -p$(p_jitlib) -p$(p_jitdev) -p$(p_jitdbg)
+	$(cross_makeshlibs) dh_makeshlibs -p$(p_jitlib)
+	$(call cross_mangle_shlibs,$(p_jitlib))
+	$(ignshld)$(cross_shlibdeps) dh_shlibdeps -p$(p_jitlib)
+	$(call cross_mangle_substvars,$(p_jitlib))
+	$(cross_gencontrol) dh_gencontrol -p$(p_jitlib) -p$(p_jitdev) -p$(p_jitdbg) \
+		-- -v$(DEB_VERSION) $(common_substvars)
+	$(call cross_mangle_control,$(p_jitlib))
+	dh_installdeb -p$(p_jitlib) -p$(p_jitdev) -p$(p_jitdbg)
+	dh_md5sums -p$(p_jitlib) -p$(p_jitdev) -p$(p_jitdbg)
+	dh_builddeb -p$(p_jitlib) -p$(p_jitdev) -p$(p_jitdbg)
+
+	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
+	touch $@
+
+$(binary_stamp)-libgccjitdoc: $(install_jit_stamp)
+	dh_testdir
+	dh_testroot
+	mv $(install_stamp) $(install_stamp)-tmp
+
+	rm -rf $(d_jitdoc)
+	dh_installdirs -p$(p_jitdoc) \
+		$(PF)/share/info
+
+	DH_COMPAT=2 dh_movefiles -p$(p_jitdoc) \
+		$(PF)/share/info/libgccjit*
+
+	debian/dh_doclink -p$(p_jitdoc) $(p_base)
+
+	dh_compress -p$(p_jitdoc)
+	dh_fixperms -p$(p_jitdoc)
+	dh_gencontrol -p$(p_jitdoc) \
+		-- -v$(DEB_VERSION) $(common_substvars)
+	dh_installdeb -p$(p_jitdoc)
+	dh_md5sums -p$(p_jitdoc)
+	dh_builddeb -p$(p_jitdoc)
+
+	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
+	touch $@
