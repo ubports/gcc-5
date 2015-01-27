@@ -1,6 +1,16 @@
+gcc-5 (5-20150127-1) experimental; urgency=medium
+
+  * Update to SVN 20150127.
+  * More symbol file updates.
+  * Fix libbacktrace and libsanitizer multilib builds.
+  * Fix libssp builds on 64bit architectures.
+  * Update hardening testsuite patches for GCC 5.
+
+ -- Matthias Klose <doko@debian.org>  Tue, 27 Jan 2015 14:10:30 +0100
+
 gcc-5 (5-20150121-1) experimental; urgency=medium
 
-  * GCC 5.
+  * GCC 5 (SVN trunk 20150121).
   * Build new binary packages libcc1-0, libgccjit0, libgccjit-5-dev,
     libgccjit-5-dbg, libgccjit-5-doc.
   * Update symbols files (still incomplete).

@@ -104,7 +104,7 @@ Index: b/src/gcc/testsuite/gcc.dg/format/format.exp
 +set-torture-options [list { -Wformat=0 } { -DWIDE -Wformat=0 } ]
  
  dg-init
- gcc-dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/*.\[cS\]]] ""
+ gcc-dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/*.\[cS\]]] "" ""
 Index: b/src/gcc/testsuite/gcc.dg/pr30473.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.dg/pr30473.c
@@ -161,9 +161,9 @@ Index: b/src/gcc/testsuite/gcc.dg/lto/20090218-2_0.c
 @@ -1,3 +1,5 @@
 +/* { dg-lto-options "-Wno-nonnull" } */
 +
+ void set_mem_alias_set ();
  void emit_push_insn () {
    set_mem_alias_set ();
- }
 Index: b/src/gcc/testsuite/c-c++-common/torture/vector-compare-1.c
 ===================================================================
 --- a/src/gcc/testsuite/c-c++-common/torture/vector-compare-1.c
@@ -182,9 +182,9 @@ Index: b/src/gcc/testsuite/gcc.dg/tree-ssa/isolate-4.c
  /* { dg-do compile } */ 
 -/* { dg-options "-O2 -fisolate-erroneous-paths-attribute -fdump-tree-isolate-paths -fdump-tree-phicprop1" } */
 +/* { dg-options "-O2 -fisolate-erroneous-paths-attribute -fdump-tree-isolate-paths -fdump-tree-phicprop1 -Wno-nonnull" } */
+ /* { dg-skip-if "" keeps_null_pointer_checks } */
  
  
- extern void foo(void *) __attribute__ ((__nonnull__ (1)));
 Index: b/src/gcc/testsuite/gcc.dg/tree-ssa/builtin-vprintf-chk-1.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.dg/tree-ssa/builtin-vprintf-chk-1.c

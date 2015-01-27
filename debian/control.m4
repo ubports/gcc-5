@@ -805,7 +805,7 @@ Architecture: ifdef(`TARGET',`any',hppa)
 Section: devel
 Priority: PRI(optional)
 Depends: BASEDEP, ${shlibs:Depends}, ${misc:Depends}
-Conflicts: gcc-3.3-hppa64 (<= 1:3.3.4-5), gcc-3.4-hppa64 (<= 3.4.1-3), gcc-4.7-hppa64 (<< 4.7.3-13), gcc-4.8-hppa64 (<< 4.8.2-22)
+Conflicts: gcc-3.3-hppa64 (<= 1:3.3.4-5), gcc-3.4-hppa64 (<= 3.4.1-3), gcc-4.7-hppa64 (<< 4.7.3-13), gcc-4.8-hppa64 (<< 4.8.2-22), gcc-4.9-hppa64 (<< 4.9.3-1)
 BUILT_USING`'dnl
 Description: GNU C compiler (cross compiler for hppa64)
  This is the GNU C compiler, a fairly portable optimizing compiler for C.
@@ -4302,7 +4302,8 @@ Recommends: libdevdep(stdc++`'PV-dev,)
 Conflicts: libstdc++5-dbg`'LS, libstdc++5-3.3-dbg`'LS, libstdc++6-dbg`'LS,
  libstdc++6-4.0-dbg`'LS, libstdc++6-4.1-dbg`'LS, libstdc++6-4.2-dbg`'LS,
  libstdc++6-4.3-dbg`'LS, libstdc++6-4.4-dbg`'LS, libstdc++6-4.5-dbg`'LS,
- libstdc++6-4.6-dbg`'LS, libstdc++6-4.7-dbg`'LS, libstdc++6-4.8-dbg`'LS
+ libstdc++6-4.6-dbg`'LS, libstdc++6-4.7-dbg`'LS, libstdc++6-4.8-dbg`'LS,
+ libstdc++6-4.9-dbg`'LS
 BUILT_USING`'dnl
 Description: GNU Standard C++ Library v3 (debugging files)`'ifdef(`TARGET)',` (TARGET)', `')
  This package contains the shared library of libstdc++ compiled with
@@ -4345,7 +4346,7 @@ ifdef(`TARGET',`Provides: lib32stdc++CXX_SO-dbg-TARGET-dcv1
 Conflicts: lib32stdc++6-dbg`'LS, lib32stdc++6-4.0-dbg`'LS,
  lib32stdc++6-4.1-dbg`'LS, lib32stdc++6-4.2-dbg`'LS, lib32stdc++6-4.3-dbg`'LS,
  lib32stdc++6-4.4-dbg`'LS, lib32stdc++6-4.5-dbg`'LS, lib32stdc++6-4.6-dbg`'LS,
- lib32stdc++6-4.7-dbg`'LS, lib32stdc++6-4.8-dbg`'LS
+ lib32stdc++6-4.7-dbg`'LS, lib32stdc++6-4.8-dbg`'LS, lib32stdc++6-4.9-dbg`'LS
 BUILT_USING`'dnl
 Description: GNU Standard C++ Library v3 (debugging files)`'ifdef(`TARGET)',` (TARGET)', `')
  This package contains the shared library of libstdc++ compiled with
@@ -4388,7 +4389,7 @@ ifdef(`TARGET',`Provides: lib64stdc++CXX_SO-dbg-TARGET-dcv1
 Conflicts: lib64stdc++6-dbg`'LS, lib64stdc++6-4.0-dbg`'LS,
  lib64stdc++6-4.1-dbg`'LS, lib64stdc++6-4.2-dbg`'LS, lib64stdc++6-4.3-dbg`'LS,
  lib64stdc++6-4.4-dbg`'LS, lib64stdc++6-4.5-dbg`'LS, lib64stdc++6-4.6-dbg`'LS,
- lib64stdc++6-4.7-dbg`'LS, lib64stdc++6-4.8-dbg`'LS
+ lib64stdc++6-4.7-dbg`'LS, lib64stdc++6-4.8-dbg`'LS, lib64stdc++6-4.9-dbg`'LS
 BUILT_USING`'dnl
 Description: GNU Standard C++ Library v3 (debugging files)`'ifdef(`TARGET)',` (TARGET)', `')
  This package contains the shared library of libstdc++ compiled with
@@ -4431,7 +4432,7 @@ ifdef(`TARGET',`Provides: libn32stdc++CXX_SO-dbg-TARGET-dcv1
 Conflicts: libn32stdc++6-dbg`'LS, libn32stdc++6-4.0-dbg`'LS,
  libn32stdc++6-4.1-dbg`'LS, libn32stdc++6-4.2-dbg`'LS, libn32stdc++6-4.3-dbg`'LS,
  libn32stdc++6-4.4-dbg`'LS, libn32stdc++6-4.5-dbg`'LS, libn32stdc++6-4.6-dbg`'LS,
- libn32stdc++6-4.7-dbg`'LS, libn32stdc++6-4.8-dbg`'LS
+ libn32stdc++6-4.7-dbg`'LS, libn32stdc++6-4.8-dbg`'LS, libn32stdc++6-4.9-dbg`'LS
 BUILT_USING`'dnl
 Description: GNU Standard C++ Library v3 (debugging files)`'ifdef(`TARGET)',` (TARGET)', `')
  This package contains the shared library of libstdc++ compiled with
@@ -4475,7 +4476,7 @@ Depends: BASEDEP, libdep(stdc++CXX_SO,x32),
 ifdef(`TARGET',`Provides: libx32stdc++CXX_SO-dbg-TARGET-dcv1
 ',`')`'dnl
 Conflicts: libx32stdc++6-dbg`'LS, libx32stdc++6-4.6-dbg`'LS,
- libx32stdc++6-4.7-dbg`'LS, libx32stdc++6-4.8-dbg`'LS
+ libx32stdc++6-4.7-dbg`'LS, libx32stdc++6-4.8-dbg`'LS, libx32stdc++6-4.9-dbg`'LS
 BUILT_USING`'dnl
 Description: GNU Standard C++ Library v3 (debugging files)`'ifdef(`TARGET)',` (TARGET)', `')
  This package contains the shared library of libstdc++ compiled with
@@ -4580,7 +4581,7 @@ Depends: gcc`'PV-base (>= ${gcc:SoftVersion}), ${misc:Depends}
 Conflicts: libstdc++5-doc, libstdc++5-3.3-doc, libstdc++6-doc,
  libstdc++6-4.0-doc, libstdc++6-4.1-doc, libstdc++6-4.2-doc, libstdc++6-4.3-doc,
  libstdc++6-4.4-doc, libstdc++6-4.5-doc, libstdc++6-4.6-doc, libstdc++6-4.7-doc,
- libstdc++-4.8-doc
+ libstdc++-4.8-doc, libstdc++-4.9-doc
 Description: GNU Standard C++ Library v3 (documentation files)
  This package contains documentation files for the GNU stdc++ library.
  .

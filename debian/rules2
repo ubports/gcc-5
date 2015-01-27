@@ -733,7 +733,7 @@ endif
 # no b-d on g++-multilib, this is run by the built compiler
 abi_run_check = $(strip $(if $(wildcard build/runcheck$(1).out), \
 				$(shell cat build/runcheck$(1).out), \
-				$(shell CC="$(builddir)/gcc/xgcc -B$(builddir)/gcc/ -static-libgcc $(1)" bash debian/runcheck.sh)))
+				$(shell CC="$(builddir)/gcc/xg++ -B$(builddir)/gcc/ -static-libgcc $(1)" bash debian/runcheck.sh)))
 ifeq ($(biarch32),yes)
   DEJAGNU_RUNS += $(call abi_run_check,$(if $(filter $(DEB_TARGET_ARCH_CPU),mips64 mips64el mipsn32 mipsn32el),-mabi=32,-m32))
 endif
@@ -1194,7 +1194,7 @@ else
 	s=`cat status`; rm -f status; \
 	if [ $$s -ne 0 ] && [ -z "$$NO_CONFIG_LOG_DUMP" ]; then \
 	  for log in $$(find $(builddir) -name config.log); do \
-	    case "$$log" in */prev-*/) continue; esac; \
+	    case "$$log" in */prev-*) continue; esac; \
 	    echo LOGFILE START $$log; \
 	    cat $$log; \
 	    echo LOGFILE END $$log; \
@@ -1218,16 +1218,27 @@ CONFARGS_JIT := \
 	--enable-host-shared \
 	--disable-bootstrap
 
+# FIXME: this doesn't yet work, use the system g++ for the builds
+CC_FOR_JIT = $(builddir)/gcc/xg++ -B$(builddir)/gcc/ \
+	-I$(builddir)/$(TARGET_ALIAS)/libstdc++-v3/include \
+	-I$(builddir)/$(TARGET_ALIAS)/libstdc++-v3/include/$(TARGET_ALIAS)
+CC_FOR_JIT =
+
 $(configure_jit_stamp): $(build_stamp)
 	dh_testdir
 	rm -f $(configure_jit_stamp) $(build_jit_stamp)
 	rm -rf $(builddir_jit)
 	mkdir $(builddir_jit)
+ifeq (0,1)
+	: # FIXME: or set -B and LD_LIBRARY_PATH ???
+	cp -a $(builddir)/$(TARGET_ALIAS)/libstdc++-v3/src/.libs/libstdc++.{a,so*} \
+	  $(builddir)/gcc/.
+endif
 	: # configure
 	cd $(builddir_jit) && \
 	  $(SET_PATH) \
 	  $(SET_SHELL) \
-	  CC="$(builddir)/gcc/xgcc -B$(builddir)/gcc/" \
+	  CC="$(CC_FOR_JIT)" \
 	     ../src/configure $(CONFARGS_JIT)
 	touch $(configure_jit_stamp)
 
@@ -1237,7 +1248,7 @@ $(build_jit_stamp): $(configure_jit_stamp)
 	  $(SET_LOCPATH) \
 	  LD_LIBRARY_PATH=$${LD_LIBRARY_PATH:+$$LD_LIBRARY_PATH:}$(builddir)/gcc \
 	    $(MAKE) -C $(builddir_jit) $(NJOBS) \
-		CC="$(builddir)/gcc/xgcc -B$(builddir)/gcc/" \
+		CC="$(CC_FOR_JIT)" \
 		$(CFLAGS_TO_PASS) \
 		$(LDFLAGS_TO_PASS)
 	touch $(build_jit_stamp)
@@ -1245,7 +1256,7 @@ $(build_jit_stamp): $(configure_jit_stamp)
 ifeq ($(DEB_CROSS),yes)
   CC_for_hppa64_cross = $(CC)
 else
-  CC_for_hppa64_cross = $(builddir)/gcc/xgcc -B$(builddir)/gcc/
+  CC_for_hppa64_cross = $(builddir)/gcc/xg++ -B$(builddir)/gcc/
 endif
 
 ifeq ($(versioned_packages),yes)
@@ -1304,7 +1315,7 @@ $(configure_neon_stamp): $(build_stamp)
 	cd $(builddir_neon) && \
 	  $(SET_PATH) \
 	  $(SET_SHELL) \
-	  CC="$(builddir)/gcc/xgcc -B$(builddir)/gcc/" \
+	  CC="$(builddir)/gcc/xg++ -B$(builddir)/gcc/" \
 	     ../src/configure \
 		--disable-bootstrap \
 		--enable-languages=c,c++,objc,fortran \
@@ -1325,7 +1336,7 @@ $(build_neon_stamp): $(configure_neon_stamp)
 	  $(SET_SHELL) \
 	  $(SET_LOCPATH) \
 	    $(MAKE) -C $(builddir_neon) $(NJOBS) \
-		CC="$(builddir)/gcc/xgcc -B$(builddir)/gcc/" \
+		CC="$(builddir)/gcc/xg++ -B$(builddir)/gcc/" \
 		$(CFLAGS_TO_PASS) \
 		$(LDFLAGS_TO_PASS)
 	touch $(build_neon_stamp)
@@ -1474,7 +1485,7 @@ $(check_stamp): $(build_stamp) $(build_locale_stamp)
 
 ifneq ($(with_common_libs),yes)
   ifeq ($(with_cxx),yes)
-	: # libstdc++6 built from newer gcc-4.x source, run testsuite against the installed lib
+	: # libstdc++6 built from newer gcc-X source, run testsuite against the installed lib
 
 	sed 's/-L[^ ]*//g' $(buildlibdir)/libstdc++-v3/scripts/testsuite_flags \
 	  > $(buildlibdir)/libstdc++-v3/scripts/testsuite_flags.installed
@@ -1957,9 +1968,9 @@ ifeq ($(with_hppa64),yes)
 
 	ls -l $(d)/$(PF)/bin
 	if [ ! -x $(d)/$(PF)/bin/hppa64-linux-gnu-gcc ]; then \
-	  mv $(d)/$(PF)/bin/hppa64-linux-gnu-gcc-4* $(d)/$(PF)/bin/hppa64-linux-gnu-gcc; \
+	  mv $(d)/$(PF)/bin/hppa64-linux-gnu-gcc-5* $(d)/$(PF)/bin/hppa64-linux-gnu-gcc; \
 	else \
-	  rm -f $(d)/$(PF)/bin/hppa64-linux-gnu-gcc-4*; \
+	  rm -f $(d)/$(PF)/bin/hppa64-linux-gnu-gcc-5*; \
 	fi
 
 	for i in ar nm ranlib; do \
@@ -2010,9 +2021,9 @@ endif
 	done
 
 	if [ ! -x $(d)/$(PF)/bin/$(TARGET_ALIAS)-gcc ]; then \
-	  mv $(d)/$(PF)/bin/$(TARGET_ALIAS)-gcc-4* $(d)/$(PF)/bin/$(TARGET_ALIAS)-gcc; \
+	  mv $(d)/$(PF)/bin/$(TARGET_ALIAS)-gcc-5* $(d)/$(PF)/bin/$(TARGET_ALIAS)-gcc; \
 	else \
-	  rm -f $(d)/$(PF)/bin/$(TARGET_ALIAS)-gcc-4*; \
+	  rm -f $(d)/$(PF)/bin/$(TARGET_ALIAS)-gcc-5*; \
 	fi
 	set -e; \
 	  cd $(d)/$(gcc_lib_dir)/include-fixed; \
@@ -2242,7 +2253,7 @@ $(install_jit_stamp): $(build_jit_stamp) $(install_stamp)
 
 	$(SET_PATH) \
 	    $(MAKE) -C $(builddir_jit) \
-		CC="$(builddir)/gcc/xgcc -B$(builddir)/gcc/" \
+		CC="$(CC_FOR_JIT)" \
 		$(CFLAGS_TO_PASS) \
 		$(LDFLAGS_TO_PASS) \
 		DESTDIR=$(PWD)/$(d)-jit \

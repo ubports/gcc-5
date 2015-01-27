@@ -43,8 +43,8 @@ dirs_go = \
 	$(PF)/share/man/man1
 files_go = \
 	$(PF)/bin/$(cmd_prefix){gccgo,go,gofmt}$(pkg_ver) \
-	$(gcc_lexec_dir)/cgo \
-	$(gcc_lexec_dir)/go1
+	$(gcc_lexec_dir)/{cgo,go1} \
+	$(PF)/share/man/man1/{go,gofmt}$(pkg_ver).1
 
 ifneq ($(GFDL_INVARIANT_FREE),yes)
   files_go += \
@@ -203,8 +203,6 @@ $(binary_stamp)-gccgo: $(install_stamp)
 	fi
 
 	$(call do_go_dev,,$(p_go))
-
-	mv $(d)/$(gcc_lexec_dir)/cgo$(pkg_ver) $(d)/$(gcc_lexec_dir)/cgo
 
 	DH_COMPAT=2 dh_movefiles -p$(p_go) $(files_go)
 

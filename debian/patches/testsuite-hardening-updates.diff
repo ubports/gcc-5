@@ -22,8 +22,8 @@ Index: b/src/gcc/testsuite/g++.dg/asan/asan_test.C
  // { dg-skip-if "" { *-*-* } { "*" } { "-O2" } }
  // { dg-skip-if "" { *-*-* } { "-flto" } { "" } }
  // { dg-additional-sources "asan_globals_test-wrapper.cc" }
--// { dg-options "-fsanitize=address -fno-builtin -Wall -Wno-format -Werror -g -DASAN_UAR=0 -DASAN_HAS_EXCEPTIONS=1 -DASAN_HAS_BLACKLIST=0 -DASAN_USE_DEJAGNU_GTEST=1 -lasan -lpthread -ldl" }
-+// { dg-options "-fsanitize=address -fno-builtin -Wall -Wno-format -Wno-unused-result -Werror -g -DASAN_UAR=0 -DASAN_HAS_EXCEPTIONS=1 -DASAN_HAS_BLACKLIST=0 -DASAN_USE_DEJAGNU_GTEST=1 -lasan -lpthread -ldl" }
+-// { dg-options "-std=c++11 -fsanitize=address -fno-builtin -Wall -Wno-format -Werror -g -DASAN_UAR=0 -DASAN_HAS_EXCEPTIONS=1 -DASAN_HAS_BLACKLIST=0 -DSANITIZER_USE_DEJAGNU_GTEST=1 -lasan -lpthread -ldl" }
++// { dg-options "-std=c++11 -fsanitize=address -fno-builtin -Wall -Wno-format -Wno-unused-result -Werror -g -DASAN_UAR=0 -DASAN_HAS_EXCEPTIONS=1 -DASAN_HAS_BLACKLIST=0 -DSANITIZER_USE_DEJAGNU_GTEST=1 -lasan -lpthread -ldl" }
  // { dg-additional-options "-DASAN_NEEDS_SEGV=1" { target { ! arm*-*-* } } }
  // { dg-additional-options "-DASAN_LOW_MEMORY=1 -DASAN_NEEDS_SEGV=0" { target arm*-*-* } }
  // { dg-additional-options "-DASAN_AVOID_EXPENSIVE_TESTS=1" { target { ! run_expensive_tests } } }
@@ -116,8 +116,8 @@ Index: b/src/gcc/testsuite/gcc.dg/fstack-protector-strong.c
 -/* { dg-options "-O2 -fstack-protector-strong" } */
 +/* { dg-options "-O2 -fstack-protector-strong -U_FORTIFY_SOURCE" } */
  
- #include<string.h>
- 
+ /* This test checks the presence of __stack_chk_fail function in assembler.
+  * Compiler generates _stack_chk_fail_local (wrapper) calls instead for PIC.
 Index: b/src/gcc/testsuite/g++.dg/fstack-protector-strong.C
 ===================================================================
 --- a/src/gcc/testsuite/g++.dg/fstack-protector-strong.C
@@ -129,8 +129,8 @@ Index: b/src/gcc/testsuite/g++.dg/fstack-protector-strong.C
 -/* { dg-options "-O2 -fstack-protector-strong" } */
 +/* { dg-options "-O2 -fstack-protector-strong -U_FORTIFY_SOURCE" } */
  
- class A
- {
+ /* This test checks the presence of __stack_chk_fail function in assembler.
+  * Compiler generates _stack_chk_fail_local (wrapper) calls instead for PIC.
 Index: b/src/gcc/testsuite/gcc.c-torture/execute/memset-1.x
 ===================================================================
 --- /dev/null

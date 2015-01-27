@@ -867,7 +867,7 @@ ifneq (,$(findstring $(DEB_TARGET_ARCH_CPU), ia64 i386 i486 i586 i686 amd64))
   # FIXME: upstream build tied to gfortran build
   ifeq ($(with_fortran),yes)
     with_qmath := yes
-    ifneq (,$(findstring gcc-4,$(PKGSOURCE)))
+    ifneq (,$(findstring gcc-5,$(PKGSOURCE)))
       ifeq ($(with_common_libs),yes)
         with_libqmath := yes
       endif
@@ -971,7 +971,7 @@ with_ssp := $(call envfilt, ssp, , , $(with_ssp))
 
 ifeq ($(with_ssp),yes)
   ifneq ($(derivative),Debian)
-    ifneq (,$(findstring gcc-4, $(PKGSOURCE)))
+    ifneq (,$(findstring gcc-5, $(PKGSOURCE)))
       with_ssp_default := yes
     endif
   endif
@@ -1234,7 +1234,7 @@ else
 
   # neon build -------------------
   # FIXME: build as a cross compiler to build on armv4 as well
-  ifneq (,$(findstring gcc-4, $(PKGSOURCE)))
+  ifneq (,$(findstring gcc-5, $(PKGSOURCE)))
     ifeq ($(derivative),Ubuntu)
 #      neon_archs = armel armhf
 #      ifneq (, $(filter $(DEB_TARGET_ARCH),$(neon_archs)))
@@ -1285,7 +1285,7 @@ ifneq (,$(filter $(DEB_HOST_ARCH), hppa mips))
     with_check := disabled for $(DEB_HOST_ARCH), testsuite timeouts with expect
   endif
 endif
-with_check := disabled for this upload
+#with_check := disabled for this upload
 
 # not a dependency on all archs, but if available, use it for the testsuite
 ifneq (,$(wildcard /usr/bin/localedef))
