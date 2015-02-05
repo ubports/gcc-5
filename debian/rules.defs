@@ -505,6 +505,13 @@ enabled_languages := c
 
 with_jit = yes
 
+# FIXME: compiler bug
+jit_no_cpus	:= none
+
+ifneq (,$(filter $(DEB_TARGET_ARCH_CPU),$(jit_no_cpus)))
+  with_jit := disabled for cpu $(DEB_TARGET_ARCH_CPU)
+endif
+
 with_jit := $(call envfilt, jit, , , $(with_jit))
 
 # Build all packages needed for C development
@@ -582,6 +589,21 @@ ifneq (,$(findstring $(DEB_TARGET_ARCH_CPU),$(cxx_no_cpus)))
   with_cxx := disabled for cpu $(DEB_TARGET_ARCH_CPU)
 endif
 with_cxx := $(call envfilt, c++, obj-c++ java, , $(with_cxx))
+
+# Set the default libstdc++ ABI. libstdc++ provides both ABI's.
+# Existing code still runs with the new c++11 ABI, however link
+# errors are seen when one object is compiled with the new std::string in scope,
+# another object is compiled with the old std::string in scope. both can link
+# to libstdc++.so but not to each other.
+# two objects (which might be some system library and a user's program) need to
+# agree on the version of std::string they're using
+
+libstdcxx_abi = c++11
+libstdcxx_abi = c++98
+# backports default to the old ABI
+ifneq (,$(filter $(distrelease),squeeze wheezy jessie sid lucid precise trusty utopic vivid))
+  libstdcxx_abi = c++98
+endif
 
 # Build all packages needed for C++ development
 ifeq ($(with_cxx),yes)
@@ -800,9 +822,6 @@ ifeq ($(with_base_only),yes)
   with_d := no
 endif
 
-# FIXME: disabled for now
-with_d :=
-
 ifeq ($(with_d)-$(with_separate_gdc),yes-yes)
   ifneq (,$(findstring gdc,$(PKGSOURCE)))
     languages := c c++
@@ -954,7 +973,7 @@ with_nls := $(call envfilt, nls, , , $(with_nls))
 # powerpc nof libraries -----
 with_libnof := no
 
-ifneq (,$(findstring gcc-4,$(PKGSOURCE)))
+ifneq (,$(findstring gcc-5,$(PKGSOURCE)))
   with_source := yes
 endif
 with_source := $(call envfilt, source, , , $(with_source))
@@ -1361,6 +1380,9 @@ define gen_biarch
     ifeq ($$(with_fdev),yes)
       with_lib$1gfortrandev := yes
     endif
+    ifeq ($$(with_libphobos),yes)
+      with_lib$1phobosdev := yes
+    endif
     ifeq ($$(with_libssp),yes)
       with_lib$1ssp := yes
     endif
@@ -1420,10 +1442,9 @@ define gen_biarch
     ifeq ($(with_go),yes)
       biarch_multidir_names += libgo
     endif
-    # no gdc-4-x-multilib built
-    #ifeq ($(with_d),yes)
-    #  biarch_multidir_names += libphobos
-    #endif
+    ifeq ($(with_libphobos),yes)
+      biarch_multidir_names += libphobos
+    endif
     export biarch_multidir_names
     ifneq (,$$(findstring 32,$1))
       TARGET64_MACHINE := $$(strip $$(subst $$(DEB_TARGET_GNU_CPU),$$(biarch_cpu), \
@@ -1491,6 +1512,7 @@ ifeq ($(no_biarch_libs),yes)
   with_lib64cxxdev	:= no
   with_lib64objcdev	:= no
   with_lib64gfortrandev	:= no
+  with_lib64phobosdev	:= no
 
   with_lib32gcc		:= no
   with_lib32cxx		:= no
@@ -1516,6 +1538,7 @@ ifeq ($(no_biarch_libs),yes)
   with_lib32cxxdev	:= no
   with_lib32objcdev	:= no
   with_lib32gfortrandev	:= no
+  with_lib32phobosdev	:= no
 
   with_libn32gcc	:= no
   with_libn32cxx	:= no
@@ -1539,6 +1562,7 @@ ifeq ($(no_biarch_libs),yes)
   with_libn32cxxdev	:= no
   with_libn32objcdev	:= no
   with_libn32gfortrandev:= no
+  with_libn32phobosdev	:= no
 
   with_libx32gcc	:= no
   with_libx32cxx	:= no
@@ -1564,6 +1588,7 @@ ifeq ($(no_biarch_libs),yes)
   with_libx32cxxdev	:= no
   with_libx32objcdev	:= no
   with_libx32gfortrandev:= no
+  with_libx32phobosdev	:= no
 
   with_libhfgcc		:= no
   with_libhfcxx		:= no
@@ -1587,6 +1612,7 @@ ifeq ($(no_biarch_libs),yes)
   with_libhfcxxdev	:= no
   with_libhfobjcdev	:= no
   with_libhfgfortrandev	:= no
+  with_libhfphobosdev	:= no
 
   with_libsfgcc		:= no
   with_libsfcxx		:= no
@@ -1610,6 +1636,7 @@ ifeq ($(no_biarch_libs),yes)
   with_libsfcxxdev	:= no
   with_libsfobjcdev	:= no
   with_libsfgfortrandev	:= no
+  with_libsfphobosdev	:= no
 
   with_java_plugin := no
 

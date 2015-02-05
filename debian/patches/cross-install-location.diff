@@ -61,8 +61,8 @@ Index: b/src/lto-plugin/Makefile.in
  ACLOCAL_AMFLAGS = -I .. -I ../config
  AUTOMAKE_OPTIONS = no-dependencies
  gcc_version := $(shell cat $(top_srcdir)/../gcc/BASE-VER)
--libexecsubdir := $(libexecdir)/gcc/$(target_noncanonical)/$(gcc_version)
-+libexecsubdir := $(libexecdir)/gcc-cross/$(target_noncanonical)/$(gcc_version)
+-libexecsubdir := $(libexecdir)/gcc/$(real_target_noncanonical)/$(gcc_version)$(accel_dir_suffix)
++libexecsubdir := $(libexecdir)/gcc-cross/$(real_target_noncanonical)/$(gcc_version)$(accel_dir_suffix)
  AM_CPPFLAGS = -I$(top_srcdir)/../include $(DEFS)
  AM_CFLAGS = @ac_lto_plugin_warn_cflags@
  AM_LDFLAGS = @ac_lto_plugin_ldflags@
@@ -74,8 +74,8 @@ Index: b/src/lto-plugin/Makefile.am
  
  gcc_version := $(shell cat $(top_srcdir)/../gcc/BASE-VER)
  target_noncanonical := @target_noncanonical@
--libexecsubdir := $(libexecdir)/gcc/$(target_noncanonical)/$(gcc_version)
-+libexecsubdir := $(libexecdir)/gcc-cross/$(target_noncanonical)/$(gcc_version)
+-libexecsubdir := $(libexecdir)/gcc/$(real_target_noncanonical)/$(gcc_version)$(accel_dir_suffix)
++libexecsubdir := $(libexecdir)/gcc-cross/$(real_target_noncanonical)/$(gcc_version)$(accel_dir_suffix)
  
  AM_CPPFLAGS = -I$(top_srcdir)/../include $(DEFS)
  AM_CFLAGS = @ac_lto_plugin_warn_cflags@
@@ -150,11 +150,11 @@ Index: b/src/gcc/Makefile.in
  # --------
  
  # Directory in which the compiler finds libraries etc.
--libsubdir = $(libdir)/gcc/$(target_noncanonical)/$(version)
-+libsubdir = $(libdir)/gcc-cross/$(target_noncanonical)/$(version)
+-libsubdir = $(libdir)/gcc/$(real_target_noncanonical)/$(version)$(accel_dir_suffix)
++libsubdir = $(libdir)/gcc-cross/$(real_target_noncanonical)/$(version)$(accel_dir_suffix)
  # Directory in which the compiler finds executables
--libexecsubdir = $(libexecdir)/gcc/$(target_noncanonical)/$(version)
-+libexecsubdir = $(libexecdir)/gcc-cross/$(target_noncanonical)/$(version)
+-libexecsubdir = $(libexecdir)/gcc/$(real_target_noncanonical)/$(version)$(accel_dir_suffix)
++libexecsubdir = $(libexecdir)/gcc-cross/$(real_target_noncanonical)/$(version)$(accel_dir_suffix)
  # Directory in which all plugin resources are installed
  plugin_resourcesdir = $(libsubdir)/plugin
   # Directory in which plugin headers are installed
@@ -261,9 +261,9 @@ Index: b/src/libgomp/Makefile.in
 --- a/src/libgomp/Makefile.in
 +++ b/src/libgomp/Makefile.in
 @@ -291,8 +291,8 @@
- SUBDIRS = testsuite
- gcc_version := $(shell cat $(top_srcdir)/../gcc/BASE-VER)
- search_path = $(addprefix $(top_srcdir)/config/, $(config_path)) $(top_srcdir)
+ search_path = $(addprefix $(top_srcdir)/config/, $(config_path)) $(top_srcdir) \
+ 	      $(top_srcdir)/../include
+ 
 -fincludedir = $(libdir)/gcc/$(target_alias)/$(gcc_version)/finclude
 -libsubincludedir = $(libdir)/gcc/$(target_alias)/$(gcc_version)/include
 +fincludedir = $(libdir)/gcc-cross/$(target_alias)/$(gcc_version)/finclude
@@ -294,8 +294,8 @@ Index: b/src/libgcc/Makefile.in
  STRIP_FOR_TARGET = $(STRIP)
  
  # Directory in which the compiler finds libraries etc.
--libsubdir = $(libdir)/gcc/$(host_noncanonical)/$(version)
-+libsubdir = $(libdir)/gcc-cross/$(host_noncanonical)/$(version)
+-libsubdir = $(libdir)/gcc/$(host_noncanonical)/$(version)@accel_dir_suffix@
++libsubdir = $(libdir)/gcc-cross/$(host_noncanonical)/$(version)@accel_dir_suffix@
  # Used to install the shared libgcc.
  slibdir = @slibdir@
  # Maybe used for DLLs on Windows targets.

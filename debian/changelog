@@ -1,3 +1,19 @@
+gcc-5 (5-20150205-1) experimental; urgency=medium
+
+  * Update to SVN 20150205.
+  * Update GDC for GCC 5.
+  * Build GDC multilib packages.
+  * Update cross-install-location.diff for gcc-5. Closes: #776100.
+  * Configure --with-default-libstdcxx-abi=c++11 for development,
+    --with-default-libstdcxx-abi=c++98 for backports.
+  * Apply proposed patch for PR target/64893 (AArch64), build using
+    4.9 on AArch64 for now.
+  * Don't disable bootstrap mode for the jit build on arm64, gets
+    miscompiled.
+  * Allow to build using gettext built with a newer GCC.
+
+ -- Matthias Klose <doko@debian.org>  Thu, 05 Feb 2015 18:31:17 +0100
+
 gcc-5 (5-20150127-1) experimental; urgency=medium
 
   * Update to SVN 20150127.

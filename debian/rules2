@@ -88,6 +88,9 @@ ifeq ($(REVERSE_CROSS),yes)
   CC	=
 else
   CC	= $(if $(filter yes,$(with_ada)),gnatgcc,gcc)
+  ifneq (,$(filter $(DEB_TARGET_ARCH), arm64))
+    CC	= gcc-4.9
+  endif
 endif
 ifeq ($(DEB_BUILD_GNU_TYPE),$(DEB_TARGET_GNU_TYPE))
   CC_FOR_TARGET = $(builddir)/gcc/xgcc -B$(builddir)/gcc/
@@ -232,6 +235,7 @@ ifeq ($(with_cxx)-$(with_debug),yes-yes)
   CONFARGS += --enable-libstdcxx-debug
 endif
 CONFARGS += --enable-libstdcxx-time=yes
+CONFARGS += --with-default-libstdcxx-abi=$(libstdcxx_abi)
 
 ifeq (,$(filter $(DEB_TARGET_ARCH), hurd-i386 kfreebsd-i386 kfreebsd-amd64))
   CONFARGS += --enable-gnu-unique-object
@@ -1065,6 +1069,12 @@ endif
 	rm -rf $(builddir)
 	mkdir $(builddir)
 
+	: # some tools like gettext are built with a newer libstdc++
+	mkdir -p bin
+	for i in msgfmt; do \
+	  install -m755 debian/bin-wrapper.in bin/$$i; \
+	done
+
 	: # configure
 	cd $(builddir) \
 	  && $(SET_PATH) \
@@ -1213,10 +1223,16 @@ endif
 	touch $(build_stamp)
 
 CONFARGS_JIT := \
-	$(filter-out %bootstrap --enable-languages=%, $(CONFARGS)) \
+	$(filter-out --enable-languages=%, $(CONFARGS)) \
 	--enable-languages=jit \
-	--enable-host-shared \
+	--enable-host-shared
+
+# see Linaro#1149
+ifeq (,$(filter $(DEB_TARGET_ARCH),arm64))
+  CONFARGS_JIT := \
+	$(filter-out %bootstrap, $(CONFARGS_JIT)) \
 	--disable-bootstrap
+endif
 
 # FIXME: this doesn't yet work, use the system g++ for the builds
 CC_FOR_JIT = $(builddir)/gcc/xg++ -B$(builddir)/gcc/ \

@@ -77,7 +77,7 @@ Index: b/src/gcc/config/darwin.h
 ===================================================================
 --- a/src/gcc/config/darwin.h
 +++ b/src/gcc/config/darwin.h
-@@ -918,4 +918,10 @@ extern void darwin_driver_init (unsigned
+@@ -919,4 +919,10 @@ extern void darwin_driver_init (unsigned
     providing an osx-version-min of this unless overridden by the User.  */
  #define DEF_MIN_OSX_VERSION "10.4"
  
@@ -380,7 +380,7 @@ Index: b/src/gcc/config/rs6000/linux64.h
 ===================================================================
 --- a/src/gcc/config/rs6000/linux64.h
 +++ b/src/gcc/config/rs6000/linux64.h
-@@ -340,6 +340,17 @@ extern int dot_symbols;
+@@ -336,6 +336,17 @@ extern int dot_symbols;
      }							\
    while (0)
  
