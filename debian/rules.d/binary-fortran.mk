@@ -207,7 +207,8 @@ endif
 		$(d_g95)/$(docdir)/$(p_xbase)/fortran/changelog
 	debian/dh_rmemptydirs -p$(p_g95)
 
-	dh_strip -p$(p_g95)
+	dh_strip -p$(p_g95) \
+	  $(if $(unstripped_exe),-X/f951)
 	dh_compress -p$(p_g95)
 	dh_fixperms -p$(p_g95)
 	dh_shlibdeps -p$(p_g95)

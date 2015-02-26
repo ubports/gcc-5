@@ -284,7 +284,8 @@ endif
 	debian/dh_doclink -p$(p_gcj) $(p_jbase)
 	debian/dh_rmemptydirs -p$(p_gcj)
 
-	dh_strip -p$(p_gcj)
+	dh_strip -p$(p_gcj) \
+	  $(if $(unstripped_exe),-X/jc1)
 	dh_compress -p$(p_gcj)
 	dh_fixperms -p$(p_gcj)
 	dh_shlibdeps -p$(p_gcj) -Xecj1

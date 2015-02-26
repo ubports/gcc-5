@@ -116,7 +116,7 @@ gfdl_manpages = \
 # ---------------------------------------------------------------------------
 $(unpack_stamp)-$(gcc_tarball): $(gcc_tarpath)
 	: # unpack gcc tarball
-	-mkdir $(stampdir)
+	mkdir -p $(stampdir)
 	if [ -d $(srcdir) ]; then \
 	  echo >&2 "Source directory $(srcdir) exists. Delete by hand"; \
 	  false; \

@@ -1,3 +1,16 @@
+gcc-5 (5-20150226-1) experimental; urgency=medium
+
+  * Update to SVN 20150226.
+    - Fix PR c/65040 (closes: #778514), PR tree-optimization/65053
+      (closes: #778070, #778071), PR c++/64898 (closes: #778472).
+  * Allow not to strip the compiler executables to be able to print backtraces
+    for ICEs.
+  * Fix gnat build on mips64el (James Cowgill). Addresses: #779191.
+  * Fix the hppa64 cross build (John David Anglin). Closes: #778658.
+  * Fix libstdc++ pretty printers for Python3. Closes: #778436.
+
+ -- Matthias Klose <doko@debian.org>  Thu, 26 Feb 2015 08:18:23 +0100
+
 gcc-5 (5-20150205-1) experimental; urgency=medium
 
   * Update to SVN 20150205.

@@ -31,7 +31,8 @@ $(binary_stamp)-objcxx: $(install_stamp)
 
 	debian/dh_rmemptydirs -p$(p_objcx)
 
-	dh_strip -p$(p_objcx)
+	dh_strip -p$(p_objcx) \
+	  $(if $(unstripped_exe),-X/cc1objplus)
 	dh_compress -p$(p_objcx)
 
 	dh_fixperms -p$(p_objcx)

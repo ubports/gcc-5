@@ -369,6 +369,9 @@ endif
 # -------------------------------------------------------------------
 # basic config
 
+# allows to wrote backtraces for ICEs
+unstripped_exe = yes
+
 # common things ---------------
 # build common packages, where package names don't differ in different
 # gcc versions (fixincludes, libgcj-common) ...
@@ -821,6 +824,8 @@ with_d := $(call envfilt, d, , , $(with_d))
 ifeq ($(with_base_only),yes)
   with_d := no
 endif
+
+with_d := not updated to current trunk
 
 ifeq ($(with_d)-$(with_separate_gdc),yes-yes)
   ifneq (,$(findstring gdc,$(PKGSOURCE)))

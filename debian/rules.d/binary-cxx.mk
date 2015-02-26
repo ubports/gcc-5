@@ -93,7 +93,8 @@ else
 endif	
 	echo "TEST COMPARE END"
 
-	dh_strip -p$(p_cxx)
+	dh_strip -p$(p_cxx) \
+	  $(if $(unstripped_exe),-X/cc1plus)
 	dh_compress -p$(p_cxx) -X.log.xz -X.sum.xz
 	dh_fixperms -p$(p_cxx)
 	dh_shlibdeps -p$(p_cxx)

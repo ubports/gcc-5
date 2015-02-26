@@ -124,7 +124,8 @@ endif
 		/$(docdir)/$(p_gcc)/README.Bugs \
 		/$(docdir)/$(p_gdc)/README.Bugs
 
-	dh_strip -p$(p_gdc)
+	dh_strip -p$(p_gdc) \
+	  $(if $(unstripped_exe),-X/cc1d)
 	dh_compress -p$(p_gdc)
 	dh_fixperms -p$(p_gdc)
 	dh_shlibdeps -p$(p_gdc)

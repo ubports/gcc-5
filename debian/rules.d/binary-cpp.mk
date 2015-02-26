@@ -47,7 +47,8 @@ endif
 	debian/dh_doclink -p$(p_cpp) $(p_xbase)
 	debian/dh_rmemptydirs -p$(p_cpp)
 
-	dh_strip -p$(p_cpp)
+	dh_strip -p$(p_cpp) \
+	  $(if $(unstripped_exe),-X/cc1)
 	dh_compress -p$(p_cpp)
 	dh_fixperms -p$(p_cpp)
 	dh_shlibdeps -p$(p_cpp)

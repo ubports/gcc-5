@@ -342,20 +342,20 @@ Index: b/src/gcc/ada/gnat_rm.texi
 ===================================================================
 --- a/src/gcc/ada/gnat_rm.texi
 +++ b/src/gcc/ada/gnat_rm.texi
-@@ -36,7 +36,7 @@ included in the section entitled ``GNU F
- 
- @dircategory GNU Ada tools
+@@ -12,7 +12,7 @@
+ @finalout
+ @dircategory GNU Ada Tools 
  @direntry
--* GNAT Reference Manual: (gnat_rm).  Reference Manual for GNU Ada tools.
+-* gnat_rm: (gnat_rm.info). gnat_rm
 +* GNAT Reference Manual: (gnat_rm-5).  Reference Manual for GNU Ada tools.
  @end direntry
  
- @titlepage
+ @definfoenclose strong,`,'
 Index: b/src/gcc/doc/invoke.texi
 ===================================================================
 --- a/src/gcc/doc/invoke.texi
 +++ b/src/gcc/doc/invoke.texi
-@@ -10968,7 +10968,7 @@ One of the standard libraries bypassed b
+@@ -11002,7 +11002,7 @@ One of the standard libraries bypassed b
  @option{-nodefaultlibs} is @file{libgcc.a}, a library of internal subroutines
  which GCC uses to overcome shortcomings of particular machines, or special
  needs for some languages.
@@ -364,7 +364,7 @@ Index: b/src/gcc/doc/invoke.texi
  Collection (GCC) Internals},
  for more discussion of @file{libgcc.a}.)
  In most cases, you need @file{libgcc.a} even when you want to avoid
-@@ -10977,7 +10977,7 @@ or @option{-nodefaultlibs} you should us
+@@ -11011,7 +11011,7 @@ or @option{-nodefaultlibs} you should us
  This ensures that you have no unresolved references to internal GCC
  library subroutines.
  (An example of such an internal subroutine is @code{__main}, used to ensure C++
@@ -373,7 +373,7 @@ Index: b/src/gcc/doc/invoke.texi
  GNU Compiler Collection (GCC) Internals}.)
  
  @item -pie
-@@ -23683,7 +23683,7 @@ Note that you can also specify places to
+@@ -23741,7 +23741,7 @@ Note that you can also specify places to
  @option{-B}, @option{-I} and @option{-L} (@pxref{Directory Options}).  These
  take precedence over places specified using environment variables, which
  in turn take precedence over those specified by the configuration of GCC@.
@@ -382,7 +382,7 @@ Index: b/src/gcc/doc/invoke.texi
  GNU Compiler Collection (GCC) Internals}.
  
  @table @env
-@@ -23843,7 +23843,7 @@ the headers it contains change.
+@@ -23901,7 +23901,7 @@ the headers it contains change.
  
  A precompiled header file is searched for when @code{#include} is
  seen in the compilation.  As it searches for the included file
@@ -395,7 +395,7 @@ Index: b/src/gcc/doc/extend.texi
 ===================================================================
 --- a/src/gcc/doc/extend.texi
 +++ b/src/gcc/doc/extend.texi
-@@ -18256,7 +18256,7 @@ want to write code that checks whether t
+@@ -18320,7 +18320,7 @@ want to write code that checks whether t
  test for the GNU compiler the same way as for C programs: check for a
  predefined macro @code{__GNUC__}.  You can also use @code{__GNUG__} to
  test specifically for GNU C++ (@pxref{Common Predefined Macros,,
@@ -408,7 +408,7 @@ Index: b/src/gcc/doc/standards.texi
 ===================================================================
 --- a/src/gcc/doc/standards.texi
 +++ b/src/gcc/doc/standards.texi
-@@ -288,8 +288,8 @@ described at @uref{http://golang.org/doc
+@@ -286,8 +286,8 @@ described at @uref{http://golang.org/doc
  GNAT Reference Manual}, for information on standard
  conformance and compatibility of the Ada compiler.
  

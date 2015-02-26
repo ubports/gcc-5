@@ -1271,8 +1271,17 @@ $(build_jit_stamp): $(configure_jit_stamp)
 
 ifeq ($(DEB_CROSS),yes)
   CC_for_hppa64_cross = $(CC)
+  CCX_for_hppa64_cross = $(CXX)
 else
-  CC_for_hppa64_cross = $(builddir)/gcc/xg++ -B$(builddir)/gcc/
+  CC_for_hppa64_cross = $(builddir)/gcc/xgcc -B$(builddir)/gcc/
+  CXX_for_hppa64_cross = $(builddir)/gcc/xg++ -B$(builddir)/gcc/ \
+		-B$(builddir)/hppa-linux-gnu/libstdc++-v3/src/.libs \
+		-B$(builddir)/hppa-linux-gnu/libstdc++-v3/libsupc++/.libs \
+		-I$(builddir)/hppa-linux-gnu/libstdc++-v3/include \
+		-I$(builddir)/hppa-linux-gnu/libstdc++-v3/include/hppa-linux-gnu \
+		-I$(srcdir)/libstdc++-v3/libsupc++ \
+		-L$(builddir)/hppa-linux-gnu/libstdc++-v3/src/.libs \
+		-L$(builddir)/hppa-linux-gnu/libstdc++-v3/libsupc++/.libs
 endif
 
 ifeq ($(versioned_packages),yes)
@@ -1289,6 +1298,7 @@ $(configure_hppa64_stamp): $(build_stamp)
 	  $(SET_PATH) \
 	  $(SET_SHELL) \
 	  CC="$(CC_for_hppa64_cross)" \
+	  CXX="$(CXX_for_hppa64_cross)" \
 	     ../src/configure \
 		--enable-languages=c \
 		--prefix=/$(PF) \
@@ -2252,7 +2262,8 @@ ifeq ($(DEB_CROSS)-$(multilib),yes-yes)
 endif
 
 	for i in ar nm ranlib; do \
-	  cp debian/gcc-$$i$(pkg_ver).1 $(d)/$(PF)/share/man/man1/$(cmd_prefix)gcc-$$i$(pkg_ver).1; \
+	  cp debian/gcc-$$i-$(BASE_VERSION).1 \
+	    $(d)/$(PF)/share/man/man1/$(cmd_prefix)gcc-$$i$(pkg_ver).1; \
 	done
 
 	chmod 755 debian/dh_*

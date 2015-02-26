@@ -162,7 +162,8 @@ endif
 	  true; \
 	fi
 	debian/dh_rmemptydirs -p$(p_gcc)
-	dh_strip -p$(p_gcc)
+	dh_strip -p$(p_gcc) \
+	  $(if $(unstripped_exe),-X/lto1)
 	dh_compress -p$(p_gcc) -X README.Bugs
 	dh_fixperms -p$(p_gcc)
 	dh_shlibdeps -p$(p_gcc)
