@@ -102,11 +102,9 @@ ifeq ($(with_qmath),yes)
 		$(d_gcc)/$(docdir)/$(p_xbase)/quadmath/changelog
 endif
 ifeq ($(with_asan),yes)
-  ifneq ($(empty_sanitizer_packages),yes)
 	mv $(d)/$(usr_lib)/libsanitizer*.spec $(d_gcc)/$(gcc_lib_dir)/
 	cp -p $(srcdir)/libsanitizer/ChangeLog \
 		$(d_gcc)/$(docdir)/$(p_xbase)/sanitizer/changelog
-  endif
 endif
 ifeq ($(with_cilkrts),yes)
 	mv $(d)/$(usr_lib)/libcilkrts.spec $(d_gcc)/$(gcc_lib_dir)/
@@ -118,7 +116,7 @@ endif
 
 	rm -f $(d)/$(usr_lib)/libcc1.so
 	dh_link -p$(p_gcc) \
-		/$(usr_lib)/libcc1.so.$(CC1_SO) /$(gcc_lib_dir)/libcc1.so
+		/$(usr_lib)/libcc1.so.$(CC1_SONAME) /$(gcc_lib_dir)/libcc1.so
 
 ifneq ($(DEB_CROSS),yes)
 	for i in gcc gcov gcov-tool gcc-ar gcc-nm gcc-ranlib; do \

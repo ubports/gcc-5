@@ -314,7 +314,7 @@ Depends: BASEDEP, ${dep:libgcc}, ${dep:libssp}, ${dep:libgomp}, ${dep:libitm},
  ${dep:libqmath}, ${dep:libunwinddev}, ${shlibs:Depends}, ${misc:Depends}
 ifdef(`MULTIARCH', `Multi-Arch: same
 ')`'dnl
-Replaces: gccgo-4.9 (<< ${gcc:Version})
+Replaces: gccgo-5 (<< ${gcc:Version})
 BUILT_USING`'dnl
 Description: GCC support library (development files)
  This package contains the headers and static library files necessary for
@@ -744,7 +744,7 @@ Depends: cpp`'PV`'TS (= ${gcc:Version}),ifenabled(`gccbase',` BASEDEP,')
   binutils`'TS (>= ${binutils:Version}),
   ${dep:libgccdev}, ${shlibs:Depends}, ${misc:Depends}
 Recommends: ${dep:libcdev}
-Replaces: gccgo-4.9 (<< ${gcc:Version})
+Replaces: gccgo-5 (<< ${gcc:Version})
 Suggests: ${gcc:multilib}, gcc`'PV-doc (>= ${gcc:SoftVersion}),
  gcc`'PV-locales (>= ${gcc:SoftVersion}),
  libdbgdep(gcc`'GCC_SO-dbg,,>=,${libgcc:Version}),
@@ -818,7 +818,7 @@ Section: ifdef(`TARGET',`devel',`interpreters')
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASEDEP, ${shlibs:Depends}, ${misc:Depends}
 Suggests: gcc`'PV-locales (>= ${gcc:SoftVersion})
-Replaces: gccgo-4.9 (<< ${gcc:Version})
+Replaces: gccgo-5 (<< ${gcc:Version})
 BUILT_USING`'dnl
 Description: GNU C preprocessor
  A macro processor that is used automatically by the GNU C compiler
@@ -3663,6 +3663,7 @@ Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASEDEP, ifdef(`STANDALONEGO',,`gcc`'PV`'TS (= ${gcc:Version}), ')libdep(go`'GO_SO,), ${dep:libcdev}, ${shlibs:Depends}, ${misc:Depends}
 Provides: go-compiler
 Suggests: ${go:multilib}, gccgo`'PV-doc, libdbgdep(go`'GO_SO-dbg,)
+Conflicts: gccgo-go, ${golang:Conflicts}
 BUILT_USING`'dnl
 Description: GNU Go compiler
  This is the GNU Go compiler, which compiles Go on platforms supported
@@ -4610,7 +4611,8 @@ Replaces: gnat (<< 4.6.1), dh-ada-library (<< 6.0), gnat-4.6-base (= 4.6.4-2),
 # g-base 4.6.4-2, 4.9-20140330-1 contain debian_packaging.mk by mistake.
 # Newer versions of gnat and dh-ada-library will not provide these files.
 Conflicts: gnat (<< 4.1), gnat-3.1, gnat-3.2, gnat-3.3, gnat-3.4, gnat-3.5,
- gnat-4.0, gnat-4.1, gnat-4.2, gnat-4.3, gnat-4.4, gnat-4.6, gnat-4.7, gnat-4.8
+ gnat-4.0, gnat-4.1, gnat-4.2, gnat-4.3, gnat-4.4, gnat-4.6, gnat-4.7, gnat-4.8,
+ gnat-4.9
 # These other packages will continue to provide /usr/bin/gnatmake and
 # other files.
 BUILT_USING`'dnl

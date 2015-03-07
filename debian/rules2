@@ -269,10 +269,6 @@ ifneq ($(with_asan),yes)
   CONFARGS += --disable-libsanitizer
 endif
 
-ifeq ($(empty_sanitizer_packages),yes)
-  CONFARGS += --disable-libsanitizer
-endif
-
 ifneq ($(with_qmath),yes)
   CONFARGS += --disable-libquadmath
 endif

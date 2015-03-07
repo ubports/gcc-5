@@ -300,7 +300,6 @@ debian_patches += ada-ppc64
 debian_patches += ada-mips64
 
 debian_patches += libasan-sparc
-#debian_patches += libstdc++-python-hook
 
 series_stamp = $(stampdir)/02-series-stamp
 series: $(series_stamp)

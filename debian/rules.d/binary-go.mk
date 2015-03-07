@@ -102,7 +102,8 @@ define __do_gccgo
 	debian/dh_doclink -p$(p_l) $(p_base)
 	debian/dh_doclink -p$(p_d) $(p_base)
 
-	dh_strip -p$(p_l) --dbg-package=$(p_d)
+	: # don't strip: https://gcc.gnu.org/ml/gcc-patches/2015-02/msg01722.html
+	: # dh_strip -p$(p_l) --dbg-package=$(p_d)
 	dh_compress -p$(p_l) -p$(p_d)
 	dh_fixperms -p$(p_l) -p$(p_d)
 	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)

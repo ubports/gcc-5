@@ -92,7 +92,7 @@ Depends: gcc-5-base (= ${gcc:Version}), ${dep:libgcc}, ${dep:libssp}, ${dep:libg
  ${dep:libtsan}, ${dep:libubsan}, ${dep:libcilkrts}, ${dep:libvtv},
  ${dep:libqmath}, ${dep:libunwinddev}, ${shlibs:Depends}, ${misc:Depends}
 Multi-Arch: same
-Replaces: gccgo-4.9 (<< ${gcc:Version})
+Replaces: gccgo-5 (<< ${gcc:Version})
 Description: GCC support library (development files)
  This package contains the headers and static library files necessary for
  building C programs which use libgcc, libgomp, libquadmath, libssp or libitm.
@@ -263,7 +263,7 @@ Depends: cpp-5 (= ${gcc:Version}), gcc-5-base (= ${gcc:Version}),
   binutils (>= ${binutils:Version}), 
   ${dep:libgccdev}, ${shlibs:Depends}, ${misc:Depends}
 Recommends: ${dep:libcdev}
-Replaces: gccgo-4.9 (<< ${gcc:Version})
+Replaces: gccgo-5 (<< ${gcc:Version})
 Suggests: ${gcc:multilib}, gcc-5-doc (>= ${gcc:SoftVersion}),
  gcc-5-locales (>= ${gcc:SoftVersion}),
  libgcc1-dbg (>= ${libgcc:Version}),
@@ -316,7 +316,7 @@ Section: interpreters
 Priority: optional
 Depends: gcc-5-base (= ${gcc:Version}), ${shlibs:Depends}, ${misc:Depends}
 Suggests: gcc-5-locales (>= ${gcc:SoftVersion})
-Replaces: gccgo-4.9 (<< ${gcc:Version})
+Replaces: gccgo-5 (<< ${gcc:Version})
 Description: GNU C preprocessor
  A macro processor that is used automatically by the GNU C compiler
  to transform programs before actual compilation.
@@ -1569,6 +1569,7 @@ Priority: optional
 Depends: gcc-5-base (= ${gcc:Version}), gcc-5 (= ${gcc:Version}), libgo7 (>= ${gcc:Version}), ${dep:libcdev}, ${shlibs:Depends}, ${misc:Depends}
 Provides: go-compiler
 Suggests: ${go:multilib}, gccgo-5-doc, libgo7-dbg (>= ${gcc:Version})
+Conflicts: gccgo-go, ${golang:Conflicts}
 Description: GNU Go compiler
  This is the GNU Go compiler, which compiles Go on platforms supported
  by the gcc compiler. It uses the gcc backend to generate optimized code.
@@ -2082,91 +2083,6 @@ Description: GNU Standard C++ Library v3 (documentation files)
  source documentation including a namespace list, class hierarchy,
  alphabetical list, compound list, file list, namespace members,
  compound members and file members.
-
-Package: gdc-5
-Architecture: any
-Priority: optional
-Depends: gcc-5-base (>= ${gcc:SoftVersion}), g++-5 (>= ${gcc:SoftVersion}), ${dep:gdccross}, ${dep:phobosdev}, ${shlibs:Depends}, ${misc:Depends}
-Provides: gdc, d-compiler, d-v2-compiler
-Replaces: gdc (<< 4.4.6-5)
-Description: GNU D compiler (version 2)
- This is the GNU D compiler, which compiles D on platforms supported by gcc.
- It uses the gcc backend to generate optimised code.
- .
- This compiler supports D language version 2.
-
-Package: gdc-5-multilib
-Architecture: any
-Priority: optional
-Depends: gcc-5-base (>= ${gcc:SoftVersion}), gdc-5 (= ${gcc:Version}), gcc-5-multilib (= ${gcc:Version}), ${dep:libphobosbiarchdev}${shlibs:Depends}, ${misc:Depends}
-Description: GNU D compiler (version 2, multilib files)
- This is the GNU D compiler, which compiles D on platforms supported by gcc.
- It uses the gcc backend to generate optimised code.
- .
- On architectures with multilib support, the package contains files
- and dependencies for the non-default multilib architecture(s).
-
-Package: libphobos-5-dev
-Architecture: amd64 armel armhf i386 x32 kfreebsd-amd64 kfreebsd-i386
-Section: libdevel
-Priority: optional
-Depends: gcc-5-base (= ${gcc:Version}), zlib1g-dev, ${shlibs:Depends}, ${misc:Depends}
-Description: Phobos D standard library
- This is the Phobos standard library that comes with the D2 compiler.
- .
- For more information check http://www.dlang.org/phobos/
-
-#Package: libphobos`'PHOBOS_V`'PV`'TS-dbg
-#Section: debug
-#Architecture: ifdef(`TARGET',`CROSS_ARCH',`libphobos_archs')
-#Priority: extra
-#Depends: BASEDEP, libphobos`'PHOBOS_V`'PV-dev (= ${gdc:Version}), ${misc:Depends}
-#Provides: libphobos`'PHOBOS_V`'TS-dbg
-#BUILT_USING`'dnl
-#Description: The Phobos D standard library (debug symbols)
-# This is the Phobos standard library that comes with the D2 compiler.
-# .
-# For more information check http://www.dlang.org/phobos/
-
-Package: lib64phobos-5-dev
-Architecture: i386 powerpc sparc s390 mips mipsel mipsn32 mipsn32el x32
-Section: libdevel
-Priority: optional
-Depends: gcc-5-base (= ${gcc:Version}), lib64gcc-5-dev (= ${gcc:Version}), lib64z1-dev, ${shlibs:Depends}, ${misc:Depends}
-Description: Phobos D standard library (64bit development files)
- This is the Phobos standard library that comes with the D2 compiler.
- .
- For more information check http://www.dlang.org/phobos/
-
-Package: lib32phobos-5-dev
-Architecture: amd64 ppc64 kfreebsd-amd64 s390x sparc64 x32 mipsn32 mipsn32el mips64 mips64el
-Section: libdevel
-Priority: optional
-Depends: gcc-5-base (= ${gcc:Version}), lib32gcc-5-dev (= ${gcc:Version}), lib32z1-dev, ${shlibs:Depends}, ${misc:Depends}
-Description: Phobos D standard library (64bit development files)
- This is the Phobos standard library that comes with the D2 compiler.
- .
- For more information check http://www.dlang.org/phobos/
-
-Package: libn32phobos-5-dev
-Architecture: mips mipsel mips64 mips64el
-Section: libdevel
-Priority: optional
-Depends: gcc-5-base (= ${gcc:Version}), libn32gcc-5-dev (= ${gcc:Version}), libn32z1-dev, ${shlibs:Depends}, ${misc:Depends}
-Description: Phobos D standard library (n32 development files)
- This is the Phobos standard library that comes with the D2 compiler.
- .
- For more information check http://www.dlang.org/phobos/
-
-Package: libx32phobos-5-dev
-Architecture: amd64 i386
-Section: libdevel
-Priority: optional
-Depends: gcc-5-base (= ${gcc:Version}), libx32gcc-5-dev (= ${gcc:Version}), libx32z1-dev, ${shlibs:Depends}, ${misc:Depends}
-Description: Phobos D standard library (x32 development files)
- This is the Phobos standard library that comes with the D2 compiler.
- .
- For more information check http://www.dlang.org/phobos/
 
 #Package: gcc`'PV-soft-float
 #Architecture: arm armel armhf

@@ -1033,7 +1033,7 @@ endif
 # asan / sanitizer --------------------
 with_asan :=
 with_asan := $(call envfilt, asan, , , $(with_asan))
-asan_archs = amd64 armel armhf i386 powerpc ppc64 x32 sparc sparc64
+asan_archs = amd64 armel armhf arm64 i386 powerpc ppc64 ppc64el x32 sparc sparc64
 ifneq (,$(filter $(DEB_TARGET_ARCH),$(asan_archs)))
   with_asan := yes
 endif
@@ -1059,16 +1059,9 @@ endif # with_cdev
 # ubsan / sanitizer --------------------
 with_ubsan :=
 with_ubsan := $(call envfilt, ubsan, , , $(with_ubsan))
-ubsan_archs = amd64 armel armhf i386 powerpc ppc64 x32 sparc sparc64
+ubsan_archs = amd64 armel armhf arm64 i386 powerpc ppc64 ppc64el x32 sparc sparc64
 ifneq (,$(filter $(DEB_TARGET_ARCH),$(ubsan_archs)))
   with_ubsan := yes
-endif
-
-# not yet completely ported, and causing kernel crashes running the tests
-ifneq (,$(filter $(DEB_TARGET_ARCH),powerpc ppc64 ppc64el))
-  ifneq (,$(filter $(distrelease),squeeze wheezy jessie sid precise trusty utopic vivid))
-    empty_sanitizer_packages := yes
-  endif
 endif
 
 # libvtv --------------------

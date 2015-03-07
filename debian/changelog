@@ -1,3 +1,19 @@
+gcc-5 (5-20150307-1) experimental; urgency=medium
+
+  * Update to SVN 20150307.
+    - Update gccgo to Go 1.4.2.
+  * Enable libsanitizer for AArch64 and POWERPC LE (asan, ubsan).
+  * Remove the support to build empty libsanitizer packages on powerpc
+    and ppc64; libsanitizer should be stable on these architectures.
+  * Fix libcc1.so symlink. Closes: #779341.
+  * Revert the fix for PR65150 on armel and armhf to restore bootstrap.
+  * Don't strip the libgo library, or some things won't work as documented,
+    like runtime.Callers. Still keep the -dbg packages and check if some
+    debug information can be stripped.
+  * gccgo-5: Install alternatives for go and gofmt.
+
+ -- Matthias Klose <doko@debian.org>  Sat, 07 Mar 2015 12:20:59 +0100
+
 gcc-5 (5-20150226-1) experimental; urgency=medium
 
   * Update to SVN 20150226.
