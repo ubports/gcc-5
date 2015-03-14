@@ -256,6 +256,12 @@ define __do_gcc_devels2
 	$(if $(filter yes, $(with_cilkrts)),
 		$(call install_gcc_lib,libcilkrts,$(CILKRTS_SONAME),$(1),$(2))
 	)
+	$(if $(filter yes, $(with_mpx)),
+	    $(if $(filter x32, $(1)),,
+		$(call install_gcc_lib,libmpxwrappers,$(MPX_SONAME),$(1),$(2))
+		$(call install_gcc_lib,libmpx,$(MPX_SONAME),$(1),$(2))
+	    )
+	)
 	$(if $(filter yes, $(with_qmath)),
 		$(call install_gcc_lib,libquadmath,$(QMATH_SONAME),$(1),$(2))
 	)

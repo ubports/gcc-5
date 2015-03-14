@@ -73,6 +73,7 @@ ifeq (,$(wildcard debian/soname-cache))
 	echo CILKRTS_SONAME=5 >> $$cache; \
 	echo CC1_SONAME=0 >> $$cache; \
 	echo GCCJIT_SONAME=0 >> $$cache; \
+	echo MPX_SONAME=0 >> $$cache; \
 	cat $$cache)
 else
   SONAME_VARS := $(shell cat debian/soname-cache)
@@ -101,6 +102,7 @@ GO_SONAME	= $(call vafilt,$(SONAME_VARS),GO_SONAME)
 ITM_SONAME	= $(call vafilt,$(SONAME_VARS),ITM_SONAME)
 CC1_SONAME	= $(call vafilt,$(SONAME_VARS),CC1_SONAME)
 GCCJIT_SONAME	= $(call vafilt,$(SONAME_VARS),GCCJIT_SONAME)
+MPX_SONAME	= $(call vafilt,$(SONAME_VARS),MPX_SONAME)
 
 # alias
 GFORTRAN_SONAME = $(FORTRAN_SONAME)

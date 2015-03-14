@@ -108,3 +108,14 @@ Index: b/src/gcc/config/mips/t-linux64
  
  ifneq (,$(findstring abin32,$(target)))
  MULTIARCH_DIRNAME = $(call if_multiarch,mips64$(MIPS_EL)-linux-gnuabin32$(MIPS_SOFT))
+--- a/src/gcc/config/rs6000/t-linux
++++ b/src/gcc/config/rs6000/t-linux
+@@ -2,7 +2,7 @@
+ # or soft-float.
+ ifeq (,$(filter $(with_cpu),$(SOFT_FLOAT_CPUS))$(findstring soft,$(with_float)))
+ ifneq (,$(findstring powerpc64,$(target)))
+-MULTILIB_OSDIRNAMES := .=../lib64$(call if_multiarch,:powerpc64-linux-gnu)
++MULTILIB_OSDIRNAMES := .=../lib$(call if_multiarch,:powerpc64-linux-gnu)
+ else
+ ifneq (,$(findstring spe,$(target)))
+ MULTIARCH_DIRNAME := powerpc-linux-gnuspe$(if $(findstring 8548,$(with_cpu)),,v1)

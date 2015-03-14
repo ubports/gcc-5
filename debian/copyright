@@ -569,8 +569,8 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-libcilkrts:
- Copyright (C) 2009-2013, Intel Corporation
+libcilkrts, libmpx:
+ Copyright (C) 2009-2014, Intel Corporation
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without

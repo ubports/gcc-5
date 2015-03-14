@@ -156,6 +156,8 @@ define do_go_dev
 	dh_installdirs -p$(2) $(gcc_lib_dir$(1))
 	DH_COMPAT=2 dh_movefiles -p$(2) \
 		$(gcc_lib_dir$(1))/libgobegin.a
+	$(if $(filter yes, $(with_standalone_go)), \
+	  $(call install_gccgo_lib,libgomp,$(GOMP_SONAME),$(1),$(2)))
 	$(call install_gccgo_lib,libgo,$(GO_SONAME),$(1),$(2))
 	$(call __do_gccgo_libgcc,$(1),$(2),$(gcc_lib_dir$(1)),$(d)/$(usr_lib$(1)))
 endef
@@ -209,7 +211,6 @@ $(binary_stamp)-gccgo: $(install_stamp)
 
 ifneq (,$(findstring gccgo,$(PKGSOURCE)))
 	rm -rf $(d_go)/$(gcc_lib_dir)/include/cilk
-	rm -rf $(d_go)/$(gcc_lib_dir)/include/omp.h
 	rm -rf $(d_go)/$(gcc_lib_dir)/include/openacc.h
 endif
 
@@ -227,22 +228,25 @@ endif
 endif
 
 ifeq ($(with_standalone_go),yes)
-ifneq ($(DEB_CROSS),yes)
+  ifneq ($(DEB_CROSS),yes)
 	for i in gcc gcov gcc-ar gcc-nm gcc-ranlib; do \
 	  ln -sf $$i$(pkg_ver) \
 	    $(d_go)/$(PF)/bin/$(DEB_TARGET_GNU_TYPE)-$$i$(pkg_ver); \
 	  ln -sf $$i$(pkg_ver) \
 	    $(d_go)/$(PF)/bin/$(TARGET_ALIAS)-$$i$(pkg_ver); \
 	done
-ifneq ($(GFDL_INVARIANT_FREE),yes)
+    ifneq ($(GFDL_INVARIANT_FREE),yes)
 	for i in gcc gcov gcc-ar gcc-nm gcc-ranlib; do \
 	  ln -sf gcc$(pkg_ver).1 \
 	    $(d_go)/$(PF)/share/man/man1/$(DEB_TARGET_GNU_TYPE)-$$i$(pkg_ver).1; \
 	  ln -sf $$i$(pkg_ver).1 \
 	    $(d_go)/$(PF)/share/man/man1/$(TARGET_ALIAS)-$$i$(pkg_ver).1; \
 	done
-endif
-endif
+    endif
+  endif
+  ifeq ($(with_gomp),yes)
+	mv $(d)/$(usr_lib)/libgomp*.spec $(d_go)/$(gcc_lib_dir)/
+  endif
 endif
 
 	debian/dh_doclink -p$(p_go) $(p_xbase)

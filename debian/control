@@ -90,6 +90,7 @@ Recommends: ${dep:libcdev}
 Depends: gcc-5-base (= ${gcc:Version}), ${dep:libgcc}, ${dep:libssp}, ${dep:libgomp}, ${dep:libitm},
  ${dep:libatomic}, ${dep:libbtrace}, ${dep:libasan}, ${dep:liblsan},
  ${dep:libtsan}, ${dep:libubsan}, ${dep:libcilkrts}, ${dep:libvtv},
+ ${dep:libmpx},
  ${dep:libqmath}, ${dep:libunwinddev}, ${shlibs:Depends}, ${misc:Depends}
 Multi-Arch: same
 Replaces: gccgo-5 (<< ${gcc:Version})
@@ -147,7 +148,7 @@ Depends: gcc-5-base (= ${gcc:Version}), ${dep:libgccbiarch}, ${dep:libsspbiarch}
  ${dep:libgompbiarch}, ${dep:libitmbiarch}, ${dep:libatomicbiarch},
  ${dep:libbtracebiarch}, ${dep:libasanbiarch}, ${dep:liblsanbiarch},
  ${dep:libtsanbiarch}, ${dep:libubsanbiarch},
- ${dep:libvtvbiarch}, ${dep:libcilkrtsbiarch},
+ ${dep:libvtvbiarch}, ${dep:libcilkrtsbiarch}, ${dep:libmpxbiarch},
  ${dep:libqmathbiarch}, ${shlibs:Depends}, ${misc:Depends}
 Description: GCC support library (64bit development files)
  This package contains the headers and static library files necessary for
@@ -181,7 +182,7 @@ Depends: gcc-5-base (= ${gcc:Version}), ${dep:libgccbiarch}, ${dep:libsspbiarch}
  ${dep:libgompbiarch}, ${dep:libitmbiarch}, ${dep:libatomicbiarch},
  ${dep:libbtracebiarch}, ${dep:libasanbiarch}, ${dep:liblsanbiarch},
  ${dep:libtsanbiarch}, ${dep:libubsanbiarch},
- ${dep:libvtvbiarch}, ${dep:libcilkrtsbiarch},
+ ${dep:libvtvbiarch}, ${dep:libcilkrtsbiarch}, ${dep:libmpxbiarch},
  ${dep:libqmathbiarch}, ${shlibs:Depends}, ${misc:Depends}
 Description: GCC support library (32 bit development files)
  This package contains the headers and static library files necessary for
@@ -215,7 +216,7 @@ Depends: gcc-5-base (= ${gcc:Version}), ${dep:libgccbiarch}, ${dep:libsspbiarch}
  ${dep:libgompbiarch}, ${dep:libitmbiarch}, ${dep:libatomicbiarch},
  ${dep:libbtracebiarch}, ${dep:libasanbiarch}, ${dep:liblsanbiarch},
  ${dep:libtsanbiarch}, ${dep:libubsanbiarch},
- ${dep:libvtvbiarch}, ${dep:libcilkrtsbiarch},
+ ${dep:libvtvbiarch}, ${dep:libcilkrtsbiarch}, ${dep:libmpxbiarch},
  ${dep:libqmathbiarch}, ${shlibs:Depends}, ${misc:Depends}
 Description: GCC support library (n32 development files)
  This package contains the headers and static library files necessary for
@@ -248,7 +249,7 @@ Depends: gcc-5-base (= ${gcc:Version}), ${dep:libgccbiarch}, ${dep:libsspbiarch}
  ${dep:libgompbiarch}, ${dep:libitmbiarch}, ${dep:libatomicbiarch},
  ${dep:libbtracebiarch}, ${dep:libasanbiarch}, ${dep:liblsanbiarch},
  ${dep:libtsanbiarch}, ${dep:libubsanbiarch},
- ${dep:libvtvbiarch}, ${dep:libcilkrtsbiarch},
+ ${dep:libvtvbiarch}, ${dep:libcilkrtsbiarch}, ${dep:libmpxbiarch},
  ${dep:libqmathbiarch}, ${shlibs:Depends}, ${misc:Depends}
 Description: GCC support library (x32 development files)
  This package contains the headers and static library files necessary for
@@ -275,6 +276,7 @@ Suggests: ${gcc:multilib}, gcc-5-doc (>= ${gcc:SoftVersion}),
  libtsan0-dbg (>= ${gcc:Version}),
  libubsan0-dbg (>= ${gcc:Version}),
  libcilkrts5-dbg (>= ${gcc:Version}),
+ libmpx0-dbg (>= ${gcc:Version}),
  libquadmath0-dbg (>= ${gcc:Version}), ${dep:libcloog}
 Provides: c-compiler
 Description: GNU C compiler
@@ -1063,6 +1065,78 @@ Description: Intel Cilk Plus language extensions (x32 debug symbols)
  Intel Cilk Plus is an extension to the C and C++ languages to support
  data and task parallelism.
 
+Package: libmpx0
+Section: libs
+Architecture: any
+Provides: libmpx0-armel [armel], libmpx0-armhf [armhf]
+Multi-Arch: same
+Pre-Depends: multiarch-support
+Priority: optional
+Depends: gcc-5-base (= ${gcc:Version}), ${shlibs:Depends}, ${misc:Depends}
+Description: Intel memory protection extensions (runtime)
+ Intel MPX is a set of processor features which, with compiler,
+ runtime library and OS support, brings increased robustness to
+ software by checking pointer references whose compile time normal
+ intentions are usurped at runtime due to buffer overflow.
+
+Package: libmpx0-dbg
+Architecture: any
+Section: debug
+Priority: extra
+Depends: gcc-5-base (= ${gcc:Version}), libmpx0 (= ${gcc:Version}), ${misc:Depends}
+Provides: libmpx0-dbg-armel [armel], libmpx0-dbg-armhf [armhf]
+Multi-Arch: same
+Description: Intel memory protection extensions (debug symbols)
+ Intel MPX is a set of processor features which, with compiler,
+ runtime library and OS support, brings increased robustness to
+ software by checking pointer references whose compile time normal
+ intentions are usurped at runtime due to buffer overflow.
+
+Package: lib32mpx0
+Section: libs
+Architecture: amd64 ppc64 kfreebsd-amd64 s390x sparc64 x32 mipsn32 mipsn32el mips64 mips64el
+Priority: optional
+Depends: gcc-5-base (= ${gcc:Version}), ${dep:libcbiarch}, ${shlibs:Depends}, ${misc:Depends}
+Conflicts: ${confl:lib32}
+Description: Intel memory protection extensions (32bit)
+ Intel MPX is a set of processor features which, with compiler,
+ runtime library and OS support, brings increased robustness to
+ software by checking pointer references whose compile time normal
+ intentions are usurped at runtime due to buffer overflow.
+
+Package: lib32mpx0-dbg
+Architecture: amd64 ppc64 kfreebsd-amd64 s390x sparc64 x32 mipsn32 mipsn32el mips64 mips64el
+Section: debug
+Priority: extra
+Depends: gcc-5-base (= ${gcc:Version}), lib32mpx0 (= ${gcc:Version}), ${misc:Depends}
+Description: Intel memory protection extensions (32 bit debug symbols)
+ Intel MPX is a set of processor features which, with compiler,
+ runtime library and OS support, brings increased robustness to
+ software by checking pointer references whose compile time normal
+ intentions are usurped at runtime due to buffer overflow.
+
+Package: lib64mpx0
+Section: libs
+Architecture: i386 powerpc sparc s390 mips mipsel mipsn32 mipsn32el x32
+Priority: optional
+Depends: gcc-5-base (= ${gcc:Version}), ${dep:libcbiarch}, ${shlibs:Depends}, ${misc:Depends}
+Description: Intel memory protection extensions (64bit)
+ Intel MPX is a set of processor features which, with compiler,
+ runtime library and OS support, brings increased robustness to
+ software by checking pointer references whose compile time normal
+ intentions are usurped at runtime due to buffer overflow.
+
+Package: lib64mpx0-dbg
+Architecture: i386 powerpc sparc s390 mips mipsel mipsn32 mipsn32el x32
+Section: debug
+Priority: extra
+Depends: gcc-5-base (= ${gcc:Version}), lib64mpx0 (= ${gcc:Version}), ${misc:Depends}
+Description: Intel memory protection extensions (64bit debug symbols)
+ Intel MPX is a set of processor features which, with compiler,
+ runtime library and OS support, brings increased robustness to
+ software by checking pointer references whose compile time normal
+ intentions are usurped at runtime due to buffer overflow.
+
 Package: libquadmath0
 Section: libs
 Architecture: any
@@ -1569,7 +1643,7 @@ Priority: optional
 Depends: gcc-5-base (= ${gcc:Version}), gcc-5 (= ${gcc:Version}), libgo7 (>= ${gcc:Version}), ${dep:libcdev}, ${shlibs:Depends}, ${misc:Depends}
 Provides: go-compiler
 Suggests: ${go:multilib}, gccgo-5-doc, libgo7-dbg (>= ${gcc:Version})
-Conflicts: gccgo-go, ${golang:Conflicts}
+Conflicts: ${golang:Conflicts}
 Description: GNU Go compiler
  This is the GNU Go compiler, which compiles Go on platforms supported
  by the gcc compiler. It uses the gcc backend to generate optimized code.

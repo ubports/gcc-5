@@ -1,5 +1,7 @@
 # DP: Re-apply sanitizer patch for sparc, dropped upstream
 
+# don't remove, this is regularly overwritten, see PR sanitizer/63958.
+
 libsanitizer/
 
 2014-10-14  David S. Miller  <davem@davemloft.net>

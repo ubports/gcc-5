@@ -5,6 +5,25 @@ Index: b/src/config-ml.in
 ===================================================================
 --- a/src/config-ml.in
 +++ b/src/config-ml.in
+@@ -102,6 +102,7 @@
+ Makefile=${ac_file-Makefile}
+ ml_config_shell=${CONFIG_SHELL-/bin/sh}
+ ml_realsrcdir=${srcdir}
++ml_srcbase=`basename $ml_realsrcdir`
+ 
+ # Scan all the arguments and set all the ones we need.
+ 
+@@ -220,6 +221,10 @@
+   if [ "${dir}" = "." ]; then
+     true
+   else
++    # libmpx is not supported on x32
++    if [ "${ml_srcbase}-${dir}" = libmpx-x32 ]; then
++      continue
++    fi
+     if [ -z "${multidirs}" ]; then
+       multidirs="${dir}"
+     else
 @@ -475,6 +475,25 @@ powerpc*-*-* | rs6000*-*-*)
  	;;
  esac

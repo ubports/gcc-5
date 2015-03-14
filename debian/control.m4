@@ -311,6 +311,7 @@ Recommends: ${dep:libcdev}
 Depends: BASEDEP, ${dep:libgcc}, ${dep:libssp}, ${dep:libgomp}, ${dep:libitm},
  ${dep:libatomic}, ${dep:libbtrace}, ${dep:libasan}, ${dep:liblsan},
  ${dep:libtsan}, ${dep:libubsan}, ${dep:libcilkrts}, ${dep:libvtv},
+ ${dep:libmpx},
  ${dep:libqmath}, ${dep:libunwinddev}, ${shlibs:Depends}, ${misc:Depends}
 ifdef(`MULTIARCH', `Multi-Arch: same
 ')`'dnl
@@ -404,7 +405,7 @@ Depends: BASEDEP, ${dep:libgccbiarch}, ${dep:libsspbiarch},
  ${dep:libgompbiarch}, ${dep:libitmbiarch}, ${dep:libatomicbiarch},
  ${dep:libbtracebiarch}, ${dep:libasanbiarch}, ${dep:liblsanbiarch},
  ${dep:libtsanbiarch}, ${dep:libubsanbiarch},
- ${dep:libvtvbiarch}, ${dep:libcilkrtsbiarch},
+ ${dep:libvtvbiarch}, ${dep:libcilkrtsbiarch}, ${dep:libmpxbiarch},
  ${dep:libqmathbiarch}, ${shlibs:Depends}, ${misc:Depends}
 BUILT_USING`'dnl
 Description: GCC support library (64bit development files)
@@ -457,7 +458,7 @@ Depends: BASEDEP, ${dep:libgccbiarch}, ${dep:libsspbiarch},
  ${dep:libgompbiarch}, ${dep:libitmbiarch}, ${dep:libatomicbiarch},
  ${dep:libbtracebiarch}, ${dep:libasanbiarch}, ${dep:liblsanbiarch},
  ${dep:libtsanbiarch}, ${dep:libubsanbiarch},
- ${dep:libvtvbiarch}, ${dep:libcilkrtsbiarch},
+ ${dep:libvtvbiarch}, ${dep:libcilkrtsbiarch}, ${dep:libmpxbiarch},
  ${dep:libqmathbiarch}, ${shlibs:Depends}, ${misc:Depends}
 BUILT_USING`'dnl
 Description: GCC support library (32 bit development files)
@@ -528,7 +529,7 @@ Depends: BASEDEP, ${dep:libgccbiarch}, ${dep:libsspbiarch},
  ${dep:libgompbiarch}, ${dep:libitmbiarch}, ${dep:libatomicbiarch},
  ${dep:libbtracebiarch}, ${dep:libasanbiarch}, ${dep:liblsanbiarch},
  ${dep:libtsanbiarch}, ${dep:libubsanbiarch},
- ${dep:libvtvbiarch}, ${dep:libcilkrtsbiarch},
+ ${dep:libvtvbiarch}, ${dep:libcilkrtsbiarch}, ${dep:libmpxbiarch},
  ${dep:libqmathbiarch}, ${shlibs:Depends}, ${misc:Depends}
 BUILT_USING`'dnl
 Description: GCC support library (hard float ABI development files)
@@ -584,7 +585,7 @@ Depends: BASEDEP, ${dep:libgccbiarch}, ${dep:libsspbiarch},
  ${dep:libgompbiarch}, ${dep:libitmbiarch}, ${dep:libatomicbiarch},
  ${dep:libbtracebiarch}, ${dep:libasanbiarch}, ${dep:liblsanbiarch},
  ${dep:libtsanbiarch}, ${dep:libubsanbiarch},
- ${dep:libvtvbiarch}, ${dep:libcilkrtsbiarch},
+ ${dep:libvtvbiarch}, ${dep:libcilkrtsbiarch}, ${dep:libmpxbiarch},
  ${dep:libqmathbiarch}, ${shlibs:Depends}, ${misc:Depends}
 BUILT_USING`'dnl
 Description: GCC support library (soft float ABI development files)
@@ -638,7 +639,7 @@ Depends: BASEDEP, ${dep:libgccbiarch}, ${dep:libsspbiarch},
  ${dep:libgompbiarch}, ${dep:libitmbiarch}, ${dep:libatomicbiarch},
  ${dep:libbtracebiarch}, ${dep:libasanbiarch}, ${dep:liblsanbiarch},
  ${dep:libtsanbiarch}, ${dep:libubsanbiarch},
- ${dep:libvtvbiarch}, ${dep:libcilkrtsbiarch},
+ ${dep:libvtvbiarch}, ${dep:libcilkrtsbiarch}, ${dep:libmpxbiarch},
  ${dep:libqmathbiarch}, ${shlibs:Depends}, ${misc:Depends}
 BUILT_USING`'dnl
 Description: GCC support library (n32 development files)
@@ -691,7 +692,7 @@ Depends: BASEDEP, ${dep:libgccbiarch}, ${dep:libsspbiarch},
  ${dep:libgompbiarch}, ${dep:libitmbiarch}, ${dep:libatomicbiarch},
  ${dep:libbtracebiarch}, ${dep:libasanbiarch}, ${dep:liblsanbiarch},
  ${dep:libtsanbiarch}, ${dep:libubsanbiarch},
- ${dep:libvtvbiarch}, ${dep:libcilkrtsbiarch},
+ ${dep:libvtvbiarch}, ${dep:libcilkrtsbiarch}, ${dep:libmpxbiarch},
  ${dep:libqmathbiarch}, ${shlibs:Depends}, ${misc:Depends}
 BUILT_USING`'dnl
 Description: GCC support library (x32 development files)
@@ -759,6 +760,7 @@ ifenabled(`libvtv',`',`
  libdbgdep(vtv`'VTV_SO-dbg,),
 ')`'dnl
  libdbgdep(cilkrts`'CILKRTS_SO-dbg,),
+ libdbgdep(mpx`'MPX_SO-dbg,),
  libdbgdep(quadmath`'QMATH_SO-dbg,), ${dep:libcloog}
 Provides: c-compiler`'TS
 ifdef(`TARGET',`Conflicts: gcc-multilib
@@ -2636,6 +2638,200 @@ Description: Intel Cilk Plus language extensions [neon optimized]
 ')`'dnl libneoncilkrts
 ')`'dnl libcilkrts
 
+ifenabled(`libmpx',`
+Package: libmpx`'MPX_SO`'LS
+Section: ifdef(`TARGET',`devel',`libs')
+Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
+ifdef(`TARGET',`',`Provides: libmpx'MPX_SO`-armel [armel], libmpx'MPX_SO`-armhf [armhf]
+')`'dnl
+ifdef(`MULTIARCH', `Multi-Arch: same
+Pre-Depends: multiarch-support
+')`'dnl
+Priority: ifdef(`TARGET',`extra',`PRI(optional)')
+Depends: BASEDEP, ${shlibs:Depends}, ${misc:Depends}
+BUILT_USING`'dnl
+Description: Intel memory protection extensions (runtime)
+ Intel MPX is a set of processor features which, with compiler,
+ runtime library and OS support, brings increased robustness to
+ software by checking pointer references whose compile time normal
+ intentions are usurped at runtime due to buffer overflow.
+
+Package: libmpx`'MPX_SO-dbg`'LS
+Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
+Section: debug
+Priority: extra
+Depends: BASEDEP, libdep(mpx`'MPX_SO,,=), ${misc:Depends}
+ifdef(`TARGET',`',`Provides: libmpx'MPX_SO`-dbg-armel [armel], libmpx'MPX_SO`-dbg-armhf [armhf]
+')`'dnl
+ifdef(`MULTIARCH', `Multi-Arch: same
+')`'dnl
+BUILT_USING`'dnl
+Description: Intel memory protection extensions (debug symbols)
+ Intel MPX is a set of processor features which, with compiler,
+ runtime library and OS support, brings increased robustness to
+ software by checking pointer references whose compile time normal
+ intentions are usurped at runtime due to buffer overflow.
+
+ifenabled(`lib32mpx',`
+Package: lib32mpx`'MPX_SO`'LS
+Section: ifdef(`TARGET',`devel',`libs')
+Architecture: ifdef(`TARGET',`CROSS_ARCH',`biarch32_archs')
+Priority: ifdef(`TARGET',`extra',`PRI(optional)')
+Depends: BASEDEP, ${dep:libcbiarch}, ${shlibs:Depends}, ${misc:Depends}
+Conflicts: ${confl:lib32}
+BUILT_USING`'dnl
+Description: Intel memory protection extensions (32bit)
+ Intel MPX is a set of processor features which, with compiler,
+ runtime library and OS support, brings increased robustness to
+ software by checking pointer references whose compile time normal
+ intentions are usurped at runtime due to buffer overflow.
+
+Package: lib32mpx`'MPX_SO-dbg`'LS
+Architecture: ifdef(`TARGET',`CROSS_ARCH',`biarch32_archs')
+Section: debug
+Priority: extra
+Depends: BASEDEP, libdep(mpx`'MPX_SO,32,=), ${misc:Depends}
+BUILT_USING`'dnl
+Description: Intel memory protection extensions (32 bit debug symbols)
+ Intel MPX is a set of processor features which, with compiler,
+ runtime library and OS support, brings increased robustness to
+ software by checking pointer references whose compile time normal
+ intentions are usurped at runtime due to buffer overflow.
+')`'dnl lib32mpx
+
+ifenabled(`lib64mpx',`
+Package: lib64mpx`'MPX_SO`'LS
+Section: ifdef(`TARGET',`devel',`libs')
+Architecture: ifdef(`TARGET',`CROSS_ARCH',`biarch64_archs')
+Priority: ifdef(`TARGET',`extra',`PRI(optional)')
+Depends: BASEDEP, ${dep:libcbiarch}, ${shlibs:Depends}, ${misc:Depends}
+BUILT_USING`'dnl
+Description: Intel memory protection extensions (64bit)
+ Intel MPX is a set of processor features which, with compiler,
+ runtime library and OS support, brings increased robustness to
+ software by checking pointer references whose compile time normal
+ intentions are usurped at runtime due to buffer overflow.
+
+Package: lib64mpx`'MPX_SO-dbg`'LS
+Architecture: ifdef(`TARGET',`CROSS_ARCH',`biarch64_archs')
+Section: debug
+Priority: extra
+Depends: BASEDEP, libdep(mpx`'MPX_SO,64,=), ${misc:Depends}
+BUILT_USING`'dnl
+Description: Intel memory protection extensions (64bit debug symbols)
+ Intel MPX is a set of processor features which, with compiler,
+ runtime library and OS support, brings increased robustness to
+ software by checking pointer references whose compile time normal
+ intentions are usurped at runtime due to buffer overflow.
+')`'dnl lib64mpx
+
+ifenabled(`libn32mpx',`
+Package: libn32mpx`'MPX_SO`'LS
+Section: ifdef(`TARGET',`devel',`libs')
+Architecture: ifdef(`TARGET',`CROSS_ARCH',`biarchn32_archs')
+Priority: ifdef(`TARGET',`extra',`PRI(optional)')
+Depends: BASEDEP, ${dep:libcbiarch}, ${shlibs:Depends}, ${misc:Depends}
+BUILT_USING`'dnl
+Description: Intel memory protection extensions (n32)
+ Intel MPX is a set of processor features which, with compiler,
+ runtime library and OS support, brings increased robustness to
+ software by checking pointer references whose compile time normal
+ intentions are usurped at runtime due to buffer overflow.
+
+Package: libn32mpx`'MPX_SO-dbg`'LS
+Architecture: ifdef(`TARGET',`CROSS_ARCH',`biarchn32_archs')
+Section: debug
+Priority: extra
+Depends: BASEDEP, libdep(mpx`'MPX_SO,n32,=), ${misc:Depends}
+BUILT_USING`'dnl
+Description: Intel memory protection extensions (n32 debug symbols)
+ Intel MPX is a set of processor features which, with compiler,
+ runtime library and OS support, brings increased robustness to
+ software by checking pointer references whose compile time normal
+ intentions are usurped at runtime due to buffer overflow.
+')`'dnl libn32mpx
+
+ifenabled(`libx32mpx',`
+Package: libx32mpx`'MPX_SO`'LS
+Section: ifdef(`TARGET',`devel',`libs')
+Architecture: ifdef(`TARGET',`CROSS_ARCH',`biarchx32_archs')
+Priority: ifdef(`TARGET',`extra',`PRI(optional)')
+Depends: BASEDEP, ${dep:libcbiarch}, ${shlibs:Depends}, ${misc:Depends}
+BUILT_USING`'dnl
+Description: Intel memory protection extensions (x32)
+ Intel MPX is a set of processor features which, with compiler,
+ runtime library and OS support, brings increased robustness to
+ software by checking pointer references whose compile time normal
+ intentions are usurped at runtime due to buffer overflow.
+
+Package: libx32mpx`'MPX_SO-dbg`'LS
+Architecture: ifdef(`TARGET',`CROSS_ARCH',`biarchx32_archs')
+Section: debug
+Priority: extra
+Depends: BASEDEP, libdep(mpx`'MPX_SO,x32,=), ${misc:Depends}
+BUILT_USING`'dnl
+Description: Intel memory protection extensions (x32 debug symbols)
+ Intel MPX is a set of processor features which, with compiler,
+ runtime library and OS support, brings increased robustness to
+ software by checking pointer references whose compile time normal
+ intentions are usurped at runtime due to buffer overflow.
+')`'dnl libx32mpx
+
+ifenabled(`libhfmpx',`
+Package: libhfmpx`'MPX_SO`'LS
+Section: ifdef(`TARGET',`devel',`libs')
+Architecture: ifdef(`TARGET',`CROSS_ARCH',`biarchhf_archs')
+Priority: ifdef(`TARGET',`extra',`PRI(optional)')
+Depends: BASEDEP, ${dep:libcbiarch}, ${shlibs:Depends}, ${misc:Depends}
+ifdef(`TARGET',`dnl',`Conflicts: libmpx'MPX_SO`-armhf [biarchhf_archs]')
+BUILT_USING`'dnl
+Description: Intel memory protection extensions (hard float ABI)
+ Intel MPX is a set of processor features which, with compiler,
+ runtime library and OS support, brings increased robustness to
+ software by checking pointer references whose compile time normal
+ intentions are usurped at runtime due to buffer overflow.
+
+Package: libhfmpx`'MPX_SO-dbg`'LS
+Architecture: ifdef(`TARGET',`CROSS_ARCH',`biarchhf_archs')
+Section: debug
+Priority: extra
+Depends: BASEDEP, libdep(mpx`'MPX_SO,hf,=), ${misc:Depends}
+ifdef(`TARGET',`dnl',`Conflicts: libmpx'MPX_SO`-armel [biarchsf_archs]')
+BUILT_USING`'dnl
+Description: Intel memory protection extensions (hard float ABI debug symbols)
+ Intel MPX is a set of processor features which, with compiler,
+ runtime library and OS support, brings increased robustness to
+ software by checking pointer references whose compile time normal
+ intentions are usurped at runtime due to buffer overflow.
+')`'dnl libhfmpx
+
+ifenabled(`libsfmpx',`
+Package: libsfmpx`'MPX_SO`'LS
+Section: ifdef(`TARGET',`devel',`libs')
+Architecture: ifdef(`TARGET',`CROSS_ARCH',`biarchsf_archs')
+Priority: ifdef(`TARGET',`extra',`PRI(optional)')
+Depends: BASEDEP, ${dep:libcbiarch}, ${shlibs:Depends}, ${misc:Depends}
+BUILT_USING`'dnl
+Description: Intel memory protection extensions (soft float ABI)
+ Intel MPX is a set of processor features which, with compiler,
+ runtime library and OS support, brings increased robustness to
+ software by checking pointer references whose compile time normal
+ intentions are usurped at runtime due to buffer overflow.
+
+Package: libsfmpx`'MPX_SO-dbg`'LS
+Architecture: ifdef(`TARGET',`CROSS_ARCH',`biarchsf_archs')
+Section: debug
+Priority: extra
+Depends: BASEDEP, libdep(mpx`'MPX_SO,sf,=), ${misc:Depends}
+BUILT_USING`'dnl
+Description: Intel memory protection extensions (soft float ABI debug symbols)
+ Intel MPX is a set of processor features which, with compiler,
+ runtime library and OS support, brings increased robustness to
+ software by checking pointer references whose compile time normal
+ intentions are usurped at runtime due to buffer overflow.
+')`'dnl libsfmpx
+')`'dnl libmpx
+
 ifenabled(`libbacktrace',`
 Package: libbacktrace`'BTRACE_SO`'LS
 Section: ifdef(`TARGET',`devel',`libs')
@@ -3663,7 +3859,7 @@ Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASEDEP, ifdef(`STANDALONEGO',,`gcc`'PV`'TS (= ${gcc:Version}), ')libdep(go`'GO_SO,), ${dep:libcdev}, ${shlibs:Depends}, ${misc:Depends}
 Provides: go-compiler
 Suggests: ${go:multilib}, gccgo`'PV-doc, libdbgdep(go`'GO_SO-dbg,)
-Conflicts: gccgo-go, ${golang:Conflicts}
+Conflicts: ${golang:Conflicts}
 BUILT_USING`'dnl
 Description: GNU Go compiler
  This is the GNU Go compiler, which compiles Go on platforms supported

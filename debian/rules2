@@ -273,6 +273,10 @@ ifneq ($(with_qmath),yes)
   CONFARGS += --disable-libquadmath
 endif
 
+ifeq ($(with_mpx),yes)
+  CONFARGS += --enable-libmpx
+endif
+
 ifeq ($(with_plugins),yes)
   CONFARGS += --enable-plugin
 endif
@@ -1914,6 +1918,10 @@ endif
 
 ifeq ($(with_libcilkrts),yes)
   include debian/rules.d/binary-libcilkrts.mk
+endif
+
+ifeq ($(with_libmpx),yes)
+  include debian/rules.d/binary-libmpx.mk
 endif
 
 ifeq ($(with_f77),yes)

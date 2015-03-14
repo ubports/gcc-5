@@ -1,3 +1,18 @@
+gcc-5 (5-20150314-1) experimental; urgency=medium
+
+  * Update to SVN 20150314.
+    - libgo: Add arm64 to the pointer size map (Michael Hudson).
+    - libgo: Add ppc to the pointer size map.
+    - PR go/65404, enable cgo on arm64 and powerpc. LP: #1431032.
+    - Fix PR/tree-optimization 65418. Closes: #778163.
+    - Fix PR c++/65370. Closes: #778073.
+  * Enable libmpx builds on amd64 and i386.
+  * Update the gcc-multiarch patch for mips64 (YunQiang Su).
+    Closes: #776402, #780271.
+  * Remove pr52306 and pr52714 patches, applied upstream. Closes: #780468.
+
+ -- Matthias Klose <doko@debian.org>  Sat, 14 Mar 2015 14:48:19 +0100
+
 gcc-5 (5-20150307-1) experimental; urgency=medium
 
   * Update to SVN 20150307.

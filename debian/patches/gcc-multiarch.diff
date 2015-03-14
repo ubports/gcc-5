@@ -7,11 +7,13 @@
 	* config/i386/t-linux64: Set MULTIARCH_DIRNAME.
 	* config/i386/t-kfreebsd: Set MULTIARCH_DIRNAME.
 	* config.gcc (i[34567]86-*-linux* | x86_64-*-linux*): Prepend
-	i386/t-linux to $tmake_file.
+	i386/t-linux to $tmake_file;
+	set default ABI to N64 for mips64el.
 	* config/mips/t-linux64: Set MULTIARCH_DIRNAME.
 	* config/rs6000/t-linux64: Set MULTIARCH_DIRNAME.
 	* config/s390/t-linux64: Set MULTIARCH_DIRNAME.
 	* config/sparc/t-linux64: Set MULTIARCH_DIRNAME.
+	* src/gcc/config/mips/mips.h: (/usr)/lib as default path.
 
 Index: b/src/gcc/config/sh/t-linux
 ===================================================================
@@ -108,9 +110,20 @@ Index: b/src/gcc/config/mips/t-linux64
 +endif
 Index: b/src/gcc/config.gcc
 ===================================================================
---- a/src/gcc/config.gcc
-+++ b/src/gcc/config.gcc
-@@ -4220,7 +4220,7 @@ case ${target} in
+--- a/src/gcc/config.gcc	2015-03-11 01:56:41.641941311 +0800
++++ b/src/gcc/config.gcc	2015-03-11 01:56:41.621941311 +0800
+@@ -2030,6 +2030,10 @@
+ 			default_mips_arch=mips64r2
+ 			enable_mips_multilibs="yes"
+ 			;;
++		mips64*-*-linux-gnuabi64 | mipsisa64*-*-linux-gnuabi64)
++			default_mips_abi=64
++			enable_mips_multilibs="yes"
++			;;
+ 		mips64*-*-linux* | mipsisa64*-*-linux*)
+ 			default_mips_abi=n32
+ 			enable_mips_multilibs="yes"
+@@ -4221,7 +4225,7 @@
  	i[34567]86-*-darwin* | x86_64-*-darwin*)
  		;;
  	i[34567]86-*-linux* | x86_64-*-linux*)
@@ -134,3 +147,21 @@ Index: b/src/gcc/config/aarch64/t-aarch64-linux
  
 -MULTILIB_OSDIRNAMES += mabi.ilp32=../libilp32
 +MULTIARCH_DIRNAME = $(call if_multiarch,aarch64$(AARCH_BE)-linux-gnu)
+Index: b/src/gcc/config/mips/mips.h
+===================================================================
+--- a/src/gcc/config/mips/mips.h	2015-03-11 01:40:50.000000000 +0800
++++ b/src/gcc/config/mips/mips.h	2015-03-11 03:16:53.313941935 +0800
+@@ -3137,13 +3137,3 @@
+    with arguments ARGS.  */
+ #define PMODE_INSN(NAME, ARGS) \
+   (Pmode == SImode ? NAME ## _si ARGS : NAME ## _di ARGS)
+-
+-/* If we are *not* using multilibs and the default ABI is not ABI_32 we
+-   need to change these from /lib and /usr/lib.  */
+-#if MIPS_ABI_DEFAULT == ABI_N32
+-#define STANDARD_STARTFILE_PREFIX_1 "/lib32/"
+-#define STANDARD_STARTFILE_PREFIX_2 "/usr/lib32/"
+-#elif MIPS_ABI_DEFAULT == ABI_64
+-#define STANDARD_STARTFILE_PREFIX_1 "/lib64/"
+-#define STANDARD_STARTFILE_PREFIX_2 "/usr/lib64/"
+-#endif

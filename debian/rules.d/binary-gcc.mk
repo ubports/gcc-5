@@ -5,7 +5,10 @@ ifeq ($(with_plugins),yes)
   arch_binaries  := $(arch_binaries) gcc-plugindev
 endif
 
-arch_binaries  := $(arch_binaries) libcc1 gcc
+ifneq (,$(findstring gcc-, $(PKGSOURCE)))
+  arch_binaries  := $(arch_binaries) libcc1
+endif
+arch_binaries  := $(arch_binaries) gcc
 
 ifneq ($(DEB_CROSS),yes)
   ifneq ($(GFDL_INVARIANT_FREE),yes)
@@ -21,7 +24,7 @@ endif
 # but it becomes difficult to name all these files ...
 
 dirs_gcc = \
-	$(docdir)/$(p_xbase)/{gcc,libssp,gomp,itm,quadmath,sanitizer,cilkrts} \
+	$(docdir)/$(p_xbase)/{gcc,libssp,gomp,itm,quadmath,sanitizer,cilkrts,mpx} \
 	$(PF)/bin \
 	$(gcc_lexec_dir) \
 	$(gcc_lib_dir)/{include,include-fixed} \
@@ -111,12 +114,18 @@ ifeq ($(with_cilkrts),yes)
 	cp -p $(srcdir)/libcilkrts/ChangeLog \
 		$(d_gcc)/$(docdir)/$(p_xbase)/cilkrts/changelog
 endif
-
-	DH_COMPAT=2 dh_movefiles -p$(p_gcc) $(files_gcc)
-
+ifeq ($(with_mpx),yes)
+	mv $(d)/$(usr_lib)/libmpx.spec $(d_gcc)/$(gcc_lib_dir)/
+	cp -p $(srcdir)/libmpx/ChangeLog \
+		$(d_gcc)/$(docdir)/$(p_xbase)/mpx/changelog
+endif
+ifneq (,$(findstring gcc-, $(PKGSOURCE)))
 	rm -f $(d)/$(usr_lib)/libcc1.so
 	dh_link -p$(p_gcc) \
 		/$(usr_lib)/libcc1.so.$(CC1_SONAME) /$(gcc_lib_dir)/libcc1.so
+endif
+
+	DH_COMPAT=2 dh_movefiles -p$(p_gcc) $(files_gcc)
 
 ifneq ($(DEB_CROSS),yes)
 	for i in gcc gcov gcov-tool gcc-ar gcc-nm gcc-ranlib; do \

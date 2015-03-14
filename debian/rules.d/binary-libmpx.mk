@@ -1,0 +1,80 @@
+$(lib_binaries)  += libmpx
+ifeq ($(with_lib64mpx),yes)
+  $(lib_binaries)  += lib64mpx
+endif
+ifeq ($(with_lib32mpx),yes)
+  $(lib_binaries)	+= lib32mpx
+endif
+ifeq ($(with_libn32mpx),yes)
+  $(lib_binaries)	+= libn32mpx
+endif
+ifeq ($(with_libx32mpx),yes)
+  $(lib_binaries)	+= libx32mpx
+endif
+ifeq ($(with_libhfmpx),yes)
+  $(lib_binaries)	+= libhfmpx
+endif
+ifeq ($(with_libsfmpx),yes)
+  $(lib_binaries)	+= libsfmpx
+endif
+
+define __do_mpx
+	dh_testdir
+	dh_testroot
+	mv $(install_stamp) $(install_stamp)-tmp
+
+	rm -rf $(d_l) $(d_d)
+	dh_installdirs -p$(p_l) $(usr_lib$(2))
+	DH_COMPAT=2 dh_movefiles -p$(p_l) \
+		$(usr_lib$(2))/libmpx.so.* \
+		$(usr_lib$(2))/libmpxwrappers.so.*
+
+	debian/dh_doclink -p$(p_l) $(p_base)
+	debian/dh_doclink -p$(p_d) $(p_base)
+
+	if [ -f debian/$(p_l).overrides ]; then \
+		mkdir -p debian/$(p_l)/usr/share/lintian/overrides; \
+		cp debian/$(p_l).overrides debian/$(p_l)/usr/share/lintian/overrides/$(p_l); \
+	fi
+
+	dh_strip -p$(p_l) --dbg-package=$(p_d)
+	dh_compress -p$(p_l) -p$(p_d)
+	dh_fixperms -p$(p_l) -p$(p_d)
+	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)
+	$(call cross_mangle_shlibs,$(p_l))
+	$(ignshld)DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_l)
+	$(call cross_mangle_substvars,$(p_l))
+	$(cross_gencontrol) dh_gencontrol -p$(p_l) -p$(p_d)	\
+		-- -v$(DEB_VERSION) $(common_substvars)
+	$(call cross_mangle_control,$(p_l))
+	dh_installdeb -p$(p_l) -p$(p_d)
+	dh_md5sums -p$(p_l) -p$(p_d)
+	dh_builddeb -p$(p_l) -p$(p_d)
+
+	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
+endef
+
+# ----------------------------------------------------------------------
+
+do_mpx = $(call __do_mpx,lib$(1)mpx$(MPX_SONAME),$(1))
+
+$(binary_stamp)-libmpx: $(install_stamp)
+	$(call do_mpx,)
+
+$(binary_stamp)-lib64mpx: $(install_stamp)
+	$(call do_mpx,64)
+
+$(binary_stamp)-lib32mpx: $(install_stamp)
+	$(call do_mpx,32)
+
+$(binary_stamp)-libn32mpx: $(install_stamp)
+	$(call do_mpx,n32)
+
+$(binary_stamp)-libx32mpx: $(install_stamp)
+	$(call do_mpx,x32)
+
+$(binary_stamp)-libhfmpx: $(install_dependencies)
+	$(call do_mpx,hf)
+
+$(binary_stamp)-libsfmpx: $(install_dependencies)
+	$(call do_mpx,sf)

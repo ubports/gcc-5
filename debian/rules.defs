@@ -517,6 +517,10 @@ endif
 
 with_jit := $(call envfilt, jit, , , $(with_jit))
 
+ifeq (,$(findstring gcc-,$(PKGSOURCE)))
+  with_jit :=
+endif
+
 # Build all packages needed for C development
 ifneq ($(with_base_only),yes)
   ifeq ($(with_dev),yes)
@@ -668,6 +672,10 @@ ifeq ($(java_no_cross)-$(DEB_CROSS),yes-yes)
   with_java := disabled for cross compiler package
 endif
 with_java := $(call envfilt, java, , c++, $(with_java))
+
+ifneq (,$(findstring gccgo, $(PKGSOURCE)))
+  with_java :=
+endif
 
 ifeq ($(with_java)-$(with_separate_libgcj),yes-yes)
   ifneq (,$(findstring gcj, $(PKGSOURCE)))
@@ -1084,6 +1092,15 @@ ifneq (,$(filter $(DEB_TARGET_ARCH),$(cilkrts_archs)))
   with_cilkrts := yes
 endif
 
+# libmpx --------------------
+with_mpx :=
+with_mpx := $(call envfilt, mpx, , , $(with_mpx))
+mpx_archs = amd64 i386
+ifneq (,$(filter $(DEB_TARGET_ARCH),$(mpx_archs)))
+  with_mpx := yes
+  with_libmpx := yes
+endif
+
 # gold --------------------
 # armel with binutils 2.20.51 only
 gold_archs = amd64 armel armhf i386 powerpc powerpcspe ppc64 ppc64el sparc sparc64 x32 hurd-i386
@@ -1414,6 +1431,11 @@ define gen_biarch
     ifeq ($$(with_libcilkrts),yes)
       with_lib$1cilkrts := yes
     endif
+    ifeq ($$(with_libmpx),yes)
+      ifneq (,$(filter $1, 32 64))
+        with_lib$1mpx := yes
+      endif
+    endif
     ifeq ($$(with_libqmath),yes)
       with_lib$1qmath := yes
     endif
@@ -1421,10 +1443,10 @@ define gen_biarch
       with_lib$1go := yes
     endif
 
-    biarch_multidir_names = libiberty libgcc libbacktrace libatomic
+    biarch_multidir_names = libiberty libgcc libbacktrace libatomic libgomp
     ifneq (,$$(findstring gcc-, $$(PKGSOURCE)))
       biarch_multidir_names += libstdc++-v3 libobjc libgfortran libssp \
-				libgomp zlib libitm \
+				zlib libitm libmpx \
 				libsanitizer \
 				libcilkrts libvtv
       ifeq ($$(with_objc_gc),yes)
@@ -1506,6 +1528,7 @@ ifeq ($(no_biarch_libs),yes)
   with_lib64ubsan	:= no
   with_lib64vtv		:= no
   with_lib64cilkrts	:= no
+  with_lib64mpx		:= no
   with_lib64gccdev	:= no
   with_lib64cxxdev	:= no
   with_lib64objcdev	:= no
@@ -1532,6 +1555,7 @@ ifeq ($(no_biarch_libs),yes)
   with_lib32ubsan	:= no
   with_lib32vtv		:= no
   with_lib32cilkrts	:= no
+  with_lib32mpx		:= no
   with_lib32gccdev	:= no
   with_lib32cxxdev	:= no
   with_lib32objcdev	:= no
