@@ -1,3 +1,11 @@
+gcc-5 (5-20150316-1) experimental; urgency=medium
+
+  * Update to SVN 20150316.
+    - Fix bootstrap failures on armel, armhh and arm64.
+  * Configure with --enable-checking=yes (instead of =release).
+
+ -- Matthias Klose <doko@debian.org>  Tue, 17 Mar 2015 00:30:27 +0100
+
 gcc-5 (5-20150314-1) experimental; urgency=medium
 
   * Update to SVN 20150314.

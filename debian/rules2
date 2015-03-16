@@ -633,7 +633,8 @@ ifeq ($(trunk_build),yes)
   endif
   CONFARGS += --enable-checking=yes
 else
-  CONFARGS += --enable-checking=release
+  #CONFARGS += --enable-checking=release
+  CONFARGS += --enable-checking=yes
 endif
 
 CONFARGS += \
