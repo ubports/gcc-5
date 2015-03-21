@@ -264,7 +264,7 @@ Depends: cpp-5 (= ${gcc:Version}), gcc-5-base (= ${gcc:Version}),
   binutils (>= ${binutils:Version}), 
   ${dep:libgccdev}, ${shlibs:Depends}, ${misc:Depends}
 Recommends: ${dep:libcdev}
-Replaces: gccgo-5 (<< ${gcc:Version})
+Replaces: gccgo-5 (<< ${gcc:Version}), gcc-5-plugin-dev (<< 5-20150321-1)
 Suggests: ${gcc:multilib}, gcc-5-doc (>= ${gcc:SoftVersion}),
  gcc-5-locales (>= ${gcc:SoftVersion}),
  libgcc1-dbg (>= ${libgcc:Version}),

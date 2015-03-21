@@ -4,7 +4,7 @@ Index: b/src/libjava/Makefile.am
 ===================================================================
 --- a/src/libjava/Makefile.am
 +++ b/src/libjava/Makefile.am
-@@ -836,7 +836,7 @@ if CREATE_JAVA_HOME
+@@ -835,7 +835,7 @@ if CREATE_JAVA_HOME
  	$(mkinstalldirs) $(DESTDIR)$(SDK_INCLUDE_DIR)/$(OS)
  	relative() { \
  	  $(PERL) -e 'use File::Spec; \
@@ -17,7 +17,7 @@ Index: b/src/libjava/Makefile.in
 ===================================================================
 --- a/src/libjava/Makefile.in
 +++ b/src/libjava/Makefile.in
-@@ -12506,7 +12506,7 @@ install-data-local:
+@@ -12504,7 +12504,7 @@ install-data-local:
  @CREATE_JAVA_HOME_TRUE@	$(mkinstalldirs) $(DESTDIR)$(SDK_INCLUDE_DIR)/$(OS)
  @CREATE_JAVA_HOME_TRUE@	relative() { \
  @CREATE_JAVA_HOME_TRUE@	  $(PERL) -e 'use File::Spec; \

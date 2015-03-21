@@ -1,3 +1,11 @@
+gcc-5 (5-20150321-1) experimental; urgency=medium
+
+  * Update to SVN 20150321.
+  * Move the libcc1plugin from the gcc-5-plugin-dev package into the
+    gcc-5 package.
+
+ -- Matthias Klose <doko@debian.org>  Sat, 21 Mar 2015 15:01:15 +0100
+
 gcc-5 (5-20150316-1) experimental; urgency=medium
 
   * Update to SVN 20150316.

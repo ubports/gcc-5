@@ -36,6 +36,7 @@ files_gcc = \
 	$(PF)/bin/$(cmd_prefix)gcc-{ar,ranlib,nm}$(pkg_ver) \
 	$(PF)/share/man/man1/$(cmd_prefix)gcc-{ar,nm,ranlib}$(pkg_ver).1 \
 	$(gcc_lexec_dir)/{collect2,lto1,lto-wrapper} \
+	$(gcc_lib_dir)/plugin/libcc1plugin.so{,.0,.0.0.0} \
 	$(shell test -e $(d)/$(gcc_lib_dir)/SYSCALLS.c.X \
 		&& echo $(gcc_lib_dir)/SYSCALLS.c.X)
 
@@ -248,15 +249,11 @@ $(binary_stamp)-gcc-plugindev: $(install_dependencies)
 	rm -rf $(d_pld)
 	dh_installdirs -p$(p_pld) \
 		$(docdir) \
-		$(gcc_lib_dir)/plugin/include/config/arm
-	DH_COMPAT=2 dh_movefiles -p$(p_pld) \
 		$(gcc_lib_dir)/plugin
-
-	: # FIXME: see #645018, this only works for the native build :-/
-	if [ $(DEB_BUILD_ARCH) = $(DEB_HOST_ARCH) ] && [ $(DEB_HOST_ARCH) = $(DEB_TARGET_ARCH) ]; then \
-	  cp $(builddir)/gcc/build/gengtype $(d_pld)/$(gcc_lib_dir)/; \
-	  cp $(builddir)/gcc/gtype.state $(d_pld)/$(gcc_lib_dir)/; \
-	fi
+	DH_COMPAT=2 dh_movefiles -p$(p_pld) \
+		$(gcc_lib_dir)/plugin/include \
+		$(gcc_lib_dir)/plugin/gtype.state \
+		$(gcc_lexec_dir)/plugin/gengtype
 
 	debian/dh_doclink -p$(p_pld) $(p_xbase)
 	debian/dh_rmemptydirs -p$(p_pld)

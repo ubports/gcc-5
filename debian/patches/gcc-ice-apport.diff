@@ -5,7 +5,7 @@ Index: b/src/gcc/gcc.c
 ===================================================================
 --- a/src/gcc/gcc.c
 +++ b/src/gcc/gcc.c
-@@ -6518,6 +6518,16 @@ do_report_bug (const char **new_argv, co
+@@ -6571,6 +6571,16 @@ do_report_bug (const char **new_argv, co
      {
        fnotice (stderr, "Preprocessed source stored into %s file,"
  	       " please attach this to your bugreport.\n", *out_file);

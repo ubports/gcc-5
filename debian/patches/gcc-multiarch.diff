@@ -19,11 +19,15 @@ Index: b/src/gcc/config/sh/t-linux
 ===================================================================
 --- a/src/gcc/config/sh/t-linux
 +++ b/src/gcc/config/sh/t-linux
-@@ -1,2 +1,4 @@
+@@ -1,6 +1,8 @@
  MULTILIB_DIRNAMES= 
  MULTILIB_MATCHES = 
-+
+ 
 +MULTILIB_OSDIRNAMES = sh4-linux-gnu:sh4-linux-gnu sh4_nofpu-linux-gnu:sh4-linux-gnu
++
+ DEFAULT_ENDIAN = $(word 1,$(TM_ENDIAN_CONFIG))
+ ifeq ($(DEFAULT_ENDIAN),ml)
+ MULTILIB_EXCEPTIONS = m2a m2a/ml
 Index: b/src/gcc/config/sparc/t-linux64
 ===================================================================
 --- a/src/gcc/config/sparc/t-linux64
@@ -110,9 +114,9 @@ Index: b/src/gcc/config/mips/t-linux64
 +endif
 Index: b/src/gcc/config.gcc
 ===================================================================
---- a/src/gcc/config.gcc	2015-03-11 01:56:41.641941311 +0800
-+++ b/src/gcc/config.gcc	2015-03-11 01:56:41.621941311 +0800
-@@ -2030,6 +2030,10 @@
+--- a/src/gcc/config.gcc
++++ b/src/gcc/config.gcc
+@@ -2032,6 +2032,10 @@ mips*-*-linux*)				# Linux MIPS, either
  			default_mips_arch=mips64r2
  			enable_mips_multilibs="yes"
  			;;
@@ -123,7 +127,7 @@ Index: b/src/gcc/config.gcc
  		mips64*-*-linux* | mipsisa64*-*-linux*)
  			default_mips_abi=n32
  			enable_mips_multilibs="yes"
-@@ -4221,7 +4225,7 @@
+@@ -4232,7 +4236,7 @@ case ${target} in
  	i[34567]86-*-darwin* | x86_64-*-darwin*)
  		;;
  	i[34567]86-*-linux* | x86_64-*-linux*)
@@ -149,9 +153,9 @@ Index: b/src/gcc/config/aarch64/t-aarch64-linux
 +MULTIARCH_DIRNAME = $(call if_multiarch,aarch64$(AARCH_BE)-linux-gnu)
 Index: b/src/gcc/config/mips/mips.h
 ===================================================================
---- a/src/gcc/config/mips/mips.h	2015-03-11 01:40:50.000000000 +0800
-+++ b/src/gcc/config/mips/mips.h	2015-03-11 03:16:53.313941935 +0800
-@@ -3137,13 +3137,3 @@
+--- a/src/gcc/config/mips/mips.h
++++ b/src/gcc/config/mips/mips.h
+@@ -3137,13 +3137,3 @@ extern GTY(()) struct target_globals *mi
     with arguments ARGS.  */
  #define PMODE_INSN(NAME, ARGS) \
    (Pmode == SImode ? NAME ## _si ARGS : NAME ## _di ARGS)

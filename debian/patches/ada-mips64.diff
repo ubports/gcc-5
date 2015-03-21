@@ -1,6 +1,8 @@
+Index: b/src/gcc/ada/gcc-interface/Makefile.in
+===================================================================
 --- a/src/gcc/ada/gcc-interface/Makefile.in
 +++ b/src/gcc/ada/gcc-interface/Makefile.in
-@@ -1893,7 +1893,7 @@ ifeq ($(strip $(filter-out mips64el linu
+@@ -1830,7 +1830,7 @@ ifeq ($(strip $(filter-out mips64el linu
    LIBGNAT_TARGET_PAIRS_64 = \
    system.ads<system-linux-mips64el.ads
  
