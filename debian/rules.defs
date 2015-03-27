@@ -521,6 +521,14 @@ ifeq (,$(findstring gcc-,$(PKGSOURCE)))
   with_jit :=
 endif
 
+with_cc1 := yes
+with_cc1 := $(call envfilt, cc1, , , $(with_cc1))
+ifeq ($(with_cc1),yes)
+  ifneq ($(DEB_CROSS),yes)
+    with_libcc1 := yes
+  endif
+endif
+
 # Build all packages needed for C development
 ifneq ($(with_base_only),yes)
   ifeq ($(with_dev),yes)
@@ -563,9 +571,9 @@ ifeq ($(ada_no_snap)-$(single_package),yes-yes)
 endif
 with_ada := $(call envfilt, ada, , , $(with_ada))
 
-ifneq ($(single_package),yes)
-  with_separate_gnat := yes
-endif
+#ifneq ($(single_package),yes)
+#  with_separate_gnat := yes
+#endif
 ifeq ($(with_ada)-$(with_separate_gnat),yes-yes)
   ifneq (,$(findstring gnat,$(PKGSOURCE)))
     languages := c
@@ -573,6 +581,8 @@ ifeq ($(with_ada)-$(with_separate_gnat),yes-yes)
     with_mudflap := no
     with_gccbase := no
     with_cdev := no
+    with_cc1 := no
+    with_libcc1 := no
   else
     debian_extra_langs += ada
     with_ada := built from separate source
@@ -583,6 +593,7 @@ endif
 ifeq ($(with_ada),yes)
   enabled_languages += ada
   with_libgnat := yes
+  with_gnatsjlj := disabled # FIXME
 endif
 
 # C++ -------------------------
@@ -1098,7 +1109,9 @@ with_mpx := $(call envfilt, mpx, , , $(with_mpx))
 mpx_archs = amd64 i386
 ifneq (,$(filter $(DEB_TARGET_ARCH),$(mpx_archs)))
   with_mpx := yes
-  with_libmpx := yes
+  ifneq (,$(findstring gcc-, $(PKGSOURCE)))
+    with_libmpx := yes
+  endif
 endif
 
 # gold --------------------

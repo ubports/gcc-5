@@ -69,6 +69,11 @@ ifeq ($(with_standalone_go),yes)
 	$(shell test -e $(d)/$(gcc_lib_dir)/SYSCALLS.c.X \
 		&& echo $(gcc_lib_dir)/SYSCALLS.c.X)
 
+  ifeq ($(with_cc1),yes)
+    files_go += \
+	$(gcc_lib_dir)/plugin/libcc1plugin.so{,.0,.0.0.0}
+  endif
+
   ifneq ($(GFDL_INVARIANT_FREE),yes)
     files_go += \
 	$(PF)/share/man/man1/{cpp,gcc,gcov}$(pkg_ver).1
@@ -246,6 +251,11 @@ ifeq ($(with_standalone_go),yes)
   endif
   ifeq ($(with_gomp),yes)
 	mv $(d)/$(usr_lib)/libgomp*.spec $(d_go)/$(gcc_lib_dir)/
+  endif
+  ifeq ($(with_cc1),yes)
+	rm -f $(d)/$(usr_lib)/libcc1.so
+	dh_link -p$(p_go) \
+		/$(usr_lib)/libcc1.so.$(CC1_SONAME) /$(gcc_lib_dir)/libcc1.so
   endif
 endif
 

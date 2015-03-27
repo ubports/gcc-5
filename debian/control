@@ -16,8 +16,8 @@ Build-Depends: debhelper (>= 5.0.62), dpkg-dev (>= 1.17.11),
   gperf (>= 3.0.1), bison (>= 1:2.3), flex, gettext, 
   gdb, 
   texinfo (>= 4.3), locales, sharutils, 
-  procps, zlib1g-dev, libantlr-java, python, libffi-dev, fastjar, libmagic-dev, libecj-java (>= 3.3.0-2), zip, libasound2-dev [ !hurd-any !kfreebsd-any], libxtst-dev, libxt-dev, libgtk2.0-dev (>= 2.4.4-2), libart-2.0-dev, libcairo2-dev, netbase, 
-  libcloog-isl-dev (>= 0.18), libmpc-dev (>= 1.0), libmpfr-dev (>= 3.0.0-9~), libgmp-dev (>= 2:5.0.1~), 
+  procps, zlib1g-dev, libantlr-java, python, libffi-dev, fastjar, libmagic-dev, libecj-java (>= 3.3.0-2), zip, libasound2-dev [ !hurd-any !kfreebsd-any], libxtst-dev, libxt-dev, libgtk2.0-dev (>= 2.4.4-2), libart-2.0-dev, libcairo2-dev, gnat-4.9 [!m32r !sh3 !sh3eb !sh4 !sh4eb], netbase, 
+  libisl-dev, libmpc-dev (>= 1.0), libmpfr-dev (>= 3.0.0-9~), libgmp-dev (>= 2:5.0.1~), 
   dejagnu [!m68k], realpath (>= 1.9.12), chrpath, lsb-release, quilt
 Build-Depends-Indep: doxygen (>= 1.7.2), graphviz (>= 2.2), ghostscript, texlive-latex-base, xsltproc, libxml2-utils, docbook-xsl-ns, 
 Homepage: http://gcc.gnu.org/
@@ -260,7 +260,7 @@ Architecture: any
 Section: devel
 Priority: optional
 Depends: cpp-5 (= ${gcc:Version}), gcc-5-base (= ${gcc:Version}),
-  libcc1-0 (= ${gcc:Version}), 
+  ${dep:libcc1}, 
   binutils (>= ${binutils:Version}), 
   ${dep:libgccdev}, ${shlibs:Depends}, ${misc:Depends}
 Recommends: ${dep:libcdev}
@@ -277,7 +277,7 @@ Suggests: ${gcc:multilib}, gcc-5-doc (>= ${gcc:SoftVersion}),
  libubsan0-dbg (>= ${gcc:Version}),
  libcilkrts5-dbg (>= ${gcc:Version}),
  libmpx0-dbg (>= ${gcc:Version}),
- libquadmath0-dbg (>= ${gcc:Version}), ${dep:libcloog}
+ libquadmath0-dbg (>= ${gcc:Version})
 Provides: c-compiler
 Description: GNU C compiler
  This is the GNU C compiler, a fairly portable optimizing compiler for C.
@@ -2157,6 +2157,178 @@ Description: GNU Standard C++ Library v3 (documentation files)
  source documentation including a namespace list, class hierarchy,
  alphabetical list, compound list, file list, namespace members,
  compound members and file members.
+
+Package: gnat-5
+Architecture: any
+Priority: optional
+Pre-Depends: multiarch-support
+Depends: gcc-5-base (= ${gcc:Version}), gcc-5 (>= ${gcc:SoftVersion}), ${dep:libgnat}, ${dep:libcdev}, ${shlibs:Depends}, ${misc:Depends}
+Suggests: gnat-5-doc, ada-reference-manual-2012, gnat-5-sjlj
+Breaks:   gnat (<< 4.6.1), dh-ada-library (<< 6.0), gnat-4.6-base (= 4.6.4-2),
+ gnat-4.9-base (= 4.9-20140330-1)
+Replaces: gnat (<< 4.6.1), dh-ada-library (<< 6.0), gnat-4.6-base (= 4.6.4-2),
+ gnat-4.9-base (= 4.9-20140330-1)
+# Takes over symlink from gnat (<< 4.6.1): /usr/bin/gnatgcc.
+# Takes over file from dh-ada-library (<< 6.0): debian_packaging.mk.
+# g-base 4.6.4-2, 4.9-20140330-1 contain debian_packaging.mk by mistake.
+# Newer versions of gnat and dh-ada-library will not provide these files.
+Conflicts: gnat (<< 4.1), gnat-3.1, gnat-3.2, gnat-3.3, gnat-3.4, gnat-3.5,
+ gnat-4.0, gnat-4.1, gnat-4.2, gnat-4.3, gnat-4.4, gnat-4.6, gnat-4.7, gnat-4.8,
+ gnat-4.9
+# These other packages will continue to provide /usr/bin/gnatmake and
+# other files.
+Description: GNU Ada compiler
+ GNAT is a compiler for the Ada programming language. It produces optimized
+ code on platforms supported by the GNU Compiler Collection (GCC).
+ .
+ This package provides the compiler, tools and runtime library that handles
+ exceptions using the default zero-cost mechanism.
+
+Package: libgnat-5
+Section: libs
+Architecture: any
+Multi-Arch: same
+Pre-Depends: multiarch-support
+Priority: optional
+Depends: gcc-5-base (= ${gcc:Version}), ${shlibs:Depends}, ${misc:Depends}
+Description: runtime for applications compiled with GNAT (shared library)
+ GNAT is a compiler for the Ada programming language. It produces optimized
+ code on platforms supported by the GNU Compiler Collection (GCC).
+ .
+ The libgnat library provides runtime components needed by most
+ applications produced with GNAT.
+ .
+ This package contains the runtime shared library.
+
+Package: libgnat-5-dbg
+Section: debug
+Architecture: any
+Multi-Arch: same
+Pre-Depends: multiarch-support
+Priority: extra
+Depends: gcc-5-base (= ${gcc:Version}), libgnat-5 (= ${gnat:Version}), ${misc:Depends}
+Description: runtime for applications compiled with GNAT (debugging symbols)
+ GNAT is a compiler for the Ada programming language. It produces optimized
+ code on platforms supported by the GNU Compiler Collection (GCC).
+ .
+ The libgnat library provides runtime components needed by most
+ applications produced with GNAT.
+ .
+ This package contains the debugging symbols.
+
+Package: libgnatvsn5-dev
+Section: libdevel
+Architecture: any
+Priority: extra
+Depends: gcc-5-base (= ${gcc:Version}), gnat-5 (= ${gnat:Version}),
+ libgnatvsn5 (= ${gnat:Version}), ${misc:Depends}
+Conflicts: libgnatvsn-dev (<< 5), libgnatvsn4.1-dev, libgnatvsn4.3-dev, libgnatvsn4.4-dev, libgnatvsn4.5-dev, libgnatvsn4.6-dev
+Description: GNU Ada compiler selected components (development files)
+ GNAT is a compiler for the Ada programming language. It produces optimized
+ code on platforms supported by the GNU Compiler Collection (GCC).
+ .
+ The libgnatvsn library exports selected GNAT components for use in other
+ packages, most notably ASIS tools. It is licensed under the GNAT-Modified
+ GPL, allowing to link proprietary programs with it.
+ .
+ This package contains the development files and static library.
+
+Package: libgnatvsn5
+Architecture: any
+Multi-Arch: same
+Pre-Depends: multiarch-support
+Priority: optional
+Section: libs
+Depends: gcc-5-base (= ${gcc:Version}), libgnat-5 (= ${gnat:Version}), ${misc:Depends}
+Description: GNU Ada compiler selected components (shared library)
+ GNAT is a compiler for the Ada programming language. It produces optimized
+ code on platforms supported by the GNU Compiler Collection (GCC).
+ .
+ The libgnatvsn library exports selected GNAT components for use in other
+ packages, most notably ASIS tools. It is licensed under the GNAT-Modified
+ GPL, allowing to link proprietary programs with it.
+ .
+ This package contains the runtime shared library.
+
+Package: libgnatvsn5-dbg
+Architecture: any
+Multi-Arch: same
+Pre-Depends: multiarch-support
+Priority: extra
+Section: debug
+Depends: gcc-5-base (= ${gcc:Version}), libgnatvsn5 (= ${gnat:Version}), ${misc:Depends}
+Suggests: gnat
+Description: GNU Ada compiler selected components (debugging symbols)
+ GNAT is a compiler for the Ada programming language. It produces optimized
+ code on platforms supported by the GNU Compiler Collection (GCC).
+ .
+ The libgnatvsn library exports selected GNAT components for use in other
+ packages, most notably ASIS tools. It is licensed under the GNAT-Modified
+ GPL, allowing to link proprietary programs with it.
+ .
+ This package contains the debugging symbols.
+
+Package: libgnatprj5-dev
+Section: libdevel
+Architecture: any
+Priority: extra
+Depends: gcc-5-base (= ${gcc:Version}), gnat-5 (= ${gnat:Version}),
+ libgnatprj5 (= ${gnat:Version}),
+ libgnatvsn5-dev (= ${gnat:Version}), ${misc:Depends}
+Conflicts: libgnatprj-dev (<< 5), libgnatprj4.1-dev, libgnatprj4.3-dev, libgnatprj4.4-dev, libgnatprj4.5-dev, libgnatprj4.6-dev
+Description: GNU Ada compiler Project Manager (development files)
+ GNAT is a compiler for the Ada programming language. It produces optimized
+ code on platforms supported by the GNU Compiler Collection (GCC).
+ .
+ GNAT uses project files to organise source and object files in large-scale
+ development efforts. The libgnatprj library exports GNAT project files
+ management for use in other packages, most notably ASIS tools (package
+ asis-programs) and GNAT Programming Studio (package gnat-gps). It is
+ licensed under the pure GPL; all programs that use it must also be
+ distributed under the GPL, or not distributed at all.
+ .
+ This package contains the development files and static library.
+
+Package: libgnatprj5
+Architecture: any
+Multi-Arch: same
+Pre-Depends: multiarch-support
+Priority: optional
+Section: libs
+Depends: gcc-5-base (= ${gcc:Version}), libgnat-5 (= ${gnat:Version}), libgnatvsn5 (= ${gnat:Version}), ${misc:Depends}
+Description: GNU Ada compiler Project Manager (shared library)
+ GNAT is a compiler for the Ada programming language. It produces optimized
+ code on platforms supported by the GNU Compiler Collection (GCC).
+ .
+ GNAT uses project files to organise source and object files in large-scale
+ development efforts. The libgnatprj library exports GNAT project files
+ management for use in other packages, most notably ASIS tools (package
+ asis-programs) and GNAT Programming Studio (package gnat-gps). It is
+ licensed under the pure GPL; all programs that use it must also be
+ distributed under the GPL, or not distributed at all.
+ .
+ This package contains the runtime shared library.
+
+Package: libgnatprj5-dbg
+Architecture: any
+Multi-Arch: same
+Pre-Depends: multiarch-support
+Priority: extra
+Section: debug
+Depends: gcc-5-base (= ${gcc:Version}), libgnatprj5 (= ${gnat:Version}), ${misc:Depends}
+Suggests: gnat
+Description: GNU Ada compiler Project Manager (debugging symbols)
+ GNAT is a compiler for the Ada programming language. It produces optimized
+ code on platforms supported by the GNU Compiler Collection (GCC).
+ .
+ GNAT uses project files to organise source and object files in large-scale
+ development efforts. The libgnatprj library exports GNAT project files
+ management for use in other packages, most notably ASIS tools (package
+ asis-programs) and GNAT Programming Studio (package gnat-gps). It is
+ licensed under the pure GPL; all programs that use it must also be
+ distributed under the GPL, or not distributed at all.
+ .
+ This package contains the debugging symbols.
 
 #Package: gcc`'PV-soft-float
 #Architecture: arm armel armhf

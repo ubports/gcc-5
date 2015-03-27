@@ -1,3 +1,26 @@
+gcc-5 (5-20150327-1) experimental; urgency=medium
+
+  * Update to SVN 20150327.
+  * Update libcc1 build support.
+  * Fix syntax in libstdc++ symbols file. Closes: #780991.
+  * Fix PR go/65417: Add support for PPC32 relocs to debug/elf. LP: #1431388.
+  * Fix PR go/65462: Fix go get dependencies. LP: #1432497.
+  * Limit the omp.h multilib fix to Linux. Closes: #778440.
+  * For ICEs, dump the preprocessed source file to stderr when in a
+    distro build environment.
+  * Remove the bootstrap-debug.mk patch from the ada-mips patch.
+  * gnat related work (partly based on #780640):
+    - Update patches for GCC 5.
+    - Build the gnat packages from the gcc-5 source package.
+    - Don't build a gnat-base package from the gcc-5 source.
+    - Stop building the gnat-5-sjlj package for now, patch needs an update.
+    - Fix the packaging when not building the gnat-5-sjlj package.
+    - Don't apply the ada-symbolic-tracebacks, patch needs an update.
+    - Fix the libgnatprj build, build with -DIN_GCC.
+  * Replace cloog/ppl build bits with isl build bits. 
+
+ -- Matthias Klose <doko@debian.org>  Fri, 27 Mar 2015 21:05:16 +0100
+
 gcc-5 (5-20150321-1) experimental; urgency=medium
 
   * Update to SVN 20150321.
@@ -70,7 +93,7 @@ gcc-5 (5-20150205-1) experimental; urgency=medium
     4.9 on AArch64 for now.
   * Don't disable bootstrap mode for the jit build on arm64, gets
     miscompiled.
-  * Allow to build using gettext built with a newer GCC.
+  * Allow one to build using gettext built with a newer GCC.
 
  -- Matthias Klose <doko@debian.org>  Thu, 05 Feb 2015 18:31:17 +0100
 
@@ -171,7 +194,7 @@ gcc-4.9 (4.9.2-6) unstable; urgency=medium
       closes: #771974), PR target/59593 (ARM, wrong code),
       PR middle-end/63762 (ARM. wrong code), PR target/63661 (x86,
       wrong code), PR target/64113 (alpha, wrong code), PR c++/64191. 
-    - Allow to build with ISL 0.14.
+    - Allow one to build with ISL 0.14.
 
  -- Matthias Klose <doko@debian.org>  Tue, 09 Dec 2014 11:00:08 +0100
 
@@ -242,7 +265,7 @@ gcc-4.9 (4.9.2-1) unstable; urgency=medium
   * Update GDC from the 4.9 branch.
 
   [ Matthias Klose ]
-  * Allow to build the gcc-base package only.
+  * Allow one to build the gcc-base package only.
 
   [Ludovic Brenta]
   Merge from gnat-4.9 (4.9.1-4) unstable; urgency=low.
@@ -1121,9 +1144,9 @@ gcc-4.8 (4.8.1-4) unstable; urgency=low
   * For ARM multilib builds, use libsf/libhf system directories to lookup
     files for the non-default multilib (for now, only for the cross compilers).
   * Split out a gcj-4.8 package, allow to build a gcj cross compiler.
-  * Allow to cross build gcj.
+  * Allow one to cross build gcj.
   * Don't include object.di in the D cross compiler, but depend on gdc instead.
-  * Allow to cross build gdc.
+  * Allow one to cross build gdc.
   * Pass --hash-style=gnu instead of --hash-style=both to the linker.
 
  -- Matthias Klose <doko@debian.org>  Wed, 19 Jun 2013 23:48:02 +0200
@@ -7154,7 +7177,7 @@ gcc-4.1 (4.1.0-0) experimental; urgency=low
     package.
 
   [Ludovic Brenta]
-  * Allow to enable and disable NLS and bootstrapping from the environment.
+  * Allow one to enable and disable NLS and bootstrapping from the environment.
     - Adding "nls" to WITHOUT_LANG disables NLS support.
     - If WITH_BOOTSTRAP is set, debian/rules2 calls configure
       --enable-bootstrap=$(WITH_BOOTSTRAP) and just "make".  If

@@ -4,18 +4,23 @@
 
 	* omp.h.in (omp_nest_lock_t): Fix up for Linux multilibs.
 
-Index: b/src/libgomp/omp.h.in
-===================================================================
+2015-03-25  Matthias Klose  <doko@ubuntu.com>
+
+	* omp.h.in (omp_nest_lock_t): Limit the fix Linux.
+
 --- a/src/libgomp/omp.h.in
 +++ b/src/libgomp/omp.h.in
-@@ -40,8 +40,8 @@ typedef struct
+@@ -39,8 +39,13 @@ typedef struct
  
  typedef struct
  {
--  unsigned char _x[@OMP_NEST_LOCK_SIZE@] 
--    __attribute__((__aligned__(@OMP_NEST_LOCK_ALIGN@)));
++#if defined(__linux__)
 +  unsigned char _x[8 + sizeof (void *)] 
 +    __attribute__((__aligned__(sizeof (void *))));
++#else
+   unsigned char _x[@OMP_NEST_LOCK_SIZE@] 
+     __attribute__((__aligned__(@OMP_NEST_LOCK_ALIGN@)));
++#endif
  } omp_nest_lock_t;
  #endif
  

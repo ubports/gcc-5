@@ -59,7 +59,7 @@ Build-Depends: debhelper (>= 5.0.62), DPKG_BUILD_DEP
   kfreebsd-kernel-headers (>= 0.84) [kfreebsd-any],
   LIBUNWIND_BUILD_DEP LIBATOMIC_OPS_BUILD_DEP AUTO_BUILD_DEP
   SOURCE_BUILD_DEP CROSS_BUILD_DEP
-  CLOOG_BUILD_DEP MPC_BUILD_DEP MPFR_BUILD_DEP GMP_BUILD_DEP,
+  ISL_BUILD_DEP MPC_BUILD_DEP MPFR_BUILD_DEP GMP_BUILD_DEP,
   autogen, zlib1g-dev, gawk, lzma, xz-utils, patchutils,
   zlib1g-dev, SDT_BUILD_DEP
   bison (>= 1:2.3), flex, realpath (>= 1.9.12), lsb-release, quilt
@@ -77,7 +77,7 @@ Build-Depends: debhelper (>= 5.0.62), DPKG_BUILD_DEP
   gdb,
   texinfo (>= 4.3), locales, sharutils,
   procps, FORTRAN_BUILD_DEP JAVA_BUILD_DEP GNAT_BUILD_DEP GO_BUILD_DEP GDC_BUILD_DEP
-  CLOOG_BUILD_DEP MPC_BUILD_DEP MPFR_BUILD_DEP GMP_BUILD_DEP
+  ISL_BUILD_DEP MPC_BUILD_DEP MPFR_BUILD_DEP GMP_BUILD_DEP
   CHECK_BUILD_DEP realpath (>= 1.9.12), chrpath, lsb-release, quilt
 Build-Depends-Indep: LIBSTDCXX_BUILD_INDEP JAVA_BUILD_INDEP
 ')dnl
@@ -207,7 +207,7 @@ Description: GCC, the GNU Compiler Collection (gcj base package)
 ')`'dnl
 ')`'dnl java
 
-ifenabled(`ada',`
+ifenabled(`gnatbase',`
 Package: gnat`'PV-base`'TS
 Architecture: any
 # "all" causes build instabilities for "any" dependencies (see #748388).
@@ -221,7 +221,7 @@ Description: GNU Ada compiler (common files)
  code on platforms supported by the GNU Compiler Collection (GCC).
  .
  This package contains files common to all GNAT related packages.
-')`'dnl ada
+')`'dnl gnatbase
 
 ifenabled(`libgcc',`
 Package: libgcc1`'LS
@@ -741,7 +741,7 @@ Architecture: any
 Section: devel
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: cpp`'PV`'TS (= ${gcc:Version}),ifenabled(`gccbase',` BASEDEP,')
-  libcc1-`'CC1_SO (= ${gcc:Version}),
+  ${dep:libcc1},
   binutils`'TS (>= ${binutils:Version}),
   ${dep:libgccdev}, ${shlibs:Depends}, ${misc:Depends}
 Recommends: ${dep:libcdev}
@@ -761,7 +761,7 @@ ifenabled(`libvtv',`',`
 ')`'dnl
  libdbgdep(cilkrts`'CILKRTS_SO-dbg,),
  libdbgdep(mpx`'MPX_SO-dbg,),
- libdbgdep(quadmath`'QMATH_SO-dbg,), ${dep:libcloog}
+ libdbgdep(quadmath`'QMATH_SO-dbg,)
 Provides: c-compiler`'TS
 ifdef(`TARGET',`Conflicts: gcc-multilib
 ')`'dnl
@@ -3169,6 +3169,7 @@ Description: GCC Quad-Precision Math Library (hard float ABI debug symbols)
 ')`'dnl libsfqmath
 ')`'dnl libqmath
 
+ifenabled(`libcc1',`
 Package: libcc1-`'CC1_SO
 Section: ifdef(`TARGET',`devel',`libs')
 Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
@@ -3180,6 +3181,7 @@ Depends: BASEDEP, ${shlibs:Depends}, ${misc:Depends}
 BUILT_USING`'dnl
 Description: GCC cc1 plugin for GDB
  libcc1 is a plugin for GDB.
+')`'dnl libcc1
 
 ifenabled(`libjit',`
 Package: libgccjit`'GCCJIT_SO
@@ -3856,7 +3858,7 @@ ifenabled(`godev',`
 Package: gccgo`'PV`'TS
 Architecture: any
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
-Depends: BASEDEP, ifdef(`STANDALONEGO',,`gcc`'PV`'TS (= ${gcc:Version}), ')libdep(go`'GO_SO,), ${dep:libcdev}, ${shlibs:Depends}, ${misc:Depends}
+Depends: BASEDEP, ifdef(`STANDALONEGO',`${dep:libcc1}, ',`gcc`'PV`'TS (= ${gcc:Version}), ')libdep(go`'GO_SO,), ${dep:libcdev}, ${shlibs:Depends}, ${misc:Depends}
 Provides: go-compiler
 Suggests: ${go:multilib}, gccgo`'PV-doc, libdbgdep(go`'GO_SO-dbg,)
 Conflicts: ${golang:Conflicts}
@@ -4819,6 +4821,7 @@ Description: GNU Ada compiler
  This package provides the compiler, tools and runtime library that handles
  exceptions using the default zero-cost mechanism.
 
+ifenabled(`adasjlj',`
 Package: gnat`'-GNAT_V-sjlj`'TS
 Architecture: any
 Priority: extra
@@ -4833,6 +4836,7 @@ Description: GNU Ada compiler (setjump/longjump runtime library)
  This package provides an alternative runtime library that handles
  exceptions using the setjump/longjump mechanism (as a static library
  only).  You can install it to supplement the normal compiler.
+')`'dnl adasjlj
 
 ifenabled(`libgnat',`
 Package: libgnat`'-GNAT_V`'LS
@@ -5020,7 +5024,9 @@ Section: doc
 Priority: PRI(optional)
 Depends: dpkg (>= 1.15.4) | install-info, ${misc:Depends}
 Suggests: gnat`'PV
-Conflicts: gnat-4.1-doc, gnat-4.2-doc, gnat-4.3-doc, gnat-4.4-doc, gnat-4.6-doc
+Conflicts: gnat-4.1-doc, gnat-4.2-doc,
+  gnat-4.3-doc, gnat-4.4-doc,
+  gnat-4.6-doc, gnat-4.9-doc
 BUILT_USING`'dnl
 Description: GNU Ada compiler (documentation)
  GNAT is a compiler for the Ada programming language. It produces optimized

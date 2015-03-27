@@ -1,23 +1,10 @@
 # DP: use gcc-5 instead of gcc as the command name.
 
-Index: b/src/gcc/ada/comperr.adb
-===================================================================
---- a/src/gcc/ada/comperr.adb
-+++ b/src/gcc/ada/comperr.adb
-@@ -371,7 +371,7 @@
-                End_Line;
- 
-                Write_Str
--                 ("| Include the exact gcc or gnatmake command " &
-+                 ("| Include the exact gcc-5 or gnatmake command " &
-                   "that you entered.");
-                End_Line;
- 
 Index: b/src/gcc/ada/gnatlink.adb
 ===================================================================
 --- a/src/gcc/ada/gnatlink.adb
 +++ b/src/gcc/ada/gnatlink.adb
-@@ -137,7 +137,7 @@
+@@ -136,7 +136,7 @@ procedure Gnatlink is
     --  This table collects the arguments to be passed to compile the binder
     --  generated file.
  
@@ -26,7 +13,7 @@ Index: b/src/gcc/ada/gnatlink.adb
  
     Read_Mode : constant String := "r" & ASCII.NUL;
  
-@@ -1475,7 +1475,8 @@
+@@ -1412,7 +1412,8 @@ procedure Gnatlink is
        end if;
  
        Write_Line ("  --GCC=comp Use comp as the compiler");
@@ -40,7 +27,7 @@ Index: b/src/gcc/ada/make.adb
 ===================================================================
 --- a/src/gcc/ada/make.adb
 +++ b/src/gcc/ada/make.adb
-@@ -670,7 +670,7 @@
+@@ -671,7 +671,7 @@ package body Make is
     -- Compiler, Binder & Linker Data and Subprograms --
     ----------------------------------------------------
  
@@ -53,7 +40,7 @@ Index: b/src/gcc/ada/gnatchop.adb
 ===================================================================
 --- a/src/gcc/ada/gnatchop.adb
 +++ b/src/gcc/ada/gnatchop.adb
-@@ -45,7 +45,7 @@
+@@ -44,7 +44,7 @@ procedure Gnatchop is
     Config_File_Name : constant String_Access := new String'("gnat.adc");
     --  The name of the file holding the GNAT configuration pragmas
  
@@ -66,7 +53,7 @@ Index: b/src/gcc/ada/mdll-utl.adb
 ===================================================================
 --- a/src/gcc/ada/mdll-utl.adb
 +++ b/src/gcc/ada/mdll-utl.adb
-@@ -39,7 +39,7 @@
+@@ -39,7 +39,7 @@ package body MDLL.Utl is
     Dlltool_Name  : constant String := "dlltool";
     Dlltool_Exec  : OS_Lib.String_Access;
  
@@ -75,7 +62,7 @@ Index: b/src/gcc/ada/mdll-utl.adb
     Gcc_Exec      : OS_Lib.String_Access;
  
     Gnatbind_Name : constant String := "gnatbind";
-@@ -212,7 +212,7 @@
+@@ -212,7 +212,7 @@ package body MDLL.Utl is
           end;
        end if;
  
@@ -88,7 +75,7 @@ Index: b/src/gcc/ada/mlib-utl.adb
 ===================================================================
 --- a/src/gcc/ada/mlib-utl.adb
 +++ b/src/gcc/ada/mlib-utl.adb
-@@ -440,7 +440,7 @@
+@@ -446,7 +446,7 @@ package body MLib.Utl is
        if Driver_Name = No_Name then
           if Gcc_Exec = null then
              if Gcc_Name = null then
@@ -101,7 +88,7 @@ Index: b/src/gcc/ada/prj-makr.adb
 ===================================================================
 --- a/src/gcc/ada/prj-makr.adb
 +++ b/src/gcc/ada/prj-makr.adb
-@@ -116,7 +116,7 @@
+@@ -115,7 +115,7 @@ package body Prj.Makr is
  
     procedure Dup2 (Old_Fd, New_Fd : File_Descriptor);
  

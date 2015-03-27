@@ -44,6 +44,10 @@ d_gnatd	= debian/$(p_gnatd)
 GNAT_TOOLS = gnat gnatbind gnatchop gnatclean gnatfind gnatkr gnatlink \
              gnatls gnatmake gnatname gnatprep gnatxref gnathtml
 
+ifeq ($(with_gnatsjlj),yes)
+	rts_subdir = rts-native/
+endif
+
 dirs_gnat = \
 	$(docdir)/$(p_gbase) \
 	$(PF)/bin \
@@ -54,8 +58,12 @@ dirs_gnat = \
 files_gnat = \
 	$(gcc_lexec_dir)/gnat1 \
 	$(gcc_lib_dir)/{adalib,adainclude} \
-	$(foreach i,$(GNAT_TOOLS),$(PF)/bin/$(cmd_prefix)$(i)) \
-	$(gcc_lib_dir)/rts-native
+	$(foreach i,$(GNAT_TOOLS),$(PF)/bin/$(cmd_prefix)$(i))
+
+ifeq ($(with_gnatsjlj),yes)
+files_gnat += \
+	$(gcc_lib_dir)/$(rts_subdir)
+endif
 # rts-sjlj moved to a separate package
 
 dirs_lgnat = \
@@ -265,6 +273,8 @@ $(binary_stamp)-ada: $(binary_stamp)-gnatbase
 	cp src/gcc/ada/gnathtml.pl debian/tmp/$(PF)/bin/$(cmd_prefix)gnathtml
 	chmod 755 debian/tmp/$(PF)/bin/$(cmd_prefix)gnathtml
 	dh_movefiles -p$(p_gnat) $(files_gnat)
+
+ifeq ($(with_gnatsjlj),yes)
 	dh_installdirs -p$(p_gnsjlj) $(gcc_lib_dir)
 	dh_movefiles -p$(p_gnsjlj) $(gcc_lib_dir)/rts-sjlj
 	dh_link -p$(p_gnsjlj) \
@@ -275,6 +285,7 @@ $(binary_stamp)-ada: $(binary_stamp)-gnatbase
 	dh_link -p$(p_gnsjlj) \
 	   $(gcc_lib_dir)/rts-sjlj/adalib/libgnarl.a \
 	   $(gcc_lib_dir)/rts-sjlj/adalib/libgnarl-$(GNAT_VERSION).a
+endif
 
 ifeq ($(with_libgnat),yes)
 	for lib in lib{gnat,gnarl}; do \
@@ -286,7 +297,7 @@ ifeq ($(with_libgnat),yes)
 	for lib in lib{gnat,gnarl}; do \
 	  vlib=$$lib-$(GNAT_SONAME); \
 	  dh_link -p$(p_gnat) \
-	    /$(PF)/$(libdir)/$$vlib.so.1 $(gcc_lib_dir)/rts-native/adalib/$$lib.so; \
+	    /$(PF)/$(libdir)/$$vlib.so.1 $(gcc_lib_dir)/$(rts_subdir)adalib/$$lib.so; \
 	done
 endif
 	debian/dh_doclink -p$(p_gnat)      $(p_gbase)
@@ -320,7 +331,7 @@ endif
 	dh_md5sums -p$(p_gnat)
 	dh_builddeb -p$(p_gnat)
 
-ifeq ($(with_libgnat),yes)
+ifeq ($(with_gnatsjlj),yes)
 	dh_strip -p$(p_gnsjlj)
 	dh_compress -p$(p_gnsjlj)
 	dh_fixperms -p$(p_gnsjlj)

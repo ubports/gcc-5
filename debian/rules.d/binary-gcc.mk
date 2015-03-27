@@ -5,9 +5,6 @@ ifeq ($(with_plugins),yes)
   arch_binaries  := $(arch_binaries) gcc-plugindev
 endif
 
-ifneq (,$(findstring gcc-, $(PKGSOURCE)))
-  arch_binaries  := $(arch_binaries) libcc1
-endif
 arch_binaries  := $(arch_binaries) gcc
 
 ifneq ($(DEB_CROSS),yes)
@@ -36,9 +33,13 @@ files_gcc = \
 	$(PF)/bin/$(cmd_prefix)gcc-{ar,ranlib,nm}$(pkg_ver) \
 	$(PF)/share/man/man1/$(cmd_prefix)gcc-{ar,nm,ranlib}$(pkg_ver).1 \
 	$(gcc_lexec_dir)/{collect2,lto1,lto-wrapper} \
-	$(gcc_lib_dir)/plugin/libcc1plugin.so{,.0,.0.0.0} \
 	$(shell test -e $(d)/$(gcc_lib_dir)/SYSCALLS.c.X \
 		&& echo $(gcc_lib_dir)/SYSCALLS.c.X)
+
+ifeq ($(with_cc1),yes)
+    files_gcc += \
+	$(gcc_lib_dir)/plugin/libcc1plugin.so{,.0,.0.0.0}
+endif
 
 ifeq ($(DEB_STAGE),stage1)
     files_gcc += \
@@ -68,9 +69,6 @@ d_gcc_m	= debian/$(p_gcc_m)
 
 p_pld	= gcc$(pkg_ver)-plugin-dev$(cross_bin_arch)
 d_pld	= debian/$(p_pld)
-
-p_cc1	= libcc1-$(CC1_SONAME)
-d_cc1	= debian/$(p_cc1)
 
 # ----------------------------------------------------------------------
 $(binary_stamp)-gcc: $(install_dependencies)
@@ -120,7 +118,7 @@ ifeq ($(with_mpx),yes)
 	cp -p $(srcdir)/libmpx/ChangeLog \
 		$(d_gcc)/$(docdir)/$(p_xbase)/mpx/changelog
 endif
-ifneq (,$(findstring gcc-, $(PKGSOURCE)))
+ifeq ($(with_cc1),yes)
 	rm -f $(d)/$(usr_lib)/libcc1.so
 	dh_link -p$(p_gcc) \
 		/$(usr_lib)/libcc1.so.$(CC1_SONAME) /$(gcc_lib_dir)/libcc1.so
@@ -209,34 +207,6 @@ $(binary_stamp)-gcc-multi: $(install_dependencies)
 	dh_gencontrol -p$(p_gcc_m) -- -v$(DEB_VERSION) $(common_substvars)
 	dh_md5sums -p$(p_gcc_m)
 	dh_builddeb -p$(p_gcc_m)
-
-	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
-
-# ----------------------------------------------------------------------
-$(binary_stamp)-libcc1: $(install_dependencies)
-	dh_testdir
-	dh_testroot
-	mv $(install_stamp) $(install_stamp)-tmp
-
-	rm -rf $(d_cc1)
-	dh_installdirs -p$(p_cc1) \
-		$(docdir) \
-		$(usr_lib)
-	DH_COMPAT=2 dh_movefiles -p$(p_cc1) \
-		$(usr_lib)/libcc1.so.*
-
-	debian/dh_doclink -p$(p_cc1) $(p_xbase)
-	debian/dh_rmemptydirs -p$(p_cc1)
-
-	dh_strip -p$(p_cc1)
-	dh_compress -p$(p_cc1)
-	dh_makeshlibs -p$(p_cc1)
-	dh_shlibdeps -p$(p_cc1)
-	dh_fixperms -p$(p_cc1)
-	dh_installdeb -p$(p_cc1)
-	dh_gencontrol -p$(p_cc1) -- -v$(DEB_VERSION) $(common_substvars)
-	dh_md5sums -p$(p_cc1)
-	dh_builddeb -p$(p_cc1)
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 

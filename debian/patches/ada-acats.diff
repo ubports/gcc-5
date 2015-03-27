@@ -6,7 +6,7 @@ Index: b/src/gcc/testsuite/ada/acats/run_acats
 ===================================================================
 --- a/src/gcc/testsuite/ada/acats/run_acats
 +++ b/src/gcc/testsuite/ada/acats/run_acats
-@@ -20,52 +20,29 @@
+@@ -20,52 +20,29 @@ which () {
      return 1
  }
  
@@ -90,7 +90,7 @@ Index: b/src/gcc/testsuite/ada/acats/run_all.sh
  target_run () {
    eval $EXPECT -f $testdir/run_test.exp $*
  }
-@@ -48,12 +53,15 @@
+@@ -63,12 +68,15 @@ if [ "$dir" = "$testdir" ]; then
  fi
  
  target_gnatchop () {
@@ -109,7 +109,7 @@ Index: b/src/gcc/testsuite/ada/acats/run_all.sh
  }
  
  target_gcc () {
-@@ -86,8 +94,8 @@
+@@ -101,8 +109,8 @@ display target gcc is $GCC
  display `$GCC -v 2>&1`
  display host=`gcc -dumpmachine`
  display target=$target
@@ -119,12 +119,12 @@ Index: b/src/gcc/testsuite/ada/acats/run_all.sh
 +$GNATTOOLS/gnatls -I- -I$RTS -v >> $dir/acats.log
  display ""
  
- display "		=== acats support ==="
+ if [ -n "$GCC_RUNTEST_PARALLELIZE_DIR" ]; then
 Index: b/src/gcc/testsuite/lib/gnat.exp
 ===================================================================
 --- a/src/gcc/testsuite/lib/gnat.exp
 +++ b/src/gcc/testsuite/lib/gnat.exp
-@@ -88,18 +88,24 @@
+@@ -88,18 +88,24 @@ proc gnat_init { args } {
      global GNAT_UNDER_TEST
      global TOOL_EXECUTABLE
      global gnat_target_current
@@ -156,7 +156,7 @@ Index: b/src/gcc/testsuite/lib/gnat.exp
  
      if ![info exists tmpdir] then {
  	set tmpdir /tmp
-@@ -121,31 +127,6 @@
+@@ -121,31 +127,6 @@ proc gnat_target_compile { source dest t
  	return [gcc_target_compile $source $dest $type $options]
      }
  

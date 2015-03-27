@@ -118,8 +118,10 @@ ifeq ($(with_ada),yes)
 	ada-driver-check \
 	ada-gcc-name \
 	ada-default-project-path \
-	ada-symbolic-tracebacks \
 	ada-library-project-files-soname
+
+	# FIXME: needs update
+	#ada-symbolic-tracebacks \
 
   ifeq ($(biarch64),yes)
     debian_patches += \
@@ -131,8 +133,11 @@ ifeq ($(with_ada),yes)
 	ada-link-lib \
 	ada-libgnatvsn \
 	ada-libgnatprj \
-	ada-acats \
-	ada-sjlj
+	ada-acats
+  endif
+  ifeq ($(with_gnatsjlj),yes)
+    debian_patches += \
+	ada-sjlj FIXME needs update
   endif
 
   debian_patches += ada-link-shlib
@@ -233,6 +238,7 @@ ifeq ($(DEB_TARGET_ARCH_OS),hurd)
   debian_patches += hurd-changes
 endif
 
+debian_patches += gcc-ice-dump
 debian_patches += gcc-ice-apport
 
 debian_patches += libjava-fixed-symlinks
