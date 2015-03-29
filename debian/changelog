@@ -1,3 +1,14 @@
+gcc-5 (5-20150329-1) experimental; urgency=medium
+
+  * Update to SVN 20150329.
+  * Fix building the gnat-5-doc package.
+  * Fix gnat build dependencies.
+  * Fix installation of the gnat upstream ChangeLog. Closes: #781451.
+  * Restore the bootstrap-debug.mk patch to the ada-mips patch
+    for debugging purposes. See #781457.
+
+ -- Matthias Klose <doko@debian.org>  Sun, 29 Mar 2015 18:53:29 +0200
+
 gcc-5 (5-20150327-1) experimental; urgency=medium
 
   * Update to SVN 20150327.
@@ -17,7 +28,7 @@ gcc-5 (5-20150327-1) experimental; urgency=medium
     - Fix the packaging when not building the gnat-5-sjlj package.
     - Don't apply the ada-symbolic-tracebacks, patch needs an update.
     - Fix the libgnatprj build, build with -DIN_GCC.
-  * Replace cloog/ppl build bits with isl build bits. 
+  * Replace cloog/ppl build bits with isl build bits.
 
  -- Matthias Klose <doko@debian.org>  Fri, 27 Mar 2015 21:05:16 +0100
 

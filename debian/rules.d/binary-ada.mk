@@ -262,7 +262,12 @@ $(binary_stamp)-ada: $(binary_stamp)-libgnatprj
 else
 $(binary_stamp)-ada: $(install_stamp)
 endif
+
+ifeq ($(with_separate_gnat),yes)
 $(binary_stamp)-ada: $(binary_stamp)-gnatbase
+else
+$(binary_stamp)-ada:
+endif
 	dh_testdir
 	dh_testroot
 	mv $(install_stamp) $(install_stamp)-tmp
@@ -306,6 +311,9 @@ ifeq ($(PKGSOURCE),gnat-$(BASE_VERSION))
   ifeq ($(with_check),yes)
 	cp -p test-summary $(d_gnat)/$(docdir)/$(p_gbase)/.
   endif
+else
+	mkdir -p $(d_gnat)/$(docdir)/$(p_gbase)/ada
+	cp -p src/gcc/ada/ChangeLog $(d_gnat)/$(docdir)/$(p_gbase)/ada/.
 endif
 	for i in $(GNAT_TOOLS); do \
 	  case "$$i" in \
@@ -364,7 +372,7 @@ $(binary_stamp)-ada-doc: $(build_html_stamp)
 	    makeinfo -I $(srcdir)/gcc/doc/include -I $(srcdir)/gcc/ada \
 		-I $(builddir)/gcc \
 		-o gnat_ugn-$(GNAT_VERSION).info \
-		$(builddir)/gcc/doc/gnat_ugn.texi
+		$(srcdir)/gcc/ada/gnat_ugn.texi
 	cd $(ada_info_dir) && \
 	    makeinfo -I $(srcdir)/gcc/doc/include -I $(srcdir)/gcc/ada \
 		-I $(builddir)/gcc \

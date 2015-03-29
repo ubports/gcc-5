@@ -539,6 +539,12 @@ endif
 ifndef DEB_STAGE
 # Ada --------------------
 ada_no_cpus	:= m32r sh3 sh3eb sh4 sh4eb
+# no Debian builds ... some of these should exist
+ada_no_cpus += m68k powerpcspe sparc64
+ada_no_cpus += x32 # see https://gcc.gnu.org/PR61954
+ifneq (,$(filter $(distrelease),trusty))
+  ada_no_cpus += arm64
+endif
 ada_no_systems	:= 
 ada_no_cross	:= yes
 ada_no_snap	:= no
@@ -568,6 +574,9 @@ ifeq ($(ada_no_cross)-$(DEB_CROSS),yes-yes)
 endif
 ifeq ($(ada_no_snap)-$(single_package),yes-yes)
   with_ada := disabled for snapshot build
+endif
+ifneq (,$(findstring gccgo,$(PKGSOURCE)))
+  with_ada :=
 endif
 with_ada := $(call envfilt, ada, , , $(with_ada))
 

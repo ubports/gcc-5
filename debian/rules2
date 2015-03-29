@@ -87,9 +87,14 @@ $(foreach v, CPPFLAGS CFLAGS CXXFLAGS FFLAGS LDFLAGS, $(if $(filter environment,
 ifeq ($(REVERSE_CROSS),yes)
   CC	=
 else
-  CC	= $(if $(filter yes,$(with_ada)),gnatgcc,gcc)
-  ifneq (,$(filter $(DEB_TARGET_ARCH), arm64))
-    CC	= gcc-4.9
+  ifeq ($(with_ada),yes)
+    ifneq (,$(wildcard /usr/bin/gnatgcc))
+      CC = gnatgcc
+    else
+      CC = gcc
+    endif
+  else
+      CC = gcc
   endif
 endif
 ifeq ($(DEB_BUILD_GNU_TYPE),$(DEB_TARGET_GNU_TYPE))
@@ -386,7 +391,7 @@ endif
 #CONFARGS += --disable-isl-version-check
 
 ifeq ($(REVERSE_CROSS),yes)
-  # FIXME: requires isl and cloog headers for the target
+  # FIXME: requires isl headers for the target
   #CONFARGS += --without-isl
   # FIXME: build currently fails build the precompiled headers
   CONFARGS += --disable-libstdcxx-pch
@@ -1621,7 +1626,7 @@ endif
 	    fi; \
 	    echo "Build Dependencies:" >> ts-include; \
 	    dpkg -l g++-* binutils* `echo '$(LIBC_DEP)' | awk '{print $$1}'` \
-		libgmp*-dev libmpfr-dev libmpc-dev libisl-dev libcloog-isl-dev \
+		libgmp*-dev libmpfr-dev libmpc-dev libisl-dev \
 	        | fgrep -v '<none>' >> ts-include; \
 	    echo '' >> ts-include; \
 	    cat ../$(patch_stamp) >> ts-include; \
@@ -1697,7 +1702,7 @@ endif
 	    echo '' >> ts-include; \
 	    echo "Build Dependencies:" >> ts-include; \
 	    dpkg -l g++-* binutils* `echo '$(LIBC_DEP)' | awk '{print $$1}'` \
-		libgmp*-dev libmpfr-dev libmpc-dev libisl*-dev libcloog-isl-dev \
+		libgmp*-dev libmpfr-dev libmpc-dev libisl*-dev \
 	        | fgrep -v '<none>' >> ts-include; \
 	    echo '' >> ts-include; \
 	    echo 'Results for the installed GCC-3.3 compilers' >> ts-include; \
