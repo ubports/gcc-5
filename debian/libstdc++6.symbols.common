@@ -32,6 +32,7 @@
  GLIBCXX_3.4.9@GLIBCXX_3.4.9 4.2.1
  GLIBCXX_3.4@GLIBCXX_3.4 4.1.1
 (arch=amd64 i386 x32)#include "libstdc++6.symbols.float128"
+(arch=!armel)#include "libstdc++6.symbols.not-armel"
  _ZGVNSt10moneypunctIcLb0EE2idE@GLIBCXX_3.4 4.1.1
  _ZGVNSt10moneypunctIcLb1EE2idE@GLIBCXX_3.4 4.1.1
  _ZGVNSt10moneypunctIwLb0EE2idE@GLIBCXX_3.4 4.1.1
@@ -722,25 +723,17 @@
  _ZNKSt7__cxx119money_getIcSt19istreambuf_iteratorIcSt11char_traitsIcEEE10_M_extractILb0EEES4_S4_S4_RSt8ios_baseRSt12_Ios_IostateRNS_12basic_stringIcS3_SaIcEEE@GLIBCXX_3.4.21 5
  _ZNKSt7__cxx119money_getIcSt19istreambuf_iteratorIcSt11char_traitsIcEEE10_M_extractILb1EEES4_S4_S4_RSt8ios_baseRSt12_Ios_IostateRNS_12basic_stringIcS3_SaIcEEE@GLIBCXX_3.4.21 5
  _ZNKSt7__cxx119money_getIcSt19istreambuf_iteratorIcSt11char_traitsIcEEE3getES4_S4_bRSt8ios_baseRSt12_Ios_IostateRNS_12basic_stringIcS3_SaIcEEE@GLIBCXX_3.4.21 5
- _ZNKSt7__cxx119money_getIcSt19istreambuf_iteratorIcSt11char_traitsIcEEE3getES4_S4_bRSt8ios_baseRSt12_Ios_IostateRe@GLIBCXX_3.4.21 5
  _ZNKSt7__cxx119money_getIcSt19istreambuf_iteratorIcSt11char_traitsIcEEE6do_getES4_S4_bRSt8ios_baseRSt12_Ios_IostateRNS_12basic_stringIcS3_SaIcEEE@GLIBCXX_3.4.21 5
- _ZNKSt7__cxx119money_getIcSt19istreambuf_iteratorIcSt11char_traitsIcEEE6do_getES4_S4_bRSt8ios_baseRSt12_Ios_IostateRe@GLIBCXX_3.4.21 5
  _ZNKSt7__cxx119money_getIwSt19istreambuf_iteratorIwSt11char_traitsIwEEE10_M_extractILb0EEES4_S4_S4_RSt8ios_baseRSt12_Ios_IostateRNS_12basic_stringIcS2_IcESaIcEEE@GLIBCXX_3.4.21 5
  _ZNKSt7__cxx119money_getIwSt19istreambuf_iteratorIwSt11char_traitsIwEEE10_M_extractILb1EEES4_S4_S4_RSt8ios_baseRSt12_Ios_IostateRNS_12basic_stringIcS2_IcESaIcEEE@GLIBCXX_3.4.21 5
  _ZNKSt7__cxx119money_getIwSt19istreambuf_iteratorIwSt11char_traitsIwEEE3getES4_S4_bRSt8ios_baseRSt12_Ios_IostateRNS_12basic_stringIwS3_SaIwEEE@GLIBCXX_3.4.21 5
- _ZNKSt7__cxx119money_getIwSt19istreambuf_iteratorIwSt11char_traitsIwEEE3getES4_S4_bRSt8ios_baseRSt12_Ios_IostateRe@GLIBCXX_3.4.21 5
  _ZNKSt7__cxx119money_getIwSt19istreambuf_iteratorIwSt11char_traitsIwEEE6do_getES4_S4_bRSt8ios_baseRSt12_Ios_IostateRNS_12basic_stringIwS3_SaIwEEE@GLIBCXX_3.4.21 5
- _ZNKSt7__cxx119money_getIwSt19istreambuf_iteratorIwSt11char_traitsIwEEE6do_getES4_S4_bRSt8ios_baseRSt12_Ios_IostateRe@GLIBCXX_3.4.21 5
  _ZNKSt7__cxx119money_putIcSt19ostreambuf_iteratorIcSt11char_traitsIcEEE3putES4_bRSt8ios_basecRKNS_12basic_stringIcS3_SaIcEEE@GLIBCXX_3.4.21 5
- _ZNKSt7__cxx119money_putIcSt19ostreambuf_iteratorIcSt11char_traitsIcEEE3putES4_bRSt8ios_basece@GLIBCXX_3.4.21 5
  _ZNKSt7__cxx119money_putIcSt19ostreambuf_iteratorIcSt11char_traitsIcEEE6do_putES4_bRSt8ios_basecRKNS_12basic_stringIcS3_SaIcEEE@GLIBCXX_3.4.21 5
- _ZNKSt7__cxx119money_putIcSt19ostreambuf_iteratorIcSt11char_traitsIcEEE6do_putES4_bRSt8ios_basece@GLIBCXX_3.4.21 5
  _ZNKSt7__cxx119money_putIcSt19ostreambuf_iteratorIcSt11char_traitsIcEEE9_M_insertILb0EEES4_S4_RSt8ios_basecRKNS_12basic_stringIcS3_SaIcEEE@GLIBCXX_3.4.21 5
  _ZNKSt7__cxx119money_putIcSt19ostreambuf_iteratorIcSt11char_traitsIcEEE9_M_insertILb1EEES4_S4_RSt8ios_basecRKNS_12basic_stringIcS3_SaIcEEE@GLIBCXX_3.4.21 5
  _ZNKSt7__cxx119money_putIwSt19ostreambuf_iteratorIwSt11char_traitsIwEEE3putES4_bRSt8ios_basewRKNS_12basic_stringIwS3_SaIwEEE@GLIBCXX_3.4.21 5
- _ZNKSt7__cxx119money_putIwSt19ostreambuf_iteratorIwSt11char_traitsIwEEE3putES4_bRSt8ios_basewe@GLIBCXX_3.4.21 5
  _ZNKSt7__cxx119money_putIwSt19ostreambuf_iteratorIwSt11char_traitsIwEEE6do_putES4_bRSt8ios_basewRKNS_12basic_stringIwS3_SaIwEEE@GLIBCXX_3.4.21 5
- _ZNKSt7__cxx119money_putIwSt19ostreambuf_iteratorIwSt11char_traitsIwEEE6do_putES4_bRSt8ios_basewe@GLIBCXX_3.4.21 5
  _ZNKSt7__cxx119money_putIwSt19ostreambuf_iteratorIwSt11char_traitsIwEEE9_M_insertILb0EEES4_S4_RSt8ios_basewRKNS_12basic_stringIwS3_SaIwEEE@GLIBCXX_3.4.21 5
  _ZNKSt7__cxx119money_putIwSt19ostreambuf_iteratorIwSt11char_traitsIwEEE9_M_insertILb1EEES4_S4_RSt8ios_basewRKNS_12basic_stringIwS3_SaIwEEE@GLIBCXX_3.4.21 5
  _ZNKSt7codecvtIDic11__mbstate_tE10do_unshiftERS0_PcS3_RS3_@GLIBCXX_3.4.21 5
@@ -1507,18 +1500,6 @@
  _ZNSt12system_errorD0Ev@GLIBCXX_3.4.11 4.4.0
  _ZNSt12system_errorD1Ev@GLIBCXX_3.4.11 4.4.0
  _ZNSt12system_errorD2Ev@GLIBCXX_3.4.11 4.4.0
- _ZNSt13__future_base11_State_baseD0Ev@GLIBCXX_3.4.15 4.6
- _ZNSt13__future_base11_State_baseD1Ev@GLIBCXX_3.4.15 4.6
- _ZNSt13__future_base11_State_baseD2Ev@GLIBCXX_3.4.15 4.6
- _ZNSt13__future_base12_Result_baseC1Ev@GLIBCXX_3.4.15 4.6
- _ZNSt13__future_base12_Result_baseC2Ev@GLIBCXX_3.4.15 4.6
- _ZNSt13__future_base12_Result_baseD0Ev@GLIBCXX_3.4.15 4.6
- _ZNSt13__future_base12_Result_baseD1Ev@GLIBCXX_3.4.15 4.6
- _ZNSt13__future_base12_Result_baseD2Ev@GLIBCXX_3.4.15 4.6
- _ZNSt13__future_base13_State_baseV211_Make_ready6_M_setEv@GLIBCXX_3.4.21 5
- _ZNSt13__future_base19_Async_state_commonD0Ev@GLIBCXX_3.4.17 4.7.0~rc1
- _ZNSt13__future_base19_Async_state_commonD1Ev@GLIBCXX_3.4.17 4.7.0~rc1
- _ZNSt13__future_base19_Async_state_commonD2Ev@GLIBCXX_3.4.17 4.7.0~rc1
  _ZNSt13bad_exceptionD0Ev@GLIBCXX_3.4 4.1.1
  _ZNSt13bad_exceptionD1Ev@GLIBCXX_3.4 4.1.1
  _ZNSt13bad_exceptionD2Ev@GLIBCXX_3.4 4.1.1
@@ -2373,9 +2354,6 @@
  _ZNSt16invalid_argumentD0Ev@GLIBCXX_3.4 4.1.1
  _ZNSt16invalid_argumentD1Ev@GLIBCXX_3.4 4.1.1
  _ZNSt16invalid_argumentD2Ev@GLIBCXX_3.4.15 4.6
- _ZNSt16nested_exceptionD0Ev@CXXABI_1.3.5 4.6
- _ZNSt16nested_exceptionD1Ev@CXXABI_1.3.5 4.6
- _ZNSt16nested_exceptionD2Ev@CXXABI_1.3.5 4.6
  _ZNSt17__timepunct_cacheIcE12_S_timezonesE@GLIBCXX_3.4 4.1.1
  _ZNSt17__timepunct_cacheIcED0Ev@GLIBCXX_3.4 4.1.1
  _ZNSt17__timepunct_cacheIcED1Ev@GLIBCXX_3.4 4.1.1
@@ -2384,11 +2362,8 @@
  _ZNSt17__timepunct_cacheIwED0Ev@GLIBCXX_3.4 4.1.1
  _ZNSt17__timepunct_cacheIwED1Ev@GLIBCXX_3.4 4.1.1
  _ZNSt17__timepunct_cacheIwED2Ev@GLIBCXX_3.4 4.1.1
-#MISSING: 4.6# _ZNSt17bad_function_callD0Ev@CXXABI_1.3.5 4.6
  _ZNSt17bad_function_callD0Ev@GLIBCXX_3.4.15 4.6
-#MISSING: 4.6# _ZNSt17bad_function_callD1Ev@CXXABI_1.3.5 4.6
  _ZNSt17bad_function_callD1Ev@GLIBCXX_3.4.15 4.6
-#MISSING: 4.6# _ZNSt17bad_function_callD2Ev@CXXABI_1.3.5 4.6
  _ZNSt17bad_function_callD2Ev@GLIBCXX_3.4.15 4.6
  _ZNSt17moneypunct_bynameIcLb0EE4intlE@GLIBCXX_3.4 4.1.1
  _ZNSt17moneypunct_bynameIcLb0EED0Ev@GLIBCXX_3.4 4.1.1
@@ -2562,7 +2537,6 @@
  _ZNSt25__codecvt_utf8_utf16_baseIwED0Ev@GLIBCXX_3.4.21 5
  _ZNSt25__codecvt_utf8_utf16_baseIwED1Ev@GLIBCXX_3.4.21 5
  _ZNSt25__codecvt_utf8_utf16_baseIwED2Ev@GLIBCXX_3.4.21 5
- _ZNSt28__atomic_futex_unsigned_base19_M_futex_notify_allEPj@GLIBCXX_3.4.21 5
  _ZNSt3_V214error_categoryD0Ev@GLIBCXX_3.4.21 5
  _ZNSt3_V214error_categoryD1Ev@GLIBCXX_3.4.21 5
  _ZNSt3_V214error_categoryD2Ev@GLIBCXX_3.4.21 5
@@ -3534,6 +3508,12 @@
  _ZStplIwSt11char_traitsIwESaIwEESbIT_T0_T1_EPKS3_RKS6_@GLIBCXX_3.4 4.1.1
  _ZStplIwSt11char_traitsIwESaIwEESbIT_T0_T1_ERKS6_S8_@GLIBCXX_3.4 4.1.1
  _ZStplIwSt11char_traitsIwESaIwEESbIT_T0_T1_ES3_RKS6_@GLIBCXX_3.4 4.1.1
+ _ZStplIcSt11char_traitsIcESaIcEENSt7__cxx1112basic_stringIT_T0_T1_EEPKS5_RKS8_@GLIBCXX_3.4.21 5
+ _ZStplIcSt11char_traitsIcESaIcEENSt7__cxx1112basic_stringIT_T0_T1_EERKS8_SA_@GLIBCXX_3.4.21 5
+ _ZStplIcSt11char_traitsIcESaIcEENSt7__cxx1112basic_stringIT_T0_T1_EES5_RKS8_@GLIBCXX_3.4.21 5
+ _ZStplIwSt11char_traitsIwESaIwEENSt7__cxx1112basic_stringIT_T0_T1_EEPKS5_RKS8_@GLIBCXX_3.4.21 5
+ _ZStplIwSt11char_traitsIwESaIwEENSt7__cxx1112basic_stringIT_T0_T1_EERKS8_SA_@GLIBCXX_3.4.21 5
+ _ZStplIwSt11char_traitsIwESaIwEENSt7__cxx1112basic_stringIT_T0_T1_EES5_RKS8_@GLIBCXX_3.4.21 5
  _ZStrsISt11char_traitsIcEERSt13basic_istreamIcT_ES5_Pa@GLIBCXX_3.4 4.1.1
  _ZStrsISt11char_traitsIcEERSt13basic_istreamIcT_ES5_Ph@GLIBCXX_3.4 4.1.1
  _ZStrsISt11char_traitsIcEERSt13basic_istreamIcT_ES5_Ra@GLIBCXX_3.4 4.1.1
@@ -3586,9 +3566,6 @@
  _ZTIN9__gnu_cxx13stdio_filebufIwSt11char_traitsIwEEE@GLIBCXX_3.4 4.1.1
  _ZTIN9__gnu_cxx18stdio_sync_filebufIcSt11char_traitsIcEEE@GLIBCXX_3.4 4.1.1
  _ZTIN9__gnu_cxx18stdio_sync_filebufIwSt11char_traitsIwEEE@GLIBCXX_3.4 4.1.1
- _ZTINSt13__future_base11_State_baseE@GLIBCXX_3.4.15 4.6
- _ZTINSt13__future_base12_Result_baseE@GLIBCXX_3.4.15 4.6
- _ZTINSt13__future_base19_Async_state_commonE@GLIBCXX_3.4.17 4.7.0~rc1
  _ZTINSt3_V214error_categoryE@GLIBCXX_3.4.21 5
  _ZTINSt6locale5facetE@GLIBCXX_3.4 4.1.1
  _ZTINSt7__cxx1110moneypunctIcLb0EEE@GLIBCXX_3.4.21 5
@@ -3738,8 +3715,6 @@
  _ZTISt15underflow_error@GLIBCXX_3.4 4.1.1
  _ZTISt16bad_array_length@CXXABI_1.3.8 4.9
  _ZTISt16invalid_argument@GLIBCXX_3.4 4.1.1
- _ZTISt16nested_exception@CXXABI_1.3.5 4.6
-#MISSING: 4.6# _ZTISt17bad_function_call@CXXABI_1.3.5 4.6
  _ZTISt17bad_function_call@GLIBCXX_3.4.15 4.6
  _ZTISt17moneypunct_bynameIcLb0EE@GLIBCXX_3.4 4.1.1
  _ZTISt17moneypunct_bynameIcLb1EE@GLIBCXX_3.4 4.1.1
@@ -3829,7 +3804,6 @@
  _ZTSN9__gnu_cxx13stdio_filebufIwSt11char_traitsIwEEE@GLIBCXX_3.4 4.1.1
  _ZTSN9__gnu_cxx18stdio_sync_filebufIcSt11char_traitsIcEEE@GLIBCXX_3.4 4.1.1
  _ZTSN9__gnu_cxx18stdio_sync_filebufIwSt11char_traitsIwEEE@GLIBCXX_3.4 4.1.1
- _ZTSNSt13__future_base19_Async_state_commonE@GLIBCXX_3.4.17 4.7.0~rc1
  _ZTSNSt6locale5facetE@GLIBCXX_3.4 4.1.1
  _ZTSNSt7__cxx1110moneypunctIcLb0EEE@GLIBCXX_3.4.21 5
  _ZTSNSt7__cxx1110moneypunctIcLb1EEE@GLIBCXX_3.4.21 5
@@ -4083,9 +4057,6 @@
  _ZTVN10__cxxabiv129__pointer_to_member_type_infoE@CXXABI_1.3 4.1.1
  _ZTVN9__gnu_cxx18stdio_sync_filebufIcSt11char_traitsIcEEE@GLIBCXX_3.4 4.1.1
  _ZTVN9__gnu_cxx18stdio_sync_filebufIwSt11char_traitsIwEEE@GLIBCXX_3.4 4.1.1
- _ZTVNSt13__future_base11_State_baseE@GLIBCXX_3.4.15 4.6
- _ZTVNSt13__future_base12_Result_baseE@GLIBCXX_3.4.15 4.6
- _ZTVNSt13__future_base19_Async_state_commonE@GLIBCXX_3.4.17 4.7.0~rc1
  _ZTVNSt3_V214error_categoryE@GLIBCXX_3.4.21 5
  _ZTVNSt6locale5facetE@GLIBCXX_3.4 4.1.1
  _ZTVNSt7__cxx1110moneypunctIcLb0EEE@GLIBCXX_3.4.21 5
@@ -4185,8 +4156,6 @@
  _ZTVSt15underflow_error@GLIBCXX_3.4 4.1.1
  _ZTVSt16bad_array_length@CXXABI_1.3.8 4.9
  _ZTVSt16invalid_argument@GLIBCXX_3.4 4.1.1
- _ZTVSt16nested_exception@CXXABI_1.3.5 4.6
-#MISSING: 4.6# _ZTVSt17bad_function_call@CXXABI_1.3.5 4.6
  _ZTVSt17bad_function_call@GLIBCXX_3.4.15 4.6
  _ZTVSt17moneypunct_bynameIcLb0EE@GLIBCXX_3.4 4.1.1
  _ZTVSt17moneypunct_bynameIcLb1EE@GLIBCXX_3.4 4.1.1

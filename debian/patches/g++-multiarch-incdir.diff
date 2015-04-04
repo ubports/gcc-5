@@ -45,7 +45,7 @@ Index: b/src/gcc/Makefile.in
  
 +# Directory in which the compiler finds target-dependent g++ includes.
 +ifneq ($(call if_multiarch,non-empty),)
-+  gcc_gxx_tool_include_dir = /usr/include/$(MULTIARCH_DIRNAME)/c++/$(BASEVER_c)
++  gcc_gxx_tool_include_dir = $(libsubdir)/$(libsubdir_to_prefix)include/$(MULTIARCH_DIRNAME)/c++/$(BASEVER_c)
 +else
 +  gcc_gxx_tool_include_dir = $(gcc_gxx_include_dir)/$(target_noncanonical)
 +endif

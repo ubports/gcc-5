@@ -138,8 +138,10 @@ DEB_TARGET_GNU_TYPE	:= $(call vafilt,$(TARGET_VARS),DEB_HOST_GNU_TYPE)
 DEB_TARGET_GNU_SYSTEM	:= $(call vafilt,$(TARGET_VARS),DEB_HOST_GNU_SYSTEM)
 DEB_TARGET_MULTIARCH	:= $(call vafilt,$(TARGET_VARS),DEB_HOST_MULTIARCH)
 
-ifeq ($(DEB_TARGET_GNU_TYPE),i486-linux-gnu)
-  DEB_TARGET_GNU_TYPE	= i586-linux-gnu
+ifeq (,$(filter $(distrelease),dapper lucid))
+  ifeq ($(DEB_TARGET_GNU_TYPE),i486-linux-gnu)
+    DEB_TARGET_GNU_TYPE	= i586-linux-gnu
+  endif
 endif
 
 ifeq ($(DEB_TARGET_ARCH),)
@@ -578,11 +580,23 @@ endif
 ifneq (,$(findstring gccgo,$(PKGSOURCE)))
   with_ada :=
 endif
+ifneq (,$(filter $(distrelease),lucid))
+  with_ada :=
+endif
 with_ada := $(call envfilt, ada, , , $(with_ada))
 
 #ifneq ($(single_package),yes)
 #  with_separate_gnat := yes
 #endif
+
+ifneq ($(with_separate_gnat),yes)
+  ifeq ($(with_ada),yes)
+    ifneq (,$(filter $(distrelease),squeeze lucid))
+      with_ada :=
+    endif
+  endif
+endif
+
 ifeq ($(with_ada)-$(with_separate_gnat),yes-yes)
   ifneq (,$(findstring gnat,$(PKGSOURCE)))
     languages := c
@@ -1117,9 +1131,12 @@ with_mpx :=
 with_mpx := $(call envfilt, mpx, , , $(with_mpx))
 mpx_archs = amd64 i386
 ifneq (,$(filter $(DEB_TARGET_ARCH),$(mpx_archs)))
-  with_mpx := yes
-  ifneq (,$(findstring gcc-, $(PKGSOURCE)))
-    with_libmpx := yes
+  # requires newer binutils, or else libmpxwrappers isn't built
+  ifeq (,$(filter $(distrelease),squeeze lucid precise))
+    with_mpx := yes
+    ifneq (,$(findstring gcc-, $(PKGSOURCE)))
+      with_libmpx := yes
+    endif
   endif
 endif
 

@@ -104,10 +104,10 @@ dirs_dev = \
 	$(docdir)/$(p_base)/C++ \
 	$(usr_lib) \
 	$(gcc_lib_dir)/include \
-	$(cxx_inc_dir)
+	$(PF)/include/c++
 
 files_dev = \
-	$(cxx_inc_dir)/ \
+	$(PF)/include/c++/$(BASE_VERSION) \
 	$(gcc_lib_dir)/libstdc++.{a,so} \
 	$(gcc_lib_dir)/libsupc++.a
 

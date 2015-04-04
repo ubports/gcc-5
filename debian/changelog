@@ -1,3 +1,23 @@
+gcc-5 (5-20150404-1) experimental; urgency=medium
+
+  * Update to SVN 20150404.
+  * Don't explicitly configure --with-gxx-include-dir and an absolute path,
+    so the toolchain remains relocatible. Instead, canonicalize the include
+    path names at runtime.
+  * Don't link libgnatprj using --no-allow-shlib-undefined on older releases.
+  * Don't build libmpx on older releases.
+  * Remove the work around to build libgccjit on arm64.
+  * Fix the libgccjit build using the just built compiler.
+  * Don't break other gcc, gcj, gnat -base packages for backports, only
+    needed for dist-upgrades.
+  * Don't add -gtoggle to STAGE3_CFLAGS (disabling the bootstrap comparison).
+    Instead, ignore the one differing file (gcc/ada/a-except.o) for now.
+    See #781457, PR ada/65618.
+  * Update libasan, libtsan, libgfortran and libstdc++ symbols files.
+  * Add symbols files for libmpx, libgccjit and libcc1.
+
+ -- Matthias Klose <doko@debian.org>  Sat, 04 Apr 2015 21:53:45 +0200
+
 gcc-5 (5-20150329-1) experimental; urgency=medium
 
   * Update to SVN 20150329.

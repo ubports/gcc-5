@@ -1,3 +1,13 @@
+ __ieee_arithmetic_MOD_ieee_support_datatype_16@GFORTRAN_1.6 5
+ __ieee_arithmetic_MOD_ieee_support_denormal_16@GFORTRAN_1.6 5
+ __ieee_arithmetic_MOD_ieee_support_divide_16@GFORTRAN_1.6 5
+ __ieee_arithmetic_MOD_ieee_support_inf_16@GFORTRAN_1.6 5
+ __ieee_arithmetic_MOD_ieee_support_io_16@GFORTRAN_1.6 5
+ __ieee_arithmetic_MOD_ieee_support_nan_16@GFORTRAN_1.6 5
+ __ieee_arithmetic_MOD_ieee_support_rounding_16@GFORTRAN_1.6 5
+ __ieee_arithmetic_MOD_ieee_support_sqrt_16@GFORTRAN_1.6 5
+ __ieee_arithmetic_MOD_ieee_support_standard_16@GFORTRAN_1.6 5
+ __ieee_arithmetic_MOD_ieee_support_underflow_control_16@GFORTRAN_1.6 5
  __iso_c_binding_c_f_pointer_c16@GFORTRAN_1.0 4.3
  __iso_c_binding_c_f_pointer_r16@GFORTRAN_1.0 4.3
  _gfortran_arandom_r16@GFORTRAN_1.0 4.3

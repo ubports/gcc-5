@@ -189,3 +189,14 @@ Index: b/src/gcc/gcc.c
  			      accel_dir_suffix, dir_separator_str, NULL);
  
    /* Now we have the specs.
+--- a/src/gcc/configure.ac
++++ b/src/gcc/configure.ac
+@@ -203,7 +203,7 @@
+   if test x${enable_version_specific_runtime_libs} = xyes; then
+     gcc_gxx_include_dir='${libsubdir}/include/c++'
+   else
+-    libstdcxx_incdir='include/c++/$(version)'
++    libstdcxx_incdir='include/c++/$(BASEVER_c)'
+     if test x$host != x$target; then
+        libstdcxx_incdir="$target_alias/$libstdcxx_incdir"
+     fi

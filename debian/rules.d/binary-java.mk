@@ -187,8 +187,8 @@ dirs_jdev = \
 	$(jvm_dir)/include
 
 files_jdev = \
-	$(cxx_inc_dir)/{org,gcj,java,javax} \
-	$(cxx_inc_dir)/gnu/{awt,classpath,gcj,java,javax} \
+	$(PF)/include/c++/$(BASE_VERSION)/{org,gcj,java,javax} \
+	$(PF)/include/c++/$(BASE_VERSION)/gnu/{awt,classpath,gcj,java,javax} \
 	$(PF)/$(libdir)/pkgconfig/libgcj-$(BASE_VERSION).pc \
 	$(gcj_vlibdir)/lib*peer.so
 

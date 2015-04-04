@@ -573,7 +573,6 @@ libtsan.so.0 libtsan0 #MINVER#
  __sanitizer_syscall_post_impl_capset@Base 4.9
  __sanitizer_syscall_post_impl_chdir@Base 4.9
  __sanitizer_syscall_post_impl_chmod@Base 4.9
- __sanitizer_syscall_post_impl_chown16@Base 4.9
  __sanitizer_syscall_post_impl_chown@Base 4.9
  __sanitizer_syscall_post_impl_chroot@Base 4.9
  __sanitizer_syscall_post_impl_clock_adjtime@Base 4.9
@@ -601,7 +600,6 @@ libtsan.so.0 libtsan0 #MINVER#
  __sanitizer_syscall_post_impl_fchdir@Base 4.9
  __sanitizer_syscall_post_impl_fchmod@Base 4.9
  __sanitizer_syscall_post_impl_fchmodat@Base 4.9
- __sanitizer_syscall_post_impl_fchown16@Base 4.9
  __sanitizer_syscall_post_impl_fchown@Base 4.9
  __sanitizer_syscall_post_impl_fchownat@Base 4.9
  __sanitizer_syscall_post_impl_fcntl64@Base 4.9
@@ -627,13 +625,9 @@ libtsan.so.0 libtsan0 #MINVER#
  __sanitizer_syscall_post_impl_getcwd@Base 4.9
  __sanitizer_syscall_post_impl_getdents64@Base 4.9
  __sanitizer_syscall_post_impl_getdents@Base 4.9
- __sanitizer_syscall_post_impl_getegid16@Base 4.9
  __sanitizer_syscall_post_impl_getegid@Base 4.9
- __sanitizer_syscall_post_impl_geteuid16@Base 4.9
  __sanitizer_syscall_post_impl_geteuid@Base 4.9
- __sanitizer_syscall_post_impl_getgid16@Base 4.9
  __sanitizer_syscall_post_impl_getgid@Base 4.9
- __sanitizer_syscall_post_impl_getgroups16@Base 4.9
  __sanitizer_syscall_post_impl_getgroups@Base 4.9
  __sanitizer_syscall_post_impl_gethostname@Base 4.9
  __sanitizer_syscall_post_impl_getitimer@Base 4.9
@@ -643,9 +637,7 @@ libtsan.so.0 libtsan0 #MINVER#
  __sanitizer_syscall_post_impl_getpid@Base 4.9
  __sanitizer_syscall_post_impl_getppid@Base 4.9
  __sanitizer_syscall_post_impl_getpriority@Base 4.9
- __sanitizer_syscall_post_impl_getresgid16@Base 4.9
  __sanitizer_syscall_post_impl_getresgid@Base 4.9
- __sanitizer_syscall_post_impl_getresuid16@Base 4.9
  __sanitizer_syscall_post_impl_getresuid@Base 4.9
  __sanitizer_syscall_post_impl_getrlimit@Base 4.9
  __sanitizer_syscall_post_impl_getrusage@Base 4.9
@@ -654,7 +646,6 @@ libtsan.so.0 libtsan0 #MINVER#
  __sanitizer_syscall_post_impl_getsockopt@Base 4.9
  __sanitizer_syscall_post_impl_gettid@Base 4.9
  __sanitizer_syscall_post_impl_gettimeofday@Base 4.9
- __sanitizer_syscall_post_impl_getuid16@Base 4.9
  __sanitizer_syscall_post_impl_getuid@Base 4.9
  __sanitizer_syscall_post_impl_getxattr@Base 4.9
  __sanitizer_syscall_post_impl_init_module@Base 4.9
@@ -675,7 +666,6 @@ libtsan.so.0 libtsan0 #MINVER#
  __sanitizer_syscall_post_impl_kexec_load@Base 4.9
  __sanitizer_syscall_post_impl_keyctl@Base 4.9
  __sanitizer_syscall_post_impl_kill@Base 4.9
- __sanitizer_syscall_post_impl_lchown16@Base 4.9
  __sanitizer_syscall_post_impl_lchown@Base 4.9
  __sanitizer_syscall_post_impl_lgetxattr@Base 4.9
  __sanitizer_syscall_post_impl_link@Base 4.9
@@ -804,32 +794,23 @@ libtsan.so.0 libtsan0 #MINVER#
  __sanitizer_syscall_post_impl_set_robust_list@Base 4.9
  __sanitizer_syscall_post_impl_set_tid_address@Base 4.9
  __sanitizer_syscall_post_impl_setdomainname@Base 4.9
- __sanitizer_syscall_post_impl_setfsgid16@Base 4.9
  __sanitizer_syscall_post_impl_setfsgid@Base 4.9
- __sanitizer_syscall_post_impl_setfsuid16@Base 4.9
  __sanitizer_syscall_post_impl_setfsuid@Base 4.9
- __sanitizer_syscall_post_impl_setgid16@Base 4.9
  __sanitizer_syscall_post_impl_setgid@Base 4.9
- __sanitizer_syscall_post_impl_setgroups16@Base 4.9
  __sanitizer_syscall_post_impl_setgroups@Base 4.9
  __sanitizer_syscall_post_impl_sethostname@Base 4.9
  __sanitizer_syscall_post_impl_setitimer@Base 4.9
  __sanitizer_syscall_post_impl_setns@Base 4.9
  __sanitizer_syscall_post_impl_setpgid@Base 4.9
  __sanitizer_syscall_post_impl_setpriority@Base 4.9
- __sanitizer_syscall_post_impl_setregid16@Base 4.9
  __sanitizer_syscall_post_impl_setregid@Base 4.9
- __sanitizer_syscall_post_impl_setresgid16@Base 4.9
  __sanitizer_syscall_post_impl_setresgid@Base 4.9
- __sanitizer_syscall_post_impl_setresuid16@Base 4.9
  __sanitizer_syscall_post_impl_setresuid@Base 4.9
- __sanitizer_syscall_post_impl_setreuid16@Base 4.9
  __sanitizer_syscall_post_impl_setreuid@Base 4.9
  __sanitizer_syscall_post_impl_setrlimit@Base 4.9
  __sanitizer_syscall_post_impl_setsid@Base 4.9
  __sanitizer_syscall_post_impl_setsockopt@Base 4.9
  __sanitizer_syscall_post_impl_settimeofday@Base 4.9
- __sanitizer_syscall_post_impl_setuid16@Base 4.9
  __sanitizer_syscall_post_impl_setuid@Base 4.9
  __sanitizer_syscall_post_impl_setxattr@Base 4.9
  __sanitizer_syscall_post_impl_sgetmask@Base 4.9
@@ -912,7 +893,6 @@ libtsan.so.0 libtsan0 #MINVER#
  __sanitizer_syscall_pre_impl_capset@Base 4.9
  __sanitizer_syscall_pre_impl_chdir@Base 4.9
  __sanitizer_syscall_pre_impl_chmod@Base 4.9
- __sanitizer_syscall_pre_impl_chown16@Base 4.9
  __sanitizer_syscall_pre_impl_chown@Base 4.9
  __sanitizer_syscall_pre_impl_chroot@Base 4.9
  __sanitizer_syscall_pre_impl_clock_adjtime@Base 4.9
@@ -940,7 +920,6 @@ libtsan.so.0 libtsan0 #MINVER#
  __sanitizer_syscall_pre_impl_fchdir@Base 4.9
  __sanitizer_syscall_pre_impl_fchmod@Base 4.9
  __sanitizer_syscall_pre_impl_fchmodat@Base 4.9
- __sanitizer_syscall_pre_impl_fchown16@Base 4.9
  __sanitizer_syscall_pre_impl_fchown@Base 4.9
  __sanitizer_syscall_pre_impl_fchownat@Base 4.9
  __sanitizer_syscall_pre_impl_fcntl64@Base 4.9
@@ -966,13 +945,9 @@ libtsan.so.0 libtsan0 #MINVER#
  __sanitizer_syscall_pre_impl_getcwd@Base 4.9
  __sanitizer_syscall_pre_impl_getdents64@Base 4.9
  __sanitizer_syscall_pre_impl_getdents@Base 4.9
- __sanitizer_syscall_pre_impl_getegid16@Base 4.9
  __sanitizer_syscall_pre_impl_getegid@Base 4.9
- __sanitizer_syscall_pre_impl_geteuid16@Base 4.9
  __sanitizer_syscall_pre_impl_geteuid@Base 4.9
- __sanitizer_syscall_pre_impl_getgid16@Base 4.9
  __sanitizer_syscall_pre_impl_getgid@Base 4.9
- __sanitizer_syscall_pre_impl_getgroups16@Base 4.9
  __sanitizer_syscall_pre_impl_getgroups@Base 4.9
  __sanitizer_syscall_pre_impl_gethostname@Base 4.9
  __sanitizer_syscall_pre_impl_getitimer@Base 4.9
@@ -982,9 +957,7 @@ libtsan.so.0 libtsan0 #MINVER#
  __sanitizer_syscall_pre_impl_getpid@Base 4.9
  __sanitizer_syscall_pre_impl_getppid@Base 4.9
  __sanitizer_syscall_pre_impl_getpriority@Base 4.9
- __sanitizer_syscall_pre_impl_getresgid16@Base 4.9
  __sanitizer_syscall_pre_impl_getresgid@Base 4.9
- __sanitizer_syscall_pre_impl_getresuid16@Base 4.9
  __sanitizer_syscall_pre_impl_getresuid@Base 4.9
  __sanitizer_syscall_pre_impl_getrlimit@Base 4.9
  __sanitizer_syscall_pre_impl_getrusage@Base 4.9
@@ -993,7 +966,6 @@ libtsan.so.0 libtsan0 #MINVER#
  __sanitizer_syscall_pre_impl_getsockopt@Base 4.9
  __sanitizer_syscall_pre_impl_gettid@Base 4.9
  __sanitizer_syscall_pre_impl_gettimeofday@Base 4.9
- __sanitizer_syscall_pre_impl_getuid16@Base 4.9
  __sanitizer_syscall_pre_impl_getuid@Base 4.9
  __sanitizer_syscall_pre_impl_getxattr@Base 4.9
  __sanitizer_syscall_pre_impl_init_module@Base 4.9
@@ -1014,7 +986,6 @@ libtsan.so.0 libtsan0 #MINVER#
  __sanitizer_syscall_pre_impl_kexec_load@Base 4.9
  __sanitizer_syscall_pre_impl_keyctl@Base 4.9
  __sanitizer_syscall_pre_impl_kill@Base 4.9
- __sanitizer_syscall_pre_impl_lchown16@Base 4.9
  __sanitizer_syscall_pre_impl_lchown@Base 4.9
  __sanitizer_syscall_pre_impl_lgetxattr@Base 4.9
  __sanitizer_syscall_pre_impl_link@Base 4.9
@@ -1143,32 +1114,23 @@ libtsan.so.0 libtsan0 #MINVER#
  __sanitizer_syscall_pre_impl_set_robust_list@Base 4.9
  __sanitizer_syscall_pre_impl_set_tid_address@Base 4.9
  __sanitizer_syscall_pre_impl_setdomainname@Base 4.9
- __sanitizer_syscall_pre_impl_setfsgid16@Base 4.9
  __sanitizer_syscall_pre_impl_setfsgid@Base 4.9
- __sanitizer_syscall_pre_impl_setfsuid16@Base 4.9
  __sanitizer_syscall_pre_impl_setfsuid@Base 4.9
- __sanitizer_syscall_pre_impl_setgid16@Base 4.9
  __sanitizer_syscall_pre_impl_setgid@Base 4.9
- __sanitizer_syscall_pre_impl_setgroups16@Base 4.9
  __sanitizer_syscall_pre_impl_setgroups@Base 4.9
  __sanitizer_syscall_pre_impl_sethostname@Base 4.9
  __sanitizer_syscall_pre_impl_setitimer@Base 4.9
  __sanitizer_syscall_pre_impl_setns@Base 4.9
  __sanitizer_syscall_pre_impl_setpgid@Base 4.9
  __sanitizer_syscall_pre_impl_setpriority@Base 4.9
- __sanitizer_syscall_pre_impl_setregid16@Base 4.9
  __sanitizer_syscall_pre_impl_setregid@Base 4.9
- __sanitizer_syscall_pre_impl_setresgid16@Base 4.9
  __sanitizer_syscall_pre_impl_setresgid@Base 4.9
- __sanitizer_syscall_pre_impl_setresuid16@Base 4.9
  __sanitizer_syscall_pre_impl_setresuid@Base 4.9
- __sanitizer_syscall_pre_impl_setreuid16@Base 4.9
  __sanitizer_syscall_pre_impl_setreuid@Base 4.9
  __sanitizer_syscall_pre_impl_setrlimit@Base 4.9
  __sanitizer_syscall_pre_impl_setsid@Base 4.9
  __sanitizer_syscall_pre_impl_setsockopt@Base 4.9
  __sanitizer_syscall_pre_impl_settimeofday@Base 4.9
- __sanitizer_syscall_pre_impl_setuid16@Base 4.9
  __sanitizer_syscall_pre_impl_setuid@Base 4.9
  __sanitizer_syscall_pre_impl_setxattr@Base 4.9
  __sanitizer_syscall_pre_impl_sgetmask@Base 4.9

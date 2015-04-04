@@ -1,0 +1,34 @@
+# DP: Don't use any relative path names for the standard include paths.
+
+--- a/src/gcc/incpath.c
++++ b/src/gcc/incpath.c
+@@ -173,6 +173,14 @@
+ 			str = reconcat (str, str, dir_separator_str,
+ 					imultiarch, NULL);
+ 		    }
++		  {
++		    char *rp = lrealpath (str);
++		    if (rp)
++		      {
++			free (str);
++			str = rp;
++		      }
++		  }
+ 		  add_path (str, SYSTEM, p->cxx_aware, false);
+ 		}
+ 	    }
+@@ -247,6 +255,14 @@
+ 	      else
+ 		str = reconcat (str, str, dir_separator_str, imultiarch, NULL);
+ 	    }
++	  {
++	    char *rp = lrealpath (str);
++	    if (rp)
++	      {
++		free (str);
++		str = rp;
++	      }
++	  }
+ 
+ 	  add_path (str, SYSTEM, p->cxx_aware, false);
+ 	}

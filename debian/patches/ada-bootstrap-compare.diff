@@ -1,0 +1,15 @@
+# DP: For the bootstrap comparison, ignore gcc/ada/a-except.o on
+# DP: mips and mipsel. See PR ada/65618.
+
+--- a/src/configure.ac
++++ b/src/configure.ac
+@@ -3538,6 +3538,9 @@
+ 
+ compare_exclusions="gcc/cc*-checksum\$(objext) | gcc/ada/*tools/*"
+ case "$target" in
++  mips-*linux-gnu|mipsel-*linux-gnu)
++    compare_exclusions="gcc/cc*-checksum\$(objext) | gcc/ada/*tools/* | gcc/ada/a-except.o"
++    ;;
+   hppa*64*-*-hpux*) ;;
+   hppa*-*-hpux*) compare_exclusions="gcc/cc*-checksum\$(objext) | */libgcc/lib2funcs* | gcc/ada/*tools/*" ;;
+   powerpc*-ibm-aix*) compare_exclusions="gcc/cc*-checksum\$(objext) | gcc/ada/*tools/* | *libgomp*\$(objext)" ;;

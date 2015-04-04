@@ -76,6 +76,7 @@ debian_patches += \
 	hurd-boehm-gc \
 	libitm-no-fortify-source \
 	sparc64-biarch-long-double-128 \
+	ada-bootstrap-compare \
 
 #	$(if $(filter yes, $(DEB_CROSS)),,gcc-print-file-name) \
 #	libstdc++-nothumb-check \
@@ -134,6 +135,10 @@ ifeq ($(with_ada),yes)
 	ada-libgnatvsn \
 	ada-libgnatprj \
 	ada-acats
+    ifneq (,$(filter $(distrelease),lucid precise))
+      debian_patches += \
+	libgnatprj-link
+    endif
   endif
   ifeq ($(with_gnatsjlj),yes)
     debian_patches += \
@@ -243,15 +248,6 @@ debian_patches += gcc-ice-apport
 
 debian_patches += libjava-fixed-symlinks
 
-ifneq (,$(filter $(DEB_TARGET_ARCH), mips mipsel))
-  # timeouts on the buildd's, Debian
-  #debian_patches += libstdc++-no-testsuite
-else ifeq ($(distribution),Ubuntu)
-  # timeouts on the buildd's, Ubuntu only
-  ifneq (,$(filter $(DEB_TARGET_ARCH), armel ia64))
-    debian_patches += libstdc++-no-testsuite
-  endif
-endif
 debian_patches += libffi-ro-eh_frame_sect
 
 debian_patches += gcc-multiarch$(if $(with_linaro_branch),-linaro)
@@ -265,6 +261,7 @@ debian_patches += config-ml
 ifneq ($(single_package),yes)
   ifeq ($(with_multiarch_cxxheaders),yes)
     debian_patches += g++-multiarch-incdir
+    debian_patches += canonical-cpppath
   endif
 endif
 ifeq ($(DEB_CROSS),yes)

@@ -205,7 +205,6 @@ ifneq ($(single_package),yes)
         --libexecdir=/$(libexecdir) \
         --without-included-gettext \
         --enable-threads=posix \
-	--with-gxx-include-dir=/$(cxx_inc_dir) \
 	--libdir=/$(PF)/$(configured_libdir)
 endif
 
@@ -924,16 +923,6 @@ ifeq ($(with_separate_gnat),yes)
   endif
 endif
 
-ifneq ($(DEB_CROSS),yes)
-  ifneq ($(single_package),yes)
-    cxx_inc_dir	= $(PF)/include/c++/$(BASE_VERSION)
-  else
-    cxx_inc_dir	= $(PF)/include/c++/$(GCC_VERSION)
-  endif
-else
-  cxx_inc_dir	= $(PF)/$(TARGET_ALIAS)/include/c++/$(GCC_VERSION)
-endif
-
 # FIXME: MULTIARCH_DIRNAME needed for g++-multiarch-incdir.diff
 MULTIARCH_DIRNAME := $(DEB_TARGET_MULTIARCH)
 export MULTIARCH_DIRNAME
@@ -950,6 +939,7 @@ $(configure_stamp):
 	: # give information about the build process
 	@echo "------------------------ Build process variables ------------------------"
 	@echo "Number of parallel processes used for the build: $(USE_CPUS)"
+	@echo "DEB_BUILD_OPTIONS: $$DEB_BUILD_OPTIONS"
 	@echo "Package source: $(PKGSOURCE)"
 	@echo "GCC version: $(GCC_VERSION)"
 	@echo "Base Debian version: $(BASE_VERSION)"
@@ -1228,39 +1218,42 @@ endif
 
 	touch $(build_stamp)
 
-CONFARGS_JIT := \
-	$(filter-out --enable-languages=%, $(CONFARGS)) \
-	--enable-languages=jit \
-	--enable-host-shared
-
-# see Linaro#1149
-ifeq (,$(filter $(DEB_TARGET_ARCH),arm64))
-  CONFARGS_JIT := \
-	$(filter-out %bootstrap, $(CONFARGS_JIT)) \
-	--disable-bootstrap
+ifeq ($(DEB_CROSS),yes)
+  BUILT_CC = $(CC)
+  BUILT_CXX = $(CXX)
+else
+  BUILT_CC = $(builddir)/gcc/xgcc -B$(builddir)/gcc/
+  BUILT_CXX = $(builddir)/gcc/xg++ -B$(builddir)/gcc/ \
+	-B$(builddir)/$(TARGET_ALIAS)/libstdc++-v3/src/.libs \
+	-B$(builddir)/$(TARGET_ALIAS)/libstdc++-v3/libsupc++/.libs \
+	-I$(builddir)/$(TARGET_ALIAS)/libstdc++-v3/include \
+	-I$(builddir)/$(TARGET_ALIAS)/libstdc++-v3/include/$(TARGET_ALIAS) \
+	-I$(srcdir)/libstdc++-v3/libsupc++ \
+	-L$(builddir)/$(TARGET_ALIAS)/libstdc++-v3/src/.libs \
+	-L$(builddir)/$(TARGET_ALIAS)/libstdc++-v3/libsupc++/.libs
 endif
 
-# FIXME: this doesn't yet work, use the system g++ for the builds
-CC_FOR_JIT = $(builddir)/gcc/xg++ -B$(builddir)/gcc/ \
-	-I$(builddir)/$(TARGET_ALIAS)/libstdc++-v3/include \
-	-I$(builddir)/$(TARGET_ALIAS)/libstdc++-v3/include/$(TARGET_ALIAS)
-CC_FOR_JIT =
+CONFARGS_JIT := \
+	$(filter-out --enable-languages=%, $(CONFARGS)) \
+	--enable-languages=c++,jit \
+	--enable-host-shared
+
+CONFARGS_JIT := \
+	$(filter-out %bootstrap, $(CONFARGS_JIT)) \
+	--disable-bootstrap
 
 $(configure_jit_stamp): $(build_stamp)
 	dh_testdir
 	rm -f $(configure_jit_stamp) $(build_jit_stamp)
 	rm -rf $(builddir_jit)
 	mkdir $(builddir_jit)
-ifeq (0,1)
-	: # FIXME: or set -B and LD_LIBRARY_PATH ???
-	cp -a $(builddir)/$(TARGET_ALIAS)/libstdc++-v3/src/.libs/libstdc++.{a,so*} \
-	  $(builddir)/gcc/.
-endif
+
 	: # configure
 	cd $(builddir_jit) && \
 	  $(SET_PATH) \
 	  $(SET_SHELL) \
-	  CC="$(CC_FOR_JIT)" \
+	  CC="$(BUILT_CC)" \
+	  CXX="$(BUILT_CXX)" \
 	     ../src/configure $(CONFARGS_JIT)
 	touch $(configure_jit_stamp)
 
@@ -1273,22 +1266,13 @@ $(build_jit_stamp): $(configure_jit_stamp)
 		CC="$(CC_FOR_JIT)" \
 		$(CFLAGS_TO_PASS) \
 		$(LDFLAGS_TO_PASS)
-	touch $(build_jit_stamp)
 
-ifeq ($(DEB_CROSS),yes)
-  CC_for_hppa64_cross = $(CC)
-  CCX_for_hppa64_cross = $(CXX)
-else
-  CC_for_hppa64_cross = $(builddir)/gcc/xgcc -B$(builddir)/gcc/
-  CXX_for_hppa64_cross = $(builddir)/gcc/xg++ -B$(builddir)/gcc/ \
-		-B$(builddir)/hppa-linux-gnu/libstdc++-v3/src/.libs \
-		-B$(builddir)/hppa-linux-gnu/libstdc++-v3/libsupc++/.libs \
-		-I$(builddir)/hppa-linux-gnu/libstdc++-v3/include \
-		-I$(builddir)/hppa-linux-gnu/libstdc++-v3/include/hppa-linux-gnu \
-		-I$(srcdir)/libstdc++-v3/libsupc++ \
-		-L$(builddir)/hppa-linux-gnu/libstdc++-v3/src/.libs \
-		-L$(builddir)/hppa-linux-gnu/libstdc++-v3/libsupc++/.libs
+ifeq ($(with_check),yes)
+	-$(MAKE) -C $(builddir_jit)/gcc check-jit \
+		RUNTESTFLAGS="-v -v"
 endif
+
+	touch $(build_jit_stamp)
 
 ifeq ($(versioned_packages),yes)
   hppa64_configure_flags += --program-suffix=-$(BASE_VERSION)
@@ -1303,8 +1287,8 @@ $(configure_hppa64_stamp): $(build_stamp)
 	cd $(builddir_hppa64) && \
 	  $(SET_PATH) \
 	  $(SET_SHELL) \
-	  CC="$(CC_for_hppa64_cross)" \
-	  CXX="$(CXX_for_hppa64_cross)" \
+	  CC="$(BUILT_CC)" \
+	  CXX="$(BUILT_CXX)" \
 	     ../src/configure \
 		--enable-languages=c \
 		--prefix=/$(PF) \
