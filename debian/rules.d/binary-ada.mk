@@ -306,7 +306,9 @@ ifeq ($(with_libgnat),yes)
 	done
 endif
 	debian/dh_doclink -p$(p_gnat)      $(p_gbase)
+ifeq ($(with_gnatsjlj),yes)
 	debian/dh_doclink -p$(p_gnsjlj) $(p_gbase)
+endif
 ifeq ($(PKGSOURCE),gnat-$(BASE_VERSION))
   ifeq ($(with_check),yes)
 	cp -p test-summary $(d_gnat)/$(docdir)/$(p_gbase)/.

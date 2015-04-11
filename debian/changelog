@@ -1,3 +1,17 @@
+gcc-5 (5-20150410-1) experimental; urgency=medium
+
+  * Update to SVN 20150410
+
+  [ Matthias Klose ]
+  * Fix /usr/include/c++/5.0.0 symlink.
+  * Re-enable building the D frontend. Closes: #782254.
+  * gccgo: Install libnetgo.
+
+  [ Samuel Thibault ]
+  * Fix ada builds on the Hurd and KFreeBSD. Closes: #781424.
+
+ -- Matthias Klose <doko@debian.org>  Sat, 11 Apr 2015 02:24:08 +0200
+
 gcc-5 (5-20150404-1) experimental; urgency=medium
 
   * Update to SVN 20150404.

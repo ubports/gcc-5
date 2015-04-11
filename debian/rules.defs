@@ -867,8 +867,6 @@ ifeq ($(with_base_only),yes)
   with_d := no
 endif
 
-with_d := not updated to current trunk
-
 ifeq ($(with_d)-$(with_separate_gdc),yes-yes)
   ifneq (,$(findstring gdc,$(PKGSOURCE)))
     languages := c c++

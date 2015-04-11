@@ -409,7 +409,7 @@ endif
 	dh_link -p$(p_dev) \
 		/$(usr_lib)/libstdc++.so.$(CXX_SONAME) \
 		/$(gcc_lib_dir)/libstdc++.so \
-		/$(cxx_inc_dir) /$(PFL)/include/c++/$(GCC_VERSION)
+		/$(PFL)/include/c++/$(BASE_VERSION) /$(PFL)/include/c++/$(GCC_VERSION)
 
 	debian/dh_doclink -p$(p_dev) $(p_base)
 	debian/dh_doclink -p$(p_pic) $(p_base)

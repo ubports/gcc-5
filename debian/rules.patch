@@ -164,7 +164,6 @@ ifeq ($(with_d),yes)
   endif
   ifeq ($(with_libphobos),yes)
     debian_patches += gdc-libphobos-build
-    debian_patches += libphobos-configury
   else
     debian_patches += gdc-driver-nophobos
   endif

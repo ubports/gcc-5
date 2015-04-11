@@ -160,7 +160,7 @@ endef
 define do_go_dev
 	dh_installdirs -p$(2) $(gcc_lib_dir$(1))
 	DH_COMPAT=2 dh_movefiles -p$(2) \
-		$(gcc_lib_dir$(1))/libgobegin.a
+		$(gcc_lib_dir$(1))/{libgobegin,libnetgo}.a
 	$(if $(filter yes, $(with_standalone_go)), \
 	  $(call install_gccgo_lib,libgomp,$(GOMP_SONAME),$(1),$(2)))
 	$(call install_gccgo_lib,libgo,$(GO_SONAME),$(1),$(2))
@@ -191,22 +191,22 @@ $(binary_stamp)-gccgo: $(install_stamp)
 	rm -rf $(d_go)
 	dh_installdirs -p$(p_go) $(dirs_go)
 
-	mv $(d)/$(usr_lib)/libgobegin.a \
+	mv $(d)/$(usr_lib)/{libgobegin,libnetgo}.a \
 		$(d)/$(gcc_lib_dir)/
 	if [ -f $(d)/$(usr_lib64)/libgobegin.a ]; then \
-	    mv $(d)/$(usr_lib64)/libgobegin.a \
+	    mv $(d)/$(usr_lib64)/{libgobegin,libnetgo}.a \
 		$(d)/$(gcc_lib_dir)/64/; \
 	fi
 	if [ -f $(d)/$(usr_lib32)/libgobegin.a ]; then \
-	    mv $(d)/$(usr_lib32)/libgobegin.a \
+	    mv $(d)/$(usr_lib32)/{libgobegin,libnetgo}.a \
 		$(d)/$(gcc_lib_dir)/32/; \
 	fi
 	if [ -f $(d)/$(usr_libn32)/libgobegin.a ]; then \
-	    mv $(d)/$(usr_libn32)/libgobegin.a \
+	    mv $(d)/$(usr_libn32)/{libgobegin,libnetgo}.a \
 		$(d)/$(gcc_lib_dir)/n32/; \
 	fi
 	if [ -f $(d)/$(usr_libx32)/libgobegin.a ]; then \
-	    mv $(d)/$(usr_libx32)/libgobegin.a \
+	    mv $(d)/$(usr_libx32)/{libgobegin,libnetgo}.a \
 		$(d)/$(gcc_lib_dir)/x32/; \
 	fi
 

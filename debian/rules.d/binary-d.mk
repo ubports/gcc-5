@@ -60,6 +60,8 @@ ifeq ($(DEB_CROSS),yes)
 else
   gdc_include_dir := $(PF)/include/d/$(BASE_VERSION)
 endif
+# FIXME: always here?
+gdc_include_dir := $(gcc_lib_dir)/include/d
 
 dirs_gdc = \
 	$(PF)/bin \
@@ -114,11 +116,11 @@ endif
 	mkdir -p $(d_gdc)/$(gdc_include_dir)
 	cp $(srcdir)/libphobos/libdruntime/object.di \
 	    $(d_gdc)/$(gdc_include_dir)/.
-ifneq ($(DEB_CROSS),yes)
-	dh_link -p$(p_gdc) \
-		/$(gdc_include_dir) \
-		/$(dir $(gdc_include_dir))/$(GCC_VERSION)
-endif
+#ifneq ($(DEB_CROSS),yes)
+#	dh_link -p$(p_gdc) \
+#		/$(gdc_include_dir) \
+#		/$(dir $(gdc_include_dir))/$(GCC_VERSION)
+#endif
 
 	dh_link -p$(p_gdc) \
 		/$(docdir)/$(p_gcc)/README.Bugs \
