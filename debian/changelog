@@ -1,3 +1,14 @@
+gcc-5 (5.1~rc1-1) experimental; urgency=medium
+
+  * GCC 5.1 release candidate 1.
+  * Update to SVN 20150414 (r222066) from the gcc-5-branch.
+  * Update GDC to the gcc-5 branch, 20140414.
+  * Don't build libobjc, when not building the common libraries.
+  * Don't run the gccjit tests on KFreeBSD. Works around #782444:.
+  * Fix not building libs built by the next GCC version.
+
+ -- Matthias Klose <doko@debian.org>  Tue, 14 Apr 2015 02:03:53 +0200
+
 gcc-5 (5-20150410-1) experimental; urgency=medium
 
   * Update to SVN 20150410
