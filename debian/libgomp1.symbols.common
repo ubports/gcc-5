@@ -67,6 +67,7 @@
  GOMP_loop_ull_static_next@GOMP_2.0 4.4
  GOMP_loop_ull_static_start@GOMP_2.0 4.4
  GOMP_offload_register@GOMP_4.0.1 5
+ GOMP_offload_unregister@GOMP_4.0.1 5
  GOMP_ordered_end@GOMP_1.0 4.2.1
  GOMP_ordered_start@GOMP_1.0 4.2.1
  GOMP_parallel@GOMP_4.0 4.9

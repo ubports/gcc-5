@@ -104,10 +104,10 @@ dirs_dev = \
 	$(docdir)/$(p_base)/C++ \
 	$(usr_lib) \
 	$(gcc_lib_dir)/include \
-	$(PF)/include/c++
+	$(PFL)/include/c++
 
 files_dev = \
-	$(PF)/include/c++/$(BASE_VERSION) \
+	$(PFL)/include/c++/$(BASE_VERSION) \
 	$(gcc_lib_dir)/libstdc++.{a,so} \
 	$(gcc_lib_dir)/libsupc++.a
 
@@ -410,6 +410,11 @@ endif
 		/$(usr_lib)/libstdc++.so.$(CXX_SONAME) \
 		/$(gcc_lib_dir)/libstdc++.so \
 		/$(PFL)/include/c++/$(BASE_VERSION) /$(PFL)/include/c++/$(GCC_VERSION)
+ifeq ($(with_multiarch_cxxheaders),yes)
+	dh_link -p$(p_dev) \
+		/$(PFL)/include/$(DEB_TARGET_MULTIARCH)/c++/$(BASE_VERSION) \
+		/$(PFL)/include/$(DEB_TARGET_MULTIARCH)/c++/$(GCC_VERSION)
+endif
 
 	debian/dh_doclink -p$(p_dev) $(p_base)
 	debian/dh_doclink -p$(p_pic) $(p_base)

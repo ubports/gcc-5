@@ -1,10 +1,10 @@
-# DP: updates from the 5 branch upto 2015xxyy (r221808).
+# DP: updates from the 5 branch upto 20150424 (r222416).
 
 last_update()
 {
 	cat > ${dir}LAST_UPDATED <EOF
-Wed Apr  1 18:00:58 CEST 2015
-Wed Apr  1 16:00:58 UTC 2015 (revision 221808)
+Fri Apr 24 17:49:55 CEST 2015
+Fri Apr 24 15:49:55 UTC 2015 (revision 222416)
 EOF
 }
 
@@ -12,7 +12,2605 @@ LANG=C svn diff svn://gcc.gnu.org/svn/gcc/tags/gcc_5_1_0_release svn://gcc.gnu.o
 	| sed -r 's,^--- (\S+)\t(\S+)(.*)$,--- a/src/\1\t\2,;s,^\+\+\+ (\S+)\t(\S+)(.*)$,+++ b/src/\1\t\2,' \
 	| awk '/^Index:.*\.(class|texi)/ {skip=1; next} /^Index:/ { skip=0 } skip==0'
 
-LANG=C svn diff svn://gcc.gnu.org/svn/gcc/trunk@221805 svn://gcc.gnu.org/svn/gcc/trunk \
-	| sed -r 's,^--- (\S+)\t(\S+)(.*)$,--- a/src/\1\t\2,;s,^\+\+\+ (\S+)\t(\S+)(.*)$,+++ b/src/\1\t\2,' \
-	| awk '/^Index:.*\.(class|texi)/ {skip=1; next} /^Index:/ { skip=0 } skip==0'
-
+Index: gcc/DATESTAMP
+===================================================================
+--- a/src/gcc/DATESTAMP	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/DATESTAMP	(.../branches/gcc-5-branch)
+@@ -1 +1 @@
+-20150422
++20150424
+Index: gcc/lra-eliminations.c
+===================================================================
+--- a/src/gcc/lra-eliminations.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/lra-eliminations.c	(.../branches/gcc-5-branch)
+@@ -318,7 +318,9 @@
+    substitution if UPDATE_P, or the full offset if FULL_P, or
+    otherwise zero.  If FULL_P, we also use the SP offsets for
+    elimination to SP.  If UPDATE_P, use UPDATE_SP_OFFSET for updating
+-   offsets of register elimnable to SP.
++   offsets of register elimnable to SP.  If UPDATE_SP_OFFSET is
++   non-zero, don't use difference of the offset and the previous
++   offset.
+ 
+    MEM_MODE is the mode of an enclosing MEM.  We need this to know how
+    much to adjust a register for, e.g., PRE_DEC.  Also, if we are
+@@ -341,7 +343,8 @@
+   const char *fmt;
+   int copied = 0;
+ 
+-  gcc_assert (!update_p || !full_p);
++  lra_assert (!update_p || !full_p);
++  lra_assert (update_sp_offset == 0 || (!subst_p && update_p && !full_p));
+   if (! current_function_decl)
+     return x;
+ 
+@@ -366,11 +369,14 @@
+ 	{
+ 	  rtx to = subst_p ? ep->to_rtx : ep->from_rtx;
+ 
+-	  if (update_p)
+-	    return plus_constant (Pmode, to,
+-				  ep->offset - ep->previous_offset
+-				  + (ep->to_rtx == stack_pointer_rtx
+-				     ? update_sp_offset : 0));
++	  if (update_sp_offset != 0)
++	    {
++	      if (ep->to_rtx == stack_pointer_rtx)
++		return plus_constant (Pmode, to, update_sp_offset);
++	      return to;
++	    }
++	  else if (update_p)
++	    return plus_constant (Pmode, to, ep->offset - ep->previous_offset);
+ 	  else if (full_p)
+ 	    return plus_constant (Pmode, to,
+ 				  ep->offset
+@@ -395,16 +401,15 @@
+ 
+ 	      if (! update_p && ! full_p)
+ 		return gen_rtx_PLUS (Pmode, to, XEXP (x, 1));
+-
+-	      offset = (update_p
+-			? ep->offset - ep->previous_offset
+-			+ (ep->to_rtx == stack_pointer_rtx
+-			   ? update_sp_offset : 0)
+-			: ep->offset);
++	      
++	      if (update_sp_offset != 0)
++		offset = ep->to_rtx == stack_pointer_rtx ? update_sp_offset : 0;
++	      else
++		offset = (update_p
++			  ? ep->offset - ep->previous_offset : ep->offset);
+ 	      if (full_p && insn != NULL_RTX && ep->to_rtx == stack_pointer_rtx)
+ 		offset -= lra_get_insn_recog_data (insn)->sp_offset;
+-	      if (CONST_INT_P (XEXP (x, 1))
+-		  && INTVAL (XEXP (x, 1)) == -offset)
++	      if (CONST_INT_P (XEXP (x, 1)) && INTVAL (XEXP (x, 1)) == -offset)
+ 		return to;
+ 	      else
+ 		return gen_rtx_PLUS (Pmode, to,
+@@ -451,12 +456,18 @@
+ 	{
+ 	  rtx to = subst_p ? ep->to_rtx : ep->from_rtx;
+ 
+-	  if (update_p)
++	  if (update_sp_offset != 0)
++	    {
++	      if (ep->to_rtx == stack_pointer_rtx)
++		return plus_constant (Pmode,
++				      gen_rtx_MULT (Pmode, to, XEXP (x, 1)),
++				      update_sp_offset * INTVAL (XEXP (x, 1)));
++	      return gen_rtx_MULT (Pmode, to, XEXP (x, 1));
++	    }
++	  else if (update_p)
+ 	    return plus_constant (Pmode,
+ 				  gen_rtx_MULT (Pmode, to, XEXP (x, 1)),
+-				  (ep->offset - ep->previous_offset
+-				   + (ep->to_rtx == stack_pointer_rtx
+-				      ? update_sp_offset : 0))
++				  (ep->offset - ep->previous_offset)
+ 				  * INTVAL (XEXP (x, 1)));
+ 	  else if (full_p)
+ 	    {
+@@ -889,11 +900,12 @@
+ 
+    If REPLACE_P is false, just update the offsets while keeping the
+    base register the same.  If FIRST_P, use the sp offset for
+-   elimination to sp.  Otherwise, use UPDATE_SP_OFFSET for this.
+-   Attach the note about used elimination for insns setting frame
+-   pointer to update elimination easy (without parsing already
+-   generated elimination insns to find offset previously used) in
+-   future.  */
++   elimination to sp.  Otherwise, use UPDATE_SP_OFFSET for this.  If
++   UPDATE_SP_OFFSET is non-zero, don't use difference of the offset
++   and the previous offset.  Attach the note about used elimination
++   for insns setting frame pointer to update elimination easy (without
++   parsing already generated elimination insns to find offset
++   previously used) in future.  */
+ 
+ void
+ eliminate_regs_in_insn (rtx_insn *insn, bool replace_p, bool first_p,
+@@ -940,6 +952,10 @@
+ 		rtx src = SET_SRC (old_set);
+ 		rtx off = remove_reg_equal_offset_note (insn, ep->to_rtx);
+ 		
++		/* We should never process such insn with non-zero
++		   UPDATE_SP_OFFSET.  */
++		lra_assert (update_sp_offset == 0);
++		
+ 		if (off != NULL_RTX
+ 		    || src == ep->to_rtx
+ 		    || (GET_CODE (src) == PLUS
+@@ -1026,7 +1042,8 @@
+ 
+ 	  if (! replace_p)
+ 	    {
+-	      offset += (ep->offset - ep->previous_offset);
++	      if (update_sp_offset == 0)
++		offset += (ep->offset - ep->previous_offset);
+ 	      if (ep->to_rtx == stack_pointer_rtx)
+ 		{
+ 		  if (first_p)
+Index: gcc/lra-spills.c
+===================================================================
+--- a/src/gcc/lra-spills.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/lra-spills.c	(.../branches/gcc-5-branch)
+@@ -461,7 +461,7 @@
+ 	{
+ 	  rtx x = lra_eliminate_regs_1 (insn, pseudo_slots[i].mem,
+ 					GET_MODE (pseudo_slots[i].mem),
+-					0, false, false, true);
++					false, false, 0, true);
+ 	  *loc = x != pseudo_slots[i].mem ? x : copy_rtx (x);
+ 	}
+       return;
+Index: gcc/ChangeLog
+===================================================================
+--- a/src/gcc/ChangeLog	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/ChangeLog	(.../branches/gcc-5-branch)
+@@ -1,3 +1,129 @@
++2015-04-24  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
++
++	Backport from mainline r222385
++	2015-04-23  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
++
++	* config/rs6000/altivec.md (*altivec_lvx_<mode>_internal): Remove
++	asterisk from name so this can be generated directly.
++	(*altivec_stvx_<mode>_internal): Likewise.
++	* config/rs6000/rs6000.c (rs6000_emit_le_vsx_store): Add assert
++	that this is never called during or after reload/lra.
++	(rs6000_frame_related): Remove split_reg
++	argument and logic that references it.
++	(emit_frame_save): Remove last parameter from call to
++	rs6000_frame_related.
++	(rs6000_emit_prologue): Remove last parameter from eight calls to
++	rs6000_frame_related.  Force generation of stvx instruction for
++	Altivec register saves.  Remove split_reg handling, which is no
++	longer needed.
++	(rs6000_emit_epilogue):  Force generation of lvx instruction for
++	Altivec register restores.
++
++2015-04-24  Uros Bizjak  <ubizjak@gmail.com>
++
++	* config/i386/sse.md (*vec_widen_smult_even_v8si<mask_name>):
++	Mark operand1 commutative.
++
++2015-04-23  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
++
++	Backport from mainline r222362
++	2015-04-23  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
++
++	* config/rs6000/crypto.md (crypto_vpmsum<CR_char>): Change
++	TARGET_CRYPTO to TARGET_P8_VECTOR>
++	(crypto_vpermxor_<mode>): Likewise.
++	* config/rs6000/rs6000-builtin.def (BU_CRYPTO_2A): New #define.
++	(BU_CRYPTO_3A): Likewise.
++	(BU_CRYPTO_OVERLOAD_2A): Rename from BU_CRYPTO_OVERLOAD_2.
++	(BU_CRYPTO_OVERLOAD_3A): New #define.
++	(VPMSUMB): Change from BU_CRYPTO_2 to BU_CRYPTO_2A.
++	(VPMSUMH): Likewise.
++	(VPMSUMW): Likewise.
++	(VPMSUMD): Likewise.
++	(VPERMXOR_V2DI): Change from BU_CRYPTO_3 to BU_CRYPTO_3A.
++	(VPERMXOR_V4SI): Likewise.
++	(VPERMXOR_V8HI): Likewise.
++	(VPERMXOR_V16QI): Likewise.
++	(VPMSUM): Change from BU_CRYPTO_OVERLOAD_2 to
++	BU_CRYPTO_OVERLOAD_2A.
++	(VPERMXOR): Change from BU_CRYPTO_OVERLOAD3 to
++	BU_CRYPTO_OVERLOAD_3A.
++	* config/rs6000/rs6000.opt (mcrypto): Change description of
++	option.
++
++	Backport from mainline r222362
++	2015-04-23  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
++
++	* config/rs6000/rs6000.opt (mcrypto): Change option description to
++	match category changes in ISA 2.07B.
++
++2015-04-23  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
++
++	Backport from mainline r222351
++	2015-04-22  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
++
++	* config/rs6000/rs6000.c (rtx_is_swappable_p): Commentary
++	adjustments.
++	(insn_is_swappable_p): Return 1 for a convert from double to
++	single precision when all of its uses are splats of BE element
++	zero.
++
++2015-04-23  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
++
++	Backport from mainline r222349
++	2015-04-22  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
++
++	PR target/65456
++	* config/rs6000/rs6000.c (rs6000_option_override_internal):  For
++	VSX + POWER8, enable TARGET_ALLOW_MOVMISALIGN and
++	TARGET_EFFICIENT_UNALIGNED_VSX if not selected by command line
++	option.
++	(rs6000_builtin_mask_for_load): Return 0 for targets with
++	efficient unaligned VSX accesses so that the vectorizer will use
++	direct unaligned loads.
++	(rs6000_builtin_support_vector_misalignment): Always return true
++	for targets with efficient unaligned VSX accesses.
++	(rs6000_builtin_vectorization_cost): Cost of unaligned loads and
++	stores on targets with efficient unaligned VSX accesses is almost
++	always the same as the cost of an aligned load or store, so model
++	it that way.
++	* config/rs6000/rs6000.h (SLOW_UNALIGNED_ACCESS): Return 0 for
++	unaligned vectors if we have efficient unaligned VSX accesses.
++	* config/rs6000/rs6000.opt (mefficient-unaligned-vector): New
++	undocumented option.
++
++2015-04-23  Vladimir Makarov  <vmakarov@redhat.com>
++
++	Backport from trunk r222223.
++
++	2015-04-19  Vladimir Makarov  <vmakarov@redhat.com>
++
++	PR rtl-optimization/65805
++	* lra-eliminations.c (lra_eliminate_regs_1): Add new assert.
++	Don't use difference of offset and previous offset if
++	update_sp_offset is non-zero.
++	(eliminate_regs_in_insn): Ditto.
++	* lra-spills.c (remove_pseudos): Exchange 4th and 6th args in
++	lra_eliminate_regs_1 call.
++	* lra-constraints.c (get_equiv_with_elimination): Ditto.
++
++2015-04-22  Georg-Johann Lay  <avr@gjlay.de>
++
++	Backport from trunk r222179.
++
++	2015-04-17  Sivanupandi Pitchumani <Pitchumani.Sivanupandi@atmel.com>
++
++	PR target/65296
++	* config/avr/gen-avr-mmcu-specs.c (*avrlibc_startfile): Adjust
++	to new AVR-LibC file layout (bug #44574).
++	(*avrlibc_devicelib): Same.
++	* config/avr/avr-mcus.def: Adjust comments.
++	* config/avr/avr.opt (nodevicelib): Adjust help.
++
++2015-04-22  Jakub Jelinek  <jakub@redhat.com>
++
++	* BASE-VER: Set to 5.1.1.
++
+ 2015-04-22  Release Manager
+ 
+ 	* GCC 5.1.0 released.
+Index: gcc/testsuite/gcc.target/powerpc/vsx-vectorize-2.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/powerpc/vsx-vectorize-2.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.target/powerpc/vsx-vectorize-2.c	(.../branches/gcc-5-branch)
+@@ -59,7 +59,7 @@
+ }
+ 
+ /* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" } } */
+-/* { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 0 "vect" {xfail {! vect_hw_misalign } } } } */
++/* { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 0 "vect" {xfail { {! vect_hw_misalign } || powerpc*-*-* } } } } */
+ /* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning" 0 "vect" } } */
+-/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 4 "vect" {xfail {! vect_hw_misalign } } } } */
++/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 4 "vect" {xfail { {! vect_hw_misalign } || powerpc*-*-* } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.target/powerpc/pr65456.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/powerpc/pr65456.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.target/powerpc/pr65456.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,65 @@
++/* { dg-do compile { target { powerpc64le-*-* } } } */
++/* { dg-skip-if "do not override -mcpu" { powerpc64le-*-* } { "-mcpu=*" } { "-mcpu=power8" } } */
++/* { dg-options "-mcpu=power8 -O3" } */
++
++/* Verify that swap optimization properly removes swaps for unaligned
++   vector stores.  See PR65456.  */
++
++typedef unsigned char UChar;
++typedef unsigned short UShort;
++typedef unsigned int UWord;
++
++typedef unsigned long SizeT;
++typedef unsigned long Addr;
++
++void *memmove(void *dst, const void *src, SizeT len)
++{
++  const Addr WS = sizeof(UWord);/* 8 or 4 */
++  const Addr WM = WS - 1;/* 7 or 3 */
++
++  /* Copying backwards. */
++  SizeT n = len;
++  Addr d = (Addr) dst;
++  Addr s = (Addr) src;
++
++  if (((s ^ d) & WM) == 0) {
++    /* s and d have same UWord alignment. */
++    /* Pull up to a UWord boundary. */
++    while ((s & WM) != 0 && n >= 1) {
++      *(UChar *) d = *(UChar *) s;
++      s += 1;
++      d += 1;
++      n -= 1;
++    }
++    /* Copy UWords. */
++    while (n >= WS) {
++      *(UWord *) d = *(UWord *) s;
++      s += WS;
++      d += WS;
++      n -= WS;
++    }
++    if (n == 0)
++      return dst;
++  }
++  if (((s | d) & 1) == 0) {
++    /* Both are 16-aligned; copy what we can thusly. */
++    while (n >= 2) {
++      *(UShort *) d = *(UShort *) s;
++      s += 2;
++      d += 2;
++      n -= 2;
++    }
++  }
++  /* Copy leftovers, or everything if misaligned. */
++  while (n >= 1) {
++    *(UChar *) d = *(UChar *) s;
++    s += 1;
++    d += 1;
++    n -= 1;
++  }
++
++  return dst;
++}
++
++/* { dg-final { scan-assembler-not "xxpermdi" } } */
++/* { dg-final { scan-assembler-not "xxswapd" } } */
+Index: gcc/testsuite/gcc.target/powerpc/vsx-vectorize-4.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/powerpc/vsx-vectorize-4.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.target/powerpc/vsx-vectorize-4.c	(.../branches/gcc-5-branch)
+@@ -55,7 +55,7 @@
+ }
+ 
+ /* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" } } */
+-/* { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 0 "vect" {xfail {! vect_hw_misalign } } } } */
++/* { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 0 "vect" {xfail { {! vect_hw_misalign } || powerpc*-*-* } } } } */
+ /* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning" 0 "vect" } } */
+-/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 3 "vect" {xfail {! vect_hw_misalign } } } } */
++/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 3 "vect" {xfail { {! vect_hw_misalign } || powerpc*-*-* } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.target/powerpc/crypto-builtin-2.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/powerpc/crypto-builtin-2.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.target/powerpc/crypto-builtin-2.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,36 @@
++/* { dg-do compile { target { powerpc*-*-* } } } */
++/* { dg-skip-if "" { powerpc*-*-darwin* } { "*" } { "" } } */
++/* { dg-require-effective-target powerpc_vsx_ok } */
++/* { dg-skip-if "do not override -mcpu" { powerpc*-*-* } { "-mcpu=*" } { "-mcpu=power8" } } */
++/* { dg-options "-O2 -mcpu=power8 -mno-crypto" } */
++
++void use_builtins_d (__vector unsigned long long *p, __vector unsigned long long *q, __vector unsigned long long *r, __vector unsigned long long *s)
++{
++  p[0] = __builtin_crypto_vcipher (q[0], r[0]); /* { dg-error "Builtin function __builtin_crypto_vcipher is not supported with the current options" } */
++  p[1] = __builtin_crypto_vcipherlast (q[1], r[1]); /* { dg-error "Builtin function __builtin_crypto_vcipherlast is not supported with the current options" } */
++  p[2] = __builtin_crypto_vncipher (q[2], r[2]); /* { dg-error "Builtin function __builtin_crypto_vncipher is not supported with the current options" } */
++  p[3] = __builtin_crypto_vncipherlast (q[3], r[3]); /* { dg-error "Builtin function __builtin_crypto_vncipherlast is not supported with the current options" } */
++  p[4] = __builtin_crypto_vpermxor (q[4], r[4], s[4]);
++  p[5] = __builtin_crypto_vpmsumd (q[5], r[5]);
++  p[6] = __builtin_crypto_vshasigmad (q[6], 1, 15); /* { dg-error "Builtin function __builtin_crypto_vshasigmad is not supported with the current options" } */
++  p[7] = __builtin_crypto_vsbox (q[7]); /* { dg-error "Builtin function __builtin_crypto_vsbox is not supported with the current options" } */
++}
++
++void use_builtins_w (__vector unsigned int *p, __vector unsigned int *q, __vector unsigned int *r, __vector unsigned int *s)
++{
++  p[0] = __builtin_crypto_vpermxor (q[0], r[0], s[0]);
++  p[1] = __builtin_crypto_vpmsumw (q[1], r[1]);
++  p[2] = __builtin_crypto_vshasigmaw (q[2], 1, 15); /* { dg-error "Builtin function __builtin_crypto_vshasigmaw is not supported with the current options" } */
++}
++
++void use_builtins_h (__vector unsigned short *p, __vector unsigned short *q, __vector unsigned short *r, __vector unsigned short *s)
++{
++  p[0] = __builtin_crypto_vpermxor (q[0], r[0], s[0]);
++  p[1] = __builtin_crypto_vpmsumh (q[1], r[1]);
++}
++
++void use_builtins_b (__vector unsigned char *p, __vector unsigned char *q, __vector unsigned char *r, __vector unsigned char *s)
++{
++  p[0] = __builtin_crypto_vpermxor (q[0], r[0], s[0]);
++  p[1] = __builtin_crypto_vpmsumb (q[1], r[1]);
++}
+Index: gcc/testsuite/gcc.target/powerpc/swaps-p8-18.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/powerpc/swaps-p8-18.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.target/powerpc/swaps-p8-18.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,35 @@
++/* { dg-do compile { target { powerpc64le-*-* } } } */
++/* { dg-skip-if "do not override -mcpu" { powerpc*-*-* } { "-mcpu=*" } { "-mcpu=power8" } } */
++/* { dg-options "-mcpu=power8 -O3" } */
++/* { dg-final { scan-assembler-not "xxpermdi" } } */
++
++/* This is a test for a specific convert-splat permute removal.  */
++
++void compute (float*, float*, float*, int, int);
++double test (void);
++double gorp;
++
++int main (void)
++{
++  float X[10000], Y[256], Z[2000];
++  int i;
++  for (i = 0; i < 2500; i++)
++    compute (X, Y, Z, 256, 2000);
++  gorp = test ();
++}
++
++void compute(float *X, float *Y, float *Z, int m, int n)
++{
++  int i, j;
++  float w, *x, *y;
++
++  for (i = 0; i < n; i++)
++    {
++      w = 0.0;
++      x = X++;
++      y = Y;
++      for (j = 0; j < m; j++)
++	w += (*x++) * (*y++);
++      Z[i] = w;
++    }
++}
+Index: gcc/testsuite/gcc.target/powerpc/vsx-vectorize-6.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/powerpc/vsx-vectorize-6.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.target/powerpc/vsx-vectorize-6.c	(.../branches/gcc-5-branch)
+@@ -59,7 +59,7 @@
+ }
+ 
+ /* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" } } */
+-/* { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 0 "vect" {xfail {! vect_hw_misalign } } } } */
++/* { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 0 "vect" {xfail { {! vect_hw_misalign } || powerpc*-*-* } } } } */
+ /* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning" 0 "vect" } } */
+-/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 4 "vect" {xfail {! vect_hw_misalign } } } } */
++/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 4 "vect" {xfail { {! vect_hw_misalign } || powerpc*-*-* } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.target/powerpc/vsx-vectorize-7.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/powerpc/vsx-vectorize-7.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.target/powerpc/vsx-vectorize-7.c	(.../branches/gcc-5-branch)
+@@ -59,7 +59,7 @@
+ }
+ 
+ /* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" } } */
+-/* { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 0 "vect" {xfail {! vect_hw_misalign } } } } */
++/* { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 0 "vect" {xfail { {! vect_hw_misalign } || powerpc*-*-* } } } } */
+ /* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning" 0 "vect" } } */
+-/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 4 "vect" {xfail {! vect_hw_misalign } } } } */
++/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 4 "vect" {xfail { {! vect_hw_misalign } || powerpc*-*-* } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.target/i386/avx512dq-vfpclasspd-2.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/avx512dq-vfpclasspd-2.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/avx512dq-vfpclasspd-2.c	(.../branches/gcc-5-branch)
+@@ -6,7 +6,8 @@
+ #include "avx512f-helper.h"
+ 
+ #include <math.h>
+-#include <values.h>
++#include <limits.h>
++#include <float.h>
+ #define SIZE (AVX512F_LEN / 64)
+ #include "avx512f-mask-type.h"
+ 
+Index: gcc/testsuite/gcc.target/i386/avx512bw-vpmaddwd-2.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/avx512bw-vpmaddwd-2.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/avx512bw-vpmaddwd-2.c	(.../branches/gcc-5-branch)
+@@ -6,7 +6,8 @@
+ #include "avx512f-helper.h"
+ 
+ #include <math.h>
+-#include <values.h>
++#include <limits.h>
++#include <float.h>
+ #define SIZE (AVX512F_LEN / 32)
+ #include "avx512f-mask-type.h"
+ 
+Index: gcc/testsuite/gcc.target/i386/avx512bw-vpermi2w-2.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/avx512bw-vpermi2w-2.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/avx512bw-vpermi2w-2.c	(.../branches/gcc-5-branch)
+@@ -6,8 +6,9 @@
+ #include "avx512f-helper.h"
+ 
+ #define SIZE (AVX512F_LEN / 16)
+-#include "math.h"
+-#include "values.h"
++#include <math.h>
++#include <limits.h>
++#include <float.h>
+ #include "avx512f-mask-type.h"
+ 
+ #define NUM 32
+Index: gcc/testsuite/gcc.target/i386/avx512dq-vfpclassps-2.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/avx512dq-vfpclassps-2.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/avx512dq-vfpclassps-2.c	(.../branches/gcc-5-branch)
+@@ -6,7 +6,8 @@
+ #include "avx512f-helper.h"
+ 
+ #include <math.h>
+-#include <values.h>
++#include <limits.h>
++#include <float.h>
+ #include "avx512f-mask-type.h"
+ #define SIZE (AVX512F_LEN / 32)
+ 
+Index: gcc/testsuite/gcc.target/i386/avx512bw-vpmaddubsw-2.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/avx512bw-vpmaddubsw-2.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/avx512bw-vpmaddubsw-2.c	(.../branches/gcc-5-branch)
+@@ -6,7 +6,8 @@
+ #include "avx512f-helper.h"
+ 
+ #include <math.h>
+-#include <values.h>
++#include <limits.h>
++#include <float.h>
+ #define SIZE (AVX512F_LEN / 16)
+ #include "avx512f-mask-type.h"
+ 
+Index: gcc/testsuite/gcc.target/i386/avx512vbmi-vpermt2b-2.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/avx512vbmi-vpermt2b-2.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/avx512vbmi-vpermt2b-2.c	(.../branches/gcc-5-branch)
+@@ -7,8 +7,9 @@
+ #include "avx512f-helper.h"
+ 
+ #define SIZE (AVX512F_LEN / 8)
+-#include "math.h"
+-#include "values.h"
++#include <math.h>
++#include <limits.h>
++#include <float.h>
+ #include "avx512f-mask-type.h"
+ 
+ #define NUM 32
+Index: gcc/testsuite/gcc.target/i386/avx512vbmi-vpermi2b-2.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/avx512vbmi-vpermi2b-2.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/avx512vbmi-vpermi2b-2.c	(.../branches/gcc-5-branch)
+@@ -7,8 +7,9 @@
+ #include "avx512f-helper.h"
+ 
+ #define SIZE (AVX512F_LEN / 8)
+-#include "math.h"
+-#include "values.h"
++#include <math.h>
++#include <limits.h>
++#include <float.h>
+ #include "avx512f-mask-type.h"
+ 
+ #define NUM 32
+Index: gcc/testsuite/gcc.target/i386/avx512bw-vpermt2w-2.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/avx512bw-vpermt2w-2.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/avx512bw-vpermt2w-2.c	(.../branches/gcc-5-branch)
+@@ -6,8 +6,9 @@
+ #include "avx512f-helper.h"
+ 
+ #define SIZE (AVX512F_LEN / 16)
+-#include "math.h"
+-#include "values.h"
++#include <math.h>
++#include <limits.h>
++#include <float.h>
+ #include "avx512f-mask-type.h"
+ 
+ #define NUM 32
+Index: gcc/testsuite/lib/target-supports.exp
+===================================================================
+--- a/src/gcc/testsuite/lib/target-supports.exp	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/lib/target-supports.exp	(.../branches/gcc-5-branch)
+@@ -4214,6 +4214,7 @@
+ 	     || [istarget sparc*-*-*]
+ 	     || [istarget ia64-*-*]
+ 	     || [check_effective_target_arm_vect_no_misalign]
++	     || ([istarget powerpc*-*-*] && [check_p8vector_hw_available])
+ 	     || ([istarget mips*-*-*]
+ 		 && [check_effective_target_mips_loongson]) } {
+ 	    set et_vect_no_align_saved 1
+@@ -4235,6 +4236,7 @@
+     } else {
+         set et_vect_hw_misalign_saved 0
+        if { [istarget i?86-*-*] || [istarget x86_64-*-*]
++            || ([istarget powerpc*-*-*] && [check_p8vector_hw_available])
+ 	    || [istarget aarch64*-*-*] } {
+           set et_vect_hw_misalign_saved 1
+        }
+@@ -5973,7 +5975,7 @@
+ 
+         lappend DEFAULT_VECTCFLAGS "-maltivec"
+         if [check_p8vector_hw_available] {
+-            lappend DEFAULT_VECTCFLAGS "-mpower8-vector" "-mno-allow-movmisalign"
++            lappend DEFAULT_VECTCFLAGS "-mpower8-vector"
+         } elseif [check_vsx_hw_available] {
+             lappend DEFAULT_VECTCFLAGS "-mvsx" "-mno-allow-movmisalign"
+         }
+Index: gcc/testsuite/gfortran.dg/pr65429.f90
+===================================================================
+--- a/src/gcc/testsuite/gfortran.dg/pr65429.f90	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gfortran.dg/pr65429.f90	(.../branches/gcc-5-branch)
+@@ -0,0 +1,19 @@
++! { dg-do run }
++! PR fortran/65429
++program foo
++
++   implicit none
++
++   character(*), parameter :: s(*) = [ character(5) :: 'abcde', 'fghij' ]
++   character(*), parameter :: t(*) = [ character(31) :: ]
++   character(*), parameter :: u(*) = [ 'qwerty', 'asdfgh', 'zxcvbn']
++   character(*), parameter :: v(*) = ['','']
++
++   if ((size(s) /= 2).or.(len(s)/=5)) call abort
++   if ((size(t) /= 0).or.(len(t)/=31)) call abort
++   if ((size(u) /= 3).or.(len(u)/=6)) call abort
++   if ((size(v) /= 2).or.(len(v)/=0)) call abort
++   if ((s(1)/='abcde').or.(s(2)/='fghij')) call abort
++   if ((u(1)/='qwerty').or.(u(2)/='asdfgh').or.(u(3)/='zxcvbn')) call abort
++
++end program foo
+Index: gcc/testsuite/gfortran.dg/vect/vect-2.f90
+===================================================================
+--- a/src/gcc/testsuite/gfortran.dg/vect/vect-2.f90	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gfortran.dg/vect/vect-2.f90	(.../branches/gcc-5-branch)
+@@ -15,8 +15,8 @@
+ ! support unaligned loads).
+ 
+ ! { dg-final { scan-tree-dump-times "vectorized 3 loops" 1 "vect" } }
+-! { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 3 "vect" { xfail { vect_no_align || { ! vector_alignment_reachable } } } } }
+-! { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 2 "vect" { target { vect_no_align && { ! vector_alignment_reachable } } } } }
+-! { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 2 "vect" { xfail { vect_no_align } } } }
+-! { dg-final { scan-tree-dump-times "Alignment of access forced using versioning." 3 "vect" {target { vect_no_align || { { ! vector_alignment_reachable  } && { ! vect_hw_misalign } } } } } } 
++! { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 3 "vect" { xfail { { vect_no_align && { ! vect_hw_misalign } } || { ! vector_alignment_reachable } } } } }
++! { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 2 "vect" { target { { vect_no_align && { ! vect_hw_misalign } } && { ! vector_alignment_reachable } } } } }
++! { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 2 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } }
++! { dg-final { scan-tree-dump-times "Alignment of access forced using versioning." 3 "vect" {target { { vect_no_align && { ! vect_hw_misalign } } || { { ! vector_alignment_reachable  } && { ! vect_hw_misalign } } } } } }
+ ! { dg-final { cleanup-tree-dump "vect" } }
+Index: gcc/testsuite/gfortran.dg/vect/vect-3.f90
+===================================================================
+--- a/src/gcc/testsuite/gfortran.dg/vect/vect-3.f90	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gfortran.dg/vect/vect-3.f90	(.../branches/gcc-5-branch)
+@@ -6,10 +6,10 @@
+ Y = Y + A * X
+ END
+ 
+-! { dg-final { scan-tree-dump-times "Alignment of access forced using versioning" 3 "vect" { target vect_no_align } } }
++! { dg-final { scan-tree-dump-times "Alignment of access forced using versioning" 3 "vect" { target { vect_no_align && { ! vect_hw_misalign } } } } }
+ ! { dg-final { scan-tree-dump-times "Alignment of access forced using versioning" 1 "vect" { target { {! vect_no_align} && { {! vector_alignment_reachable} && {! vect_hw_misalign} } } } } }
+ ! { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 2 "vect" { target { {! vect_no_align} && { {! vector_alignment_reachable} && {! vect_hw_misalign} } } } } }
+-! { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 1 "vect" { xfail { vect_no_align || {! vector_alignment_reachable}} } } }
+-! { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 1 "vect" { xfail { { vect_no_align } || { ! vector_alignment_reachable} } } } }
++! { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 1 "vect" { xfail { { vect_no_align && { ! vect_hw_misalign } } || {! vector_alignment_reachable}} } } }
++! { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 1 "vect" { xfail { { vect_no_align && { ! vect_hw_misalign } } || { ! vector_alignment_reachable} } } } }
+ 
+ ! { dg-final { cleanup-tree-dump "vect" } }
+Index: gcc/testsuite/gfortran.dg/vect/vect-4.f90
+===================================================================
+--- a/src/gcc/testsuite/gfortran.dg/vect/vect-4.f90	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gfortran.dg/vect/vect-4.f90	(.../branches/gcc-5-branch)
+@@ -10,8 +10,8 @@
+ END
+ 
+ ! { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" } } 
+-! { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 1 "vect" { xfail { { vect_no_align } || {! vector_alignment_reachable} } } } }
+-! { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 1 "vect" { xfail { { vect_no_align } || {! vector_alignment_reachable} } } } }
++! { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 1 "vect" { xfail { { vect_no_align && { ! vect_hw_misalign } } || {! vector_alignment_reachable} } } } }
++! { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 1 "vect" { xfail { { vect_no_align && { ! vect_hw_misalign } } || {! vector_alignment_reachable} } } } }
+ ! { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 2 "vect" { target { {! vector_alignment_reachable} && {! vect_hw_misalign} } } } }
+ ! { dg-final { scan-tree-dump-times "accesses have the same alignment." 1 "vect" } }
+ ! { dg-final { cleanup-tree-dump "vect" } }
+Index: gcc/testsuite/gfortran.dg/vect/vect-5.f90
+===================================================================
+--- a/src/gcc/testsuite/gfortran.dg/vect/vect-5.f90	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gfortran.dg/vect/vect-5.f90	(.../branches/gcc-5-branch)
+@@ -36,8 +36,8 @@
+         end
+ 
+ ! { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect"  } }
+-! { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 1 "vect" { xfail { vect_no_align || {! vector_alignment_reachable} } } } }
+-! { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 1 "vect" { xfail { vect_no_align } } } }
+-! { dg-final { scan-tree-dump-times "Alignment of access forced using versioning." 2 "vect" { target { vect_no_align } } } }
++! { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 1 "vect" { xfail { { vect_no_align && { ! vect_hw_misalign } } || {! vector_alignment_reachable} } } } }
++! { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 1 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } }
++! { dg-final { scan-tree-dump-times "Alignment of access forced using versioning." 2 "vect" { target { vect_no_align && { ! vect_hw_misalign } } } } }
+ ! { dg-final { scan-tree-dump-times "Alignment of access forced using versioning." 1 "vect" { target { {! vector_alignment_reachable} && {! vect_hw_misalign} } } } }
+ ! { dg-final { cleanup-tree-dump "vect" } }
+Index: gcc/testsuite/gcc.dg/vect/vect-105.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-105.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-105.c	(.../branches/gcc-5-branch)
+@@ -66,7 +66,7 @@
+ }
+ 
+ /* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" } } */
+-/*  { dg-final { scan-tree-dump-times "Alignment of access forced using versioning" 2 "vect" { target vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning" 2 "vect" { target { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { scan-tree-dump-times "possible dependence between data-refs" 0 "vect" } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+ 
+Index: gcc/testsuite/gcc.dg/vect/vect-75-big-array.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-75-big-array.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-75-big-array.c	(.../branches/gcc-5-branch)
+@@ -52,6 +52,6 @@
+ 
+ 
+ /* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" } } */
+-/*  { dg-final { scan-tree-dump-times "Alignment of access forced using versioning" 1 "vect" { target vect_no_align } } } */
+-/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 1 "vect" { xfail vect_no_align } } } */
++/*  { dg-final { scan-tree-dump-times "Alignment of access forced using versioning" 1 "vect" { target { vect_no_align && { ! vect_hw_misalign } } } } } */
++/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 1 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/vect-50.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-50.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-50.c	(.../branches/gcc-5-branch)
+@@ -61,9 +61,9 @@
+    align the store will not force the two loads to be aligned).  */
+ 
+ /* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" } } */
+-/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 2 "vect" { xfail { vect_no_align } } } }  */
++/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 2 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 2 "vect" { target vect_hw_misalign } } } */
+-/* { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 1 "vect" { xfail { vect_no_align || {! vector_alignment_reachable} } } } } */
+-/* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning." 3 "vect" { target vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 1 "vect" { xfail { { vect_no_align && { ! vect_hw_misalign } } || {! vector_alignment_reachable} } } } } */
++/* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning." 3 "vect" { target { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning." 1 "vect" { target { {! vector_alignment_reachable} && { {! vect_no_align } && {! vect_hw_misalign } } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/vect-33.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-33.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-33.c	(.../branches/gcc-5-branch)
+@@ -36,9 +36,10 @@
+   return main1 ();
+ } 
+ 
++/* vect_hw_misalign && { ! vect64 } */
+ 
+ /* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect"  } } */
+-/* { dg-final { scan-tree-dump "Vectorizing an unaligned access" "vect" { target { vect_hw_misalign && { {! vect64} || vect_multiple_sizes } } } } } */
++/* { dg-final { scan-tree-dump "Vectorizing an unaligned access" "vect" { target { { { ! powerpc*-*-* } && vect_hw_misalign } && { { ! vect64 } || vect_multiple_sizes } } } } }  */
+ /* { dg-final { scan-tree-dump "Alignment of access forced using peeling" "vect" { target { vector_alignment_reachable && { vect64 && {! vect_multiple_sizes} } } } } } */
+ /* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning" 1 "vect" { target { { {! vector_alignment_reachable} || {! vect64} } && {! vect_hw_misalign} } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/vect-42.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-42.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-42.c	(.../branches/gcc-5-branch)
+@@ -64,7 +64,7 @@
+ }
+ 
+ /* { dg-final { scan-tree-dump-times "vectorized 2 loops" 1 "vect" } } */
+-/* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning" 3 "vect" { target vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning" 3 "vect" { target { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning" 1 "vect" { target { { ! vector_alignment_reachable } && { ! vect_element_align } } } } } */
+ /* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 4 "vect" { xfail { vect_no_align || { { !  vector_alignment_reachable } || vect_element_align  } } } } }  */
+ /* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 3 "vect" { target vect_element_align } } } */
+Index: gcc/testsuite/gcc.dg/vect/no-scevccp-outer-6-global.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/no-scevccp-outer-6-global.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/no-scevccp-outer-6-global.c	(.../branches/gcc-5-branch)
+@@ -52,5 +52,5 @@
+   return 0;
+ }
+ 
+-/* { dg-final { scan-tree-dump-times "OUTER LOOP VECTORIZED." 1 "vect" { xfail vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "OUTER LOOP VECTORIZED." 1 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/vect-outer-5.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-outer-5.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-outer-5.c	(.../branches/gcc-5-branch)
+@@ -78,5 +78,5 @@
+    is known.  */
+ /* { dg-final { scan-tree-dump-times "not vectorized: possible dependence between data-refs" 1 "vect" { xfail *-*-* } } } */
+ /* { dg-final { scan-tree-dump-times "OUTER LOOP VECTORIZED" 1 "vect" } } */
+-/* { dg-final { scan-tree-dump "zero step in outer loop." "vect" { xfail vect_no_align } } } */
++/* { dg-final { scan-tree-dump "zero step in outer loop." "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/costmodel/ppc/costmodel-vect-outer-fir.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/costmodel/ppc/costmodel-vect-outer-fir.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/costmodel/ppc/costmodel-vect-outer-fir.c	(.../branches/gcc-5-branch)
+@@ -67,5 +67,5 @@
+   return 0;
+ }
+ 
+-/* { dg-final { scan-tree-dump-times "OUTER LOOP VECTORIZED" 2 "vect" { xfail vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "OUTER LOOP VECTORIZED" 2 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/costmodel/ppc/costmodel-slp-33.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/costmodel/ppc/costmodel-slp-33.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/costmodel/ppc/costmodel-slp-33.c	(.../branches/gcc-5-branch)
+@@ -40,5 +40,5 @@
+   return main1 ();
+ } 
+ 
+-/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 0 "vect" } } */
++/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 0 "vect" { target { ! vect_hw_misalign } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/costmodel/ppc/costmodel-vect-31a.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/costmodel/ppc/costmodel-vect-31a.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/costmodel/ppc/costmodel-vect-31a.c	(.../branches/gcc-5-branch)
+@@ -47,5 +47,5 @@
+ } 
+ 
+ /* { dg-final { scan-tree-dump-times "vectorization not profitable" 1 "vect" } } */
+-/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 0 "vect" } } */
++/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 0 "vect" { target { ! vect_hw_misalign } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/costmodel/ppc/costmodel-bb-slp-9a.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/costmodel/ppc/costmodel-bb-slp-9a.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/costmodel/ppc/costmodel-bb-slp-9a.c	(.../branches/gcc-5-branch)
+@@ -38,5 +38,5 @@
+   return 0;
+ }
+ 
+-/* { dg-final { scan-tree-dump-times "basic block vectorized" 1 "slp2"  { xfail  vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "basic block vectorized" 1 "slp2"  { xfail  { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { cleanup-tree-dump "slp2" } } */
+Index: gcc/testsuite/gcc.dg/vect/costmodel/ppc/costmodel-vect-76b.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/costmodel/ppc/costmodel-vect-76b.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/costmodel/ppc/costmodel-vect-76b.c	(.../branches/gcc-5-branch)
+@@ -43,8 +43,8 @@
+ }
+ 
+ /* Peeling to align the store is used. Overhead of peeling is too high.  */
+-/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 0 "vect" { target vector_alignment_reachable } } } */
+-/* { dg-final { scan-tree-dump-times "vectorization not profitable" 1 "vect" { target { vector_alignment_reachable && {! vect_no_align} } } } } */
++/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 0 "vect" { target { vector_alignment_reachable && {! vect_no_align} } } } } */
++/* { dg-final { scan-tree-dump-times "vectorization not profitable" 1 "vect" { target { vector_alignment_reachable && {! vect_hw_misalign} } } } } */
+ 
+ /* Versioning to align the store is used. Overhead of versioning is not too high.  */
+ /* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" { target { vect_no_align || {! vector_alignment_reachable} } } } } */
+Index: gcc/testsuite/gcc.dg/vect/vect-multitypes-6.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-multitypes-6.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-multitypes-6.c	(.../branches/gcc-5-branch)
+@@ -61,7 +61,7 @@
+ }
+ 
+ /* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" { xfail { sparc*-*-* && ilp32 } }} } */
+-/*  { dg-final { scan-tree-dump-times "Alignment of access forced using versioning" 6 "vect" { target vect_no_align } } } */
+-/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 6 "vect" {xfail { vect_no_align } } } } */
++/* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning" 6 "vect" { target { vect_no_align && { ! vect_hw_misalign } } } } } */
++/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 6 "vect" {xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+ 
+Index: gcc/testsuite/gcc.dg/vect/vect-60.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-60.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-60.c	(.../branches/gcc-5-branch)
+@@ -68,7 +68,7 @@
+   return 0;
+ }
+ 
+-/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" { xfail vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 2 "vect" { xfail { vect_no_align || vect_element_align } } } } */
+ /* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 1 "vect" { target { vect_element_align } } } } */
+ /* { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 0 "vect" { xfail { vect_element_align } } } } */
+Index: gcc/testsuite/gcc.dg/vect/vect-52.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-52.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-52.c	(.../branches/gcc-5-branch)
+@@ -56,7 +56,7 @@
+    (The store is aligned).  */
+ 
+ /* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" } } */
+-/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 2 "vect" { xfail vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 2 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 0 "vect" } } */
+-/* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning." 2 "vect" { target vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning." 2 "vect" { target { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/bb-slp-32.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/bb-slp-32.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/bb-slp-32.c	(.../branches/gcc-5-branch)
+@@ -19,5 +19,5 @@
+   return tem0 + tem1 + tem2 + tem3;
+ }
+ 
+-/* { dg-final { scan-tree-dump "vectorization is not profitable" "slp2" { xfail  vect_no_align } } } */
++/* { dg-final { scan-tree-dump "vectorization is not profitable" "slp2" { xfail  { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { cleanup-tree-dump "slp2" } } */
+Index: gcc/testsuite/gcc.dg/vect/vect-44.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-44.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-44.c	(.../branches/gcc-5-branch)
+@@ -65,8 +65,8 @@
+    two loads to be aligned).  */
+ 
+ /* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" } } */
+-/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 2 "vect" { xfail { vect_no_align } } } } */
+-/* { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 1 "vect" { xfail { vect_no_align || {! vector_alignment_reachable} } } } } */
+-/* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning." 3 "vect" { target vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 2 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
++/* { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 1 "vect" { xfail { { vect_no_align && { ! vect_hw_misalign } } || {! vector_alignment_reachable} } } } } */
++/* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning." 3 "vect" { target { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning." 1 "vect" { target { {! vector_alignment_reachable} && {{! vect_no_align} && {! vect_hw_misalign} } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/vect-27.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-27.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-27.c	(.../branches/gcc-5-branch)
+@@ -44,8 +44,8 @@
+ }
+ 
+ /* The initialization induction loop (with aligned access) is also vectorized.  */
+-/* { dg-final { scan-tree-dump-times "vectorized 2 loops" 1 "vect" { xfail vect_no_align } } } */
+-/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" { target vect_no_align } } } */
+-/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 1 "vect" { xfail vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "vectorized 2 loops" 1 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
++/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" { target { vect_no_align && { ! vect_hw_misalign } } } } } */
++/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 1 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 0 "vect" } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/bb-slp-24.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/bb-slp-24.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/bb-slp-24.c	(.../branches/gcc-5-branch)
+@@ -54,7 +54,9 @@
+   return 0;
+ }
+ 
+-/* { dg-final { scan-tree-dump-times "basic block vectorized" 1 "slp1" { target vect_element_align } } } */
++/* Exclude POWER8 (only POWER cpu for which vect_element_align is true)
++   because loops have vectorized before SLP gets a shot.  */
++/* { dg-final { scan-tree-dump-times "basic block vectorized" 1 "slp1" { target { vect_element_align && { ! powerpc*-*-* } } } } } */
+ /* { dg-final { cleanup-tree-dump "slp1" } } */
+ /* { dg-final { cleanup-tree-dump "slp2" } } */
+ 
+Index: gcc/testsuite/gcc.dg/vect/vect-outer-fir-lb.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-outer-fir-lb.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-outer-fir-lb.c	(.../branches/gcc-5-branch)
+@@ -74,5 +74,5 @@
+   return 0;
+ }
+ 
+-/* { dg-final { scan-tree-dump-times "OUTER LOOP VECTORIZED" 2 "vect" { xfail vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "OUTER LOOP VECTORIZED" 2 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/vect-outer-fir-big-array.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-outer-fir-big-array.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-outer-fir-big-array.c	(.../branches/gcc-5-branch)
+@@ -70,5 +70,5 @@
+   return 0;
+ }
+ 
+-/* { dg-final { scan-tree-dump-times "OUTER LOOP VECTORIZED" 2 "vect" { xfail vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "OUTER LOOP VECTORIZED" 2 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/bb-slp-25.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/bb-slp-25.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/bb-slp-25.c	(.../branches/gcc-5-branch)
+@@ -54,7 +54,9 @@
+   return 0;
+ }
+ 
+-/* { dg-final { scan-tree-dump-times "basic block vectorized" 1 "slp1" { target vect_element_align } } } */
++/* Exclude POWER8 (only POWER cpu for which vect_element_align is true)
++   because loops have vectorized before SLP gets a shot.  */
++/* { dg-final { scan-tree-dump-times "basic block vectorized" 1 "slp1" { target { vect_element_align && { ! powerpc*-*-* } } } } } */
+ /* { dg-final { cleanup-tree-dump "slp1" } } */
+ /* { dg-final { cleanup-tree-dump "slp2" } } */
+ 
+Index: gcc/testsuite/gcc.dg/vect/pr33804.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/pr33804.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/pr33804.c	(.../branches/gcc-5-branch)
+@@ -11,6 +11,6 @@
+     }
+ }
+ 
+-/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" { xfail vect_no_align } } } */
+-/* { dg-final { scan-tree-dump-times "vectorizing stmts using SLP" 1 "vect" { xfail vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
++/* { dg-final { scan-tree-dump-times "vectorizing stmts using SLP" 1 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/vect-nest-cycle-1.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-nest-cycle-1.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-nest-cycle-1.c	(.../branches/gcc-5-branch)
+@@ -43,6 +43,6 @@
+   return 0;
+ }
+ 
+-/* { dg-final { scan-tree-dump-times "OUTER LOOP VECTORIZED" 1 "vect" { xfail vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "OUTER LOOP VECTORIZED" 1 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+ 
+Index: gcc/testsuite/gcc.dg/vect/vect-77-alignchecks.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-77-alignchecks.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-77-alignchecks.c	(.../branches/gcc-5-branch)
+@@ -49,8 +49,8 @@
+    both for the load and the store.  */
+ 
+ /* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" } } */
+-/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 1 "vect" { xfail { vect_no_align } } } } */
++/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 1 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 1 "vect" { target { {! vect_no_align} && { unaligned_stack && vector_alignment_reachable } } } } } */
+-/* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning." 1 "vect" { target { { {! unaligned_stack} && vect_no_align } || {unaligned_stack && { {! vector_alignment_reachable} && {! vect_no_align} } } } } } } */
++/* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning." 1 "vect" { target { { {! unaligned_stack} && { vect_no_align && { ! vect_hw_misalign } } } || {unaligned_stack && { {! vector_alignment_reachable} && {! vect_no_align } } } } } } } */
+ /* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning." 2 "vect" { target { { unaligned_stack && { vector_alignment_reachable && vect_no_align } } || {unaligned_stack && { {! vector_alignment_reachable} && vect_no_align } } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/vect-outer-3a-big-array.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-outer-3a-big-array.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-outer-3a-big-array.c	(.../branches/gcc-5-branch)
+@@ -48,6 +48,6 @@
+   return 0;
+ }
+ 
+-/* { dg-final { scan-tree-dump-times "OUTER LOOP VECTORIZED" 1 "vect" { xfail vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "OUTER LOOP VECTORIZED" 1 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { scan-tree-dump-times "step doesn't divide the vector-size" 1 "vect" } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/no-vfa-vect-depend-1.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/no-vfa-vect-depend-1.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/no-vfa-vect-depend-1.c	(.../branches/gcc-5-branch)
+@@ -50,7 +50,7 @@
+   return main1 ();
+ }
+ 
+-/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" {xfail vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" {xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { scan-tree-dump-times "dependence distance negative" 1 "vect"  } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+ 
+Index: gcc/testsuite/gcc.dg/vect/vect-29.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-29.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-29.c	(.../branches/gcc-5-branch)
+@@ -51,7 +51,7 @@
+ 
+ /* The initialization induction loop (with aligned access) is also vectorized.  */
+ /* { dg-final { scan-tree-dump-times "vectorized 2 loops" 1 "vect" } } */
+-/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 1 "vect" { xfail vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 1 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 0 "vect" } } */
+-/* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning." 1 "vect" {target vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning." 1 "vect" {target { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/pr58508.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/pr58508.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/pr58508.c	(.../branches/gcc-5-branch)
+@@ -67,5 +67,5 @@
+ }
+ 
+ /* { dg-final { scan-tree-dump-times "hoist" 8 "vect" { xfail *-*-* } } } */
+-/* { dg-final { scan-tree-dump-times "hoist" 3 "vect" { xfail vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "hoist" 3 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/if-cvt-stores-vect-ifcvt-18.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/if-cvt-stores-vect-ifcvt-18.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/if-cvt-stores-vect-ifcvt-18.c	(.../branches/gcc-5-branch)
+@@ -65,5 +65,5 @@
+   return 0;
+ }
+ 
+-/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect"  { xfail { vect_no_align || { ! vect_strided2 } } } } } */
++/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect"  { xfail { { vect_no_align && { ! vect_hw_misalign } } || { ! vect_strided2 } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/vect-72.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-72.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-72.c	(.../branches/gcc-5-branch)
+@@ -46,7 +46,7 @@
+   return main1 ();
+ }
+ 
+-/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" { xfail vect_no_align } } } */
+-/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 1 "vect" { xfail vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
++/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 1 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 0 "vect" } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/vect-nest-cycle-2.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-nest-cycle-2.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-nest-cycle-2.c	(.../branches/gcc-5-branch)
+@@ -42,6 +42,6 @@
+   return 0;
+ }
+ 
+-/* { dg-final { scan-tree-dump-times "OUTER LOOP VECTORIZED" 1 "vect" { xfail vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "OUTER LOOP VECTORIZED" 1 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+ 
+Index: gcc/testsuite/gcc.dg/vect/no-vfa-vect-depend-2.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/no-vfa-vect-depend-2.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/no-vfa-vect-depend-2.c	(.../branches/gcc-5-branch)
+@@ -50,6 +50,6 @@
+   return main1 ();
+ }
+ 
+-/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" {xfail vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" {xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { scan-tree-dump-times "dependence distance negative" 1 "vect"  } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/bb-slp-9.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/bb-slp-9.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/bb-slp-9.c	(.../branches/gcc-5-branch)
+@@ -46,6 +46,6 @@
+   return 0;
+ }
+ 
+-/* { dg-final { scan-tree-dump-times "basic block vectorized" 1 "slp2"  { xfail  vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "basic block vectorized" 1 "slp2"  { xfail  { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { cleanup-tree-dump "slp2" } } */
+   
+Index: gcc/testsuite/gcc.dg/vect/vect-56.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-56.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-56.c	(.../branches/gcc-5-branch)
+@@ -67,7 +67,7 @@
+   return 0;
+ }
+ 
+-/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" { xfail vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 2 "vect" { xfail { vect_no_align || vect_element_align } } } } */
+ /* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 1 "vect" { target { vect_element_align } } } } */
+ /* { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 0 "vect" { xfail { vect_element_align } } } } */
+Index: gcc/testsuite/gcc.dg/vect/no-vfa-vect-43.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/no-vfa-vect-43.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/no-vfa-vect-43.c	(.../branches/gcc-5-branch)
+@@ -90,5 +90,5 @@
+ }
+ 
+ /* { dg-final { scan-tree-dump-times "vectorized 2 loops" 2 "vect" } } */
+-/* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning" 6 "vect" { target vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning" 6 "vect" { target { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/vect-outer-fir-lb-big-array.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-outer-fir-lb-big-array.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-outer-fir-lb-big-array.c	(.../branches/gcc-5-branch)
+@@ -74,5 +74,5 @@
+   return 0;
+ }
+ 
+-/* { dg-final { scan-tree-dump-times "OUTER LOOP VECTORIZED" 2 "vect" { xfail vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "OUTER LOOP VECTORIZED" 2 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/no-vfa-vect-depend-3.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/no-vfa-vect-depend-3.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/no-vfa-vect-depend-3.c	(.../branches/gcc-5-branch)
+@@ -182,6 +182,6 @@
+   return main1 ();
+ }
+ 
+-/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 4 "vect" {xfail vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 4 "vect" {xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { scan-tree-dump-times "dependence distance negative" 4 "vect"  } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/vect-48.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-48.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-48.c	(.../branches/gcc-5-branch)
+@@ -55,7 +55,7 @@
+    (The store is aligned).  */
+ 
+ /* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect"  } } */
+-/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 2 "vect" { xfail vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 2 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 0 "vect" } } */
+-/* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning." 2 "vect" { target vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning." 2 "vect" { target { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/vect-outer-fir.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-outer-fir.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-outer-fir.c	(.../branches/gcc-5-branch)
+@@ -70,5 +70,5 @@
+   return 0;
+ }
+ 
+-/* { dg-final { scan-tree-dump-times "OUTER LOOP VECTORIZED" 2 "vect" { xfail vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "OUTER LOOP VECTORIZED" 2 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/vect-peel-3.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-peel-3.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-peel-3.c	(.../branches/gcc-5-branch)
+@@ -48,7 +48,7 @@
+   return main1 ();
+ }
+ 
+-/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" { xfail vect_no_align } } } */
+-/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 1 "vect"  { xfail { { vect_no_align } || {vect_sizes_32B_16B } } } } } */
+-/* { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 1 "vect" { xfail { { vect_no_align } || {vect_sizes_32B_16B } } } } } */
++/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
++/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 1 "vect"  { xfail { { vect_no_align && { ! vect_hw_misalign } } || {vect_sizes_32B_16B } } } } } */
++/* { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 1 "vect" { xfail { { vect_no_align && { ! vect_hw_misalign } } || {vect_sizes_32B_16B } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/no-scevccp-outer-6.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/no-scevccp-outer-6.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/no-scevccp-outer-6.c	(.../branches/gcc-5-branch)
+@@ -51,6 +51,6 @@
+   return 0;
+ }
+ 
+-/* { dg-final { scan-tree-dump-times "OUTER LOOP VECTORIZED." 1 "vect" { xfail { unaligned_stack || vect_no_align } } } } */
++/* { dg-final { scan-tree-dump-times "OUTER LOOP VECTORIZED." 1 "vect" { xfail { unaligned_stack || { vect_no_align && { ! vect_hw_misalign } } } } } } */
+ /* { dg-final { scan-tree-dump-times "vect_recog_widen_mult_pattern: detected" 1 "vect" { xfail *-*-* } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/no-vfa-vect-61.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/no-vfa-vect-61.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/no-vfa-vect-61.c	(.../branches/gcc-5-branch)
+@@ -73,5 +73,5 @@
+   return 0;
+ }
+ 
+-/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" { xfail vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/bb-slp-29.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/bb-slp-29.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/bb-slp-29.c	(.../branches/gcc-5-branch)
+@@ -54,7 +54,9 @@
+   return 0;
+ }
+ 
+-/* { dg-final { scan-tree-dump-times "basic block vectorized" 1 "slp1"  { target { vect_int_mult &&  vect_element_align } } } } */
++/* Exclude POWER8 (only POWER cpu for which vect_element_align is true)
++   because loops have vectorized before SLP gets a shot.  */
++/* { dg-final { scan-tree-dump-times "basic block vectorized" 1 "slp1"  { target { { vect_int_mult && vect_element_align } && { ! powerpc*-*-* } } } } } */
+ /* { dg-final { cleanup-tree-dump "slp1" } } */
+ /* { dg-final { cleanup-tree-dump "slp2" } } */
+ 
+Index: gcc/testsuite/gcc.dg/vect/vect-peel-4.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-peel-4.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-peel-4.c	(.../branches/gcc-5-branch)
+@@ -45,7 +45,7 @@
+   return main1 ();
+ }
+ 
+-/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" { xfail vect_no_align } } } */
+-/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 1 "vect"  { xfail vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
++/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 1 "vect"  { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 0 "vect" } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/vect-75.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-75.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-75.c	(.../branches/gcc-5-branch)
+@@ -44,6 +44,6 @@
+ 
+ 
+ /* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" } } */
+-/*  { dg-final { scan-tree-dump-times "Alignment of access forced using versioning" 1 "vect" { target vect_no_align } } } */
+-/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 1 "vect" { xfail vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning" 1 "vect" { target { vect_no_align && { ! vect_hw_misalign } } } } } */
++/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 1 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/pr16105.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/pr16105.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/pr16105.c	(.../branches/gcc-5-branch)
+@@ -18,5 +18,5 @@
+ }
+ 
+ /* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" } } */
+-/*  { dg-final { scan-tree-dump-times "Alignment of access forced using versioning" 2 "vect" { target vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning" 2 "vect" { target { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/vect-outer-3a.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-outer-3a.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-outer-3a.c	(.../branches/gcc-5-branch)
+@@ -48,6 +48,6 @@
+   return 0;
+ }
+ 
+-/* { dg-final { scan-tree-dump-times "OUTER LOOP VECTORIZED" 1 "vect" { xfail vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "OUTER LOOP VECTORIZED" 1 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { scan-tree-dump-times "step doesn't divide the vector-size" 1 "vect" } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/slp-25.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/slp-25.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/slp-25.c	(.../branches/gcc-5-branch)
+@@ -57,5 +57,5 @@
+ 
+ /* { dg-final { scan-tree-dump-times "vectorized 2 loops" 1 "vect"  } } */
+ /* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 0 "vect" } } */
+-/* { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 2 "vect" { xfail { vect_no_align || { ! vect_natural_alignment } } } } } */
++/* { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 2 "vect" { xfail { { vect_no_align && { ! vect_hw_misalign } } || { ! vect_natural_alignment } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/vect-93.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-93.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-93.c	(.../branches/gcc-5-branch)
+@@ -76,10 +76,10 @@
+ 
+ /* in main1: */
+ /* { dg-final { scan-tree-dump-times "vectorized 2 loops" 1 "vect" { target !powerpc*-*-* !i?86-*-* !x86_64-*-* } } } */
+-/* { dg-final { scan-tree-dump-times "vectorized 2 loops" 1 "vect" { target vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "vectorized 2 loops" 1 "vect" { target { vect_no_align && { ! vect_hw_misalign } } } } } */
+ 
+ /* in main: */
+-/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" { target vect_no_align } } } */
+-/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 1 "vect" { xfail { vect_no_align } } } } */
++/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" { target { vect_no_align && { ! vect_hw_misalign } } } } } */
++/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 1 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ 
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/vect-105-big-array.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-105-big-array.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-105-big-array.c	(.../branches/gcc-5-branch)
+@@ -100,7 +100,7 @@
+ }
+ 
+ /* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" } } */
+-/* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning" 2 "vect" { target vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning" 2 "vect" { target { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { scan-tree-dump-times "possible dependence between data-refs" 0 "vect" } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+ 
+Index: gcc/testsuite/gcc.dg/vect/vect-77-global.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-77-global.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-77-global.c	(.../branches/gcc-5-branch)
+@@ -48,7 +48,7 @@
+ /* Requires versioning for aliasing.  */
+ 
+ /* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" } } */
+-/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 1 "vect" { xfail { vect_no_align } } } } */
++/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 1 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 0 "vect" } } */
+-/* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning." 1 "vect" { target vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning." 1 "vect" { target { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/vect-pre-interact.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-pre-interact.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-pre-interact.c	(.../branches/gcc-5-branch)
+@@ -12,5 +12,5 @@
+     res[i] = data[i] + data[i + 1];
+ }
+ 
+-/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" { xfail vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/vect-95.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-95.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-95.c	(.../branches/gcc-5-branch)
+@@ -64,6 +64,6 @@
+ 
+ /* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 2 "vect" { xfail { vect_no_align || vect_element_align} } } }  */
+ /* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning" 2 "vect" { xfail { vect_no_align || vect_element_align } } } } */
+-/*  { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 0 "vect" { target vect_no_align } } } */
+-/*  { dg-final { scan-tree-dump-times "Alignment of access forced using versioning" 4 "vect" { target vect_no_align } } } */
++/*  { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 0 "vect" { target { vect_no_align && { ! vect_hw_misalign } } } } } */
++/*  { dg-final { scan-tree-dump-times "Alignment of access forced using versioning" 4 "vect" { target { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/vect-78-alignchecks.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-78-alignchecks.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-78-alignchecks.c	(.../branches/gcc-5-branch)
+@@ -50,8 +50,8 @@
+    both for the load and the store.  */
+ 
+ /* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" } } */
+-/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 1 "vect" { xfail { vect_no_align } } } } */ 
++/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 1 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */ 
+ /* { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 1 "vect" { target { {! vect_no_align} && { unaligned_stack && vector_alignment_reachable } } } } } */
+-/* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning." 1 "vect" { target { { {! unaligned_stack} && vect_no_align } || {unaligned_stack && { {! vector_alignment_reachable} && {! vect_no_align} } } } } } } */
++/* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning." 1 "vect" { target { { {! unaligned_stack} && { vect_no_align && { ! vect_hw_misalign } } } || {unaligned_stack && { {! vector_alignment_reachable} && { ! vect_no_align } } } } } } } */
+ /* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning." 2 "vect" { target { { unaligned_stack && { vector_alignment_reachable && vect_no_align } } || {unaligned_stack && { {! vector_alignment_reachable} && vect_no_align } } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/vect-cselim-1.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-cselim-1.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-cselim-1.c	(.../branches/gcc-5-branch)
+@@ -82,5 +82,5 @@
+   return 0;
+ }
+ 
+-/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect"  { xfail { vect_no_align || { ! vect_strided2 } } } } } */
++/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect"  { xfail { { vect_no_align && { ! vect_hw_misalign } } || { ! vect_strided2 } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/no-vfa-vect-57.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/no-vfa-vect-57.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/no-vfa-vect-57.c	(.../branches/gcc-5-branch)
+@@ -71,5 +71,5 @@
+   return 0;
+ }
+ 
+-/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" { xfail vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/vect-cond-1.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-cond-1.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-cond-1.c	(.../branches/gcc-5-branch)
+@@ -51,7 +51,7 @@
+   return 0;
+ }
+ 
+-/* { dg-final { scan-tree-dump-times "OUTER LOOP VECTORIZED" 1 "vect" { xfail vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "OUTER LOOP VECTORIZED" 1 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+ 
+ 
+Index: gcc/testsuite/gcc.dg/vect/vect-96.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-96.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-96.c	(.../branches/gcc-5-branch)
+@@ -46,5 +46,5 @@
+ /* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" } } */
+ /* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 1 "vect" { target { {! vect_no_align} && vector_alignment_reachable } } } } */
+ /* { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 1 "vect" { xfail { { vect_no_align } || { { ! vector_alignment_reachable} || vect_element_align } } } } } */
+-/* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning." 1 "vect" { target { vect_no_align || { {! vector_alignment_reachable} && {! vect_element_align} } } } } } */
++/* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning." 1 "vect" { target { { vect_no_align && { ! vect_hw_misalign } } || { {! vector_alignment_reachable} && {! vect_element_align} } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/pr20122.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/pr20122.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/pr20122.c	(.../branches/gcc-5-branch)
+@@ -52,5 +52,5 @@
+ /* The loops in VecBug and VecBug2 require versioning for alignment.
+    The loop in main is aligned.  */
+ /* { dg-final { scan-tree-dump-times "vectorized 1 loops" 3 "vect" } } */
+-/*  { dg-final { scan-tree-dump-times "Alignment of access forced using versioning" 2 "vect" { target vect_no_align } } } */
++/*  { dg-final { scan-tree-dump-times "Alignment of access forced using versioning" 2 "vect" { target { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/vect-multitypes-1.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-multitypes-1.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-multitypes-1.c	(.../branches/gcc-5-branch)
+@@ -81,8 +81,8 @@
+   return 0;
+ }
+ 
+-/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 2 "vect" { xfail { vect_no_align } } } } */
+-/* { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 2 "vect" { xfail {{ vect_no_align } || {vect_sizes_32B_16B }}} } } */
+-/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 4 "vect" { xfail {{ vect_no_align } || {vect_sizes_32B_16B }}} } } */
++/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 2 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
++/* { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 2 "vect" { xfail {{ vect_no_align && { ! vect_hw_misalign } } || {vect_sizes_32B_16B }}} } } */
++/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 4 "vect" { xfail {{ vect_no_align && { ! vect_hw_misalign } } || {vect_sizes_32B_16B }}} } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+ 
+Index: gcc/testsuite/gcc.dg/vect/pr33953.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/pr33953.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/pr33953.c	(.../branches/gcc-5-branch)
+@@ -28,8 +28,8 @@
+    }
+ }
+ 
+-/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" {xfail vect_no_align } } } */
+-/* { dg-final { scan-tree-dump-times "vectorizing stmts using SLP" 1 "vect" {xfail vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
++/* { dg-final { scan-tree-dump-times "vectorizing stmts using SLP" 1 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+ 
+ 
+Index: gcc/testsuite/gcc.dg/vect/vect-cond-3.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-cond-3.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-cond-3.c	(.../branches/gcc-5-branch)
+@@ -59,7 +59,7 @@
+   return 0;
+ }
+ 
+-/* { dg-final { scan-tree-dump-times "OUTER LOOP VECTORIZED" 1 "vect" { xfail vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "OUTER LOOP VECTORIZED" 1 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+ 
+ 
+Index: gcc/testsuite/gcc.dg/vect/vect-78-global.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-78-global.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-78-global.c	(.../branches/gcc-5-branch)
+@@ -48,7 +48,7 @@
+    (The store is aligned).  */
+ 
+ /* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" } } */
+-/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 1 "vect" { xfail { vect_no_align } } } } */
++/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 1 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 0 "vect" } } */
+-/* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning." 1 "vect" { target vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning." 1 "vect" { target { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/vect-multitypes-3.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-multitypes-3.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-multitypes-3.c	(.../branches/gcc-5-branch)
+@@ -54,7 +54,7 @@
+ }
+ 
+ /* { dg-final { scan-tree-dump-times "vectorized 1 loops" 1 "vect" } } */
+-/*  { dg-final { scan-tree-dump-times "Alignment of access forced using versioning" 3 "vect" { target vect_no_align } } } */
+-/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 3 "vect" {xfail { vect_no_align } } } } */
++/* { dg-final { scan-tree-dump-times "Alignment of access forced using versioning" 3 "vect" { target { vect_no_align && { ! vect_hw_misalign } } } } } */
++/* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 3 "vect" {xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+ 
+Index: gcc/testsuite/gcc.dg/vect/pr56787.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/pr56787.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/pr56787.c	(.../branches/gcc-5-branch)
+@@ -31,5 +31,5 @@
+     }
+ }
+ 
+-/* { dg-final { scan-tree-dump "vectorized 1 loops" "vect" { xfail vect_no_align } } } */
++/* { dg-final { scan-tree-dump "vectorized 1 loops" "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/vect-cond-4.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-cond-4.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-cond-4.c	(.../branches/gcc-5-branch)
+@@ -56,7 +56,7 @@
+   return 0;
+ }
+ 
+-/* { dg-final { scan-tree-dump-times "OUTER LOOP VECTORIZED" 1 "vect" { xfail vect_no_align } } } */
++/* { dg-final { scan-tree-dump-times "OUTER LOOP VECTORIZED" 1 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { cleanup-tree-dump "vect" } } */
+ 
+ 
+Index: gcc/testsuite/gcc.dg/vect/vect-multitypes-4.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-multitypes-4.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-multitypes-4.c	(.../branches/gcc-5-branch)
+@@ -92,7 +92,7 @@
+   return 0;
+ }
+ 
+-/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 2 "vect" { xfail { vect_no_align } } } } */
++/* { dg-final { scan-tree-dump-times "vectorized 1 loops" 2 "vect" { xfail { vect_no_align && { ! vect_hw_misalign } } } } } */
+ /* { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 0 "vect" { target { vect_element_align}  } } } */
+ /* { dg-final { scan-tree-dump-times "Alignment of access forced using peeling" 2 "vect" { xfail { vect_no_align || vect_element_align } } } } */
+ /* { dg-final { scan-tree-dump-times "Vectorizing an unaligned access" 8 "vect" { xfail { vect_no_align || vect_element_align } } } } */
+Index: gcc/testsuite/ChangeLog
+===================================================================
+--- a/src/gcc/testsuite/ChangeLog	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/ChangeLog	(.../branches/gcc-5-branch)
+@@ -1,3 +1,151 @@
++2015-04-24  Andreas Tobler  <andreast@gcc.gnu.org>
++
++	Add missing ChangeLog entry for r222341.
++
++	Backport from trunk r222273
++        2015-04-21  Andreas Tobler  <andreast@gcc.gnu.org>
++	* gcc.target/i386/avx512bw-vpermi2w-2.c: Fix includes to use actual
++	headers.
++	* gcc.target/i386/avx512bw-vpermt2w-2.c: Likewise.
++	* gcc.target/i386/avx512bw-vpmaddubsw-2.c: Likewise.
++	* gcc.target/i386/avx512bw-vpmaddwd-2.c: Likewise.
++	* gcc.target/i386/avx512dq-vfpclasspd-2.c: Likewise.
++	* gcc.target/i386/avx512dq-vfpclassps-2.c: Likewise.
++	* gcc.target/i386/avx512vbmi-vpermi2b-2.c: Likewise.
++	* gcc.target/i386/avx512vbmi-vpermt2b-2.c: Likewise.
++
++2015-04-23  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
++
++	Backport from mainline r222362
++	2015-04-23  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
++
++	* gcc.target/powerpc/crypto-builtin-2.c: New.
++
++2015-04-23  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
++
++	* gcc.target/powerpc/pr65456.c: Add test missed during backport of
++	r222349.
++
++2015-04-23  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
++
++	Backport from mainline r222351
++	2015-04-22  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
++
++	* gcc.target/powerpc/swaps-p8-18.c: New test.
++
++2015-04-23  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
++
++	Backport from mainline r222349
++	2015-04-22  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
++
++	PR target/65456
++	* gcc.dg/vect/bb-slp-24.c: Exclude test for POWER8.
++	* gcc.dg/vect/bb-slp-25.c: Likewise.
++	* gcc.dg/vect/bb-slp-29.c: Likewise.
++	* gcc.dg/vect/bb-slp-32.c: Replace vect_no_align with
++	vect_no_align && { ! vect_hw_misalign }.
++	* gcc.dg/vect/bb-slp-9.c: Likewise.
++	* gcc.dg/vect/costmodel/ppc/costmodel-slp-33.c: Exclude test for
++	vect_hw_misalign.
++	* gcc.dg/vect/costmodel/ppc/costmodel-vect-31a.c: Likewise.
++	* gcc.dg/vect/costmodel/ppc/costmodel-vect-76b.c: Adjust tests to
++	account for POWER8, where peeling for alignment is not needed.
++	* gcc.dg/vect/costmodel/ppc/costmodel-vect-outer-fir.c: Replace
++	vect_no_align with vect_no_align && { ! vect_hw_misalign }.
++	* gcc.dg.vect.if-cvt-stores-vect-ifcvt-18.c: Likewise.
++	* gcc.dg/vect/no-scevccp-outer-6-global.c: Likewise.
++	* gcc.dg/vect/no-scevccp-outer-6.c: Likewise.
++	* gcc.dg/vect/no-vfa-vect-43.c: Likewise.
++	* gcc.dg/vect/no-vfa-vect-57.c: Likewise.
++	* gcc.dg/vect/no-vfa-vect-61.c: Likewise.
++	* gcc.dg/vect/no-vfa-vect-depend-1.c: Likewise.
++	* gcc.dg/vect/no-vfa-vect-depend-2.c: Likewise.
++	* gcc.dg/vect/no-vfa-vect-depend-3.c: Likewise.
++	* gcc.dg/vect/pr16105.c: Likewise.
++	* gcc.dg/vect/pr20122.c: Likewise.
++	* gcc.dg/vect/pr33804.c: Likewise.
++	* gcc.dg/vect/pr33953.c: Likewise.
++	* gcc.dg/vect/pr56787.c: Likewise.
++	* gcc.dg/vect/pr58508.c: Likewise.
++	* gcc.dg/vect/slp-25.c: Likewise.
++	* gcc.dg/vect/vect-105-bit-array.c: Likewise.
++	* gcc.dg/vect/vect-105.c: Likewise.
++	* gcc.dg/vect/vect-27.c: Likewise.
++	* gcc.dg/vect/vect-29.c: Likewise.
++	* gcc.dg/vect/vect-33.c: Exclude unaligned access test for
++	POWER8.
++	* gcc.dg/vect/vect-42.c: Replace vect_no_align with vect_no_align
++	&& { ! vect_hw_misalign }.
++	* gcc.dg/vect/vect-44.c: Likewise.
++	* gcc.dg/vect/vect-48.c: Likewise.
++	* gcc.dg/vect/vect-50.c: Likewise.
++	* gcc.dg/vect/vect-52.c: Likewise.
++	* gcc.dg/vect/vect-56.c: Likewise.
++	* gcc.dg/vect/vect-60.c: Likewise.
++	* gcc.dg/vect/vect-72.c: Likewise.
++	* gcc.dg/vect/vect-75-big-array.c: Likewise.
++	* gcc.dg/vect/vect-75.c: Likewise.
++	* gcc.dg/vect/vect-77-alignchecks.c: Likewise.
++	* gcc.dg/vect/vect-77-global.c: Likewise.
++	* gcc.dg/vect/vect-78-alignchecks.c: Likewise.
++	* gcc.dg/vect/vect-78-global.c: Likewise.
++	* gcc.dg/vect/vect-93.c: Likewise.
++	* gcc.dg/vect/vect-95.c: Likewise.
++	* gcc.dg/vect/vect-96.c: Likewise.
++	* gcc.dg/vect/vect-cond-1.c: Likewise.
++	* gcc.dg/vect/vect-cond-3.c: Likewise.
++	* gcc.dg/vect/vect-cond-4.c: Likewise.
++	* gcc.dg/vect/vect-cselim-1.c: Likewise.
++	* gcc.dg/vect/vect-multitypes-1.c: Likewise.
++	* gcc.dg/vect/vect-multitypes-3.c: Likewise.
++	* gcc.dg/vect/vect-multitypes-4.c: Likewise.
++	* gcc.dg/vect/vect-multitypes-6.c: Likewise.
++	* gcc.dg/vect/vect-nest-cycle-1.c: Likewise.
++	* gcc.dg/vect/vect-nest-cycle-2.c: Likewise.
++	* gcc.dg/vect/vect-outer-3a-big-array.c: Likewise.
++	* gcc.dg/vect/vect-outer-3a.c: Likewise.
++	* gcc.dg/vect/vect-outer-5.c: Likewise.
++	* gcc.dg/vect/vect-outer-fir-big-array.c: Likewise.
++	* gcc.dg/vect/vect-outer-fir-lb-big-array.c: Likewise.
++	* gcc.dg/vect/vect-outer-fir-lb.c: Likewise.
++	* gcc.dg/vect/vect-outer-fir.c: Likewise.
++	* gcc.dg/vect/vect-peel-3.c: Likewise.
++	* gcc.dg/vect/vect-peel-4.c: Likewise.
++	* gcc.dg/vect/vect-pre-interact.c: Likewise.
++	* gcc.target/powerpc/pr65456.c: New test.
++	* gcc.target/powerpc/vsx-vectorize-2.c: Exclude test for POWER8.
++	* gcc.target/powerpc/vsx-vectorize-4.c: Likewise.
++	* gcc.target/powerpc/vsx-vectorize-6.c: Likewise.
++	* gcc.target/powerpc/vsx-vectorize-7.c: Likewise.
++	* gfortran.dg/vect/vect-2.f90: Replace vect_no_align with
++	vect_no_align && { ! vect_hw_misalign }.
++	* gfortran.dg/vect/vect-3.f90: Likewise.
++	* gfortran.dg/vect/vect-4.f90: Likewise.
++	* gfortran.dg/vect/vect-5.f90: Likewise.
++	* lib/target-supports.exp (check_effective_target_vect_no_align):
++	Return 1 for POWER8.
++	(check_effective_target_vect_hw_misalign): Return 1 for POWER8.
++
++	Backport from mainline r222372
++	2015-04-23  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
++
++	* gcc.dg/vect/costmodel/ppc/costmodel-bb-slp-9a.c: Replace
++	vect_no_align with vect_no_align && { ! vect_hw_misalign }.
++
++2015-04-22  Steven G. Kargl  <kargl@gcc.gnu.org>
++
++	PR fortran/65429
++	* gfortran.dg/pr65429.f90: New test.
++
++2015-04-22  Bin Cheng  <bin.cheng@arm.com>
++
++	Backport from trunk r222255
++	2015-04-21  Bin Cheng  <bin.cheng@arm.com>
++
++	PR testsuite/65767
++	* g++.dg/lto/pr65276_0.C: Change namespace std to std2.
++	* g++.dg/lto/pr65276_1.C: Change namespace std to std2.
++
+ 2015-04-22  Release Manager
+ 
+ 	* GCC 5.1.0 released.
+Index: gcc/testsuite/g++.dg/cpp0x/lambda/lambda-decltype2.C
+===================================================================
+--- a/src/gcc/testsuite/g++.dg/cpp0x/lambda/lambda-decltype2.C	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/g++.dg/cpp0x/lambda/lambda-decltype2.C	(.../branches/gcc-5-branch)
+@@ -0,0 +1,25 @@
++// PR c++/65727
++// { dg-do compile { target c++11 } }
++
++struct type_a { void(*cb)(); };
++
++struct type_b
++{
++    type_b(type_a p);
++    void dummy();
++};
++
++template<class T>
++constexpr T function_c(T**t) {return **t;}
++
++class type_d {
++    public:
++        static void dummy();
++};
++class type_e {
++    public:
++        static type_b b;
++        type_d *d[1];
++};
++
++type_b type_e::b = {{[](){decltype(function_c(type_e::d))::dummy();}}};
+Index: gcc/testsuite/g++.dg/cpp0x/constexpr-ptrmem4.C
+===================================================================
+--- a/src/gcc/testsuite/g++.dg/cpp0x/constexpr-ptrmem4.C	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/g++.dg/cpp0x/constexpr-ptrmem4.C	(.../branches/gcc-5-branch)
+@@ -0,0 +1,26 @@
++// PR c++/65695
++// { dg-do compile { target c++11 } }
++
++struct Foo;
++
++struct Bar
++{
++    using MemberFuncT = int (Foo::*)();
++
++    MemberFuncT h_;
++    constexpr Bar(MemberFuncT h) : h_{h}
++    {
++    }
++};
++
++struct Foo
++{
++    int test()
++    {
++        return -1;
++    }
++
++    static constexpr Bar bar {&Foo::test};
++};
++
++constexpr Bar Foo::bar;
+Index: gcc/testsuite/g++.dg/cpp1y/auto-fn26.C
+===================================================================
+--- a/src/gcc/testsuite/g++.dg/cpp1y/auto-fn26.C	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/g++.dg/cpp1y/auto-fn26.C	(.../branches/gcc-5-branch)
+@@ -0,0 +1,6 @@
++// PR c++/59766
++// { dg-do compile { target c++14 } }
++
++struct T {
++  friend auto f() { }
++};
+Index: gcc/testsuite/g++.dg/lookup/using55.C
+===================================================================
+--- a/src/gcc/testsuite/g++.dg/lookup/using55.C	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/g++.dg/lookup/using55.C	(.../branches/gcc-5-branch)
+@@ -0,0 +1,19 @@
++// PR c++/65721
++
++template<typename T>
++struct A {
++  typedef T D;
++};
++
++template<typename X>
++class B : public A<X> {
++  using typename B::D;		// { dg-error "not a base" }
++public:
++  D echo(D x) {			// { dg-error "D" }
++    return x;
++  }
++};
++
++int main() {
++  B<int> b;
++}
+Index: gcc/testsuite/g++.dg/lto/pr65276_1.C
+===================================================================
+--- a/src/gcc/testsuite/g++.dg/lto/pr65276_1.C	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/g++.dg/lto/pr65276_1.C	(.../branches/gcc-5-branch)
+@@ -3,7 +3,7 @@
+ #pragma interface
+ extern "C++"
+ {
+-  namespace std
++  namespace std2
+   {
+     class exception
+     {
+@@ -12,7 +12,7 @@
+     };
+   }
+ }
+-namespace std
++namespace std2
+ {
+   struct __cow_string
+   {
+Index: gcc/testsuite/g++.dg/lto/pr65276_0.C
+===================================================================
+--- a/src/gcc/testsuite/g++.dg/lto/pr65276_0.C	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/testsuite/g++.dg/lto/pr65276_0.C	(.../branches/gcc-5-branch)
+@@ -7,7 +7,7 @@
+ 
+ extern "C++"
+ {
+-  namespace std
++  namespace std2
+   {
+     class exception
+     {
+@@ -16,7 +16,7 @@
+     };
+   }
+ }
+-namespace std
++namespace std2
+ {
+   struct __cow_string
+   {
+@@ -31,9 +31,9 @@
+     __cow_string _M_msg;
+   };
+ }
+-namespace std
++namespace std2
+ {
+-  class system_error:public std::runtime_error
++  class system_error:public std2::runtime_error
+   {
+   };
+   enum _Ios_Fmtflags
+Index: gcc/cp/decl.c
+===================================================================
+--- a/src/gcc/cp/decl.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/cp/decl.c	(.../branches/gcc-5-branch)
+@@ -10628,7 +10628,7 @@
+       }
+     else if (decl_context == FIELD)
+       {
+-	if (!staticp && TREE_CODE (type) != METHOD_TYPE
++	if (!staticp && !friendp && TREE_CODE (type) != METHOD_TYPE
+ 	    && type_uses_auto (type))
+ 	  {
+ 	    error ("non-static data member declared %<auto%>");
+Index: gcc/cp/ChangeLog
+===================================================================
+--- a/src/gcc/cp/ChangeLog	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/cp/ChangeLog	(.../branches/gcc-5-branch)
+@@ -1,3 +1,22 @@
++2015-04-22  Marek Polacek  <polacek@redhat.com>
++
++	PR c++/65727
++	* lambda.c (maybe_resolve_dummy): Handle null return.
++
++2015-04-22  Jason Merrill  <jason@redhat.com>
++
++	PR c++/65695
++	* cvt.c (cp_fold_convert): Avoid wrapping PTRMEM_CST in NOP_EXPR.
++
++	PR c++/65721
++	* name-lookup.c (do_class_using_decl): Complain about specifying
++	the current class even if there are dependent bases.
++
++2015-04-22  David Krauss  <david_work@me.com>
++
++	PR c++/59766
++	* decl.c (grokdeclarator): Do not flag friends with deduced return.
++
+ 2015-04-22  Release Manager
+ 
+ 	* GCC 5.1.0 released.
+Index: gcc/cp/lambda.c
+===================================================================
+--- a/src/gcc/cp/lambda.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/cp/lambda.c	(.../branches/gcc-5-branch)
+@@ -787,7 +787,7 @@
+       /* In a lambda, need to go through 'this' capture.  */
+       tree lam = CLASSTYPE_LAMBDA_EXPR (current_class_type);
+       tree cap = lambda_expr_this_capture (lam, add_capture_p);
+-      if (cap != error_mark_node)
++      if (cap && cap != error_mark_node)
+ 	object = build_x_indirect_ref (EXPR_LOCATION (object), cap,
+ 				       RO_NULL, tf_warning_or_error);
+     }
+Index: gcc/cp/cvt.c
+===================================================================
+--- a/src/gcc/cp/cvt.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/cp/cvt.c	(.../branches/gcc-5-branch)
+@@ -603,8 +603,20 @@
+ tree
+ cp_fold_convert (tree type, tree expr)
+ {
+-  tree conv = fold_convert (type, expr);
+-  conv = ignore_overflows (conv, expr);
++  tree conv;
++  if (TREE_TYPE (expr) == type)
++    conv = expr;
++  else if (TREE_CODE (expr) == PTRMEM_CST)
++    {
++      /* Avoid wrapping a PTRMEM_CST in NOP_EXPR.  */
++      conv = copy_node (expr);
++      TREE_TYPE (conv) = type;
++    }
++  else
++    {
++      conv = fold_convert (type, expr);
++      conv = ignore_overflows (conv, expr);
++    }
+   return conv;
+ }
+ 
+Index: gcc/cp/name-lookup.c
+===================================================================
+--- a/src/gcc/cp/name-lookup.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/cp/name-lookup.c	(.../branches/gcc-5-branch)
+@@ -3408,7 +3408,7 @@
+ 			   tf_warning_or_error);
+       if (b_kind < bk_proper_base)
+ 	{
+-	  if (!bases_dependent_p)
++	  if (!bases_dependent_p || b_kind == bk_same_type)
+ 	    {
+ 	      error_not_base_type (scope, current_class_type);
+ 	      return NULL_TREE;
+Index: gcc/fortran/decl.c
+===================================================================
+--- a/src/gcc/fortran/decl.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/fortran/decl.c	(.../branches/gcc-5-branch)
+@@ -1404,9 +1404,7 @@
+ 		    }
+ 		  else if (init->expr_type == EXPR_ARRAY)
+ 		    {
+-		      gfc_constructor *c;
+-		      c = gfc_constructor_first (init->value.constructor);
+-		      clen = c->expr->value.character.length;
++		      clen = mpz_get_si (init->ts.u.cl->length->value.integer);
+ 		      sym->ts.u.cl->length
+ 				= gfc_get_int_expr (gfc_default_integer_kind,
+ 						    NULL, clen);
+Index: gcc/fortran/ChangeLog
+===================================================================
+--- a/src/gcc/fortran/ChangeLog	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/fortran/ChangeLog	(.../branches/gcc-5-branch)
+@@ -2,6 +2,11 @@
+ 
+ 	* GCC 5.1.0 released.
+ 
++2015-04-22  Steven G. Kargl  <kargl@gcc.gnu.org>
++
++	PR fortran/65429
++	* decl.c (add_init_expr_to_sym): Set the length type parameter.
++
+ 2015-04-10  Tobias Burnus  <burnus@net-b.de>
+ 
+ 	* trans-stmt.c (gfc_trans_lock_unlock): Implement -fcoarray=lib
+Index: gcc/BASE-VER
+===================================================================
+--- a/src/gcc/BASE-VER	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/BASE-VER	(.../branches/gcc-5-branch)
+@@ -1 +1 @@
+-5.1.0
++5.1.1
+Index: gcc/lra-constraints.c
+===================================================================
+--- a/src/gcc/lra-constraints.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/lra-constraints.c	(.../branches/gcc-5-branch)
+@@ -533,7 +533,7 @@
+   if (x == res || CONSTANT_P (res))
+     return res;
+   return lra_eliminate_regs_1 (insn, res, GET_MODE (res),
+-			       0, false, false, true);
++			       false, false, 0, true);
+ }
+ 
+ /* Set up curr_operand_mode.  */
+Index: gcc/config/i386/sse.md
+===================================================================
+--- a/src/gcc/config/i386/sse.md	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/config/i386/sse.md	(.../branches/gcc-5-branch)
+@@ -9523,7 +9523,7 @@
+ 	(mult:V4DI
+ 	  (sign_extend:V4DI
+ 	    (vec_select:V4SI
+-	      (match_operand:V8SI 1 "nonimmediate_operand" "v")
++	      (match_operand:V8SI 1 "nonimmediate_operand" "%v")
+ 	      (parallel [(const_int 0) (const_int 2)
+ 			 (const_int 4) (const_int 6)])))
+ 	  (sign_extend:V4DI
+Index: gcc/config/avr/avr.opt
+===================================================================
+--- a/src/gcc/config/avr/avr.opt	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/config/avr/avr.opt	(.../branches/gcc-5-branch)
+@@ -97,4 +97,4 @@
+ 
+ nodevicelib
+ Driver Target Report RejectNegative
+-Do not link against the device-specific library libdev.a
++Do not link against the device-specific library lib<MCU>.a
+Index: gcc/config/avr/avr-mcus.def
+===================================================================
+--- a/src/gcc/config/avr/avr-mcus.def	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/config/avr/avr-mcus.def	(.../branches/gcc-5-branch)
+@@ -44,8 +44,8 @@
+                      used by DRIVER_SELF_SPECS and gen-avr-mmcu-specs.c for
+                      - the name of the device specific specs file
+                        in -specs=device-specs/spec-<NAME>
+-                     - the name of the startup file dev/<NAME>/crt1.o
+-                     - the name of the device library dev/<NAME>/libdev.a
++                     - the name of the startup file crt<NAME>.o
++                     - to link the device library by means of -l<NAME>
+ 
+        ARCH          Specifies the multilib variant together with AVR_SHORT_SP
+ 
+Index: gcc/config/avr/gen-avr-mmcu-specs.c
+===================================================================
+--- a/src/gcc/config/avr/gen-avr-mmcu-specs.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/config/avr/gen-avr-mmcu-specs.c	(.../branches/gcc-5-branch)
+@@ -171,11 +171,11 @@
+   if (is_device)
+     {
+       fprintf (f, "*avrlibc_startfile:\n");
+-      fprintf (f, "\tdev/%s/crt1.o%%s", mcu->name);
++      fprintf (f, "\tcrt%s.o%%s", mcu->name);
+       fprintf (f, "\n\n");
+ 
+       fprintf (f, "*avrlibc_devicelib:\n");
+-      fprintf (f, "\t%%{!nodevicelib:dev/%s/libdev.a%%s}", mcu->name);
++      fprintf (f, "\t%%{!nodevicelib:-l%s}", mcu->name);
+       fprintf (f, "\n\n");
+     }
+ #endif  // WITH_AVRLIBC
+Index: gcc/config/rs6000/rs6000-builtin.def
+===================================================================
+--- a/src/gcc/config/rs6000/rs6000-builtin.def	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/config/rs6000/rs6000-builtin.def	(.../branches/gcc-5-branch)
+@@ -392,6 +392,14 @@
+ 		     | RS6000_BTC_BINARY),				\
+ 		    CODE_FOR_ ## ICODE)			/* ICODE */
+ 
++#define BU_CRYPTO_2A(ENUM, NAME, ATTR, ICODE)				\
++  RS6000_BUILTIN_2 (CRYPTO_BUILTIN_ ## ENUM,		/* ENUM */	\
++		    "__builtin_crypto_" NAME,		/* NAME */	\
++		    RS6000_BTM_P8_VECTOR,		/* MASK */	\
++		    (RS6000_BTC_ ## ATTR		/* ATTR */	\
++		     | RS6000_BTC_BINARY),				\
++		    CODE_FOR_ ## ICODE)			/* ICODE */
++
+ #define BU_CRYPTO_3(ENUM, NAME, ATTR, ICODE)				\
+   RS6000_BUILTIN_3 (CRYPTO_BUILTIN_ ## ENUM,		/* ENUM */	\
+ 		    "__builtin_crypto_" NAME,		/* NAME */	\
+@@ -400,6 +408,14 @@
+ 		     | RS6000_BTC_TERNARY),				\
+ 		    CODE_FOR_ ## ICODE)			/* ICODE */
+ 
++#define BU_CRYPTO_3A(ENUM, NAME, ATTR, ICODE)				\
++  RS6000_BUILTIN_3 (CRYPTO_BUILTIN_ ## ENUM,		/* ENUM */	\
++		    "__builtin_crypto_" NAME,		/* NAME */	\
++		    RS6000_BTM_P8_VECTOR,		/* MASK */	\
++		    (RS6000_BTC_ ## ATTR		/* ATTR */	\
++		     | RS6000_BTC_TERNARY),				\
++		    CODE_FOR_ ## ICODE)			/* ICODE */
++
+ #define BU_CRYPTO_OVERLOAD_1(ENUM, NAME)				\
+   RS6000_BUILTIN_1 (CRYPTO_BUILTIN_ ## ENUM,		/* ENUM */	\
+ 		    "__builtin_crypto_" NAME,		/* NAME */	\
+@@ -408,10 +424,10 @@
+ 		     | RS6000_BTC_UNARY),				\
+ 		    CODE_FOR_nothing)			/* ICODE */
+ 
+-#define BU_CRYPTO_OVERLOAD_2(ENUM, NAME)				\
++#define BU_CRYPTO_OVERLOAD_2A(ENUM, NAME)				\
+   RS6000_BUILTIN_2 (CRYPTO_BUILTIN_ ## ENUM,		/* ENUM */	\
+ 		    "__builtin_crypto_" NAME,		/* NAME */	\
+-		    RS6000_BTM_CRYPTO,			/* MASK */	\
++		    RS6000_BTM_P8_VECTOR,		/* MASK */	\
+ 		    (RS6000_BTC_OVERLOADED		/* ATTR */	\
+ 		     | RS6000_BTC_BINARY),				\
+ 		    CODE_FOR_nothing)			/* ICODE */
+@@ -424,6 +440,14 @@
+ 		     | RS6000_BTC_TERNARY),				\
+ 		    CODE_FOR_nothing)			/* ICODE */
+ 
++#define BU_CRYPTO_OVERLOAD_3A(ENUM, NAME)				\
++  RS6000_BUILTIN_3 (CRYPTO_BUILTIN_ ## ENUM,		/* ENUM */	\
++		    "__builtin_crypto_" NAME,		/* NAME */	\
++		    RS6000_BTM_P8_VECTOR,		/* MASK */	\
++		    (RS6000_BTC_OVERLOADED		/* ATTR */	\
++		     | RS6000_BTC_TERNARY),				\
++		    CODE_FOR_nothing)			/* ICODE */
++
+ /* HTM convenience macros.  */
+ #define BU_HTM_0(ENUM, NAME, ATTR, ICODE)				\
+   RS6000_BUILTIN_H (HTM_BUILTIN_ ## ENUM,		/* ENUM */	\
+@@ -1611,24 +1635,24 @@
+ BU_CRYPTO_2 (VCIPHERLAST,	"vcipherlast",	  CONST, crypto_vcipherlast)
+ BU_CRYPTO_2 (VNCIPHER,		"vncipher",	  CONST, crypto_vncipher)
+ BU_CRYPTO_2 (VNCIPHERLAST,	"vncipherlast",	  CONST, crypto_vncipherlast)
+-BU_CRYPTO_2 (VPMSUMB,		"vpmsumb",	  CONST, crypto_vpmsumb)
+-BU_CRYPTO_2 (VPMSUMH,		"vpmsumh",	  CONST, crypto_vpmsumh)
+-BU_CRYPTO_2 (VPMSUMW,		"vpmsumw",	  CONST, crypto_vpmsumw)
+-BU_CRYPTO_2 (VPMSUMD,		"vpmsumd",	  CONST, crypto_vpmsumd)
++BU_CRYPTO_2A (VPMSUMB,		"vpmsumb",	  CONST, crypto_vpmsumb)
++BU_CRYPTO_2A (VPMSUMH,		"vpmsumh",	  CONST, crypto_vpmsumh)
++BU_CRYPTO_2A (VPMSUMW,		"vpmsumw",	  CONST, crypto_vpmsumw)
++BU_CRYPTO_2A (VPMSUMD,		"vpmsumd",	  CONST, crypto_vpmsumd)
+ 
+ /* 3 argument crypto functions.  */
+-BU_CRYPTO_3 (VPERMXOR_V2DI,	"vpermxor_v2di",  CONST, crypto_vpermxor_v2di)
+-BU_CRYPTO_3 (VPERMXOR_V4SI,	"vpermxor_v4si",  CONST, crypto_vpermxor_v4si)
+-BU_CRYPTO_3 (VPERMXOR_V8HI,	"vpermxor_v8hi",  CONST, crypto_vpermxor_v8hi)
+-BU_CRYPTO_3 (VPERMXOR_V16QI,	"vpermxor_v16qi", CONST, crypto_vpermxor_v16qi)
++BU_CRYPTO_3A (VPERMXOR_V2DI,	"vpermxor_v2di",  CONST, crypto_vpermxor_v2di)
++BU_CRYPTO_3A (VPERMXOR_V4SI,	"vpermxor_v4si",  CONST, crypto_vpermxor_v4si)
++BU_CRYPTO_3A (VPERMXOR_V8HI,	"vpermxor_v8hi",  CONST, crypto_vpermxor_v8hi)
++BU_CRYPTO_3A (VPERMXOR_V16QI,	"vpermxor_v16qi", CONST, crypto_vpermxor_v16qi)
+ BU_CRYPTO_3 (VSHASIGMAW,	"vshasigmaw",	  CONST, crypto_vshasigmaw)
+ BU_CRYPTO_3 (VSHASIGMAD,	"vshasigmad",	  CONST, crypto_vshasigmad)
+ 
+ /* 2 argument crypto overloaded functions.  */
+-BU_CRYPTO_OVERLOAD_2 (VPMSUM,	 "vpmsum")
++BU_CRYPTO_OVERLOAD_2A (VPMSUM,	 "vpmsum")
+ 
+ /* 3 argument crypto overloaded functions.  */
+-BU_CRYPTO_OVERLOAD_3 (VPERMXOR,	 "vpermxor")
++BU_CRYPTO_OVERLOAD_3A (VPERMXOR,	 "vpermxor")
+ BU_CRYPTO_OVERLOAD_3 (VSHASIGMA, "vshasigma")
+ 
+ 
+Index: gcc/config/rs6000/rs6000.opt
+===================================================================
+--- a/src/gcc/config/rs6000/rs6000.opt	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/config/rs6000/rs6000.opt	(.../branches/gcc-5-branch)
+@@ -211,6 +211,10 @@
+ Target Undocumented Var(TARGET_ALLOW_MOVMISALIGN) Init(-1)
+ ; Allow/disallow the movmisalign in DF/DI vectors
+ 
++mefficient-unaligned-vector
++Target Undocumented Report Var(TARGET_EFFICIENT_UNALIGNED_VSX) Init(-1)
++; Consider unaligned VSX accesses to be efficient/inefficient
++
+ mallow-df-permute
+ Target Undocumented Var(TARGET_ALLOW_DF_PERMUTE)
+ ; Allow/disallow permutation of DF/DI vectors
+@@ -559,7 +563,7 @@
+ 
+ mcrypto
+ Target Report Mask(CRYPTO) Var(rs6000_isa_flags)
+-Use ISA 2.07 crypto instructions
++Use ISA 2.07 Category:Vector.AES and Category:Vector.SHA2 instructions
+ 
+ mdirect-move
+ Target Report Mask(DIRECT_MOVE) Var(rs6000_isa_flags)
+Index: gcc/config/rs6000/rs6000.c
+===================================================================
+--- a/src/gcc/config/rs6000/rs6000.c	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/config/rs6000/rs6000.c	(.../branches/gcc-5-branch)
+@@ -4251,6 +4251,22 @@
+ 	}
+     }
+ 
++  /* Determine when unaligned vector accesses are permitted, and when
++     they are preferred over masked Altivec loads.  Note that if
++     TARGET_ALLOW_MOVMISALIGN has been disabled by the user, then
++     TARGET_EFFICIENT_UNALIGNED_VSX must be as well.  The converse is
++     not true.  */
++  if (TARGET_EFFICIENT_UNALIGNED_VSX == -1) {
++    if (TARGET_VSX && rs6000_cpu == PROCESSOR_POWER8
++	&& TARGET_ALLOW_MOVMISALIGN != 0)
++      TARGET_EFFICIENT_UNALIGNED_VSX = 1;
++    else
++      TARGET_EFFICIENT_UNALIGNED_VSX = 0;
++  }
++
++  if (TARGET_ALLOW_MOVMISALIGN == -1 && rs6000_cpu == PROCESSOR_POWER8)
++    TARGET_ALLOW_MOVMISALIGN = 1;
++
+   /* Set the builtin mask of the various options used that could affect which
+      builtins were used.  In the past we used target_flags, but we've run out
+      of bits, and some options like SPE and PAIRED are no longer in
+@@ -4299,7 +4315,9 @@
+ static tree
+ rs6000_builtin_mask_for_load (void)
+ {
+-  if (TARGET_ALTIVEC || TARGET_VSX)
++  /* Don't use lvsl/vperm for P8 and similarly efficient machines.  */
++  if ((TARGET_ALTIVEC && !TARGET_VSX)
++      || (TARGET_VSX && !TARGET_EFFICIENT_UNALIGNED_VSX))
+     return altivec_builtin_mask_for_load;
+   else
+     return 0;
+@@ -4378,6 +4396,9 @@
+ {
+   if (TARGET_VSX)
+     {
++      if (TARGET_EFFICIENT_UNALIGNED_VSX)
++	return true;
++
+       /* Return if movmisalign pattern is not supported for this mode.  */
+       if (optab_handler (movmisalign_optab, mode) == CODE_FOR_nothing)
+         return false;
+@@ -4441,6 +4462,9 @@
+         return 3;
+ 
+       case unaligned_load:
++	if (TARGET_EFFICIENT_UNALIGNED_VSX)
++	  return 1;
++
+         if (TARGET_VSX && TARGET_ALLOW_MOVMISALIGN)
+           {
+             elements = TYPE_VECTOR_SUBPARTS (vectype);
+@@ -4476,6 +4500,9 @@
+         return 2;
+ 
+       case unaligned_store:
++	if (TARGET_EFFICIENT_UNALIGNED_VSX)
++	  return 1;
++
+         if (TARGET_VSX && TARGET_ALLOW_MOVMISALIGN)
+           {
+             elements = TYPE_VECTOR_SUBPARTS (vectype);
+@@ -8371,6 +8398,11 @@
+ {
+   rtx tmp, permute_src, permute_tmp;
+ 
++  /* This should never be called during or after reload, because it does
++     not re-permute the source register.  It is intended only for use
++     during expand.  */
++  gcc_assert (!reload_in_progress && !lra_in_progress && !reload_completed);
++
+   /* Use V2DImode to do swaps of types with 128-bit scalare parts (TImode,
+      V1TImode).  */
+   if (mode == TImode || mode == V1TImode)
+@@ -22768,7 +22800,7 @@
+ 
+ static rtx
+ rs6000_frame_related (rtx insn, rtx reg, HOST_WIDE_INT val,
+-		      rtx reg2, rtx rreg, rtx split_reg)
++		      rtx reg2, rtx rreg)
+ {
+   rtx real, temp;
+ 
+@@ -22859,11 +22891,6 @@
+ 	  }
+     }
+ 
+-  /* If a store insn has been split into multiple insns, the
+-     true source register is given by split_reg.  */
+-  if (split_reg != NULL_RTX)
+-    real = gen_rtx_SET (VOIDmode, SET_DEST (real), split_reg);
+-
+   RTX_FRAME_RELATED_P (insn) = 1;
+   add_reg_note (insn, REG_FRAME_RELATED_EXPR, real);
+ 
+@@ -22971,7 +22998,7 @@
+   reg = gen_rtx_REG (mode, regno);
+   insn = emit_insn (gen_frame_store (reg, frame_reg, offset));
+   return rs6000_frame_related (insn, frame_reg, frame_reg_to_sp,
+-			       NULL_RTX, NULL_RTX, NULL_RTX);
++			       NULL_RTX, NULL_RTX);
+ }
+ 
+ /* Emit an offset memory reference suitable for a frame store, while
+@@ -23551,7 +23578,7 @@
+ 
+       insn = emit_insn (gen_rtx_PARALLEL (VOIDmode, p));
+       rs6000_frame_related (insn, frame_reg_rtx, sp_off - frame_off,
+-			    treg, GEN_INT (-info->total_size), NULL_RTX);
++			    treg, GEN_INT (-info->total_size));
+       sp_off = frame_off = info->total_size;
+     }
+ 
+@@ -23636,7 +23663,7 @@
+ 
+ 	  insn = emit_move_insn (mem, reg);
+ 	  rs6000_frame_related (insn, frame_reg_rtx, sp_off - frame_off,
+-				NULL_RTX, NULL_RTX, NULL_RTX);
++				NULL_RTX, NULL_RTX);
+ 	  END_USE (0);
+ 	}
+     }
+@@ -23692,7 +23719,7 @@
+ 				     info->lr_save_offset,
+ 				     DFmode, sel);
+       rs6000_frame_related (insn, ptr_reg, sp_off,
+-			    NULL_RTX, NULL_RTX, NULL_RTX);
++			    NULL_RTX, NULL_RTX);
+       if (lr)
+ 	END_USE (0);
+     }
+@@ -23771,7 +23798,7 @@
+ 					 SAVRES_SAVE | SAVRES_GPR);
+ 
+ 	  rs6000_frame_related (insn, spe_save_area_ptr, sp_off - save_off,
+-				NULL_RTX, NULL_RTX, NULL_RTX);
++				NULL_RTX, NULL_RTX);
+ 	}
+ 
+       /* Move the static chain pointer back.  */
+@@ -23821,7 +23848,7 @@
+ 				     info->lr_save_offset + ptr_off,
+ 				     reg_mode, sel);
+       rs6000_frame_related (insn, ptr_reg, sp_off - ptr_off,
+-			    NULL_RTX, NULL_RTX, NULL_RTX);
++			    NULL_RTX, NULL_RTX);
+       if (lr)
+ 	END_USE (0);
+     }
+@@ -23837,7 +23864,7 @@
+ 			     info->gp_save_offset + frame_off + reg_size * i);
+       insn = emit_insn (gen_rtx_PARALLEL (VOIDmode, p));
+       rs6000_frame_related (insn, frame_reg_rtx, sp_off - frame_off,
+-			    NULL_RTX, NULL_RTX, NULL_RTX);
++			    NULL_RTX, NULL_RTX);
+     }
+   else if (!WORLD_SAVE_P (info))
+     {
+@@ -24160,7 +24187,7 @@
+ 				     info->altivec_save_offset + ptr_off,
+ 				     0, V4SImode, SAVRES_SAVE | SAVRES_VR);
+       rs6000_frame_related (insn, scratch_reg, sp_off - ptr_off,
+-			    NULL_RTX, NULL_RTX, NULL_RTX);
++			    NULL_RTX, NULL_RTX);
+       if (REGNO (frame_reg_rtx) == REGNO (scratch_reg))
+ 	{
+ 	  /* The oddity mentioned above clobbered our frame reg.  */
+@@ -24176,7 +24203,7 @@
+       for (i = info->first_altivec_reg_save; i <= LAST_ALTIVEC_REGNO; ++i)
+ 	if (info->vrsave_mask & ALTIVEC_REG_BIT (i))
+ 	  {
+-	    rtx areg, savereg, mem, split_reg;
++	    rtx areg, savereg, mem;
+ 	    int offset;
+ 
+ 	    offset = (info->altivec_save_offset + frame_off
+@@ -24192,20 +24219,13 @@
+ 	    mem = gen_frame_mem (V4SImode,
+ 				 gen_rtx_PLUS (Pmode, frame_reg_rtx, areg));
+ 
+-	    insn = emit_move_insn (mem, savereg);
++	    /* Rather than emitting a generic move, force use of the stvx
++	       instruction, which we always want.  In particular we don't
++	       want xxpermdi/stxvd2x for little endian.  */
++	    insn = emit_insn (gen_altivec_stvx_v4si_internal (mem, savereg));
+ 
+-	    /* When we split a VSX store into two insns, we need to make
+-	       sure the DWARF info knows which register we are storing.
+-	       Pass it in to be used on the appropriate note.  */
+-	    if (!BYTES_BIG_ENDIAN
+-		&& GET_CODE (PATTERN (insn)) == SET
+-		&& GET_CODE (SET_SRC (PATTERN (insn))) == VEC_SELECT)
+-	      split_reg = savereg;
+-	    else
+-	      split_reg = NULL_RTX;
+-
+ 	    rs6000_frame_related (insn, frame_reg_rtx, sp_off - frame_off,
+-				  areg, GEN_INT (offset), split_reg);
++				  areg, GEN_INT (offset));
+ 	  }
+     }
+ 
+@@ -24847,7 +24867,10 @@
+ 		mem = gen_frame_mem (V4SImode, addr);
+ 
+ 		reg = gen_rtx_REG (V4SImode, i);
+-		emit_move_insn (reg, mem);
++		/* Rather than emitting a generic move, force use of the
++		   lvx instruction, which we always want.  In particular
++		   we don't want lxvd2x/xxpermdi for little endian.  */
++		(void) emit_insn (gen_altivec_lvx_v4si_internal (reg, mem));
+ 	      }
+ 	}
+ 
+@@ -25050,7 +25073,10 @@
+ 		mem = gen_frame_mem (V4SImode, addr);
+ 
+ 		reg = gen_rtx_REG (V4SImode, i);
+-		emit_move_insn (reg, mem);
++		/* Rather than emitting a generic move, force use of the
++		   lvx instruction, which we always want.  In particular
++		   we don't want lxvd2x/xxpermdi for little endian.  */
++		(void) emit_insn (gen_altivec_lvx_v4si_internal (reg, mem));
+ 	      }
+ 	}
+ 
+@@ -34218,7 +34244,8 @@
+ 	   order-dependent element, so additional fixup code would be
+ 	   needed to make those work.  Vector set and non-immediate-form
+ 	   vector splat are element-order sensitive.  A few of these
+-	   cases might be workable with special handling if required.  */
++	   cases might be workable with special handling if required.
++	   Adding cost modeling would be appropriate in some cases.  */
+ 	int val = XINT (op, 1);
+ 	switch (val)
+ 	  {
+@@ -34257,12 +34284,6 @@
+ 	  case UNSPEC_VUPKLPX:
+ 	  case UNSPEC_VUPKLS_V4SF:
+ 	  case UNSPEC_VUPKLU_V4SF:
+-	  /* The following could be handled as an idiom with XXSPLTW.
+-	     These place a scalar in BE element zero, but the XXSPLTW
+-	     will currently expect it in BE element 2 in a swapped
+-	     region.  When one of these feeds an XXSPLTW with no other
+-	     defs/uses either way, we can avoid the lane change for
+-	     XXSPLTW and things will be correct.  TBD.  */
+ 	  case UNSPEC_VSX_CVDPSPN:
+ 	  case UNSPEC_VSX_CVSPDP:
+ 	  case UNSPEC_VSX_CVSPDPN:
+@@ -34353,6 +34374,36 @@
+ 	return 0;
+     }
+ 
++  /* A convert to single precision can be left as is provided that
++     all of its uses are in xxspltw instructions that splat BE element
++     zero.  */
++  if (GET_CODE (body) == SET
++      && GET_CODE (SET_SRC (body)) == UNSPEC
++      && XINT (SET_SRC (body), 1) == UNSPEC_VSX_CVDPSPN)
++    {
++      df_ref def;
++      struct df_insn_info *insn_info = DF_INSN_INFO_GET (insn);
++
++      FOR_EACH_INSN_INFO_DEF (def, insn_info)
++	{
++	  struct df_link *link = DF_REF_CHAIN (def);
++	  if (!link)
++	    return 0;
++
++	  for (; link; link = link->next) {
++	    rtx use_insn = DF_REF_INSN (link->ref);
++	    rtx use_body = PATTERN (use_insn);
++	    if (GET_CODE (use_body) != SET
++		|| GET_CODE (SET_SRC (use_body)) != UNSPEC
++		|| XINT (SET_SRC (use_body), 1) != UNSPEC_VSX_XXSPLTW
++		|| XEXP (XEXP (SET_SRC (use_body), 0), 1) != const0_rtx)
++	      return 0;
++	  }
++	}
++
++      return 1;
++    }
++
+   /* Otherwise check the operands for vector lane violations.  */
+   return rtx_is_swappable_p (body, special);
+ }
+Index: gcc/config/rs6000/rs6000.h
+===================================================================
+--- a/src/gcc/config/rs6000/rs6000.h	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/config/rs6000/rs6000.h	(.../branches/gcc-5-branch)
+@@ -891,7 +891,8 @@
+    || (((MODE) == SFmode || (MODE) == DFmode || (MODE) == TFmode	\
+ 	|| (MODE) == SDmode || (MODE) == DDmode || (MODE) == TDmode)	\
+        && (ALIGN) < 32)							\
+-   || (VECTOR_MODE_P ((MODE)) && (((int)(ALIGN)) < VECTOR_ALIGN (MODE))))
++   || (!TARGET_EFFICIENT_UNALIGNED_VSX                                  \
++       && (VECTOR_MODE_P ((MODE)) && (((int)(ALIGN)) < VECTOR_ALIGN (MODE)))))
+ 
+ 
+ /* Standard register usage.  */
+Index: gcc/config/rs6000/altivec.md
+===================================================================
+--- a/src/gcc/config/rs6000/altivec.md	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/config/rs6000/altivec.md	(.../branches/gcc-5-branch)
+@@ -2455,7 +2455,7 @@
+     }
+ })
+ 
+-(define_insn "*altivec_lvx_<mode>_internal"
++(define_insn "altivec_lvx_<mode>_internal"
+   [(parallel
+     [(set (match_operand:VM2 0 "register_operand" "=v")
+ 	  (match_operand:VM2 1 "memory_operand" "Z"))
+@@ -2478,7 +2478,7 @@
+     }
+ })
+ 
+-(define_insn "*altivec_stvx_<mode>_internal"
++(define_insn "altivec_stvx_<mode>_internal"
+   [(parallel
+     [(set (match_operand:VM2 0 "memory_operand" "=Z")
+ 	  (match_operand:VM2 1 "register_operand" "v"))
+Index: gcc/config/rs6000/crypto.md
+===================================================================
+--- a/src/gcc/config/rs6000/crypto.md	(.../tags/gcc_5_1_0_release)
++++ b/src/gcc/config/rs6000/crypto.md	(.../branches/gcc-5-branch)
+@@ -18,6 +18,15 @@
+ ;; along with GCC; see the file COPYING3.  If not see
+ ;; <http://www.gnu.org/licenses/>.
+ 
++;; NOTE: Although this file contains all the instructions from
++;; section 5.11 of ISA 2.07, only those in sections 5.11.1 and
++;; 5.11.2 are in Category:Vector.Crypto.  Those are the only
++;; ones controlled by -m[no-]crypto.
++
++;; FIXME: The builtin names for the instructions in this file
++;; are likely to be deprecated in favor of other names to be
++;; agreed upon with the XL compilers and LLVM.
++
+ (define_c_enum "unspec"
+   [UNSPEC_VCIPHER
+    UNSPEC_VNCIPHER
+@@ -65,7 +74,7 @@
+ 	(unspec:CR_mode [(match_operand:CR_mode 1 "register_operand" "v")
+ 			 (match_operand:CR_mode 2 "register_operand" "v")]
+ 			UNSPEC_VPMSUM))]
+-  "TARGET_CRYPTO"
++  "TARGET_P8_VECTOR"
+   "vpmsum<CR_char> %0,%1,%2"
+   [(set_attr "type" "crypto")])
+ 
+@@ -76,7 +85,7 @@
+ 			 (match_operand:CR_mode 2 "register_operand" "v")
+ 			 (match_operand:CR_mode 3 "register_operand" "v")]
+ 			UNSPEC_VPERMXOR))]
+-  "TARGET_CRYPTO"
++  "TARGET_P8_VECTOR"
+   "vpermxor %0,%1,%2,%3"
+   [(set_attr "type" "crypto")])
+ 

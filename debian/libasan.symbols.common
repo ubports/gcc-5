@@ -2,10 +2,8 @@
  _ZN11__sanitizer7OnPrintEPKc@Base 4.9
  _ZdaPv@Base 4.8
  _ZdaPvRKSt9nothrow_t@Base 4.8
- _ZdaPvm@Base 5
  _ZdlPv@Base 4.8
  _ZdlPvRKSt9nothrow_t@Base 4.8
- _ZdlPvm@Base 5
  __asan_addr_is_in_fake_stack@Base 5
  __asan_address_is_poisoned@Base 4.8
  __asan_after_dynamic_init@Base 4.8

@@ -22,5 +22,4 @@
  _ZTVNSt13__future_base12_Result_baseE@GLIBCXX_3.4.15 4.6
  _ZTVNSt13__future_base19_Async_state_commonE@GLIBCXX_3.4.17 4.7.0~rc1
  _ZTVSt16nested_exception@CXXABI_1.3.5 4.6
- _ZTVSt17bad_function_call@CXXABI_1.3.5 4.6
  _ZNSt28__atomic_futex_unsigned_base19_M_futex_notify_allEPj@GLIBCXX_3.4.21 5

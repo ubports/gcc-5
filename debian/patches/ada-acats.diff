@@ -1,6 +1,6 @@
 # DP: - When running the ACATS, look for the gnat tools in their new
 # DP:   directory (build/gnattools), and for the shared libraries in
-# DP:   build/gcc/ada/rts-shared-zcx, build/libgnatvsn and build/libgnatprj.
+# DP:   build/gcc/ada/rts, build/libgnatvsn and build/libgnatprj.
 
 Index: b/src/gcc/testsuite/ada/acats/run_acats
 ===================================================================
@@ -78,19 +78,18 @@ Index: b/src/gcc/testsuite/ada/acats/run_all.sh
 ===================================================================
 --- a/src/gcc/testsuite/ada/acats/run_all.sh
 +++ b/src/gcc/testsuite/ada/acats/run_all.sh
-@@ -12,6 +12,11 @@
+@@ -12,6 +12,10 @@
  gccflags="-O2"
  gnatflags="-gnatws"
  
-+SHARED_RTS=`cd $GNATTOOLS/../gcc/ada/rts-shared-zcx; ${PWDCMD-pwd}`
-+RTS=`cd $GNATTOOLS/../gcc/ada/rts-static-zcx; ${PWDCMD-pwd}`
-+LD_LIBRARY_PATH=$SHARED_RTS:$LIBGNATVSN:$LIBGNATPRJ
++RTS=`cd $GNATTOOLS/../gcc/ada/rts; ${PWDCMD-pwd}`
++LD_LIBRARY_PATH=$RTS:$LIBGNATVSN:$LIBGNATPRJ
 +export LD_LIBRARY_PATH
 +
  target_run () {
    eval $EXPECT -f $testdir/run_test.exp $*
  }
-@@ -63,12 +68,15 @@ if [ "$dir" = "$testdir" ]; then
+@@ -63,12 +67,15 @@ if [ "$dir" = "$testdir" ]; then
  fi
  
  target_gnatchop () {
@@ -109,7 +108,7 @@ Index: b/src/gcc/testsuite/ada/acats/run_all.sh
  }
  
  target_gcc () {
-@@ -101,8 +109,8 @@ display target gcc is $GCC
+@@ -101,8 +108,8 @@ display target gcc is $GCC
  display `$GCC -v 2>&1`
  display host=`gcc -dumpmachine`
  display target=$target
@@ -141,18 +140,18 @@ Index: b/src/gcc/testsuite/lib/gnat.exp
 -	    set GNAT_UNDER_TEST "[local_find_gnatmake]"
 -	}
 -    }
-+    set GNAT_UNDER_TEST "$rootme/../gnattools/gnatmake -I$rootme/ada/rts-shared-zcx --GCC=$rootme/xgcc --GNATBIND=$rootme/../gnattools/gnatbind --GNATLINK=$rootme/../gnattools/gnatlink -cargs -B$rootme -largs --GCC=$rootme/xgcc -B$rootme -margs"
-+    append ld_library_path ":$rootme/ada/rts-shared-zcx"
++    set GNAT_UNDER_TEST "$rootme/../gnattools/gnatmake -I$rootme/ada/rts --GCC=$rootme/xgcc --GNATBIND=$rootme/../gnattools/gnatbind --GNATLINK=$rootme/../gnattools/gnatlink -cargs -B$rootme -largs --GCC=$rootme/xgcc -B$rootme -margs"
++    append ld_library_path ":$rootme/ada/rts"
 +    append ld_library_path ":$rootme/../libgnatvsn"
 +    append ld_library_path ":$rootme/../libgnatprj"
 +    set_ld_library_path_env_vars
 +
 +    # gnatlink looks for system.ads itself and has no --RTS option, so
 +    # specify via environment
-+    verbose -log "ADA_INCLUDE_PATH=$rootme/ada/rts-shared-zcx"
-+    verbose -log "ADA_OBJECTS_PATH=$rootme/ada/rts-shared-zcx"
-+    setenv ADA_INCLUDE_PATH "$rootme/ada/rts-shared-zcx"
-+    setenv ADA_OBJECTS_PATH "$rootme/ada/rts-shared-zcx"
++    verbose -log "ADA_INCLUDE_PATH=$rootme/ada/rts"
++    verbose -log "ADA_OBJECTS_PATH=$rootme/ada/rts"
++    setenv ADA_INCLUDE_PATH "$rootme/ada/rts"
++    setenv ADA_OBJECTS_PATH "$rootme/ada/rts"
  
      if ![info exists tmpdir] then {
  	set tmpdir /tmp

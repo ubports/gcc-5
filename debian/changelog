@@ -1,3 +1,23 @@
+gcc-5 (5.1.1-1) unstable; urgency=medium
+
+  * GCC 5.1.0 release.
+  * Update to SVN 20150424 (r222416, 5.1.1) from the gcc-5-branch.
+  * Update NEWS files.
+  * Apply the ada-bootstrap-compare patch for snapshot builds as well.
+  * Update libasan, libgomp and libstdc++ symbols files.
+  * Don't ignore errors in dh_makeshlibs and dh_shlibdeps anymore, symbols
+    files should be uptodate now.
+  * Split out the sjlj build related things from the ada-acats patch into
+    a new ada-acats-sjlj patch.
+  * Don't build libx32phobos-5-dev when not building x32 multilibs.
+  * Fix standard C++ include directory for cross builds. Closes: #783241.
+  * Ignore bootstrap comparison failure on ia64. Filed upstream as
+    PR middle-end/65874.
+  * gccgo: Add (don't yet apply) a patch to implement escape analysis (taken
+    from the trunk). Turned off by default, enable with -fgo-optimize-alloc.
+
+ -- Matthias Klose <doko@debian.org>  Fri, 24 Apr 2015 18:42:39 +0200
+
 gcc-5 (5.1~rc1-1) experimental; urgency=medium
 
   * GCC 5.1 release candidate 1.

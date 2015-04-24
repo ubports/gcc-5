@@ -5125,6 +5125,7 @@ Description: Phobos D standard library (n32 development files)
  .
  For more information check http://www.dlang.org/phobos/
 
+ifenabled(`libx32phobos',`
 Package: libx32phobos`'PV-dev`'LS
 Architecture: ifdef(`TARGET',`CROSS_ARCH',`biarchx32_archs')
 Section: libdevel
@@ -5135,6 +5136,7 @@ Description: Phobos D standard library (x32 development files)
  This is the Phobos standard library that comes with the D2 compiler.
  .
  For more information check http://www.dlang.org/phobos/
+')`'dnl libx32phobos
 
 ifenabled(`armml',`
 Package: libhfphobos`'PV-dev`'LS

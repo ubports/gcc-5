@@ -645,6 +645,8 @@ libstdcxx_abi = c++98
 ifneq (,$(filter $(distrelease),squeeze wheezy jessie sid lucid precise trusty utopic vivid))
   libstdcxx_abi = c++98
 endif
+# FIXME later ... sid is still known as jessie
+libstdcxx_abi = c++11
 
 # Build all packages needed for C++ development
 ifeq ($(with_cxx),yes)
@@ -1892,7 +1894,3 @@ else
   define cross_mangle_control
   endef
 endif
-
-# FIXME: to build initial packages ...
-ignshld = -
-cross_makeshlibs = -
