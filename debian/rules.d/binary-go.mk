@@ -42,9 +42,14 @@ dirs_go = \
 	$(PF)/include \
 	$(PF)/share/man/man1
 files_go = \
-	$(PF)/bin/$(cmd_prefix){gccgo,go,gofmt}$(pkg_ver) \
+	$(PF)/bin/$(cmd_prefix)gccgo$(pkg_ver) \
 	$(gcc_lexec_dir)/{cgo,go1} \
 	$(PF)/share/man/man1/{go,gofmt}$(pkg_ver).1
+
+ifneq (,$(filter $(build_type), build-native cross-build-native))
+  files_go += \
+	$(PF)/bin/{go,gofmt}$(pkg_ver)
+endif
 
 ifneq ($(GFDL_INVARIANT_FREE),yes)
   files_go += \
