@@ -528,7 +528,7 @@
  _ZNSt18__moneypunct_cacheIwLb0EEC2Ej@GLIBCXX_3.4 4.1.1
  _ZNSt18__moneypunct_cacheIwLb1EEC1Ej@GLIBCXX_3.4 4.1.1
  _ZNSt18__moneypunct_cacheIwLb1EEC2Ej@GLIBCXX_3.4 4.1.1
- (arch=!armel)_ZNSt28__atomic_futex_unsigned_base19_M_futex_wait_untilEPjjbNSt6chrono8durationIxSt5ratioILx1ELx1EEEENS2_IxS3_ILx1ELx1000000000EEEE@GLIBCXX_3.4.21 5
+ (arch=!armel !kfreebsd-i386)_ZNSt28__atomic_futex_unsigned_base19_M_futex_wait_untilEPjjbNSt6chrono8durationIxSt5ratioILx1ELx1EEEENS2_IxS3_ILx1ELx1000000000EEEE@GLIBCXX_3.4.21 5
  _ZNSt5ctypeIcEC1EP15__locale_structPKtbj@GLIBCXX_3.4 4.1.1
  _ZNSt5ctypeIcEC1EPKtbj@GLIBCXX_3.4 4.1.1
  _ZNSt5ctypeIcEC2EP15__locale_structPKtbj@GLIBCXX_3.4 4.1.1

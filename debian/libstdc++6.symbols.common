@@ -31,8 +31,9 @@
  GLIBCXX_3.4.8@GLIBCXX_3.4.8 4.1.1
  GLIBCXX_3.4.9@GLIBCXX_3.4.9 4.2.1
  GLIBCXX_3.4@GLIBCXX_3.4 4.1.1
-(arch=amd64 i386 x32)#include "libstdc++6.symbols.float128"
+(arch=amd64 i386 x32 kfreebsd-amd64 kfreebsd-i386)#include "libstdc++6.symbols.float128"
 (arch=!armel)#include "libstdc++6.symbols.not-armel"
+ (arch=!armel !hurd-i386 !kfreebsd-amd64 !kfreebsd-i386)_ZNSt28__atomic_futex_unsigned_base19_M_futex_notify_allEPj@GLIBCXX_3.4.21 5
  _ZGVNSt10moneypunctIcLb0EE2idE@GLIBCXX_3.4 4.1.1
  _ZGVNSt10moneypunctIcLb1EE2idE@GLIBCXX_3.4 4.1.1
  _ZGVNSt10moneypunctIwLb0EE2idE@GLIBCXX_3.4 4.1.1
