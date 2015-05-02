@@ -275,6 +275,9 @@ endif
 ifneq (,$(filter $(build_type), build-cross cross-build-cross))
   debian_patches += cross-no-locale-include
   debian_patches += cross-biarch
+  ifeq ($(with_d),yes)
+    debian_patches += gdc-cross-biarch
+  endif
 endif
 debian_patches += gcc-multilib-multiarch
 

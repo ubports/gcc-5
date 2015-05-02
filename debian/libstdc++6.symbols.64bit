@@ -527,7 +527,7 @@
  _ZNSt18__moneypunct_cacheIwLb0EEC2Em@GLIBCXX_3.4 4.1.1
  _ZNSt18__moneypunct_cacheIwLb1EEC1Em@GLIBCXX_3.4 4.1.1
  _ZNSt18__moneypunct_cacheIwLb1EEC2Em@GLIBCXX_3.4 4.1.1
- _ZNSt28__atomic_futex_unsigned_base19_M_futex_wait_untilEPjjbNSt6chrono8durationIlSt5ratioILl1ELl1EEEENS2_IlS3_ILl1ELl1000000000EEEE@GLIBCXX_3.4.21 5
+ (arch=!kfreebsd-amd64)_ZNSt28__atomic_futex_unsigned_base19_M_futex_wait_untilEPjjbNSt6chrono8durationIlSt5ratioILl1ELl1EEEENS2_IlS3_ILl1ELl1000000000EEEE@GLIBCXX_3.4.21 5
  _ZNSt5ctypeIcEC1EP15__locale_structPKtbm@GLIBCXX_3.4 4.1.1
  _ZNSt5ctypeIcEC1EPKtbm@GLIBCXX_3.4 4.1.1
  _ZNSt5ctypeIcEC2EP15__locale_structPKtbm@GLIBCXX_3.4 4.1.1
