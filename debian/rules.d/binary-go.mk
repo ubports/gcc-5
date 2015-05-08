@@ -43,12 +43,13 @@ dirs_go = \
 	$(PF)/share/man/man1
 files_go = \
 	$(PF)/bin/$(cmd_prefix)gccgo$(pkg_ver) \
-	$(gcc_lexec_dir)/{cgo,go1} \
-	$(PF)/share/man/man1/{go,gofmt}$(pkg_ver).1
+	$(gcc_lexec_dir)/go1
 
 ifneq (,$(filter $(build_type), build-native cross-build-native))
   files_go += \
-	$(PF)/bin/{go,gofmt}$(pkg_ver)
+	$(PF)/bin/{go,gofmt}$(pkg_ver) \
+	$(gcc_lexec_dir)/cgo \
+	$(PF)/share/man/man1/{go,gofmt}$(pkg_ver).1
 endif
 
 ifneq ($(GFDL_INVARIANT_FREE),yes)

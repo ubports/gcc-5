@@ -1,3 +1,18 @@
+gcc-5 (5.1.1-5) unstable; urgency=medium
+
+  * Update to SVN 20150507 (r222873, 5.1.1) from the gcc-5-branch.
+  * Fix 32bit libstdc++ symbols files for kfreebsd-amd64.
+  * libx32phobos-dev: Don't depend on libx32z-dev, when not available.
+  * Fix gotools configury.
+  * Configure with 
+      --disable-libstdcxx-dual-abi --with-default-libstdcxx-abi=c++98
+    While libstdc++ provides a dual ABI to support both the c++98 and c++11
+    ABI, there is no committment on compatibility of the old experimental
+    c++11 ABI from GCC 4.9 and the stable c++11 ABI in GCC 5.
+    Closes: #784655.
+
+ -- Matthias Klose <doko@debian.org>  Fri, 08 May 2015 18:48:49 +0200
+
 gcc-5 (5.1.1-4) unstable; urgency=medium
 
   * Update to SVN 20150503 (r222751, 5.1.1) from the gcc-5-branch.

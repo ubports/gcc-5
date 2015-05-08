@@ -741,6 +741,7 @@ Architecture: any
 Section: devel
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: cpp`'PV`'TS (= ${gcc:Version}),ifenabled(`gccbase',` BASEDEP,')
+  ifenabled(`gccxbase',` BASEDEP,')
   ${dep:libcc1},
   binutils`'TS (>= ${binutils:Version}),
   ${dep:libgccdev}, ${shlibs:Depends}, ${misc:Depends}
@@ -5132,7 +5133,7 @@ Package: libx32phobos`'PV-dev`'LS
 Architecture: ifdef(`TARGET',`CROSS_ARCH',`biarchx32_archs')
 Section: libdevel
 Priority: PRI(optional)
-Depends: BASEDEP, libdevdep(gcc`'PV-dev,x32), libx32z1-dev, ${shlibs:Depends}, ${misc:Depends}
+Depends: BASEDEP, libdevdep(gcc`'PV-dev,x32), ${dep:libx32z}, ${shlibs:Depends}, ${misc:Depends}
 BUILT_USING`'dnl
 Description: Phobos D standard library (x32 development files)
  This is the Phobos standard library that comes with the D2 compiler.

@@ -240,6 +240,7 @@ ifeq ($(with_cxx)-$(with_debug),yes-yes)
 endif
 CONFARGS += --enable-libstdcxx-time=yes
 CONFARGS += --with-default-libstdcxx-abi=$(libstdcxx_abi)
+CONFARGS += --disable-libstdcxx-dual-abi
 
 ifeq (,$(filter $(DEB_TARGET_ARCH), hurd-i386 kfreebsd-i386 kfreebsd-amd64))
   CONFARGS += --enable-gnu-unique-object
@@ -2190,7 +2191,7 @@ ifeq ($(with_java),yes)
 endif
 
 	: # remove rpath settings from binaries and shared libs
-	for i in $$(chrpath -k $(d)/$(PF)/bin/* $(d)/$(PF)/lib*/lib*.so.* \
+	for i in $$(chrpath -k $(d)/$(PF)/bin/* $(d)/$(PFL)/lib*/lib*.so.* \
 			$(d)/$(gcc_lib_dir)/plugin/* \
 			$(if $(filter $(with_multiarch_lib),yes), \
 			  $(d)/$(PF)/lib/$(DEB_HOST_MULTIARCH)/lib*.so.*) \
@@ -2245,21 +2246,6 @@ endif
 #	  mv $(d)/$(PF)/bin/$$i $(d)/$(PF)/bin/$$i-$(GNAT_VERSION); \
 #	done
 #  endif
-
-ifeq ($(DEB_CROSS)-$(multilib),yes-yes)
-  ifneq ($(DEB_STAGE),stage1)
-    ifeq ($(DEB_TARGET_ARCH)-$(biarch64),s390-yes)
-	: # s390 64bit stuff happens to be in s390x-linux-gnu/lib64/
-	mkdir -p $(d)/$(PF)/s390-linux-gnu/lib64
-	cp -a $(d)/$(PF)/s390x-linux-gnu/lib64/* $(d)/$(PF)/s390-linux-gnu/lib64/
-    endif
-    ifeq ($(DEB_TARGET_ARCH)-$(biarch64),powerpc-yes)
-	: # ppc 64bit build slaps libgcc and libstdc++ to powerpc64-linux-gnu
-	mkdir -p $(d)/$(PF)/powerpc-linux-gnu/lib64
-	cp -a $(d)/$(PF)/powerpc64-linux-gnu/lib64/* $(d)/$(PF)/powerpc-linux-gnu/lib64/
-    endif
-  endif
-endif
 
 	for i in ar nm ranlib; do \
 	  cp debian/gcc-$$i-$(BASE_VERSION).1 \

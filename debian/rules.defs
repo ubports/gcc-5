@@ -527,6 +527,10 @@ ifeq (,$(findstring gcc-,$(PKGSOURCE)))
   with_jit :=
 endif
 
+ifneq (,$(findstring build-cross, $(build_type)))
+  with_jit := disabled for cross builds
+endif
+
 with_cc1 := yes
 with_cc1 := $(call envfilt, cc1, , , $(with_cc1))
 ifeq ($(with_cc1),yes)
@@ -653,7 +657,7 @@ ifneq (,$(filter $(distrelease),squeeze wheezy jessie sid lucid precise trusty u
   libstdcxx_abi = c++98
 endif
 # FIXME later ... sid is still known as jessie
-libstdcxx_abi = c++11
+libstdcxx_abi = c++98
 
 # Build all packages needed for C++ development
 ifeq ($(with_cxx),yes)

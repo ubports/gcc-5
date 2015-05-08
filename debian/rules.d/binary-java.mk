@@ -29,10 +29,18 @@ ifeq ($(with_gcj),yes)
 endif
 endif
 
-p_jbase	= gcj$(pkg_ver)-base
-ifeq ($(with_separate_libgcj)-$(with_standalone_gcj),no-no)
-  p_jbase = gcc$(pkg_ver)-base
+ifneq (,$(filter $(build_type), build-native cross-build-native))
+  p_jbase = gcj$(pkg_ver)-base
+  ifeq ($(with_separate_libgcj)-$(with_standalone_gcj),no-no)
+    p_jbase = gcc$(pkg_ver)-base
+  endif
+else
+  p_jbase = gcj$(pkg_ver)$(cross_bin_arch)-base
+  ifeq ($(with_separate_libgcj)-$(with_standalone_gcj),no-no)
+    p_jbase = gcc$(pkg_ver)$(cross_bin_arch)-base
+  endif
 endif
+
 p_gcj	= gcj$(pkg_ver)$(cross_bin_arch)
 p_jdk	= gcj$(pkg_ver)-jdk$(cross_bin_arch)
 p_jrehl	= gcj$(pkg_ver)-jre-headless$(cross_bin_arch)
