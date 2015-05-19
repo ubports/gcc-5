@@ -1,4 +1,4 @@
-ifneq (,$(filter yes, $(biarch64) $(biarch32) $(biarchn32) $(biarchx32) $(biarchhf) $(biarchsf)))
+ifneq (,$(filter yes, $(biarch64) $(biarch32) $(biarchn32) $(biarchx32) $(biarchsf)))
   arch_binaries  := $(arch_binaries) gdc-multi
 endif
 arch_binaries := $(arch_binaries) gdc

@@ -259,7 +259,8 @@ Package: gcc-5
 Architecture: any
 Section: devel
 Priority: optional
-Depends: cpp-5 (= ${gcc:Version}), gcc-5-base (= ${gcc:Version}),  ${dep:libcc1},
+Depends: cpp-5 (= ${gcc:Version}), gcc-5-base (= ${gcc:Version}),
+    ${dep:libcc1}, 
   binutils (>= ${binutils:Version}), 
   ${dep:libgccdev}, ${shlibs:Depends}, ${misc:Depends}
 Recommends: ${dep:libcdev}

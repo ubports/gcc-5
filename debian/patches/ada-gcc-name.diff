@@ -27,15 +27,24 @@ Index: b/src/gcc/ada/make.adb
 ===================================================================
 --- a/src/gcc/ada/make.adb
 +++ b/src/gcc/ada/make.adb
-@@ -671,7 +671,7 @@ package body Make is
+@@ -671,14 +671,14 @@
     -- Compiler, Binder & Linker Data and Subprograms --
     ----------------------------------------------------
- 
+
 -   Gcc          : String_Access := Program_Name ("gcc", "gnatmake");
 +   Gcc          : String_Access := Program_Name ("gcc-5", "gnatmake");
     Original_Gcc : constant String_Access := Gcc;
     --  Original_Gcc is used to check if Gcc has been modified by a switch
     --  --GCC=, so that for VM platforms, it is not modified again, as it can
+    --  result in incorrect error messages if the compiler cannot be found.
+
+-   Gnatbind : String_Access := Program_Name ("gnatbind", "gnatmake");
+-   Gnatlink : String_Access := Program_Name ("gnatlink", "gnatmake");
++   Gnatbind : String_Access := Program_Name ("gnatbind-5", "gnatmake");
++   Gnatlink : String_Access := Program_Name ("gnatlink-5", "gnatmake");
+    --  Default compiler, binder, linker programs
+
+    Globalizer : constant String := "codepeer_globalizer";
 Index: b/src/gcc/ada/gnatchop.adb
 ===================================================================
 --- a/src/gcc/ada/gnatchop.adb

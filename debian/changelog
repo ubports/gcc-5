@@ -1,10 +1,34 @@
+gcc-5 (5.1.1-6) unstable; urgency=medium
+
+  * Update to SVN 20150519 (r223346, 5.1.1) from the gcc-5-branch.
+  * Don't build gdc-multilib on armel.
+  * Remove old CFLAGS/LDFLAGS settings to build gdc.
+  * Remove reference to .ico file in NEWS.html.
+  * Fix gcc's dependency on libcc1-0 for native builds.
+  * Fix stripping the rpath when cross-building cross compilers.
+  * Remove work arounds to build 64bit multilibs on 32bit targets,
+    now properly fixed upstream.
+  * Partially apply patches to build a gnat cross compiler (submitted
+    by YunQiang Su).
+    - gnatmake: Call the versioned gnatbind and gnatlink commands.
+      Closes: #782257.
+    - Allow libgnatprj and libgnatvsn to cross build. Addresses: #783372.
+    - New patch ada-gnattools-cross.diff (no documentation).
+  * Backport patch for gccgo:
+    - gccgo: If unary & does not escape, the var does not escape.
+  * Apply the backported patches for the go escape analysis. Need to
+    be enabled with -fgo-optimize-alloc (this option may go away again).
+  * Re-enable running the tests.
+
+ -- Matthias Klose <doko@debian.org>  Tue, 19 May 2015 10:33:40 +0200
+
 gcc-5 (5.1.1-5) unstable; urgency=medium
 
   * Update to SVN 20150507 (r222873, 5.1.1) from the gcc-5-branch.
   * Fix 32bit libstdc++ symbols files for kfreebsd-amd64.
   * libx32phobos-dev: Don't depend on libx32z-dev, when not available.
   * Fix gotools configury.
-  * Configure with 
+  * Configure with
       --disable-libstdcxx-dual-abi --with-default-libstdcxx-abi=c++98
     While libstdc++ provides a dual ABI to support both the c++98 and c++11
     ABI, there is no committment on compatibility of the old experimental

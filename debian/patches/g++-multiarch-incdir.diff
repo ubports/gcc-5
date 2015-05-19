@@ -5,11 +5,11 @@ Index: b/src/libstdc++-v3/include/Makefile.am
 ===================================================================
 --- a/src/libstdc++-v3/include/Makefile.am
 +++ b/src/libstdc++-v3/include/Makefile.am
-@@ -861,7 +861,7 @@ endif
+@@ -860,7 +860,7 @@ endif
+ 
  host_srcdir = ${glibcxx_srcdir}/$(OS_INC_SRCDIR)
- default_host_alias = @default_host_alias@
- host_builddir = ./${default_host_alias}/bits
--host_installdir = ${gxx_include_dir}/${default_host_alias}$(MULTISUBDIR)/bits
+ host_builddir = ./${host_alias}/bits
+-host_installdir = ${gxx_include_dir}/${host_alias}$(MULTISUBDIR)/bits
 +host_installdir = $(if $(shell $(CC) -print-multiarch),/usr/include/$(shell $(filter-out -m%,$(CC)) -print-multiarch)/c++/$(notdir ${gxx_include_dir})$(MULTISUBDIR)/bits,${gxx_include_dir}/${default_host_alias}$(MULTISUBDIR)/bits)
  host_headers = \
  	${host_srcdir}/ctype_base.h \
@@ -18,11 +18,11 @@ Index: b/src/libstdc++-v3/include/Makefile.in
 ===================================================================
 --- a/src/libstdc++-v3/include/Makefile.in
 +++ b/src/libstdc++-v3/include/Makefile.in
-@@ -1123,7 +1123,7 @@ profile_impl_headers = \
+@@ -1122,7 +1122,7 @@ profile_impl_headers = \
  @GLIBCXX_C_HEADERS_COMPATIBILITY_TRUE@c_compatibility_headers_extra = ${c_compatibility_headers}
  host_srcdir = ${glibcxx_srcdir}/$(OS_INC_SRCDIR)
- host_builddir = ./${default_host_alias}/bits
--host_installdir = ${gxx_include_dir}/${default_host_alias}$(MULTISUBDIR)/bits
+ host_builddir = ./${host_alias}/bits
+-host_installdir = ${gxx_include_dir}/${host_alias}$(MULTISUBDIR)/bits
 +host_installdir = $(if $(shell $(CC) -print-multiarch),/usr/include/$(shell $(filter-out -m%,$(CC)) -print-multiarch)/c++/$(notdir ${gxx_include_dir})$(MULTISUBDIR)/bits,${gxx_include_dir}/${default_host_alias}$(MULTISUBDIR)/bits)
  host_headers = \
  	${host_srcdir}/ctype_base.h \
@@ -31,7 +31,7 @@ Index: b/src/gcc/Makefile.in
 ===================================================================
 --- a/src/gcc/Makefile.in
 +++ b/src/gcc/Makefile.in
-@@ -1112,6 +1112,7 @@ FLAGS_TO_PASS = \
+@@ -1119,6 +1119,7 @@ FLAGS_TO_PASS = \
  	"prefix=$(prefix)" \
  	"local_prefix=$(local_prefix)" \
  	"gxx_include_dir=$(gcc_gxx_include_dir)" \
@@ -39,7 +39,7 @@ Index: b/src/gcc/Makefile.in
  	"build_tooldir=$(build_tooldir)" \
  	"gcc_tooldir=$(gcc_tooldir)" \
  	"bindir=$(bindir)" \
-@@ -1588,6 +1589,14 @@ ifneq ($(xmake_file),)
+@@ -1596,6 +1597,14 @@ ifneq ($(xmake_file),)
  include $(xmake_file)
  endif
  
@@ -54,7 +54,7 @@ Index: b/src/gcc/Makefile.in
  # all-tree.def includes all the tree.def files.
  all-tree.def: s-alltree; @true
  s-alltree: Makefile
-@@ -2588,7 +2597,7 @@ PREPROCESSOR_DEFINES = \
+@@ -2595,7 +2604,7 @@ PREPROCESSOR_DEFINES = \
    -DFIXED_INCLUDE_DIR=\"$(libsubdir)/include-fixed\" \
    -DGPLUSPLUS_INCLUDE_DIR=\"$(gcc_gxx_include_dir)\" \
    -DGPLUSPLUS_INCLUDE_DIR_ADD_SYSROOT=$(gcc_gxx_include_dir_add_sysroot) \

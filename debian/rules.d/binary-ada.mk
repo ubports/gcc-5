@@ -42,7 +42,7 @@ d_lgnatprj = debian/$(p_lgnatprj)
 d_gnatd	= debian/$(p_gnatd)
 
 GNAT_TOOLS = gnat gnatbind gnatchop gnatclean gnatfind gnatkr gnatlink \
-             gnatls gnatmake gnatname gnatprep gnatxref gnathtml
+	     gnatls gnatmake gnatname gnatprep gnatxref gnathtml
 
 ifeq ($(with_gnatsjlj),yes)
 	rts_subdir = rts-native/
@@ -58,7 +58,7 @@ dirs_gnat = \
 files_gnat = \
 	$(gcc_lexec_dir)/gnat1 \
 	$(gcc_lib_dir)/{adalib,adainclude} \
-	$(foreach i,$(GNAT_TOOLS),$(PF)/bin/$(cmd_prefix)$(i))
+	$(foreach i,$(GNAT_TOOLS),$(PF)/bin/$(cmd_prefix)$(i)$(pkg_ver))
 
 ifeq ($(with_gnatsjlj),yes)
 files_gnat += \
@@ -102,7 +102,7 @@ $(binary_stamp)-libgnat: $(install_stamp)
 
 	for lib in lib{gnat,gnarl}; do \
 	  vlib=$$lib-$(GNAT_SONAME); \
-	  mv $(d)/$(gcc_lib_dir)/adalib/$$vlib.so.1 $(d)/$(PF)/$(libdir)/. ; \
+	  mv $(d)/$(gcc_lib_dir)/$(rts_subdir)/adalib/$$vlib.so.1 $(d)/$(PF)/$(libdir)/. ; \
 	  rm -f $(d)/$(gcc_lib_dir)/adalib/$$lib.so.1; \
 	done
 	dh_movefiles -p$(p_lgnat) $(files_lgnat)
@@ -275,8 +275,8 @@ endif
 	rm -rf $(d_gnat)
 	dh_installdirs -p$(p_gnat) $(dirs_gnat)
 	# Upstream does not install gnathtml.
-	cp src/gcc/ada/gnathtml.pl debian/tmp/$(PF)/bin/$(cmd_prefix)gnathtml
-	chmod 755 debian/tmp/$(PF)/bin/$(cmd_prefix)gnathtml
+	cp src/gcc/ada/gnathtml.pl debian/tmp/$(PF)/bin/$(cmd_prefix)gnathtml$(pkg_ver)
+	chmod 755 debian/tmp/$(PF)/bin/$(cmd_prefix)gnathtml$(pkg_ver)
 	dh_movefiles -p$(p_gnat) $(files_gnat)
 
 ifeq ($(with_gnatsjlj),yes)
@@ -317,16 +317,65 @@ else
 	mkdir -p $(d_gnat)/$(docdir)/$(p_gbase)/ada
 	cp -p src/gcc/ada/ChangeLog $(d_gnat)/$(docdir)/$(p_gbase)/ada/.
 endif
+ifeq ($(PKGSOURCE),gnat-$(BASE_VERSION))
 	for i in $(GNAT_TOOLS); do \
 	  case "$$i" in \
-	    gnat) cp -p debian/gnat.1 $(d_gnat)/$(PF)/share/man/man1/$(cmd_prefix)gnat.1 ;; \
-	    *) ln -sf gnat.1 $(d_gnat)/$(PF)/share/man/man1/$(cmd_prefix)$$i.1; \
+	    gnat) cp -p debian/gnat.1 $(d_gnat)/$(PF)/share/man/man1/$(cmd_prefix)gnat$(pkg_ver).1 ;; \
+	    *) ln -sf gnat.1 $(d_gnat)/$(PF)/share/man/man1/$(cmd_prefix)$$i$(pkg_ver).1; \
 	  esac; \
+	done
+endif
+
+ifneq (,$(filter $(build_type), build-native cross-build-native))
+	for i in $(GNAT_TOOLS); do \
+	  ln -sf $$i$(pkg_ver) \
+	    $(d_gnat)/$(PF)/bin/$(DEB_TARGET_GNU_TYPE)-$$i$(pkg_ver); \
+	 ln -sf $$i$(pkg_ver) \
+	   $(d_gnat)/$(PF)/bin/$(TARGET_ALIAS)-$$i$(pkg_ver); \
+	done
+
+	for i in $(GNAT_TOOLS); do \
+	  ln -sf gnat$(pkg_ver).1 \
+	    $(d_gnat)/$(PF)/share/man/man1/$(DEB_TARGET_GNU_TYPE)-$$i$(pkg_ver).1; \
+	  ln -sf $$i$(pkg_ver).1 \
+	    $(d_gnat)/$(PF)/share/man/man1/$(TARGET_ALIAS)-$$i$(pkg_ver).1; \
+	done
+
+	: # still ship the unversioned names in the gnat package.
+	for i in $(GNAT_TOOLS); do \
+	  ln -sf $$i$(pkg_ver) \
+	    $(d_gnat)/$(PF)/bin/$$i; \
+	 ln -sf $$i$(pkg_ver) \
+	   $(d_gnat)/$(PF)/bin/$$i; \
+	done
+
+	for i in $(GNAT_TOOLS); do \
+	  ln -sf gnat$(pkg_ver).1 \
+	    $(d_gnat)/$(PF)/share/man/man1/$$i.1; \
+	  ln -sf $$i$(pkg_ver).1 \
+	    $(d_gnat)/$(PF)/share/man/man1/$$i.1; \
+	done
+endif
+	: # still ship the unversioned names in the gnat package.
+	for i in $(GNAT_TOOLS); do \
+	  ln -sf $$i$(pkg_ver) \
+	    $(d_gnat)/$(PF)/bin/$(DEB_TARGET_GNU_TYPE)-$$i; \
+	 ln -sf $$i$(pkg_ver) \
+	   $(d_gnat)/$(PF)/bin/$(TARGET_ALIAS)-$$i; \
+	done
+
+	for i in $(GNAT_TOOLS); do \
+	  ln -sf gnat$(pkg_ver).1 \
+	    $(d_gnat)/$(PF)/share/man/man1/$(DEB_TARGET_GNU_TYPE)-$$i.1; \
+	  ln -sf $$i$(pkg_ver).1 \
+	    $(d_gnat)/$(PF)/share/man/man1/$(TARGET_ALIAS)-$$i.1; \
 	done
 
 	dh_install -p$(p_gnat) debian/ada/debian_packaging.mk usr/share/ada
-	dh_link -p$(p_gnat) usr/bin/gcc-$(GNAT_VERSION) usr/bin/gnatgcc
-	dh_link -p$(p_gnat) usr/share/man/man1/gnat.1.gz usr/share/man/man1/gnatgcc.1.gz
+	mv $(d_gnat)/usr/share/ada/debian_packaging.mk \
+	    $(d_gnat)/usr/share/ada/debian_packaging-$(GNAT_VERSION).mk
+	dh_link -p$(p_gnat) usr/bin/$(cmd_prefix)gcc$(pkg_ver) usr/bin/$(cmd_prefix)gnatgcc$(pkg_ver)
+	dh_link -p$(p_gnat) usr/share/man/man1/$(cmd_prefix)gnat$(pkg_ver).1.gz usr/share/man/man1/$(cmd_prefix)gnatgcc$(pkg_ver).1.gz
 
 	debian/dh_rmemptydirs -p$(p_gnat)
 

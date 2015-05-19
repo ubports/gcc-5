@@ -182,14 +182,14 @@ define __do_gcc_devels2
 		if [ -h $(4)/libgcc_s.so ]; then \
 		  rm -f $(4)/libgcc_s.so; \
 		  dh_link -p$(2) /$(libgcc_dir$(1))/libgcc_s.so.$(GCC_SONAME) \
-		    $(3)/libgcc_s.so; \
+		    /$(3)/libgcc_s.so; \
 		else \
 		  mv $(4)/libgcc_s.so $(d)/$(3)/libgcc_s.so; \
 		  dh_link -p$(2) /$(libgcc_dir$(1))/libgcc_s.so.$(GCC_SONAME) \
-		    $(3)/libgcc_s.so.$(GCC_SONAME); \
+		    /$(3)/libgcc_s.so.$(GCC_SONAME); \
 		fi; \
 		$(if $(1), dh_link -p$(2) /$(3)/libgcc_s.so \
-		    $(gcc_lib_dir)/libgcc_s_$(1).so;)
+		    /$(gcc_lib_dir)/libgcc_s_$(1).so;)
 	)
 	DH_COMPAT=2 dh_movefiles -p$(2) \
 		$(3)/{libgcc*,libgcov.a,*.o} \

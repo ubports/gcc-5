@@ -83,11 +83,13 @@ debian_patches += \
 	go-escape-analysis \
 	go-escape-analysis2 \
 	go-escape-analysis3 \
+	go-escape-analysis4 \
 
 # don't apply yet, test it first ...
 #	go-escape-analysis \
 #	go-escape-analysis2 \
 #	go-escape-analysis3 \
+#	go-escape-analysis4 \
 
 #	$(if $(filter yes, $(DEB_CROSS)),,gcc-print-file-name) \
 #	libstdc++-nothumb-check \
@@ -145,6 +147,7 @@ ifeq ($(with_ada),yes)
 	ada-link-lib \
 	ada-libgnatvsn \
 	ada-libgnatprj \
+	ada-gnattools-cross \
 	ada-acats
     ifneq (,$(filter $(distrelease),lucid precise))
       debian_patches += \

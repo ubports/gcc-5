@@ -84,7 +84,7 @@ define unsetenv
 endef
 $(foreach v, CPPFLAGS CFLAGS CXXFLAGS FFLAGS LDFLAGS, $(if $(filter environment,$(origin $(v))),$(eval $(call unsetenv, $(v)))))
 
-ifeq ($(REVERSE_CROSS),yes)
+ifneq (,$(findstring cross-build-,$(build_type)))
   CC	=
 else
   ifeq ($(with_ada),yes)
@@ -107,11 +107,6 @@ ifneq ($(derivative),Ubuntu)
   ifneq (,$(filter $(DEB_TARGET_ARCH), arm armel mips mipsel))
     STAGE1_CFLAGS = -g -O2
   endif
-endif
-
-ifeq ($(with_d),yes)
-  CFLAGS  += -std=gnu99
-  LDFLAGS += -lm
 endif
 
 # work around PR 57689
@@ -390,7 +385,7 @@ endif
 # FIXME: only needed for isl-0.13 for now
 #CONFARGS += --disable-isl-version-check
 
-ifeq ($(REVERSE_CROSS),yes)
+ifneq (,$(findstring cross-build-,$(build_type)))
   # FIXME: requires isl headers for the target
   #CONFARGS += --without-isl
   # FIXME: build currently fails build the precompiled headers
@@ -1105,8 +1100,6 @@ endif
 $(build_stamp): $(configure_stamp) $(build_locale_stamp)
 	dh_testdir
 	rm -f bootstrap-protocol
-# DEB_CROSS is never set if REVERSE_CROSS is set and vice-versa.
-# DEB_CROSS build
 ifeq ($(DEB_CROSS),yes)
 	: # build cross compiler for $(TARGET_ALIAS)
 	( \
@@ -1122,8 +1115,7 @@ ifeq ($(DEB_CROSS),yes)
 	) 2>&1 | tee bootstrap-protocol
 	s=`cat status`; rm -f status; test $$s -eq 0
 else
-  # REVERSE_CROSS build
-  ifeq ($(REVERSE_CROSS),yes)
+  ifneq (,$(findstring cross-build-,$(build_type)))
 	: # build cross compiler for $(TARGET_ALIAS)
 	( \
 	  set +e; \
@@ -2194,7 +2186,7 @@ endif
 	for i in $$(chrpath -k $(d)/$(PF)/bin/* $(d)/$(PFL)/lib*/lib*.so.* \
 			$(d)/$(gcc_lib_dir)/plugin/* \
 			$(if $(filter $(with_multiarch_lib),yes), \
-			  $(d)/$(PF)/lib/$(DEB_HOST_MULTIARCH)/lib*.so.*) \
+			  $(d)/$(PF)/lib/$(DEB_TARGET_MULTIARCH)/lib*.so.*) \
 			$(d)/$(PF)/lib*/gcj$(pkg_ver)*/lib*.so.* \
 			2>/dev/null | awk -F: '/RPATH=/ {print $$1}'); \
 	do \
