@@ -1,18 +1,20 @@
-ifneq (,$(filter yes, $(biarch64) $(biarch32) $(biarchn32) $(biarchx32) $(biarchhf) $(biarchsf)))
-  arch_binaries  := $(arch_binaries) gcc-multi
-endif
-ifeq ($(with_plugins),yes)
-  arch_binaries  := $(arch_binaries) gcc-plugindev
-endif
-
-arch_binaries  := $(arch_binaries) gcc
-
-ifneq ($(DEB_CROSS),yes)
-  ifneq ($(GFDL_INVARIANT_FREE),yes)
-    indep_binaries := $(indep_binaries) gcc-doc
+ifneq ($(DEB_STAGE),rtlibs)
+  ifneq (,$(filter yes, $(biarch64) $(biarch32) $(biarchn32) $(biarchx32) $(biarchhf) $(biarchsf)))
+    arch_binaries  := $(arch_binaries) gcc-multi
   endif
-  ifeq ($(with_nls),yes)
-    indep_binaries := $(indep_binaries) gcc-locales
+  ifeq ($(with_plugins),yes)
+    arch_binaries  := $(arch_binaries) gcc-plugindev
+  endif
+
+  arch_binaries  := $(arch_binaries) gcc
+
+  ifneq ($(DEB_CROSS),yes)
+    ifneq ($(GFDL_INVARIANT_FREE),yes)
+      indep_binaries := $(indep_binaries) gcc-doc
+    endif
+    ifeq ($(with_nls),yes)
+      indep_binaries := $(indep_binaries) gcc-locales
+    endif
   endif
 endif
 

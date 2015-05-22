@@ -88,8 +88,9 @@ ifneq (,$(findstring cross-build-,$(build_type)))
   CC	=
 else
   ifeq ($(with_ada),yes)
-    ifneq (,$(wildcard /usr/bin/gnatgcc))
-      CC = gnatgcc
+    gnatgcc := $(firstword $(wildcard /usr/bin/gnatgcc-5 /usr/bin/gnatgcc))
+    ifneq (,$(gnatgcc))
+      CC = $(gnatgcc)
     else
       CC = gcc
     endif
@@ -161,7 +162,7 @@ ifeq ($(versioned_packages),yes)
   CONFARGS += --program-suffix=-$(BASE_VERSION)
 endif
 
-ifdef DEB_STAGE
+ifneq (,$(filter $(DEB_STAGE),stage1 stage2))
   CONFARGS += \
 	--disable-decimal-float \
 	--disable-libatomic  \
@@ -865,6 +866,13 @@ ifeq ($(DEB_CROSS),yes)
 else
   usr_libhf = $(PFL)/lib/arm-linux-gnueabihf
   usr_libsf = $(PFL)/lib/arm-linux-gnueabi
+endif
+
+ifeq ($(DEB_STAGE)-$(DEB_CROSS),rtlibs-yes)
+  PFL		= $(PF)
+  RPF		=
+  libdir	= lib/$(DEB_TARGET_MULTIARCH)
+  usr_lib	= $(PF)/lib/$(DEB_TARGET_MULTIARCH)
 endif
 
 gcc_lib_dir32 = $(gcc_lib_dir)/$(biarch32subdir)
@@ -1716,9 +1724,6 @@ clean: debian/control
 	dh_testdir
 	rm -f pxxx status
 	rm -f *-summary *-protocol testsuite-comparision summary-diff
-	if [ -f $(srcdir)/gcc/p/config-lang.in.debian ]; then \
-	  mv -f $(srcdir)/gcc/p/config-lang.in.debian $(srcdir)/gcc/p/config-lang.in; \
-	else true; fi
 	rm -f $(srcdir)/gcc/po/*.gmo
 	rm -f debian/lib{gcc,gcj,objc,stdc++}{-v3,[0-9]}*.{{pre,post}{inst,rm},shlibs}
 	fs=`echo debian/*BV* debian/*GCJ* debian/*CXX* debian/*LC* debian/*MF* | sort -u`; \
@@ -1728,7 +1733,7 @@ clean: debian/control
 		| sed 's/BV/$(BASE_VERSION)/;s/CXX/$(CXX_SONAME)/;s/LGCJ/$(PKG_LIBGCJ_EXT)/;s/GCJ/$(PKG_GCJ_EXT)/;s/LC/$(GCC_SONAME)/;s/-CRB/$(cross_bin_arch)/;s/\.in$$//'); \
 	  rm -f $$f2; \
 	done
-	find debian -maxdepth 1 -name '*.symbols' -type l | xargs -r rm -f
+	find debian -maxdepth 1 -name '*-cross.symbols' -type l | xargs -r rm -f
 	rm -f debian/gcc-{XX,ar,nm,ranlib}-$(BASE_VERSION).1
 	rm -f debian/shlibs.local debian/substvars.local
 	rm -f debian/*.debhelper
@@ -2150,11 +2155,24 @@ endif
 	    mandir=/$(PF)/share/man \
 		install
 
-ifneq ($(configured_libdir),$(libdir))
+ifeq ($(DEB_STAGE)-$(DEB_CROSS),rtlibs-yes)
+	@echo configured_libdir=$(configured_libdir) / libdir=$(libdir) / usr_lib=$(usr_lib)
+	ls $(d)/$(PF)/$(TARGET_ALIAS)/lib
+	set -x; \
+	if [ -d $(d)/$(PF)/$(TARGET_ALIAS)/lib ]; then \
+	  cp -a $(d)/$(PF)/$(TARGET_ALIAS)/lib/* $(d)/$(PF)/lib/$(DEB_TARGET_MULTIARCH)/.; \
+	fi
+	for d in $$(cd $(d)/$(PF)/$(TARGET_ALIAS); echo lib?*); do \
+	  [ -d $(d)/$(PF)/$(TARGET_ALIAS)/$$d ] || continue; \
+	  cp -a $(d)/$(PF)/$(TARGET_ALIAS)/$$d/* $(d)/$(PF)/$$d/.; \
+	done
+else
+  ifneq ($(configured_libdir),$(libdir))
 	for i in debug go pkgconfig '*.so' '*.so.*' '*.a' '*.la' '*.o' '*.py' '*.spec'; do \
 	  mv $(d)/$(PF)/$(configured_libdir)/$$i \
 		$(d)/$(PF)/$(libdir)/. || true; \
 	done
+  endif
 endif
 
 ifeq ($(with_libcxxdbg),yes)
@@ -2199,10 +2217,6 @@ endif
 	: # remove '*.la' and '*.lai' files, not shipped in any package.
 	find $(d) -name '*.la' -o -name '*.lai' | xargs -r rm -f
 
-ifneq ($(with_libgnat),yes)
-	rm -f $(d)/$(gcc_lib_dir)/adalib/lib*.so*
-endif
-
 ifeq ($(GFDL_INVARIANT_FREE),yes)
 	for i in gcc gcov; do \
 	  I=`echo $$i | tr a-z A-Z`; \
@@ -2223,6 +2237,19 @@ ifeq ($(GFDL_INVARIANT_FREE),yes)
 	  I=`echo $$i | tr a-z A-Z`; \
 	  sed -e "s/@NAME@/$$I$(pkg_ver)/g" -e "s/@name@/$$i$(pkg_ver)/g" \
 	    debian/dummy-man.1 > $(d)/$(PF)/share/man/man1/$$i.1; \
+	done
+  endif
+endif
+
+ifneq ($(with_libgnat),yes)
+	rm -f $(d)/$(gcc_lib_dir)/adalib/lib*.so*
+endif
+
+# FIXME: libgnatprj and libgnatvsn need proper configury/Makefiles
+ifeq ($(DEB_CROSS),yes)
+  ifeq ($(with_ada),yes)
+	for i in 'libgnatprj*' 'libgnatvsn*'; do \
+	  mv $(d)/$(PF)/lib/$$i $(d)/$(usr_lib)/. || true; \
 	done
   endif
 endif
@@ -2344,4 +2371,5 @@ source diff:
 	@echo >&2 'source and diff are obsolete - use dpkg-source -b'; false
 
 binary: binary-indep binary-arch
+.NOTPARALLEL:
 .PHONY: build clean binary-indep binary-arch binary

@@ -1,66 +1,68 @@
-
 ifeq ($(with_libcxx),yes)
   $(lib_binaries)  += libstdcxx
 endif
 ifeq ($(with_lib64cxx),yes)
   $(lib_binaries)  += lib64stdcxx
 endif
-ifeq ($(with_lib64cxxdev),yes)
-  $(lib_binaries)	+= lib64stdcxx-dev
-endif
-ifeq ($(with_lib64cxxdbg),yes)
-  $(lib_binaries)	+= lib64stdcxxdbg
-endif
 ifeq ($(with_lib32cxx),yes)
   $(lib_binaries)	+= lib32stdcxx
-endif
-ifeq ($(with_lib32cxxdev),yes)
-  $(lib_binaries)	+= lib32stdcxx-dev
-endif
-ifeq ($(with_lib32cxxdbg),yes)
-  $(lib_binaries)	+= lib32stdcxxdbg
 endif
 ifeq ($(with_libn32cxx),yes)
   $(lib_binaries)	+= libn32stdcxx
 endif
-ifeq ($(with_libn32cxxdev),yes)
-  $(lib_binaries)	+= libn32stdcxx-dev
-endif
-ifeq ($(with_libn32cxxdbg),yes)
-  $(lib_binaries)	+= libn32stdcxxdbg
-endif
 ifeq ($(with_libx32cxx),yes)
   $(lib_binaries)	+= libx32stdcxx
-endif
-ifeq ($(with_libx32cxxdev),yes)
-  $(lib_binaries)	+= libx32stdcxx-dev
-endif
-ifeq ($(with_libx32cxxdbg),yes)
-  $(lib_binaries)	+= libx32stdcxxdbg
 endif
 ifeq ($(with_libhfcxx),yes)
   $(lib_binaries)	+= libhfstdcxx
 endif
-ifeq ($(with_libhfcxxdev),yes)
-    $(lib_binaries)	+= libhfstdcxx-dev
-endif
-ifeq ($(with_libhfcxxdbg),yes)
-  $(lib_binaries)	+= libhfstdcxxdbg
-endif
 ifeq ($(with_libsfcxx),yes)
   $(lib_binaries)	+= libsfstdcxx
 endif
-ifeq ($(with_libsfcxxdev),yes)
-  $(lib_binaries)	+= libsfstdcxx-dev
-endif
-ifeq ($(with_libsfcxxdbg),yes)
-  $(lib_binaries)	+= libsfstdcxxdbg
-endif
 
-ifeq ($(with_cxxdev),yes)
-  $(lib_binaries)  += libstdcxx-dev
-  ifneq ($(DEB_CROSS),yes)
-    indep_binaries := $(indep_binaries) libstdcxx-doc
+ifneq ($(DEB_STAGE),rtlibs)
+  ifeq ($(with_lib64cxxdev),yes)
+    $(lib_binaries)	+= lib64stdcxx-dev
+  endif
+  ifeq ($(with_lib64cxxdbg),yes)
+    $(lib_binaries)	+= lib64stdcxxdbg
+  endif
+  ifeq ($(with_lib32cxxdev),yes)
+    $(lib_binaries)	+= lib32stdcxx-dev
+  endif
+  ifeq ($(with_lib32cxxdbg),yes)
+    $(lib_binaries)	+= lib32stdcxxdbg
+  endif
+  ifeq ($(with_libn32cxxdev),yes)
+    $(lib_binaries)	+= libn32stdcxx-dev
+  endif
+  ifeq ($(with_libn32cxxdbg),yes)
+    $(lib_binaries)	+= libn32stdcxxdbg
+  endif
+  ifeq ($(with_libx32cxxdev),yes)
+    $(lib_binaries)	+= libx32stdcxx-dev
+  endif
+  ifeq ($(with_libx32cxxdbg),yes)
+    $(lib_binaries)	+= libx32stdcxxdbg
+  endif
+  ifeq ($(with_libhfcxxdev),yes)
+    $(lib_binaries)	+= libhfstdcxx-dev
+  endif
+  ifeq ($(with_libhfcxxdbg),yes)
+    $(lib_binaries)	+= libhfstdcxxdbg
+  endif
+  ifeq ($(with_libsfcxxdev),yes)
+    $(lib_binaries)	+= libsfstdcxx-dev
+  endif
+  ifeq ($(with_libsfcxxdbg),yes)
+    $(lib_binaries)	+= libsfstdcxxdbg
+  endif
+
+  ifeq ($(with_cxxdev),yes)
+    $(lib_binaries)  += libstdcxx-dev
+    ifneq ($(DEB_CROSS),yes)
+      indep_binaries := $(indep_binaries) libstdcxx-doc
+    endif
   endif
 endif
 
@@ -200,7 +202,7 @@ define __do_libstdcxx
 	debian/dh_doclink -p$(p_l) $(p_base)
 	debian/dh_rmemptydirs -p$(p_l)
 
-	dh_strip -p$(p_l) --dbg-package=$(1)-$(BASE_VERSION)-dbg$(cross_lib_arch)
+	dh_strip -p$(p_l) $(if $(filter rtlibs,$(DEB_STAGE)),,--dbg-package=$(1)-$(BASE_VERSION)-dbg$(cross_lib_arch))
 	dh_compress -p$(p_l)
 	dh_fixperms -p$(p_l)
 
@@ -294,7 +296,8 @@ define __do_libstdcxx_dev
 	dh_strip -p$(p_l)
 	dh_compress -p$(p_l)
 	dh_fixperms -p$(p_l)
-	dh_shlibdeps -p$(p_l)
+	dh_shlibdeps -p$(p_l) \
+		$(call shlibdirs_to_search,$(subst stdc++$(CXX_SONAME),gcc$(GCC_SONAME),$(p_l)),$(2))
 	$(cross_gencontrol) dh_gencontrol -p$(p_l) -- -v$(DEB_VERSION) $(common_substvars)
 	dh_installdeb -p$(p_l)
 	dh_md5sums -p$(p_l)
@@ -460,13 +463,8 @@ endif
 
 	dh_compress -p$(p_dev) -p$(p_pic) -p$(p_dbg) -X.txt
 	dh_fixperms -p$(p_dev) -p$(p_pic) -p$(p_dbg)
-# XXX: what about biarchn32?
-#ifeq ($(biarch64),yes)
-#	$(ignshld)DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_dev) -p$(p_pic) -p$(p_dbg) -Xlib64
-#else
-#	$(ignshld)DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_dev) -p$(p_pic) -p$(p_dbg) -Xlib32/debug
-#endif
-	$(ignshld)DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_dev) -p$(p_pic) -p$(p_dbg)
+	$(ignshld)DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_dev) -p$(p_pic) -p$(p_dbg) \
+		$(call shlibdirs_to_search,,)
 	$(call cross_mangle_substvars,$(p_dbg))
 	$(cross_gencontrol) dh_gencontrol -p$(p_dev) -p$(p_pic) -p$(p_dbg) \
 		-- -v$(DEB_VERSION) $(common_substvars)

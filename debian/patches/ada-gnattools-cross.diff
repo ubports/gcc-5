@@ -1,3 +1,10 @@
+# DP: - When building the native gnat, link the gnat tools against
+# DP:   the build tree (build/$(host_alias)/{libgnatvsn,libgnatprj}.)
+# DP: - When building a cross gnat, link against the libgnatvsn-5-dev
+# DP:   and libgnatprj-5-dev packages.
+# DP:   This link will be done by /usr/bin/$(host_alias)-gnat*, thus
+# DP:   the native gnat with the same major version will be required.
+
 Index: b/src/gcc/ada/gcc-interface/Makefile.in
 ===================================================================
 --- a/src/gcc/ada/gcc-interface/Makefile.in

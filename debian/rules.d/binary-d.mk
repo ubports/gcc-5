@@ -1,50 +1,52 @@
-ifneq (,$(filter yes, $(biarch64) $(biarch32) $(biarchn32) $(biarchx32) $(biarchsf)))
-  arch_binaries  := $(arch_binaries) gdc-multi
-endif
-arch_binaries := $(arch_binaries) gdc
+ifneq ($(DEB_STAGE),rtlibs)
+  ifneq (,$(filter yes, $(biarch64) $(biarch32) $(biarchn32) $(biarchx32) $(biarchsf)))
+    arch_binaries  := $(arch_binaries) gdc-multi
+  endif
+  arch_binaries := $(arch_binaries) gdc
 
-ifeq ($(with_libphobos),yes)
-  arch_binaries += libphobos-dev
-endif
+  ifeq ($(with_libphobos),yes)
+    arch_binaries += libphobos-dev
+  endif
 
-ifeq ($(with_lib64phobosdev),yes)
-  $(lib_binaries)	+= lib64phobos-dev
-endif
-ifeq ($(with_lib32phobosdev),yes)
-  $(lib_binaries)	+= lib32phobos-dev
-endif
-ifeq ($(with_libn32phobosdev),yes)
-  $(lib_binaries)	+= libn32phobos-dev
-endif
-ifeq ($(with_libx32phobosdev),yes)
-  $(lib_binaries)	+= libx32phobos-dev
-endif
-ifeq ($(with_libhfphobosdev),yes)
-  $(lib_binaries)	+= libhfphobos-dev
-endif
-ifeq ($(with_libsfphobosdev),yes)
-  $(lib_binaries)	+= libsfphobos-dev
-endif
+  ifeq ($(with_lib64phobosdev),yes)
+    $(lib_binaries)	+= lib64phobos-dev
+  endif
+  ifeq ($(with_lib32phobosdev),yes)
+    $(lib_binaries)	+= lib32phobos-dev
+  endif
+  ifeq ($(with_libn32phobosdev),yes)
+    $(lib_binaries)	+= libn32phobos-dev
+  endif
+  ifeq ($(with_libx32phobosdev),yes)
+    $(lib_binaries)	+= libx32phobos-dev
+  endif
+  ifeq ($(with_libhfphobosdev),yes)
+    $(lib_binaries)	+= libhfphobos-dev
+  endif
+  ifeq ($(with_libsfphobosdev),yes)
+    $(lib_binaries)	+= libsfphobos-dev
+  endif
 
-ifeq (0,1)
-ifeq ($(with_lib64phobos),yes)
-  $(lib_binaries)	+= lib64phobos
-endif
-ifeq ($(with_lib32phobos),yes)
-  $(lib_binaries)	+= lib32phobos
-endif
-ifeq ($(with_libn32phobos),yes)
-  $(lib_binaries)	+= libn32phobos
-endif
-ifeq ($(with_libx32phobos),yes)
-  $(lib_binaries)	+= libx32phobos
-endif
-ifeq ($(with_libhfphobos),yes)
-  $(lib_binaries)	+= libhfphobos
-endif
-ifeq ($(with_libsfphobos),yes)
-  $(lib_binaries)	+= libsfphobos
-endif
+  ifeq (0,1)
+  ifeq ($(with_lib64phobos),yes)
+    $(lib_binaries)	+= lib64phobos
+  endif
+  ifeq ($(with_lib32phobos),yes)
+    $(lib_binaries)	+= lib32phobos
+  endif
+  ifeq ($(with_libn32phobos),yes)
+    $(lib_binaries)	+= libn32phobos
+  endif
+  ifeq ($(with_libx32phobos),yes)
+    $(lib_binaries)	+= libx32phobos
+  endif
+  ifeq ($(with_libhfphobos),yes)
+    $(lib_binaries)	+= libhfphobos
+  endif
+  ifeq ($(with_libsfphobos),yes)
+    $(lib_binaries)	+= libsfphobos
+  endif
+  endif
 endif
 
 p_gdc           = gdc$(pkg_ver)$(cross_bin_arch)

@@ -149,6 +149,9 @@ ifeq ($(with_ada),yes)
 	ada-libgnatprj \
 	ada-gnattools-cross \
 	ada-acats
+    #ifneq (,$(filter $(build_type), build-cross cross-build-cross))
+	debian_patches += libgnatprj-cross-hack
+    #endif
     ifneq (,$(filter $(distrelease),lucid precise))
       debian_patches += \
 	libgnatprj-link

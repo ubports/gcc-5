@@ -109,4 +109,5 @@ release:
 				xargs rm -rf; \
 		fi
 
+.NOTPARALLEL:
 .PHONY: build clean binary-indep binary-arch binary release

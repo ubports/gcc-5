@@ -1,7 +1,9 @@
-ifneq (,$(filter yes, $(biarch64) $(biarch32) $(biarchn32) $(biarchx32) $(biarchhf) $(biarchsf)))
-  arch_binaries  := $(arch_binaries) objc-multi
+ifneq ($(DEB_STAGE),rtlibs)
+  ifneq (,$(filter yes, $(biarch64) $(biarch32) $(biarchn32) $(biarchx32) $(biarchhf) $(biarchsf)))
+    arch_binaries  := $(arch_binaries) objc-multi
+  endif
+  arch_binaries := $(arch_binaries) objc
 endif
-arch_binaries := $(arch_binaries) objc
 
 p_objc	= gobjc$(pkg_ver)$(cross_bin_arch)
 d_objc	= debian/$(p_objc)

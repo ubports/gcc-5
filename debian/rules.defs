@@ -275,12 +275,20 @@ ifdef DEB_STAGE
   separate_lang := yes
   # "stage1" is minimal compiler with static libgcc
   # "stage2" is minimal compiler with shared libgcc
+  # "rtlibs" is a subset of target libraries, without compilers
   ifeq ($(DEB_STAGE),stage1)
     with_shared_libgcc := no
   endif
   ifeq ($(DEB_STAGE),stage2)
     with_libgcc := yes
     with_shared_libgcc := yes
+  endif
+  ifeq ($(DEB_STAGE),rtlibs)
+    with_rtlibs := libgcc libgomp libstdc++ libgfortran libquadmath
+    ifeq ($(DEB_CROSS),yes)
+      LS :=
+      cross_lib_arch :=
+    endif
   endif
 endif
 
@@ -450,7 +458,10 @@ multilib_multiarch_map = \
 mlib_to_march = $(patsubst $(DEB_TARGET_ARCH)/$(1)=%,%, \
 		   $(filter $(DEB_TARGET_ARCH)/$(1)=%,$(multilib_multiarch_map)))
 
-ifneq ($(DEB_STAGE),stage1)
+ifeq ($(DEB_STAGE),rtlibs)
+  with_gccbase := yes
+  with_gccxbase :=
+else ifneq ($(DEB_STAGE),stage1)
   # build a -base package.
   ifneq ($(DEB_CROSS),yes)
     with_gccbase := yes
@@ -460,7 +471,9 @@ ifneq ($(DEB_STAGE),stage1)
 endif
 
 # build dev packages.
-with_dev := yes
+ifneq ($(DEB_STAGE),rtlibs)
+  with_dev := yes
+endif
 
 with_cpp := yes
 
@@ -510,7 +523,9 @@ jit_no_cpus	:= none
 ifneq (,$(filter $(DEB_TARGET_ARCH_CPU),$(jit_no_cpus)))
   with_jit := disabled for cpu $(DEB_TARGET_ARCH_CPU)
 endif
-
+ifneq (,$(with_rtlibs))
+  with_jit := disabled for rtlibs stage
+endif
 with_jit := $(call envfilt, jit, , , $(with_jit))
 
 ifeq (,$(findstring gcc-,$(PKGSOURCE)))
@@ -528,6 +543,9 @@ ifeq ($(with_cc1),yes)
     with_libcc1 := yes
   endif
 endif
+ifneq (,$(with_rtlibs))
+  with_libcc1 := disabled for rtlibs stage
+endif
 
 # Build all packages needed for C development
 ifneq ($(with_base_only),yes)
@@ -536,7 +554,7 @@ ifneq ($(with_base_only),yes)
   endif
 endif
 
-ifndef DEB_STAGE
+ifeq (,$(filter $(DEB_STAGE),stage1 stage2))
 # Ada --------------------
 ada_no_cpus	:= m32r sh3 sh3eb sh4 sh4eb
 # no Debian builds ... some of these should exist
@@ -585,6 +603,11 @@ ifneq (,$(filter $(distrelease),lucid))
   with_ada :=
 endif
 with_ada := $(call envfilt, ada, , , $(with_ada))
+
+
+ifeq ($(DEB_STAGE)-$(filter libgnat, $(with_rtlibs)),rtlibs-)
+  with_ada := disabled for rtlibs stage
+endif
 
 #ifneq ($(single_package),yes)
 #  with_separate_gnat := yes
@@ -710,6 +733,10 @@ ifeq ($(java_no_cross)-$(DEB_CROSS),yes-yes)
 endif
 with_java := $(call envfilt, java, , c++, $(with_java))
 
+ifeq ($(DEB_STAGE)-$(filter libgcj, $(with_rtlibs)),rtlibs-)
+  with_java := disabled for rtlibs stage
+endif
+
 ifneq (,$(findstring gccgo, $(PKGSOURCE)))
   with_java :=
 endif
@@ -819,6 +846,9 @@ endif
 ifeq ($(go_no_cross)-$(DEB_CROSS),yes-yes)
   with_go := disabled for cross compiler package
 endif
+ifeq ($(DEB_STAGE)-$(filter libgo, $(with_rtlibs)),rtlibs-)
+  with_go := disabled for rtlibs stage
+endif
 with_go := $(call envfilt, go, , , $(with_go))
 
 # Build all packages needed for Go development
@@ -863,6 +893,9 @@ ifneq (,$(filter $(DEB_TARGET_ARCH_CPU),$(d_no_cpus)))
 endif
 ifeq ($(d_no_snap)-$(single_package),yes-yes)
   with_d := disabled for snapshot build
+endif
+ifeq ($(DEB_STAGE)-$(filter libphobos, $(with_rtlibs)),rtlibs-)
+  with_d := disabled for rtlibs stage
 endif
 with_d := $(call envfilt, d, , , $(with_d))
 
@@ -915,12 +948,18 @@ endif
 ifeq ($(fortran_no_cross)-$(DEB_CROSS),yes-yes)
   with_fortran := disabled for cross compiler package
 endif
+ifeq ($(DEB_STAGE)-$(filter libgfortran libquadmath, $(with_rtlibs)),rtlibs-)
+  with_fortran := disabled for rtlibs stage
+endif
+
 with_fortran := $(call envfilt, fortran, , , $(with_fortran))
 
 # Build all packages needed for Fortran development
 ifeq ($(with_fortran),yes)
   ifeq ($(with_dev),yes)
-    with_fdev := yes
+    ifneq ($(DEB_STAGE)-$(filter libgfortran libquadmath, $(with_rtlibs)),rtlibs-)
+      with_fdev := yes
+    endif
   endif
   ifeq ($(with_common_libs),yes)
     with_libgfortran := yes
@@ -956,6 +995,9 @@ ifneq ($(with_base_only),yes)
 endif
 ifeq ($(objc_no_cross)-$(DEB_CROSS),yes-yes)
   with_objc := disabled for cross compiler package
+endif
+ifeq ($(DEB_STAGE)-$(filter libobjc, $(with_rtlibs)),rtlibs-)
+  with_objc := disabled for rtlibs stage
 endif
 with_objc := $(call envfilt, objc, obj-c++, , $(with_objc))
 
@@ -1021,7 +1063,9 @@ with_nls := $(call envfilt, nls, , , $(with_nls))
 with_libnof := no
 
 ifneq (,$(findstring gcc-5,$(PKGSOURCE)))
-  with_source := yes
+  ifeq (,$(with_rtlibs))
+    with_source := yes
+  endif
 endif
 with_source := $(call envfilt, source, , , $(with_source))
 
@@ -1149,8 +1193,11 @@ endif
 
 # plugins --------------------
 with_plugins := yes
+ifneq (,$(with_rtlibs))
+  with_plugins := disabled for rtlibs stage
+endif
 
-endif # ifndef DEB_STAGE
+endif # ifeq (,$(filter $(DEB_STAGE),stage1 stage2))
 
 # Don't include docs with GFDL invariant sections
 GFDL_INVARIANT_FREE := yes
@@ -1187,6 +1234,7 @@ else
     #ifneq ($(DEB_CROSS),yes)
       with_libssp := $(if $(wildcard $(builddir)/gcc/auto-host.h),$(shell if grep -qs '^\#define TARGET_LIBC_PROVIDES_SSP 1' $(builddir)/gcc/auto-host.h; then echo 'libc provides ssp'; else echo 'yes'; fi))
     #endif
+    with_libssp := libc provides ssp
   endif
 
   # libgomp -----------------
@@ -1307,6 +1355,17 @@ else
   endif
   with_hppa64 := $(call envfilt, hppa64, , , $(with_hppa64))
 
+  ifeq ($(DEB_STAGE),rtlibs)
+    with_libatomic := disabled for rtlibs stage
+    with_libasan := disabled for rtlibs stage
+    with_liblsan := disabled for rtlibs stage
+    with_libtsan := disabled for rtlibs stage
+    with_libubsan := disabled for rtlibs stage
+    with_libcilkrts := disabled for rtlibs stage
+    with_fixincl := disabled for rtlibs stage
+    with_hppa64 := disabled for rtlibs stage
+  endif
+
   # neon build -------------------
   # FIXME: build as a cross compiler to build on armv4 as well
   ifneq (,$(findstring gcc-5, $(PKGSOURCE)))
@@ -1331,6 +1390,9 @@ ifeq ($(DEB_CROSS),yes)
 endif
 ifneq (,$(findstring cross-build-,$(build_type)))
   with_check := disabled for cross building the compiler
+endif
+ifneq (,$(with_rtlibs))
+  with_check := disabled for rtlibs stage
 endif
 check_no_cpus := m68k
 check_no_systems := # gnu kfreebsd-gnu
@@ -1360,7 +1422,7 @@ ifneq (,$(filter $(DEB_HOST_ARCH), hppa mips))
     with_check := disabled for $(DEB_HOST_ARCH), testsuite timeouts with expect
   endif
 endif
-#with_check := disabled for this upload
+with_check := disabled for this upload
 
 # not a dependency on all archs, but if available, use it for the testsuite
 ifneq (,$(wildcard /usr/bin/localedef))
@@ -1873,6 +1935,12 @@ else
       ignshld = -
     endif
   endif
+endif
+ifeq ($(DEB_STAGE),rtlibs)
+  define cross_mangle_shlibs
+  endef
+  define cross_mangle_substvars
+  endef
 endif
 
 # takes a *list* of package names as $1, the multilib dirname as $2

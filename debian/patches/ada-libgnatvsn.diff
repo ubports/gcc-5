@@ -64,7 +64,7 @@ Index: b/src/libgnatvsn/Makefile.in
 ===================================================================
 --- /dev/null
 +++ b/src/libgnatvsn/Makefile.in
-@@ -0,0 +1,157 @@
+@@ -0,0 +1,153 @@
 +# Makefile for libgnatvsn.
 +#   Copyright (c) 2006 Ludovic Brenta <ludovic@ludovic-brenta.org>
 +#
@@ -91,7 +91,7 @@ Index: b/src/libgnatvsn/Makefile.in
 +LIB_VERSION := $(strip $(shell grep ' Library_Version :' \
 +                 @srcdir@/../gcc/ada/gnatvsn.ads | \
 +	         sed -e 's/.*"\(.*\)".*/\1/'))
-+GCC:=../../gcc/xgcc -B../../gcc/
++GCC:=../../gcc/xgcc -B../../gcc/ -B/usr/@host@/lib
 +LIBGNAT_JUST_BUILT := -nostdinc -I../../gcc/ada/rts
 +CFLAGS := -g -O2 -gnatn
 +FULLVER := $(shell cat @srcdir@/../gcc/FULL-VER)
@@ -108,10 +108,6 @@ Index: b/src/libgnatvsn/Makefile.in
 +DATESTAMP_s := "\"$(if $(DEVPHASE), $(DATESTAMP))\""
 +PKGVERSION_s:= "\"@PKGVERSION@\""
 +BUGURL_s    := "\"@REPORT_BUGS_TO@\""
-+
-+ifneq (@build@,@host@)
-+   CFLAGS += -b @host@
-+endif
 +
 +.PHONY: libgnatvsn install
 +libgnatvsn: libgnatvsn.so.$(LIB_VERSION) libgnatvsn.a

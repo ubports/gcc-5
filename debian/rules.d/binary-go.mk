@@ -14,13 +14,15 @@ ifeq ($(with_libx32go),yes)
   $(lib_binaries) += libx32go
 endif
 
-arch_binaries  := $(arch_binaries) gccgo
-ifneq (,$(filter yes, $(biarch64) $(biarch32) $(biarchn32) $(biarchx32)))
-  arch_binaries  := $(arch_binaries) gccgo-multi
-endif
-ifneq ($(DEB_CROSS),yes)
-  ifneq ($(GFDL_INVARIANT_FREE),yes)
-    indep_binaries := $(indep_binaries) go-doc
+ifneq ($(DEB_STAGE),rtlibs)
+  arch_binaries  := $(arch_binaries) gccgo
+  ifneq (,$(filter yes, $(biarch64) $(biarch32) $(biarchn32) $(biarchx32)))
+    arch_binaries  := $(arch_binaries) gccgo-multi
+  endif
+  ifneq ($(DEB_CROSS),yes)
+    ifneq ($(GFDL_INVARIANT_FREE),yes)
+      indep_binaries := $(indep_binaries) go-doc
+    endif
   endif
 endif
 

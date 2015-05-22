@@ -1,7 +1,9 @@
-arch_binaries  := $(arch_binaries) cpp
-ifneq ($(DEB_CROSS),yes)
-  ifneq ($(GFDL_INVARIANT_FREE),yes)
-    indep_binaries := $(indep_binaries) cpp-doc
+ifneq ($(DEB_STAGE),rtlibs)
+  arch_binaries  := $(arch_binaries) cpp
+  ifneq ($(DEB_CROSS),yes)
+    ifneq ($(GFDL_INVARIANT_FREE),yes)
+      indep_binaries := $(indep_binaries) cpp-doc
+    endif
   endif
 endif
 

@@ -1,7 +1,9 @@
-ifneq (,$(filter yes, $(biarch64) $(biarch32) $(biarchn32) $(biarchx32) $(biarchhf) $(biarchsf)))
-  arch_binaries  := $(arch_binaries) cxx-multi
+ifneq ($(DEB_STAGE),rtlibs)
+  ifneq (,$(filter yes, $(biarch64) $(biarch32) $(biarchn32) $(biarchx32) $(biarchhf) $(biarchsf)))
+    arch_binaries  := $(arch_binaries) cxx-multi
+  endif
+  arch_binaries  := $(arch_binaries) cxx
 endif
-arch_binaries  := $(arch_binaries) cxx
 
 dirs_cxx = \
 	$(docdir)/$(p_xbase)/C++ \

@@ -22,7 +22,7 @@ define(`depifenabled', `ifelse(index(enabled_languages, `$1'), -1, `', `$2')')
 define(`ifenabled', `ifelse(index(enabled_languages, `$1'), -1, `dnl', `$2')')
 
 ifdef(`TARGET',`ifdef(`CROSS_ARCH',`',`undefine(`MULTIARCH')')')
-define(`CROSS_ARCH',`all')
+define(`CROSS_ARCH', ifdef(`CROSS_ARCH', CROSS_ARCH, `all'))
 define(`libdep', `lib$2$1`'LS`'AQ (ifelse(`$3',`',`>=',`$3') ifelse(`$4',`',`${gcc:Version}',`$4'))')
 define(`libdevdep', `lib$2$1`'LS`'AQ (ifelse(`$3',`',`=',`$3') ifelse(`$4',`',`${gcc:Version}',`$4'))')
 define(`libdbgdep', `lib$2$1`'LS`'AQ (ifelse(`$3',`',`>=',`$3') ifelse(`$4',`',`${gcc:Version}',`$4'))')
@@ -116,8 +116,8 @@ Description: A SNAPSHOT of the GNU Compiler Collection
 
 dnl default base package dependencies
 define(`BASETARGET', `')
-define(`BASEDEP', `gcc`'PV-base (= ${gcc:Version})')
-define(`SOFTBASEDEP', `gcc`'PV-base (>= ${gcc:SoftVersion})')
+define(`BASEDEP', `gcc`'PV`'TS-base (= ${gcc:Version})')
+define(`SOFTBASEDEP', `gcc`'PV`'TS-base (>= ${gcc:SoftVersion})')
 
 dnl base, when building libgcc out of the gcj source; needed if new symbols
 dnl in libgcc are used in libgcj.
@@ -133,7 +133,7 @@ define(`SOFTBASEDEP', `gnat`'PV-base (>= ${gnat:SoftVersion})')
 
 ifenabled(`gccbase',`
 
-Package: gcc`'PV-base
+Package: gcc`'PV`'TS-base
 Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
 ifdef(`MULTIARCH', `Multi-Arch: same
 ')`'dnl

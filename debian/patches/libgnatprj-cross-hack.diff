@@ -1,0 +1,63 @@
+This is a gross hack to cross build libgnatprj without having the
+gmp.h header for the target architecture.  Are libgnatvsn and libgnatprj
+really target libraries, or host libraries? The odd thing is that
+the gnat cross build tools are not linked against these two libraries.
+
+--- a/src/gcc/wide-int.h
++++ b/src/gcc/wide-int.h
+@@ -3097,8 +3097,10 @@ namespace wi
+   wide_int from_buffer (const unsigned char *, unsigned int);
+ 
+ #ifndef GENERATOR_FILE
++#ifndef LIBGNATPRJ_CROSS_HACK
+   void to_mpz (const wide_int_ref &, mpz_t, signop);
+ #endif
++#endif
+ 
+   wide_int mask (unsigned int, bool, unsigned int);
+   wide_int shifted_mask (unsigned int, unsigned int, bool, unsigned int);
+--- a/src/gcc/system.h
++++ b/src/gcc/system.h
+@@ -659,8 +659,10 @@ extern int vsnprintf (char *, size_t, co
+ 
+ /* Do not introduce a gmp.h dependency on the build system.  */
+ #ifndef GENERATOR_FILE
++#ifndef LIBGNATPRJ_CROSS_HACK
+ #include <gmp.h>
+ #endif
++#endif
+ 
+ /* Get libiberty declarations.  */
+ #include "libiberty.h"
+--- a/src/libgnatprj/Makefile.in
++++ b/src/libgnatprj/Makefile.in
+@@ -92,12 +92,12 @@ obj-shared/%.o: %.ads
+ 	$(GCC) -c -fPIC $(ADAFLAGS) $(LIBGNAT_JUST_BUILT) $(LIBGNATVSN) $< -o $@
+ 
+ obj-shared/%.o: %.c
+-	$(GPP) -c -fPIC $(CFLAGS) -DHAVE_CONFIG_H -DIN_GCC -pedantic \
++	$(GPP) -c -fPIC $(CFLAGS) -DHAVE_CONFIG_H -DIN_GCC -DLIBGNATPRJ_CROSS_HACK -pedantic \
+ 	   -I@srcdir@/../gcc -I@srcdir@/../include -I@srcdir@/../libcpp/include -I../../gcc \
+ 	   $< -o $@
+ 
+ obj-shared/prefix.o: @srcdir@/../gcc/prefix.c
+-	$(GPP) -c -fPIC $(CFLAGS) -DPREFIX=\"@prefix@\" -DBASEVER=\"$(BASEVER)\" \
++	$(GPP) -c -fPIC $(CFLAGS) -DPREFIX=\"@prefix@\" -DBASEVER=\"$(BASEVER)\" -DLIBGNATPRJ_CROSS_HACK \
+ 	   -I@srcdir@/../gcc -I@srcdir@/../include -I../../gcc -I@srcdir@/../libcpp/include \
+ 	   $< -o $@
+ 
+@@ -118,12 +118,12 @@ obj-static/%.o: %.ads
+ 	$(GCC) -c $(ADAFLAGS) $(LIBGNAT_JUST_BUILT) $(LIBGNATVSN) $< -o $@
+ 
+ obj-static/%.o: %.c
+-	$(GPP) -c $(CFLAGS) -DHAVE_CONFIG_H -DIN_GCC -pedantic \
++	$(GPP) -c $(CFLAGS) -DHAVE_CONFIG_H -DIN_GCC -DLIBGNATPRJ_CROSS_HACK -pedantic \
+ 	   -I@srcdir@/../gcc -I@srcdir@/../include -I@srcdir@/../libcpp/include -I../../gcc \
+ 	   $< -o $@
+ 
+ obj-static/prefix.o: @srcdir@/../gcc/prefix.c
+-	$(GPP) -c $(CFLAGS) -DPREFIX=\"@prefix@\" -DBASEVER=\"$(BASEVER)\" \
++	$(GPP) -c $(CFLAGS) -DPREFIX=\"@prefix@\" -DBASEVER=\"$(BASEVER)\" -DLIBGNATPRJ_CROSS_HACK \
+ 	   -I@srcdir@/../gcc -I@srcdir@/../include -I../../gcc -I@srcdir@/../libcpp/include \
+ 	   $< -o $@
+ 

@@ -1,45 +1,47 @@
 ifeq ($(with_libgcc),yes)
   $(lib_binaries)	+= libgcc
 endif
-ifeq ($(with_cdev),yes)
-  $(lib_binaries)  += libgcc-dev
-endif
-
 ifeq ($(with_lib64gcc),yes)
   $(lib_binaries)	+= lib64gcc
-endif
-ifeq ($(with_lib64gccdev),yes)
-  $(lib_binaries)  += lib64gcc-dev
 endif
 ifeq ($(with_lib32gcc),yes)
   $(lib_binaries)	+= lib32gcc
 endif
-ifeq ($(with_lib32gccdev),yes)
-  $(lib_binaries)  += lib32gcc-dev
-endif
 ifeq ($(with_libn32gcc),yes)
   $(lib_binaries)	+= libn32gcc
-endif
-ifeq ($(with_libn32gccdev),yes)
-  $(lib_binaries)  += libn32gcc-dev
 endif
 ifeq ($(with_libx32gcc),yes)
   $(lib_binaries)	+= libx32gcc
 endif
-ifeq ($(with_libx32gccdev),yes)
-  $(lib_binaries)  += libx32gcc-dev
-endif
 ifeq ($(with_libhfgcc),yes)
   $(lib_binaries)	+= libhfgcc
-endif
-ifeq ($(with_libhfgccdev),yes)
-  $(lib_binaries)  += libhfgcc-dev
 endif
 ifeq ($(with_libsfgcc),yes)
   $(lib_binaries)	+= libsfgcc
 endif
-ifeq ($(with_libsfgccdev),yes)
-  $(lib_binaries)  += libsfgcc-dev
+
+ifneq ($(DEB_STAGE),rtlibs)
+  ifeq ($(with_cdev),yes)
+    $(lib_binaries)  += libgcc-dev
+  endif
+  ifeq ($(with_lib64gccdev),yes)
+    $(lib_binaries)  += lib64gcc-dev
+  endif
+  ifeq ($(with_lib32gccdev),yes)
+    $(lib_binaries)  += lib32gcc-dev
+  endif
+  ifeq ($(with_libn32gccdev),yes)
+    $(lib_binaries)  += libn32gcc-dev
+  endif
+  ifeq ($(with_libx32gccdev),yes)
+    $(lib_binaries)  += libx32gcc-dev
+  endif
+  ifeq ($(with_libhfgccdev),yes)
+    $(lib_binaries)  += libhfgcc-dev
+  endif
+  ifeq ($(with_libsfgccdev),yes)
+    $(lib_binaries)  += libsfgcc-dev
+  endif
 endif
 
 header_files = \
