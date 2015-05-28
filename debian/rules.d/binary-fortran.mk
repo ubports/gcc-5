@@ -89,8 +89,8 @@ define __do_fortran
 	dh_installdirs -p$(p_l) $(usr_lib$(2))
 	DH_COMPAT=2 dh_movefiles -p$(p_l) $(usr_lib$(2))/libgfortran.so.*
 
-	debian/dh_doclink -p$(p_l) $(p_base)
-	debian/dh_doclink -p$(p_d) $(p_base)
+	debian/dh_doclink -p$(p_l) $(p_lbase)
+	debian/dh_doclink -p$(p_d) $(p_lbase)
 
 	if [ -f debian/$(p_l).overrides ]; then \
 		mkdir -p debian/$(p_l)/usr/share/lintian/overrides; \
@@ -134,7 +134,7 @@ define __do_libgfortran_dev
 		$(gcc_lib_dir$(2))/libcaf_single.a
 	$(call install_gcc_lib,libgfortran,$(FORTRAN_SONAME),$(2),$(p_l))
 
-	debian/dh_doclink -p$(p_l) $(p_base)
+	debian/dh_doclink -p$(p_l) $(p_lbase)
 	debian/dh_rmemptydirs -p$(p_l)
 
 	dh_strip -p$(p_l)

@@ -199,7 +199,7 @@ define __do_libstdcxx
 	cp -a $(d)/$(usr_lib$(2))/libstdc++.so.*[0-9] \
 		$(d_l)/$(usr_lib$(2))/.
 
-	debian/dh_doclink -p$(p_l) $(p_base)
+	debian/dh_doclink -p$(p_l) $(p_lbase)
 	debian/dh_rmemptydirs -p$(p_l)
 
 	dh_strip -p$(p_l) $(if $(filter rtlibs,$(DEB_STAGE)),,--dbg-package=$(1)-$(BASE_VERSION)-dbg$(cross_lib_arch))
@@ -258,7 +258,7 @@ define __do_libstdcxx_dbg
 		$(call shlibdirs_to_search,$(subst $(pkg_ver),,$(subst stdc++$(CXX_SONAME),gcc$(GCC_SONAME),$(p_l))),$(2))
 	$(call cross_mangle_substvars,$(p_d))
 
-	debian/dh_doclink -p$(p_d) $(p_base)
+	debian/dh_doclink -p$(p_d) $(p_lbase)
 	debian/dh_rmemptydirs -p$(p_d)
 
 	dh_compress -p$(p_d)
@@ -290,7 +290,7 @@ define __do_libstdcxx_dev
 		$(if $(with_multiarch_cxxheaders),$(PF)/include/$(DEB_TARGET_MULTIARCH)/c++/$(BASE_VERSION)/$(2))
 	$(call install_gcc_lib,libstdc++,$(CXX_SONAME),$(2),$(p_l))
 
-	debian/dh_doclink -p$(p_l) $(p_base)
+	debian/dh_doclink -p$(p_l) $(p_lbase)
 	debian/dh_rmemptydirs -p$(p_l)
 
 	dh_strip -p$(p_l)
@@ -419,9 +419,9 @@ ifeq ($(with_multiarch_cxxheaders),yes)
 		/$(PFL)/include/$(DEB_TARGET_MULTIARCH)/c++/$(GCC_VERSION)
 endif
 
-	debian/dh_doclink -p$(p_dev) $(p_base)
-	debian/dh_doclink -p$(p_pic) $(p_base)
-	debian/dh_doclink -p$(p_dbg) $(p_base)
+	debian/dh_doclink -p$(p_dev) $(p_lbase)
+	debian/dh_doclink -p$(p_pic) $(p_lbase)
+	debian/dh_doclink -p$(p_dbg) $(p_lbase)
 	cp -p $(srcdir)/libstdc++-v3/ChangeLog \
 		$(d_dev)/$(docdir)/$(p_base)/C++/changelog.libstdc++
 ifeq ($(with_check),yes)

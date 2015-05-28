@@ -527,7 +527,7 @@ Description: GNU Transactional Memory Library (64bit debug symbols)
 #Section: ifdef(`TARGET',`devel',`libs')
 #Architecture: ifdef(`TARGET',`CROSS_ARCH',`biarchn32_archs')
 #Priority: ifdef(`TARGET',`extra',`PRI(optional)')
-#Depends: BASEDEP, ${dep:libcbiarch}, ${shlibs:Depends}, ${misc:Depends}
+#Depends: BASELDEP, ${dep:libcbiarch}, ${shlibs:Depends}, ${misc:Depends}
 #BUILT_USING`'dnl
 #Description: GNU Transactional Memory Library (n32)
 # GNU Transactional Memory Library (libitm) provides transaction support for
@@ -538,7 +538,7 @@ Description: GNU Transactional Memory Library (64bit debug symbols)
 #Architecture: ifdef(`TARGET',`CROSS_ARCH',`biarchn32_archs')
 #Section: debug
 #Priority: extra
-#Depends: BASEDEP, libdep(itm`'ITM_SO,n32,=), ${misc:Depends}
+#Depends: BASELDEP, libdep(itm`'ITM_SO,n32,=), ${misc:Depends}
 #BUILT_USING`'dnl
 #Description: GNU Transactional Memory Library (n32 debug symbols)
 # GNU Transactional Memory Library (libitm) provides transaction support for
@@ -725,7 +725,7 @@ Description: AddressSanitizer -- a fast memory error detector (64bit debug symbo
 #Section: ifdef(`TARGET',`devel',`libs')
 #Architecture: ifdef(`TARGET',`CROSS_ARCH',`biarchn32_archs')
 #Priority: ifdef(`TARGET',`extra',`PRI(extra)')
-#Depends: BASEDEP, ${dep:libcbiarch}, ${shlibs:Depends}, ${misc:Depends}
+#Depends: BASELDEP, ${dep:libcbiarch}, ${shlibs:Depends}, ${misc:Depends}
 #BUILT_USING`'dnl
 #Description: AddressSanitizer -- a fast memory error detector (n32)
 # AddressSanitizer (ASan) is a fast memory error detector.  It finds
@@ -735,7 +735,7 @@ Description: AddressSanitizer -- a fast memory error detector (64bit debug symbo
 #Architecture: ifdef(`TARGET',`CROSS_ARCH',`biarchn32_archs')
 #Section: debug
 #Priority: extra
-#Depends: BASEDEP, libdep(asan`'ASAN_SO,n32,=), ${misc:Depends}
+#Depends: BASELDEP, libdep(asan`'ASAN_SO,n32,=), ${misc:Depends}
 #BUILT_USING`'dnl
 #Description: AddressSanitizer -- a fast memory error detector (n32 debug symbols)
 # AddressSanitizer (ASan) is a fast memory error detector.  It finds
@@ -803,7 +803,7 @@ Description: LeakSanitizer -- a memory leak detector (32 bit debug symbols)
 #Section: ifdef(`TARGET',`devel',`libs')
 #Architecture: ifdef(`TARGET',`CROSS_ARCH',`biarch64_archs')
 #Priority: ifdef(`TARGET',`extra',`PRI(optional)')
-#Depends: BASEDEP, ${dep:libcbiarch}, ${shlibs:Depends}, ${misc:Depends}
+#Depends: BASELDEP, ${dep:libcbiarch}, ${shlibs:Depends}, ${misc:Depends}
 #BUILT_USING`'dnl
 #Description: LeakSanitizer -- a memory leak detector (64bit)
 # LeakSanitizer (Lsan) is a memory leak detector which is integrated
@@ -813,7 +813,7 @@ Description: LeakSanitizer -- a memory leak detector (32 bit debug symbols)
 #Architecture: ifdef(`TARGET',`CROSS_ARCH',`biarch64_archs')
 #Section: debug
 #Priority: extra
-#Depends: BASEDEP, libdep(lsan`'LSAN_SO,64,=), ${misc:Depends}
+#Depends: BASELDEP, libdep(lsan`'LSAN_SO,64,=), ${misc:Depends}
 #BUILT_USING`'dnl
 #Description: LeakSanitizer -- a memory leak detector (64bit debug symbols)
 # LeakSanitizer (Lsan) is a memory leak detector which is integrated
@@ -823,7 +823,7 @@ Description: LeakSanitizer -- a memory leak detector (32 bit debug symbols)
 #Section: ifdef(`TARGET',`devel',`libs')
 #Architecture: ifdef(`TARGET',`CROSS_ARCH',`biarchn32_archs')
 #Priority: ifdef(`TARGET',`extra',`PRI(optional)')
-#Depends: BASEDEP, ${dep:libcbiarch}, ${shlibs:Depends}, ${misc:Depends}
+#Depends: BASELDEP, ${dep:libcbiarch}, ${shlibs:Depends}, ${misc:Depends}
 #BUILT_USING`'dnl
 #Description: LeakSanitizer -- a memory leak detector (n32)
 # LeakSanitizer (Lsan) is a memory leak detector which is integrated
@@ -833,7 +833,7 @@ Description: LeakSanitizer -- a memory leak detector (32 bit debug symbols)
 #Architecture: ifdef(`TARGET',`CROSS_ARCH',`biarchn32_archs')
 #Section: debug
 #Priority: extra
-#Depends: BASEDEP, libdep(lsan`'LSAN_SO,n32,=), ${misc:Depends}
+#Depends: BASELDEP, libdep(lsan`'LSAN_SO,n32,=), ${misc:Depends}
 #BUILT_USING`'dnl
 #Description: LeakSanitizer -- a memory leak detector (n32 debug symbols)
 # LeakSanitizer (Lsan) is a memory leak detector which is integrated
@@ -950,7 +950,7 @@ Description: UBSan -- undefined behaviour sanitizer (64bit debug symbols)
 #Section: ifdef(`TARGET',`devel',`libs')
 #Architecture: ifdef(`TARGET',`CROSS_ARCH',`biarchn32_archs')
 #Priority: ifdef(`TARGET',`extra',`PRI(optional)')
-#Depends: BASEDEP, ${dep:libcbiarch}, ${shlibs:Depends}, ${misc:Depends}
+#Depends: BASELDEP, ${dep:libcbiarch}, ${shlibs:Depends}, ${misc:Depends}
 #BUILT_USING`'dnl
 #Description: UBSan -- undefined behaviour sanitizer (n32)
 # UndefinedBehaviorSanitizer can be enabled via -fsanitize=undefined.
@@ -961,7 +961,7 @@ Description: UBSan -- undefined behaviour sanitizer (64bit debug symbols)
 #Architecture: ifdef(`TARGET',`CROSS_ARCH',`biarchn32_archs')
 #Section: debug
 #Priority: extra
-#Depends: BASEDEP, libdep(ubsan`'UBSAN_SO,n32,=), ${misc:Depends}
+#Depends: BASELDEP, libdep(ubsan`'UBSAN_SO,n32,=), ${misc:Depends}
 #BUILT_USING`'dnl
 #Description: UBSan -- undefined behaviour sanitizer (n32 debug symbols)
 # UndefinedBehaviorSanitizer can be enabled via -fsanitize=undefined.
@@ -1203,7 +1203,7 @@ Description: GCC Quad-Precision Math Library  (64bit debug symbols)
 #Section: ifdef(`TARGET',`devel',`libs')
 #Architecture: ifdef(`TARGET',`CROSS_ARCH',`biarchn32_archs')
 #Priority: ifdef(`TARGET',`extra',`PRI(optional)')
-#Depends: BASEDEP, ${dep:libcbiarch}, ${shlibs:Depends}, ${misc:Depends}
+#Depends: BASELDEP, ${dep:libcbiarch}, ${shlibs:Depends}, ${misc:Depends}
 #BUILT_USING`'dnl
 #Description: GCC Quad-Precision Math Library (n32)
 # A library, which provides quad-precision mathematical functions on targets
@@ -1214,7 +1214,7 @@ Description: GCC Quad-Precision Math Library  (64bit debug symbols)
 #Architecture: ifdef(`TARGET',`CROSS_ARCH',`biarchn32_archs')
 #Section: debug
 #Priority: extra
-#Depends: BASEDEP, libdep(quadmath`'QMATH_SO,n32,=), ${misc:Depends}
+#Depends: BASELDEP, libdep(quadmath`'QMATH_SO,n32,=), ${misc:Depends}
 #BUILT_USING`'dnl
 #Description: GCC Quad-Precision Math Library (n32 debug symbols)
 # A library, which provides quad-precision mathematical functions on targets
@@ -2368,7 +2368,7 @@ Description: Phobos D standard library
 #Section: debug
 #Architecture: ifdef(`TARGET',`CROSS_ARCH',`libphobos_archs')
 #Priority: extra
-#Depends: BASEDEP, libphobos`'PHOBOS_V`'PV-dev (= ${gdc:Version}), ${misc:Depends}
+#Depends: BASELDEP, libphobos`'PHOBOS_V`'PV-dev (= ${gdc:Version}), ${misc:Depends}
 #Provides: libphobos`'PHOBOS_V`'TS-dbg
 #BUILT_USING`'dnl
 #Description: The Phobos D standard library (debug symbols)

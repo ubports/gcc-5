@@ -458,17 +458,8 @@ multilib_multiarch_map = \
 mlib_to_march = $(patsubst $(DEB_TARGET_ARCH)/$(1)=%,%, \
 		   $(filter $(DEB_TARGET_ARCH)/$(1)=%,$(multilib_multiarch_map)))
 
-ifeq ($(DEB_STAGE),rtlibs)
-  with_gccbase := yes
-  with_gccxbase :=
-else ifneq ($(DEB_STAGE),stage1)
-  # build a -base package.
-  ifneq ($(DEB_CROSS),yes)
-    with_gccbase := yes
-  else
-    with_gccxbase := yes
-  endif
-endif
+# build a -base package.
+with_gccbase := yes
 
 # build dev packages.
 ifneq ($(DEB_STAGE),rtlibs)
@@ -877,7 +868,7 @@ endif
 # D ---------------------------
 d_no_cross := yes
 d_no_snap := yes
-d_no_cpus := s390
+d_no_cpus := s390 sh4
 
 ifneq ($(single_package),yes)
   with_separate_gdc := yes

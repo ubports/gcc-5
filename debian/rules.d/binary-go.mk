@@ -112,8 +112,8 @@ define __do_gccgo
 	DH_COMPAT=2 dh_movefiles -p$(p_l) \
 		$(usr_lib$(2))/libgo.so.* $(usr_lib$(2))/go
 
-	debian/dh_doclink -p$(p_l) $(p_base)
-	debian/dh_doclink -p$(p_d) $(p_base)
+	debian/dh_doclink -p$(p_l) $(p_lbase)
+	debian/dh_doclink -p$(p_d) $(p_lbase)
 
 	: # don't strip: https://gcc.gnu.org/ml/gcc-patches/2015-02/msg01722.html
 	: # dh_strip -p$(p_l) --dbg-package=$(p_d)
@@ -273,7 +273,7 @@ endif
 #		$(d_go)/$(docdir)/$(p_base)/go/changelog
 	debian/dh_rmemptydirs -p$(p_go)
 
-	dh_strip -p$(p_go) -X/cgo -Xgo$(pkg_ver) -Xgofmt$(pkg_ver) \
+	dh_strip -v -p$(p_go) -X/cgo -Xgo$(pkg_ver) -Xgofmt$(pkg_ver) \
 	  $(if $(unstripped_exe),-X/go1)
 	dh_compress -p$(p_go)
 	dh_fixperms -p$(p_go)

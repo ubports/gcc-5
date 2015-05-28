@@ -62,8 +62,8 @@ define __do_libobjc
 	DH_COMPAT=2 dh_movefiles -p$(p_l) \
 		$(files_lobjc)
 
-	debian/dh_doclink -p$(p_l) $(p_base)
-	debian/dh_doclink -p$(p_d) $(p_base)
+	debian/dh_doclink -p$(p_l) $(p_lbase)
+	debian/dh_doclink -p$(p_d) $(p_lbase)
 
 	dh_strip -p$(p_l) --dbg-package=$(p_d)
 	dh_compress -p$(p_l) -p$(p_d)
@@ -102,7 +102,7 @@ define __do_libobjc_dev
 		  /$(gcc_lib_dir$(2))/libobjc_gc.so
 	)
 
-	debian/dh_doclink -p$(p_l) $(p_base)
+	debian/dh_doclink -p$(p_l) $(p_lbase)
 
 	dh_compress -p$(p_l)
 	dh_fixperms -p$(p_l)

@@ -158,7 +158,7 @@ define __do_gcc_devels
 
 	$(call __do_gcc_devels2,$(1),$(2),$(3),$(4))
 
-	debian/dh_doclink -p$(2) $(p_base)
+	debian/dh_doclink -p$(2) $(p_lbase)
 	debian/dh_rmemptydirs -p$(2)
 
 	dh_strip -p$(2)
@@ -291,8 +291,8 @@ define __do_libgcc
 			$(d_l)/$(libgcc_dir$(2))/.
 	)
 
-	debian/dh_doclink -p$(p_l) $(if $(3),$(3),$(p_base))
-	debian/dh_doclink -p$(p_d) $(if $(3),$(3),$(p_base))
+	debian/dh_doclink -p$(p_l) $(if $(3),$(3),$(p_lbase))
+	debian/dh_doclink -p$(p_d) $(if $(3),$(3),$(p_lbase))
 	debian/dh_rmemptydirs -p$(p_l)
 	debian/dh_rmemptydirs -p$(p_d)
 	dh_strip -p$(p_l) --dbg-package=$(p_d)

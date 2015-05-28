@@ -397,6 +397,11 @@ ifeq ($(with_multiarch_lib),yes)
   CONFARGS += --enable-multiarch
 endif
 
+# FIXME: requires binutils trunk
+#ifneq (,$(findstring aarch64,$(DEB_TARGET_GNU_CPU)))
+#  CONFARGS += --enable-fix-cortex-a53-843419
+#endif
+
 ifeq ($(findstring powerpcspe,$(DEB_TARGET_ARCH)),powerpcspe)
   CONFARGS += --with-cpu=8548 --enable-e500_double
 endif
@@ -1757,6 +1762,7 @@ endif
 
 ifneq ($(DEB_CROSS),yes)
   p_base = gcc$(pkg_ver)-base
+  p_lbase = $(p_base)
   p_xbase = gcc$(pkg_ver)-base
   p_gcc  = gcc$(pkg_ver)
   p_cpp  = cpp$(pkg_ver)
@@ -1767,6 +1773,7 @@ ifneq ($(DEB_CROSS),yes)
 else
   # only triggered if DEB_CROSS set
   p_base = gcc$(pkg_ver)$(cross_bin_arch)-base
+  p_lbase = $(p_base)
   p_xbase = gcc$(pkg_ver)$(cross_bin_arch)-base
   p_cpp  = cpp$(pkg_ver)$(cross_bin_arch)
   p_gcc  = gcc$(pkg_ver)$(cross_bin_arch)
@@ -1811,10 +1818,6 @@ endif
 endif
 
 ifneq ($(BACKPORT),true)
-
-ifeq ($(with_gccxbase),yes)
-  include debian/rules.d/binary-base.mk
-endif
 
 ifeq ($(with_gccbase),yes)
   include debian/rules.d/binary-base.mk

@@ -59,7 +59,7 @@ $(binary_stamp)-libssp: $(install_stamp)
 	dh_installdirs -p$(p_ssp)
 
 	DH_COMPAT=2 dh_movefiles -p$(p_ssp) $(files_ssp)
-	debian/dh_doclink -p$(p_ssp) $(p_base)
+	debian/dh_doclink -p$(p_ssp) $(p_lbase)
 
 	debian/dh_rmemptydirs -p$(p_ssp)
 
@@ -88,7 +88,7 @@ $(binary_stamp)-lib64ssp: $(install_stamp)
 	DH_COMPAT=2 dh_movefiles -p$(p_ssp64) \
 		$(PF)/lib64/libssp.so.*
 
-	debian/dh_doclink -p$(p_ssp64) $(p_base)
+	debian/dh_doclink -p$(p_ssp64) $(p_lbase)
 
 	dh_strip -p$(p_ssp64)
 	dh_compress -p$(p_ssp64)
@@ -114,7 +114,7 @@ $(binary_stamp)-lib32ssp: $(install_stamp)
 	DH_COMPAT=2 dh_movefiles -p$(p_ssp32) \
 		$(lib32)/libssp.so.*
 
-	debian/dh_doclink -p$(p_ssp32) $(p_base)
+	debian/dh_doclink -p$(p_ssp32) $(p_lbase)
 
 	dh_strip -p$(p_ssp32)
 	dh_compress -p$(p_ssp32)
@@ -140,7 +140,7 @@ $(binary_stamp)-libn32ssp: $(install_stamp)
 	DH_COMPAT=2 dh_movefiles -p$(p_sspn32) \
 		$(PF)/$(libn32)/libssp.so.*
 
-	debian/dh_doclink -p$(p_sspn32) $(p_base)
+	debian/dh_doclink -p$(p_sspn32) $(p_lbase)
 
 	dh_strip -p$(p_sspn32)
 	dh_compress -p$(p_sspn32)
@@ -166,7 +166,7 @@ $(binary_stamp)-libx32ssp: $(install_stamp)
 	DH_COMPAT=2 dh_movefiles -p$(p_sspx32) \
 		$(PF)/$(libx32)/libssp.so.*
 
-	debian/dh_doclink -p$(p_sspx32) $(p_base)
+	debian/dh_doclink -p$(p_sspx32) $(p_lbase)
 
 	dh_strip -p$(p_sspx32)
 	dh_compress -p$(p_sspx32)

@@ -29,8 +29,8 @@ define __do_tsan
 	dh_installdirs -p$(p_l) $(usr_lib$(2))
 	DH_COMPAT=2 dh_movefiles -p$(p_l) $(usr_lib$(2))/libtsan.so.*
 
-	debian/dh_doclink -p$(p_l) $(p_base)
-	debian/dh_doclink -p$(p_d) $(p_base)
+	debian/dh_doclink -p$(p_l) $(p_lbase)
+	debian/dh_doclink -p$(p_d) $(p_lbase)
 
 	if [ -f debian/$(p_l).overrides ]; then \
 		mkdir -p debian/$(p_l)/usr/share/lintian/overrides; \

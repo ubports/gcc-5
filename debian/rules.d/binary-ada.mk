@@ -12,14 +12,17 @@ endif
 
 ifneq ($(DEB_CROSS),yes)
   p_gbase	= gnat-$(GNAT_VERSION)-base
+  p_glbase	= gnat-$(GNAT_VERSION)-base
   ifneq ($(with_separate_gnat),yes)
     p_gbase = gcc$(pkg_ver)-base
+    p_glbase = $(p_lbase)
   endif
 else
   p_gbase = gnat$(pkg_ver)$(cross_bin_arch)-base
   ifneq ($(with_separate_gnat),yes)
     p_gbase = gcc$(pkg_ver)$(cross_bin_arch)-base
   endif
+  p_glbase = $(p_gbase)
 endif
 
 p_gnat	= gnat-$(GNAT_VERSION)$(cross_bin_arch)
@@ -107,7 +110,7 @@ $(binary_stamp)-libgnat: $(install_stamp)
 	done
 	dh_movefiles -p$(p_lgnat) $(files_lgnat)
 
-	debian/dh_doclink -p$(p_lgnat) $(p_gbase)
+	debian/dh_doclink -p$(p_lgnat) $(p_glbase)
 
 	debian/dh_rmemptydirs -p$(p_lgnat)
 
@@ -143,7 +146,7 @@ endif
 	dh_builddeb -p$(p_lgnat)
 
 	: # $(p_lgnat_dbg)
-	debian/dh_doclink -p$(p_lgnat_dbg) $(p_gbase)
+	debian/dh_doclink -p$(p_lgnat_dbg) $(p_glbase)
 	dh_compress -p$(p_lgnat_dbg)
 	dh_fixperms -p$(p_lgnat_dbg)
 	$(cross_gencontrol) dh_gencontrol -p$(p_lgnat_dbg) \

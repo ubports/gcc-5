@@ -1,3 +1,14 @@
+gcc-5 (5.1.1-8) unstable; urgency=medium
+
+  * Update to SVN 20150528 (r223816, 5.1.1) from the gcc-5-branch.
+  * Set the priorities of the *-dev-*-cross packages to extra.
+  * Prepare to change the base dependency for *-cross packages.
+  * Fix dependencies for stage1 and stage2 builds.
+  * Relax dependencies on binary indep *-dev-*-cross packages.
+  * Disable building gdc on sh4 (bootstrap comparison failure).
+
+ -- Matthias Klose <doko@debian.org>  Thu, 28 May 2015 15:51:00 +0200
+
 gcc-5 (5.1.1-7) unstable; urgency=medium
 
   * Update to SVN 20150522 (r223579, 5.1.1) from the gcc-5-branch.

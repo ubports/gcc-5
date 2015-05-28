@@ -182,7 +182,7 @@ $(binary_stamp)-libphobos: $(install_stamp)
 ifeq ($(with_separate_gdc),yes)
 	debian/dh_doclink -p$(p_libphobos) $(p_gdc)
 else
-	debian/dh_doclink -p$(p_libphobos) $(p_base)
+	debian/dh_doclink -p$(p_libphobos) $(p_lbase)
 endif
 
 	dh_strip -p$(p_libphobos)
@@ -219,7 +219,7 @@ define __do_libphobos_dev
 	rm -f $(d_l)/$(gdc_include_dir)/object.di
 
 	debian/dh_doclink -p$(p_l) \
-		$(if $(filter yes,$(with_separate_gdc)),$(p_gdc),$(p_base))
+		$(if $(filter yes,$(with_separate_gdc)),$(p_gdc),$(p_lbase))
 
 	dh_compress -p$(p_l)
 	dh_fixperms -p$(p_l)
