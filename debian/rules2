@@ -82,22 +82,23 @@ define unsetenv
   unexport $(1)
   $(1) =
 endef
-$(foreach v, CPPFLAGS CFLAGS CXXFLAGS FFLAGS LDFLAGS, $(if $(filter environment,$(origin $(v))),$(eval $(call unsetenv, $(v)))))
+$(foreach v, CPPFLAGS CFLAGS CXXFLAGS DFLAGS FFLAGS FCFLAGS LDFLAGS OBJCFLAGS OBJCXXFLAGS GCJFLAGS, $(if $(filter environment,$(origin $(v))),$(eval $(call unsetenv, $(v)))))
 
-ifneq (,$(findstring cross-build-,$(build_type)))
-  CC	=
-else
-  ifeq ($(with_ada),yes)
-    gnatgcc := $(firstword $(wildcard /usr/bin/gnatgcc-5 /usr/bin/gnatgcc))
-    ifneq (,$(gnatgcc))
-      CC = $(gnatgcc)
-    else
-      CC = gcc
-    endif
+CC = $(notdir $(firstword $(wildcard \
+	/usr/bin/$(DEB_HOST_GNU_TYPE)-gcc-5 /usr/bin/$(DEB_HOST_GNU_TYPE)-gcc)))
+CXX = $(notdir $(firstword $(wildcard \
+	/usr/bin/$(DEB_HOST_GNU_TYPE)-g++-5 /usr/bin/$(DEB_HOST_GNU_TYPE)-g++)))
+ifeq ($(with_ada),yes)
+  GNAT = $(notdir $(firstword $(wildcard \
+	/usr/bin/$(DEB_HOST_GNU_TYPE)-gnat-5 /usr/bin/$(DEB_HOST_GNU_TYPE)-gnat /usr/bin/gnatgcc)))
+  ifeq ($(GNAT),gnatgcc)
+    CC := $(shell readlink /usr/bin/gnatgcc)
   else
-      CC = gcc
+    CC = $(subst gnat,gcc,$(GNAT))
   endif
+  CXX = $(subst gcc,g++,$(CC))
 endif
+
 ifeq ($(DEB_BUILD_GNU_TYPE),$(DEB_TARGET_GNU_TYPE))
   CC_FOR_TARGET = $(builddir)/gcc/xgcc -B$(builddir)/gcc/
 else
@@ -1083,6 +1084,7 @@ endif
 	cd $(builddir) \
 	  && $(SET_PATH) \
 		CC="$(CC)" \
+		CXX="$(CXX)" \
 		$(SET_SHELL) \
 	LD_LIBRARY_PATH=$${LD_LIBRARY_PATH:+$$LD_LIBRARY_PATH:}$(builddir)/gcc/ada/rts \
 		../src/configure $(subst ___, ,$(CONFARGS))
@@ -1120,7 +1122,6 @@ ifeq ($(DEB_CROSS),yes)
 	  $(SET_PATH) \
 	  $(SET_LOCPATH) \
 	    $(MAKE) -C $(builddir) $(NJOBS) \
-		CC="$(CC)" \
 		$(CFLAGS_TO_PASS) \
 		$(LDFLAGS_TO_PASS) \
 		; \
@@ -1135,7 +1136,6 @@ else
 	  $(SET_PATH) \
 	  $(SET_LOCPATH) \
 	    $(MAKE) -C $(builddir) $(NJOBS) \
-		CC="$(CC)" \
 		$(CFLAGS_TO_PASS) \
 		$(LDFLAGS_TO_PASS) \
 		; \
@@ -1268,7 +1268,6 @@ $(build_jit_stamp): $(configure_jit_stamp)
 	  $(SET_LOCPATH) \
 	  LD_LIBRARY_PATH=$${LD_LIBRARY_PATH:+$$LD_LIBRARY_PATH:}$(builddir)/gcc \
 	    $(MAKE) -C $(builddir_jit) $(NJOBS) \
-		CC="$(CC_FOR_JIT)" \
 		$(CFLAGS_TO_PASS) \
 		$(LDFLAGS_TO_PASS)
 
@@ -1325,7 +1324,6 @@ $(build_hppa64_stamp): $(configure_hppa64_stamp)
 	  $(SET_LOCPATH) \
 	  LD_LIBRARY_PATH=$${LD_LIBRARY_PATH:+$$LD_LIBRARY_PATH:}$(builddir)/gcc \
 	    $(MAKE) -C $(builddir_hppa64) $(NJOBS) \
-		CC="$(CC_for_hppa64_cross)" \
 		$(CFLAGS_TO_PASS) \
 		$(LDFLAGS_TO_PASS)
 	touch $(build_hppa64_stamp)
@@ -1360,7 +1358,6 @@ $(build_neon_stamp): $(configure_neon_stamp)
 	  $(SET_SHELL) \
 	  $(SET_LOCPATH) \
 	    $(MAKE) -C $(builddir_neon) $(NJOBS) \
-		CC="$(builddir)/gcc/xg++ -B$(builddir)/gcc/" \
 		$(CFLAGS_TO_PASS) \
 		$(LDFLAGS_TO_PASS)
 	touch $(build_neon_stamp)

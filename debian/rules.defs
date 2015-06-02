@@ -287,6 +287,7 @@ ifdef DEB_STAGE
     with_rtlibs := libgcc libgomp libstdc++ libgfortran libquadmath
     ifeq ($(DEB_CROSS),yes)
       LS :=
+      TS :=
       cross_lib_arch :=
     endif
   endif
@@ -509,7 +510,7 @@ enabled_languages := c
 with_jit = yes
 
 # FIXME: compiler bug
-jit_no_cpus	:= none
+jit_no_cpus	:= ia64
 
 ifneq (,$(filter $(DEB_TARGET_ARCH_CPU),$(jit_no_cpus)))
   with_jit := disabled for cpu $(DEB_TARGET_ARCH_CPU)

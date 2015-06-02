@@ -7,6 +7,10 @@ case "$1" in
 	    rm -rf $docdir
 	    ln -s gcc-@BV@-base $docdir
 	fi
+
+	if [ -n "$2" ] && dpkg --compare-versions "$2" lt 5.1.1-9; then
+	    find /usr/share/gcc-4.9/python -name __pycache__ | xargs -r rm -rf
+	fi
 esac
 
 #DEBHELPER#

@@ -273,7 +273,7 @@ endif
 #		$(d_go)/$(docdir)/$(p_base)/go/changelog
 	debian/dh_rmemptydirs -p$(p_go)
 
-	dh_strip -v -p$(p_go) -X/cgo -Xgo$(pkg_ver) -Xgofmt$(pkg_ver) \
+	dh_strip -v -p$(p_go) -X/cgo -X/go$(pkg_ver) -X/gofmt$(pkg_ver) \
 	  $(if $(unstripped_exe),-X/go1)
 	dh_compress -p$(p_go)
 	dh_fixperms -p$(p_go)

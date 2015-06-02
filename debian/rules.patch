@@ -84,6 +84,8 @@ debian_patches += \
 	go-escape-analysis2 \
 	go-escape-analysis3 \
 	go-escape-analysis4 \
+	gccgo-sendfile-fix \
+	pr66368 \
 
 # don't apply yet, test it first ...
 #	go-escape-analysis \
@@ -294,7 +296,7 @@ debian_patches += gcc-multilib-multiarch
 
 ifneq (,$(filter $(derivative),Ubuntu))
   ifeq (,$(filter $(distrelease),dapper hardy intrepid jaunty karmic lucid maverick))
-    #debian_patches += gcc-as-needed
+    debian_patches += gcc-as-needed
   endif
 else # Debian
     #debian_patches += gcc-as-needed

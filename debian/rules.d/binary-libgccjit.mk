@@ -36,7 +36,7 @@ $(binary_stamp)-libgccjit: $(install_jit_stamp)
 	DH_COMPAT=2 dh_movefiles -p$(p_jitdev) \
 		$(gcc_lib_dir)/include/libgccjit*.h
 	dh_link -p$(p_jitdev) \
-		$(usr_lib)/libgccjit.so $(gcc_lib_dir)/libgccjit.so
+		$(usr_lib)/libgccjit.so.$(GCCJIT_SONAME) $(gcc_lib_dir)/libgccjit.so
 
 	debian/dh_doclink -p$(p_jitlib) $(p_base)
 	debian/dh_doclink -p$(p_jitdev) $(p_base)
