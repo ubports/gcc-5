@@ -201,6 +201,12 @@ ifneq ($(GFDL_INVARIANT_FREE),yes)
 endif
 endif
 
+ifeq ($(GFDL_INVARIANT_FREE),yes)
+	mkdir -p $(d_g95)/usr/share/lintian/overrides
+	echo '$(p_g95) binary: binary-without-manpage' \
+	  >> $(d_g95)/usr/share/lintian/overrides/$(p_g95)
+endif
+
 	debian/dh_doclink -p$(p_g95) $(p_xbase)
 
 	cp -p $(srcdir)/gcc/fortran/ChangeLog \

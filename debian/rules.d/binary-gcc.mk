@@ -169,6 +169,13 @@ endif
 	else \
 	  true; \
 	fi
+
+ifeq ($(GFDL_INVARIANT_FREE),yes)
+	mkdir -p $(d_gcc)/usr/share/lintian/overrides
+	echo '$(p_gcc) binary: binary-without-manpage' \
+	  >> $(d_gcc)/usr/share/lintian/overrides/$(p_gcc)
+endif
+
 	debian/dh_rmemptydirs -p$(p_gcc)
 	dh_strip -p$(p_gcc) \
 	  $(if $(unstripped_exe),-X/lto1)

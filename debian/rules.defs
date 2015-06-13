@@ -459,8 +459,13 @@ multilib_multiarch_map = \
 mlib_to_march = $(patsubst $(DEB_TARGET_ARCH)/$(1)=%,%, \
 		   $(filter $(DEB_TARGET_ARCH)/$(1)=%,$(multilib_multiarch_map)))
 
-# build a -base package.
+# build -base packages
 with_gccbase := yes
+ifeq ($(build_type),build-cross)
+  ifneq ($(DEB_STAGE),rtlibs)
+    with_gcclbase := yes
+  endif
+endif
 
 # build dev packages.
 ifneq ($(DEB_STAGE),rtlibs)
@@ -670,7 +675,7 @@ ifeq ($(with_cxx),yes)
     with_cxxdev := yes
     with_libcxxdbg := yes
   endif
-  ifeq ($(with_common_pkgs),yes)
+  ifeq ($(with_common_libs),yes)
     with_libcxx := yes
   endif
 

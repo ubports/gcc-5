@@ -46,6 +46,12 @@ ifneq ($(DEB_CROSS),yes)
   endif
 endif
 
+ifeq ($(GFDL_INVARIANT_FREE),yes)
+	mkdir -p $(d_cpp)/usr/share/lintian/overrides
+	echo '$(p_cpp) binary: binary-without-manpage' \
+	  >> $(d_cpp)/usr/share/lintian/overrides/$(p_cpp)
+endif
+
 	debian/dh_doclink -p$(p_cpp) $(p_xbase)
 	debian/dh_rmemptydirs -p$(p_cpp)
 

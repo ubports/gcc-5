@@ -123,8 +123,8 @@ define(`BASEDEP', `gcc`'PV`'TS-base (= ${gcc:Version})')
 define(`SOFTBASEDEP', `gcc`'PV`'TS-base (>= ${gcc:SoftVersion})')
 
 ifdef(`TARGET',`
-define(`BASELDEP', `gcc`'PV`'TS-base (>= ${gcc:Version})')
-define(`SOFTBASELDEP', `gcc`'PV`'TS-base (>= ${gcc:SoftVersion})')
+define(`BASELDEP', `gcc`'PV-cross-base (= ${gcc:Version})')
+define(`SOFTBASELDEP', `gcc`'PV-cross-base (>= ${gcc:SoftVersion})')
 ',`dnl
 define(`BASELDEP', `BASEDEP')
 define(`SOFTBASELDEP', `SOFTBASEDEP')
@@ -161,6 +161,23 @@ ifdef(`BASE_ONLY', `dnl
  Please use the compilers from the gcc-snapshot package for testing.
 ')`'dnl
 ')`'dnl gccbase
+
+ifenabled(`gcclbase',`
+Package: gcc`'PV-cross-base
+Architecture: all
+Section: ifdef(`TARGET',`devel',`libs')
+Priority: ifdef(`TARGET',`extra',`PRI(required)')
+Depends: ${misc:Depends}
+BUILT_USING`'dnl
+Description: GCC, the GNU Compiler Collection (library base package)
+ This package contains files common to all libraries
+ contained in the GNU Compiler Collection (GCC).
+ifdef(`BASE_ONLY', `dnl
+ .
+ This version of GCC is not yet available for this architecture.
+ Please use the compilers from the gcc-snapshot package for testing.
+')`'dnl
+')`'dnl gcclbase
 
 ifenabled(`java',`
 ifdef(`TARGET', `', `
@@ -775,8 +792,8 @@ BUILT_USING`'dnl
 Description: GNU C compiler (multilib files)`'ifdef(`TARGET)',` (cross compiler for TARGET architecture)', `')
  This is the GNU C compiler, a fairly portable optimizing compiler for C.
  .
- On architectures with multilib support, the package contains files
- and dependencies for the non-default multilib architecture(s).
+ This is a dependency package on architectures with multilib support,
+ holding dependencies for the non-default multilib architecture(s).
 ')`'dnl multilib
 
 ifenabled(`plugindev',`
@@ -881,8 +898,8 @@ BUILT_USING`'dnl
 Description: GNU C++ compiler (multilib files)`'ifdef(`TARGET)',` (cross compiler for TARGET architecture)', `')
  This is the GNU C++ compiler, a fairly portable optimizing compiler for C++.
  .
- On architectures with multilib support, the package contains files
- and dependencies for the non-default multilib architecture(s).
+ This is a dependency package on architectures with multilib support,
+ holding dependencies for the non-default multilib architecture(s).
 ')`'dnl multilib
 ')`'dnl c++dev
 ')`'dnl c++
@@ -3254,8 +3271,8 @@ Description: GNU Objective-C++ compiler (multilib files)
  This is the GNU Objective-C++ compiler, which compiles Objective-C++ on
  platforms supported by the gcc compiler.
  .
- On architectures with multilib support, the package contains files
- and dependencies for the non-default multilib architecture(s).
+ This is a dependency package on architectures with multilib support,
+ holding dependencies for the non-default multilib architecture(s).
 ')`'dnl multilib
 ')`'dnl obcpp
 
@@ -3285,8 +3302,8 @@ Description: GNU Objective-C compiler (multilib files)`'ifdef(`TARGET)',` (cross
  This is the GNU Objective-C compiler, which compiles Objective-C on platforms
  supported by the gcc compiler.
  .
- On architectures with multilib support, the package contains files
- and dependencies for the non-default multilib architecture(s).
+ This is a dependency package on architectures with multilib support,
+ holding dependencies for the non-default multilib architecture(s).
 ')`'dnl multilib
 
 Package: libobjc`'PV-dev`'LS
@@ -3563,8 +3580,8 @@ Description: GNU Fortran compiler (multilib files)`'ifdef(`TARGET)',` (cross com
  This is the GNU Fortran compiler, which compiles Fortran on platforms
  supported by the gcc compiler.
  .
- On architectures with multilib support, the package contains files
- and dependencies for the non-default multilib architecture(s).
+ This is a dependency package on architectures with multilib support,
+ holding dependencies for the non-default multilib architecture(s).
 ')`'dnl multilib
 
 ifenabled(`gfdldoc',`
@@ -3871,8 +3888,8 @@ Description: GNU Go compiler (multilib files)`'ifdef(`TARGET)',` (cross compiler
  This is the GNU Go compiler, which compiles Go on platforms supported
  by the gcc compiler.
  .
- On architectures with multilib support, the package contains files
- and dependencies for the non-default multilib architecture(s).
+ This is a dependency package on architectures with multilib support,
+ holding dependencies for the non-default multilib architecture(s).
 ')`'dnl multilib
 
 ifenabled(`gfdldoc',`
@@ -5055,8 +5072,8 @@ Description: GNU D compiler (version 2, multilib files)`'ifdef(`TARGET)',` (cros
  This is the GNU D compiler, which compiles D on platforms supported by gcc.
  It uses the gcc backend to generate optimised code.
  .
- On architectures with multilib support, the package contains files
- and dependencies for the non-default multilib architecture(s).
+ This is a dependency package on architectures with multilib support, holding
+ dependencies for the non-default multilib architecture(s).
 ')`'dnl multilib
 
 ifenabled(`libphobos',`

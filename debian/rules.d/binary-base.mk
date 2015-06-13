@@ -1,4 +1,9 @@
 arch_binaries += base
+ifeq ($(with_gcclbase),yes)
+  ifneq ($(with_base_only),yes)
+    indep_binaries += lbase
+  endif
+endif
 
 # ---------------------------------------------------------------------------
 # gcc-base
@@ -52,4 +57,19 @@ endif
 	dh_installdeb -p$(p_base)
 	dh_md5sums -p$(p_base)
 	dh_builddeb -p$(p_base)
+	touch $@
+
+$(binary_stamp)-lbase: $(install_dependencies)
+	dh_testdir
+	dh_testroot
+	rm -rf $(d_lbase)
+	dh_installdocs -p$(p_lbase) debian/README.Debian
+	rm -f $(d_lbase)/usr/share/doc/$(p_lbase)/README.Debian
+	dh_installchangelogs -p$(p_lbase)
+	dh_compress -p$(p_lbase)
+	dh_fixperms -p$(p_lbase)
+	dh_gencontrol -p$(p_lbase) -- -v$(DEB_VERSION) $(common_substvars)
+	dh_installdeb -p$(p_lbase)
+	dh_md5sums -p$(p_lbase)
+	dh_builddeb -p$(p_lbase)
 	touch $@

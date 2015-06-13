@@ -289,6 +289,13 @@ ifneq ($(DEB_CROSS),yes)
 	    $(d_gcj)/$(PF)/share/man/man1/$(TARGET_ALIAS)-gcj$(pkg_ver).1
   endif
 endif
+
+ifeq ($(GFDL_INVARIANT_FREE),yes)
+	mkdir -p $(d_gcj)/usr/share/lintian/overrides
+	echo '$(p_gcj) binary: binary-without-manpage' \
+	  >> $(d_gcj)/usr/share/lintian/overrides/$(p_gcj)
+endif
+
 	debian/dh_doclink -p$(p_gcj) $(p_jbase)
 	debian/dh_rmemptydirs -p$(p_gcj)
 
@@ -617,9 +624,9 @@ endif
 
 	install -m 755 $(d)/$(PF)/$(libdir)/libgcj_bc.so.1 \
 		$(d_jdk)/$(gcc_lib_dir)/libgcj_bc.so
-	$(CC_FOR_TARGET) -shared -fpic -xc /dev/null \
+	$(CC_FOR_TARGET) $(LDFLAGS_FOR_TARGET) -shared -fpic -xc /dev/null \
 		-o build/libgcj.so -Wl,-soname,libgcj.so.$(GCJ_SONAME) -nostdlib
-	$(CC_FOR_TARGET) -shared -fpic \
+	$(CC_FOR_TARGET) $(LDFLAGS_FOR_TARGET) -shared -fpic \
 		$(srcdir)/libjava/libgcj_bc.c \
 		-o $(d_jdk)/$(gcc_lib_dir)/libgcj_bc.so \
 		-Wl,-soname,libgcj_bc.so.1 $(builddir)/libgcj.so -shared-libgcc 

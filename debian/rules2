@@ -131,23 +131,42 @@ ifeq ($(with_ssp_default),yes)
     $(var) += $(cc-fno-stack-protector)))
 endif
 
-ifeq ($(DEB_CROSS),yes)
+# FIXME: passing LDFLAGS for native doesn't do anything
+ifneq (,$(filter $(build_type), build-cross cross-build-cross))
   CFLAGS	= -g -O2
+  LDFLAGS	= -Wl,-z,relro
+else
+  BOOT_LDFLAGS	= -Wl,-z,relro
 endif
+LDFLAGS_FOR_TARGET = -Wl,-z,relro
 
 ifneq (,$(findstring static,$(DEB_BUILD_OPTIONS)))
   LDFLAGS	+= -static
 endif
 
+# set CFLAGS/LDFLAGS for the configure step only, maybe be modifed for some target
+# all other flags are passed to the make step.
 CFLAGS_TO_PASS = \
 	$(if $(CFLAGS),CFLAGS="$(CFLAGS)") \
-	$(if $(BOOT_CFLAGS),BOOT_CFLAGS="$(BOOT_CFLAGS)") \
 	$(if $(LIBCFLAGS),LIBCFLAGS="$(LIBCFLAGS)") \
 	$(if $(LIBCXXFLAGS),LIBCXXFLAGS="$(LIBCXXFLAGS)")
 LDFLAGS_TO_PASS = \
 	$(if $(LDFLAGS),LDFLAGS="$(LDFLAGS)")
+
 STAGE1_CFLAGS_TO_PASS = \
 	$(if $(STAGE1_CFLAGS),STAGE1_CFLAGS="$(STAGE1_CFLAGS)")
+STAGE1_LDFLAGS_TO_PASS = \
+	$(if $(STAGE1_LDFLAGS),STAGE1_LDFLAGS="$(STAGE1_LDFLAGS)")
+
+BOOT_CFLAGS_TO_PASS = \
+	$(if $(BOOT_CFLAGS),BOOT_CFLAGS="$(BOOT_CFLAGS)")
+BOOT_LDFLAGS_TO_PASS = \
+	$(if $(BOOT_LDFLAGS),BOOT_LDFLAGS="$(BOOT_LDFLAGS)")
+
+CFLAGS_FOR_TARGET_TO_PASS = \
+	$(if $(CFLAGS_FOR_TARGET),CFLAGS_FOR_TARGET="$(CFLAGS_FOR_TARGET)")
+LDFLAGS_FOR_TARGET_TO_PASS = \
+	$(if $(LDFLAGS_FOR_TARGET),LDFLAGS_FOR_TARGET="$(LDFLAGS_FOR_TARGET)")
 
 docdir		= usr/share/doc
 
@@ -1085,6 +1104,8 @@ endif
 	  && $(SET_PATH) \
 		CC="$(CC)" \
 		CXX="$(CXX)" \
+		$(CFLAGS_TO_PASS) \
+		$(LDFLAGS_TO_PASS) \
 		$(SET_SHELL) \
 	LD_LIBRARY_PATH=$${LD_LIBRARY_PATH:+$$LD_LIBRARY_PATH:}$(builddir)/gcc/ada/rts \
 		../src/configure $(subst ___, ,$(CONFARGS))
@@ -1122,8 +1143,10 @@ ifeq ($(DEB_CROSS),yes)
 	  $(SET_PATH) \
 	  $(SET_LOCPATH) \
 	    $(MAKE) -C $(builddir) $(NJOBS) \
-		$(CFLAGS_TO_PASS) \
-		$(LDFLAGS_TO_PASS) \
+		$(BOOT_CFLAGS_TO_PASS) \
+		$(BOOT_LDFLAGS_TO_PASS) \
+		$(CFLAGS_FOR_TARGET_TO_PASS) \
+		$(LDFLAGS_FOR_TARGET_TO_PASS) \
 		; \
 	  echo $$? > status; \
 	) 2>&1 | tee bootstrap-protocol
@@ -1136,8 +1159,10 @@ else
 	  $(SET_PATH) \
 	  $(SET_LOCPATH) \
 	    $(MAKE) -C $(builddir) $(NJOBS) \
-		$(CFLAGS_TO_PASS) \
-		$(LDFLAGS_TO_PASS) \
+		$(BOOT_CFLAGS_TO_PASS) \
+		$(BOOT_LDFLAGS_TO_PASS) \
+		$(CFLAGS_FOR_TARGET_TO_PASS) \
+		$(LDFLAGS_FOR_TARGET_TO_PASS) \
 		; \
 	  echo $$? > status; \
 	) 2>&1 | tee bootstrap-protocol
@@ -1196,9 +1221,12 @@ else
 	  $(SET_LOCPATH) \
 	    $(MAKE) -C $(builddir) $(NJOBS) $(bootstrap_target) \
 		CC="$(CC)" \
-		$(CFLAGS_TO_PASS) \
 		$(STAGE1_CFLAGS_TO_PASS) \
-		$(LDFLAGS_TO_PASS) \
+		$(STAGE1_LDFLAGS_TO_PASS) \
+		$(BOOT_CFLAGS_TO_PASS) \
+		$(BOOT_LDFLAGS_TO_PASS) \
+		$(CFLAGS_FOR_TARGET_TO_PASS) \
+		$(LDFLAGS_FOR_TARGET_TO_PASS) \
 		; \
 	  echo $$? > status; \
 	) 2>&1 | tee bootstrap-protocol
@@ -1268,8 +1296,10 @@ $(build_jit_stamp): $(configure_jit_stamp)
 	  $(SET_LOCPATH) \
 	  LD_LIBRARY_PATH=$${LD_LIBRARY_PATH:+$$LD_LIBRARY_PATH:}$(builddir)/gcc \
 	    $(MAKE) -C $(builddir_jit) $(NJOBS) \
-		$(CFLAGS_TO_PASS) \
-		$(LDFLAGS_TO_PASS)
+		$(BOOT_CFLAGS_TO_PASS) \
+		$(BOOT_LDFLAGS_TO_PASS) \
+		$(CFLAGS_FOR_TARGET_TO_PASS) \
+		$(LDFLAGS_FOR_TARGET_TO_PASS)
 
 ifeq ($(with_check),yes)
   # FIXME: #782444
@@ -1296,6 +1326,8 @@ $(configure_hppa64_stamp): $(build_stamp)
 	  $(SET_SHELL) \
 	  CC="$(BUILT_CC)" \
 	  CXX="$(BUILT_CXX)" \
+	  $(CFLAGS_TO_PASS) \
+	  $(LDFLAGS_TO_PASS) \
 	     ../src/configure \
 		--enable-languages=c \
 		--prefix=/$(PF) \
@@ -1324,8 +1356,10 @@ $(build_hppa64_stamp): $(configure_hppa64_stamp)
 	  $(SET_LOCPATH) \
 	  LD_LIBRARY_PATH=$${LD_LIBRARY_PATH:+$$LD_LIBRARY_PATH:}$(builddir)/gcc \
 	    $(MAKE) -C $(builddir_hppa64) $(NJOBS) \
-		$(CFLAGS_TO_PASS) \
-		$(LDFLAGS_TO_PASS)
+		$(BOOT_CFLAGS_TO_PASS) \
+		$(BOOT_LDFLAGS_TO_PASS) \
+		$(CFLAGS_FOR_TARGET_TO_PASS) \
+		$(LDFLAGS_FOR_TARGET_TO_PASS)
 	touch $(build_hppa64_stamp)
 
 $(configure_neon_stamp): $(build_stamp)
@@ -1337,6 +1371,8 @@ $(configure_neon_stamp): $(build_stamp)
 	cd $(builddir_neon) && \
 	  $(SET_PATH) \
 	  $(SET_SHELL) \
+	  $(CFLAGS_TO_PASS) \
+	  $(LDFLAGS_TO_PASS) \
 	  CC="$(builddir)/gcc/xg++ -B$(builddir)/gcc/" \
 	     ../src/configure \
 		--disable-bootstrap \
@@ -1358,8 +1394,10 @@ $(build_neon_stamp): $(configure_neon_stamp)
 	  $(SET_SHELL) \
 	  $(SET_LOCPATH) \
 	    $(MAKE) -C $(builddir_neon) $(NJOBS) \
-		$(CFLAGS_TO_PASS) \
-		$(LDFLAGS_TO_PASS)
+		$(BOOT_CFLAGS_TO_PASS) \
+		$(BOOT_LDFLAGS_TO_PASS) \
+		$(CFLAGS_FOR_TARGET_TO_PASS) \
+		$(LDFLAGS_FOR_TARGET_TO_PASS)
 	touch $(build_neon_stamp)
 
 
@@ -1770,7 +1808,7 @@ ifneq ($(DEB_CROSS),yes)
 else
   # only triggered if DEB_CROSS set
   p_base = gcc$(pkg_ver)$(cross_bin_arch)-base
-  p_lbase = $(p_base)
+  p_lbase = gcc$(pkg_ver)-cross-base
   p_xbase = gcc$(pkg_ver)$(cross_bin_arch)-base
   p_cpp  = cpp$(pkg_ver)$(cross_bin_arch)
   p_gcc  = gcc$(pkg_ver)$(cross_bin_arch)

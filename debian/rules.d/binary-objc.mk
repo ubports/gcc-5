@@ -33,6 +33,12 @@ $(binary_stamp)-objc: $(install_stamp)
 	cp -p $(srcdir)/libobjc/ChangeLog \
 		$(d_objc)/$(docdir)/$(p_xbase)/ObjC/changelog.libobjc
 
+ifeq ($(GFDL_INVARIANT_FREE),yes)
+	mkdir -p $(d_objc)/usr/share/lintian/overrides
+	echo '$(p_objc) binary: binary-without-manpage' \
+	  >> $(d_objc)/usr/share/lintian/overrides/$(p_objc)
+endif
+
 	debian/dh_doclink -p$(p_objc) $(p_xbase)
 
 	debian/dh_rmemptydirs -p$(p_objc)

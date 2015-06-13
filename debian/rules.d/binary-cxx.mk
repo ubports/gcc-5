@@ -53,6 +53,12 @@ ifneq ($(GFDL_INVARIANT_FREE),yes)
   endif
 endif
 
+ifeq ($(GFDL_INVARIANT_FREE),yes)
+	mkdir -p $(d_cxx)/usr/share/lintian/overrides
+	echo '$(p_cxx) binary: binary-without-manpage' \
+	  >> $(d_cxx)/usr/share/lintian/overrides/$(p_cxx)
+endif
+
 	debian/dh_doclink -p$(p_cxx) $(p_xbase)
 	cp -p debian/README.C++ $(d_cxx)/$(docdir)/$(p_xbase)/C++/
 	cp -p $(srcdir)/gcc/cp/ChangeLog \

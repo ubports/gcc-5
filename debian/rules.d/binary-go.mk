@@ -115,6 +115,10 @@ define __do_gccgo
 	debian/dh_doclink -p$(p_l) $(p_lbase)
 	debian/dh_doclink -p$(p_d) $(p_lbase)
 
+	mkdir -p debian/$(p_l)/usr/share/lintian/overrides
+	echo '$(p_l) binary: unstripped-binary-or-object' \
+	  >> debian/$(p_l)/usr/share/lintian/overrides/$(p_l)
+
 	: # don't strip: https://gcc.gnu.org/ml/gcc-patches/2015-02/msg01722.html
 	: # dh_strip -p$(p_l) --dbg-package=$(p_d)
 	dh_compress -p$(p_l) -p$(p_d)
@@ -265,6 +269,12 @@ ifeq ($(with_standalone_go),yes)
 	dh_link -p$(p_go) \
 		/$(usr_lib)/libcc1.so.$(CC1_SONAME) /$(gcc_lib_dir)/libcc1.so
   endif
+endif
+
+ifeq ($(GFDL_INVARIANT_FREE),yes)
+	mkdir -p $(d_go)/usr/share/lintian/overrides
+	echo '$(p_go) binary: binary-without-manpage' \
+	  >> $(d_go)/usr/share/lintian/overrides/$(p_go)
 endif
 
 	debian/dh_doclink -p$(p_go) $(p_xbase)
