@@ -84,6 +84,7 @@ debian_patches += \
 	go-escape-analysis2 \
 	go-escape-analysis3 \
 	go-escape-analysis4 \
+	go-escape-analysis5 \
 	gccgo-sendfile-fix \
 	pr66368 \
 
@@ -92,6 +93,7 @@ debian_patches += \
 #	go-escape-analysis2 \
 #	go-escape-analysis3 \
 #	go-escape-analysis4 \
+#	go-escape-analysis5 \
 
 #	$(if $(filter yes, $(DEB_CROSS)),,gcc-print-file-name) \
 #	libstdc++-nothumb-check \

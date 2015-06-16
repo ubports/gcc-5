@@ -1,3 +1,12 @@
+gcc-5 (5.1.1-11) unstable; urgency=medium
+
+  * Update to SVN 20150616 (r224519, 5.1.1) from the gcc-5-branch.
+  * gccgo: escape: Analyze binary expressions (taken from the trunk).
+  * Explicitly build with -Wl,--no-relax on alpha again.
+  * Build with -O1 on sh4 (try to work around PR target/66358).
+
+ -- Matthias Klose <doko@debian.org>  Tue, 16 Jun 2015 16:11:59 +0200
+
 gcc-5 (5.1.1-10) unstable; urgency=medium
 
   * Update to SVN 20150613 (r224454, 5.1.1) from the gcc-5-branch.

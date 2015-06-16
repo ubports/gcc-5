@@ -114,9 +114,6 @@ $(binary_stamp)-libgnat: $(install_stamp)
 
 	debian/dh_rmemptydirs -p$(p_lgnat)
 
-	dh_strip -p$(p_lgnat) --dbg-package=$(p_lgnat_dbg)
-	dh_compress -p$(p_lgnat)
-	dh_fixperms -p$(p_lgnat)
 	b=libgnat; \
 	v=$(GNAT_VERSION); \
 	for ext in preinst postinst prerm postrm; do \
@@ -135,6 +132,9 @@ ifneq (,$(filter $(build_type), build-native cross-build-native))
 		$(d_lgnat)/usr/share/lintian/overrides/$(p_lgnat)
 endif
 
+	dh_strip -p$(p_lgnat) --dbg-package=$(p_lgnat_dbg)
+	dh_compress -p$(p_lgnat)
+	dh_fixperms -p$(p_lgnat)
 	$(cross_shlibdeps) dh_shlibdeps -p$(p_lgnat) \
 		$(call shlibdirs_to_search,,)
 	$(call cross_mangle_substvars,$(p_lgnat))
@@ -169,9 +169,9 @@ $(binary_stamp)-libgnatvsn: $(binary_stamp)-libgnat
 	dh_link -p$(p_lgnatvsn_dev) \
 	   $(usr_lib)/libgnatvsn.so.$(GNAT_VERSION) \
 	   $(usr_lib)/libgnatvsn.so
+	debian/dh_doclink -p$(p_lgnatvsn_dev) $(p_gbase)
 	dh_strip -p$(p_lgnatvsn_dev) -X.a --keep-debug
 	dh_fixperms -p$(p_lgnatvsn_dev)
-	debian/dh_doclink -p$(p_lgnatvsn_dev) $(p_gbase)
 	$(cross_gencontrol) dh_gencontrol -p$(p_lgnatvsn_dev) \
 		-- -v$(DEB_VERSION) $(common_substvars)
 	$(call cross_mangle_control,$(p_lgnatvsn_dev))
@@ -191,6 +191,7 @@ endif
 		-V '$(p_lgnatvsn) (>= $(DEB_VERSION))'
 	$(call cross_mangle_shlibs,$(p_lgnatvsn))
 	cat debian/$(p_lgnatvsn)/DEBIAN/shlibs >> debian/shlibs.local
+	dh_fixperms -p$(p_lgnatvsn)
 	$(cross_shlibdeps) dh_shlibdeps -p$(p_lgnatvsn) \
 		$(call shlibdirs_to_search,$(p_lgnat),)
 	$(call cross_mangle_substvars,$(p_lgnatvsn))
@@ -224,8 +225,8 @@ $(binary_stamp)-libgnatprj: $(binary_stamp)-libgnat $(binary_stamp)-libgnatvsn
 	   $(usr_lib)/libgnatprj.so.$(GNAT_VERSION) \
 	   $(usr_lib)/libgnatprj.so
 	dh_strip -p$(p_lgnatprj_dev) -X.a --keep-debug
-	dh_fixperms -p$(p_lgnatprj_dev)
 	debian/dh_doclink -p$(p_lgnatprj_dev) $(p_gbase)
+	dh_fixperms -p$(p_lgnatprj_dev)
 	$(cross_gencontrol) dh_gencontrol -p$(p_lgnatprj_dev) \
 		-- -v$(DEB_VERSION) $(common_substvars)
 	$(call cross_mangle_control,$(p_lgnatprj_dev))
@@ -241,6 +242,7 @@ endif
 	dh_movefiles -p$(p_lgnatprj) $(usr_lib)/libgnatprj.so.$(GNAT_VERSION)
 	debian/dh_doclink -p$(p_lgnatprj) $(p_gbase)
 	dh_strip -p$(p_lgnatprj) --dbg-package=$(p_lgnatprj_dbg)
+	dh_fixperms -p$(p_lgnatprj)
 	$(cross_makeshlibs) dh_makeshlibs -p$(p_lgnatprj) \
 		-V '$(p_lgnatprj) (>= $(DEB_VERSION))'
 	$(call cross_mangle_shlibs,$(p_lgnatprj))

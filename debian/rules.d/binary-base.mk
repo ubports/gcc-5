@@ -64,7 +64,7 @@ $(binary_stamp)-lbase: $(install_dependencies)
 	dh_testroot
 	rm -rf $(d_lbase)
 	dh_installdocs -p$(p_lbase) debian/README.Debian
-	rm -f $(d_lbase)/usr/share/doc/$(p_lbase)/README.Debian
+	rm -f debian/$(p_lbase)/usr/share/doc/$(p_lbase)/README.Debian
 	dh_installchangelogs -p$(p_lbase)
 	dh_compress -p$(p_lbase)
 	dh_fixperms -p$(p_lbase)
