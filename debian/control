@@ -288,11 +288,11 @@ Architecture: amd64 i386 kfreebsd-amd64 mips mips64 mips64el mipsel mipsn32 mips
 Section: devel
 Priority: optional
 Depends: gcc-5-base (= ${gcc:Version}), gcc-5 (= ${gcc:Version}), ${dep:libcbiarchdev}, ${dep:libgccbiarchdev}, ${shlibs:Depends}, ${misc:Depends}
-Description: GNU C compiler (multilib files)
+Description: GNU C compiler (multilib support)
  This is the GNU C compiler, a fairly portable optimizing compiler for C.
  .
- This is a dependency package on architectures with multilib support,
- holding dependencies for the non-default multilib architecture(s).
+ This is a dependency package, depending on development packages
+ for the non-default multilib architecture(s).
 
 Package: gcc-5-plugin-dev
 Architecture: any
@@ -356,11 +356,11 @@ Section: devel
 Priority: optional
 Depends: gcc-5-base (= ${gcc:Version}), g++-5 (= ${gcc:Version}), gcc-5-multilib (= ${gcc:Version}), ${dep:libcxxbiarchdev}, ${shlibs:Depends}, ${misc:Depends}
 Suggests: ${dep:libcxxbiarchdbg}
-Description: GNU C++ compiler (multilib files)
+Description: GNU C++ compiler (multilib support)
  This is the GNU C++ compiler, a fairly portable optimizing compiler for C++.
  .
- This is a dependency package on architectures with multilib support,
- holding dependencies for the non-default multilib architecture(s).
+ This is a dependency package, depending on development packages
+ for the non-default multilib architecture(s).
 
 Package: libgomp1
 Section: libs
@@ -788,7 +788,7 @@ Depends: gcc-5-base (= ${gcc:Version}), ${dep:libcbiarch}, ${shlibs:Depends}, ${
 Conflicts: ${confl:lib32}
 Description: LeakSanitizer -- a memory leak detector (32bit)
  LeakSanitizer (Lsan) is a memory leak detector which is integrated
- into AddressSanitizer.
+ into AddressSanitizer (empty package).
 
 Package: lib32lsan0-dbg
 Architecture: amd64 ppc64 kfreebsd-amd64 s390x sparc64 x32 mipsn32 mipsn32el mips64 mips64el
@@ -797,7 +797,7 @@ Priority: extra
 Depends: gcc-5-base (= ${gcc:Version}), lib32lsan0 (= ${gcc:Version}), ${misc:Depends}
 Description: LeakSanitizer -- a memory leak detector (32 bit debug symbols)
  LeakSanitizer (Lsan) is a memory leak detector which is integrated
- into AddressSanitizer.
+ into AddressSanitizer (empty package).
 
 #Package: lib64lsan`'LSAN_SO`'LS
 #Section: ifdef(`TARGET',`devel',`libs')
@@ -846,7 +846,7 @@ Priority: optional
 Depends: gcc-5-base (= ${gcc:Version}), ${dep:libcbiarch}, ${shlibs:Depends}, ${misc:Depends}
 Description: LeakSanitizer -- a memory leak detector (x32)
  LeakSanitizer (Lsan) is a memory leak detector which is integrated
- into AddressSanitizer.
+ into AddressSanitizer (empty package).
 
 Package: libx32lsan0-dbg
 Architecture: amd64 i386
@@ -855,7 +855,7 @@ Priority: extra
 Depends: gcc-5-base (= ${gcc:Version}), libx32lsan0 (= ${gcc:Version}), ${misc:Depends}
 Description: LeakSanitizer -- a memory leak detector (x32 debug symbols)
  LeakSanitizer (Lsan) is a memory leak detector which is integrated
- into AddressSanitizer.
+ into AddressSanitizer (empty package).
 
 Package: libtsan0
 Section: libs
@@ -1310,12 +1310,12 @@ Architecture: amd64 i386 kfreebsd-amd64 mips mips64 mips64el mipsel mipsn32 mips
 Section: devel
 Priority: optional
 Depends: gcc-5-base (= ${gcc:Version}), gobjc++-5 (= ${gcc:Version}), g++-5-multilib (= ${gcc:Version}), gobjc-5-multilib (= ${gcc:Version}), ${shlibs:Depends}, ${misc:Depends}
-Description: GNU Objective-C++ compiler (multilib files)
+Description: GNU Objective-C++ compiler (multilib support)
  This is the GNU Objective-C++ compiler, which compiles Objective-C++ on
  platforms supported by the gcc compiler.
  .
- This is a dependency package on architectures with multilib support,
- holding dependencies for the non-default multilib architecture(s).
+ This is a dependency package, depending on development packages
+ for the non-default multilib architecture(s).
 
 Package: gobjc-5
 Architecture: any
@@ -1333,12 +1333,12 @@ Architecture: amd64 i386 kfreebsd-amd64 mips mips64 mips64el mipsel mipsn32 mips
 Section: devel
 Priority: optional
 Depends: gcc-5-base (= ${gcc:Version}), gobjc-5 (= ${gcc:Version}), gcc-5-multilib (= ${gcc:Version}), ${dep:libobjcbiarchdev}, ${shlibs:Depends}, ${misc:Depends}
-Description: GNU Objective-C compiler (multilib files)
+Description: GNU Objective-C compiler (multilib support)
  This is the GNU Objective-C compiler, which compiles Objective-C on platforms
  supported by the gcc compiler.
  .
- This is a dependency package on architectures with multilib support,
- holding dependencies for the non-default multilib architecture(s).
+ This is a dependency package, depending on development packages
+ for the non-default multilib architecture(s).
 
 Package: libobjc-5-dev
 Architecture: any
@@ -1488,12 +1488,12 @@ Architecture: amd64 i386 kfreebsd-amd64 mips mips64 mips64el mipsel mipsn32 mips
 Section: devel
 Priority: optional
 Depends: gcc-5-base (= ${gcc:Version}), gfortran-5 (= ${gcc:Version}), gcc-5-multilib (= ${gcc:Version}), ${dep:libgfortranbiarchdev}, ${shlibs:Depends}, ${misc:Depends}
-Description: GNU Fortran compiler (multilib files)
+Description: GNU Fortran compiler (multilib support)
  This is the GNU Fortran compiler, which compiles Fortran on platforms
  supported by the gcc compiler.
  .
- This is a dependency package on architectures with multilib support,
- holding dependencies for the non-default multilib architecture(s).
+ This is a dependency package, depending on development packages
+ for the non-default multilib architecture(s).
 
 Package: libgfortran-5-dev
 Architecture: any
@@ -1655,12 +1655,12 @@ Section: devel
 Priority: optional
 Depends: gcc-5-base (= ${gcc:Version}), gccgo-5 (= ${gcc:Version}), gcc-5-multilib (= ${gcc:Version}), ${dep:libgobiarch}, ${shlibs:Depends}, ${misc:Depends}
 Suggests: ${dep:libgobiarchdbg}
-Description: GNU Go compiler (multilib files)
+Description: GNU Go compiler (multilib support)
  This is the GNU Go compiler, which compiles Go on platforms supported
  by the gcc compiler.
  .
- This is a dependency package on architectures with multilib support,
- holding dependencies for the non-default multilib architecture(s).
+ This is a dependency package, depending on development packages
+ for the non-default multilib architecture(s).
 
 Package: libgo7
 Section: libs
@@ -1684,7 +1684,8 @@ Priority: extra
 Depends: gcc-5-base (= ${gcc:Version}), libgo7 (= ${gcc:Version}), ${misc:Depends}
 Description: Runtime library for GNU Go applications (debug symbols)
  Library needed for GNU Go applications linked against the
- shared library.
+ shared library. This currently is an empty package, because the
+ library is completely unstripped.
 
 Package: lib64go7
 Section: libs
@@ -1703,7 +1704,8 @@ Priority: extra
 Depends: gcc-5-base (= ${gcc:Version}), lib64go7 (= ${gcc:Version}), ${misc:Depends}
 Description: Runtime library for GNU Go applications (64bit debug symbols)
  Library needed for GNU Go applications linked against the
- shared library.
+ shared library. This currently is an empty package, because the
+ library is completely unstripped.
 
 Package: lib32go7
 Section: libs
@@ -1723,7 +1725,8 @@ Priority: extra
 Depends: gcc-5-base (= ${gcc:Version}), lib32go7 (= ${gcc:Version}), ${misc:Depends}
 Description: Runtime library for GNU Go applications (32 bit debug symbols)
  Library needed for GNU Go applications linked against the
- shared library.
+ shared library. This currently is an empty package, because the
+ library is completely unstripped.
 
 Package: libn32go7
 Section: libs
@@ -1742,7 +1745,8 @@ Priority: extra
 Depends: gcc-5-base (= ${gcc:Version}), libn32go7 (= ${gcc:Version}), ${misc:Depends}
 Description: Runtime library for GNU Go applications (n32 debug symbols)
  Library needed for GNU Go applications linked against the
- shared library.
+ shared library. This currently is an empty package, because the
+ library is completely unstripped.
 
 Package: libx32go7
 Section: libs
@@ -1761,7 +1765,8 @@ Priority: extra
 Depends: gcc-5-base (= ${gcc:Version}), libx32go7 (= ${gcc:Version}), ${misc:Depends}
 Description: Runtime library for GNU Go applications (x32 debug symbols)
  Library needed for GNU Go applications linked against the
- shared library.
+ shared library. This currently is an empty package, because the
+ library is completely unstripped.
 
 Package: gcj-5
 Section: java
@@ -2347,12 +2352,12 @@ Package: gdc-5-multilib
 Architecture: any
 Priority: optional
 Depends: gcc-5-base (>= ${gcc:SoftVersion}), gdc-5 (= ${gcc:Version}), gcc-5-multilib (= ${gcc:Version}), ${dep:libphobosbiarchdev}${shlibs:Depends}, ${misc:Depends}
-Description: GNU D compiler (version 2, multilib files)
+Description: GNU D compiler (version 2, multilib support)
  This is the GNU D compiler, which compiles D on platforms supported by gcc.
  It uses the gcc backend to generate optimised code.
  .
- This is a dependency package on architectures with multilib support, holding
- dependencies for the non-default multilib architecture(s).
+ This is a dependency package, depending on development packages
+ for the non-default multilib architecture(s).
 
 Package: libphobos-5-dev
 Architecture: amd64 armel armhf i386 x32 kfreebsd-amd64 kfreebsd-i386

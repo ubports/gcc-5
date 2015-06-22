@@ -789,11 +789,11 @@ Section: devel
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASEDEP, gcc`'PV`'TS (= ${gcc:Version}), ${dep:libcbiarchdev}, ${dep:libgccbiarchdev}, ${shlibs:Depends}, ${misc:Depends}
 BUILT_USING`'dnl
-Description: GNU C compiler (multilib files)`'ifdef(`TARGET)',` (cross compiler for TARGET architecture)', `')
+Description: GNU C compiler (multilib support)`'ifdef(`TARGET)',` (cross compiler for TARGET architecture)', `')
  This is the GNU C compiler, a fairly portable optimizing compiler for C.
  .
- This is a dependency package on architectures with multilib support,
- holding dependencies for the non-default multilib architecture(s).
+ This is a dependency package, depending on development packages
+ for the non-default multilib architecture(s).
 ')`'dnl multilib
 
 ifenabled(`plugindev',`
@@ -895,11 +895,11 @@ Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASEDEP, g++`'PV`'TS (= ${gcc:Version}), gcc`'PV-multilib`'TS (= ${gcc:Version}), ${dep:libcxxbiarchdev}, ${shlibs:Depends}, ${misc:Depends}
 Suggests: ${dep:libcxxbiarchdbg}
 BUILT_USING`'dnl
-Description: GNU C++ compiler (multilib files)`'ifdef(`TARGET)',` (cross compiler for TARGET architecture)', `')
+Description: GNU C++ compiler (multilib support)`'ifdef(`TARGET)',` (cross compiler for TARGET architecture)', `')
  This is the GNU C++ compiler, a fairly portable optimizing compiler for C++.
  .
- This is a dependency package on architectures with multilib support,
- holding dependencies for the non-default multilib architecture(s).
+ This is a dependency package, depending on development packages
+ for the non-default multilib architecture(s).
 ')`'dnl multilib
 ')`'dnl c++dev
 ')`'dnl c++
@@ -1743,7 +1743,7 @@ Conflicts: ${confl:lib32}
 BUILT_USING`'dnl
 Description: LeakSanitizer -- a memory leak detector (32bit)
  LeakSanitizer (Lsan) is a memory leak detector which is integrated
- into AddressSanitizer.
+ into AddressSanitizer (empty package).
 
 Package: lib32lsan`'LSAN_SO-dbg`'LS
 Architecture: ifdef(`TARGET',`CROSS_ARCH',`biarch32_archs')
@@ -1753,7 +1753,7 @@ Depends: BASELDEP, libdep(lsan`'LSAN_SO,32,=), ${misc:Depends}
 BUILT_USING`'dnl
 Description: LeakSanitizer -- a memory leak detector (32 bit debug symbols)
  LeakSanitizer (Lsan) is a memory leak detector which is integrated
- into AddressSanitizer.
+ into AddressSanitizer (empty package).
 ')`'dnl lib32lsan
 
 ifenabled(`lib64lsan',`
@@ -1809,7 +1809,7 @@ Depends: BASELDEP, ${dep:libcbiarch}, ${shlibs:Depends}, ${misc:Depends}
 BUILT_USING`'dnl
 Description: LeakSanitizer -- a memory leak detector (x32)
  LeakSanitizer (Lsan) is a memory leak detector which is integrated
- into AddressSanitizer.
+ into AddressSanitizer (empty package).
 
 Package: libx32lsan`'LSAN_SO-dbg`'LS
 Architecture: ifdef(`TARGET',`CROSS_ARCH',`biarchx32_archs')
@@ -1819,7 +1819,7 @@ Depends: BASELDEP, libdep(lsan`'LSAN_SO,x32,=), ${misc:Depends}
 BUILT_USING`'dnl
 Description: LeakSanitizer -- a memory leak detector (x32 debug symbols)
  LeakSanitizer (Lsan) is a memory leak detector which is integrated
- into AddressSanitizer.
+ into AddressSanitizer (empty package).
 ')`'dnl libx32lsan
 
 ifenabled(`libhflsan',`
@@ -3267,12 +3267,12 @@ Section: devel
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASEDEP, gobjc++`'PV`'TS (= ${gcc:Version}), g++`'PV-multilib`'TS (= ${gcc:Version}), gobjc`'PV-multilib`'TS (= ${gcc:Version}), ${shlibs:Depends}, ${misc:Depends}
 BUILT_USING`'dnl
-Description: GNU Objective-C++ compiler (multilib files)
+Description: GNU Objective-C++ compiler (multilib support)
  This is the GNU Objective-C++ compiler, which compiles Objective-C++ on
  platforms supported by the gcc compiler.
  .
- This is a dependency package on architectures with multilib support,
- holding dependencies for the non-default multilib architecture(s).
+ This is a dependency package, depending on development packages
+ for the non-default multilib architecture(s).
 ')`'dnl multilib
 ')`'dnl obcpp
 
@@ -3298,12 +3298,12 @@ Section: devel
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASEDEP, gobjc`'PV`'TS (= ${gcc:Version}), gcc`'PV-multilib`'TS (= ${gcc:Version}), ${dep:libobjcbiarchdev}, ${shlibs:Depends}, ${misc:Depends}
 BUILT_USING`'dnl
-Description: GNU Objective-C compiler (multilib files)`'ifdef(`TARGET)',` (cross compiler for TARGET architecture)', `')
+Description: GNU Objective-C compiler (multilib support)`'ifdef(`TARGET)',` (cross compiler for TARGET architecture)', `')
  This is the GNU Objective-C compiler, which compiles Objective-C on platforms
  supported by the gcc compiler.
  .
- This is a dependency package on architectures with multilib support,
- holding dependencies for the non-default multilib architecture(s).
+ This is a dependency package, depending on development packages
+ for the non-default multilib architecture(s).
 ')`'dnl multilib
 
 Package: libobjc`'PV-dev`'LS
@@ -3576,12 +3576,12 @@ Section: devel
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASEDEP, gfortran`'PV`'TS (= ${gcc:Version}), gcc`'PV-multilib`'TS (= ${gcc:Version}), ${dep:libgfortranbiarchdev}, ${shlibs:Depends}, ${misc:Depends}
 BUILT_USING`'dnl
-Description: GNU Fortran compiler (multilib files)`'ifdef(`TARGET)',` (cross compiler for TARGET architecture)', `')
+Description: GNU Fortran compiler (multilib support)`'ifdef(`TARGET)',` (cross compiler for TARGET architecture)', `')
  This is the GNU Fortran compiler, which compiles Fortran on platforms
  supported by the gcc compiler.
  .
- This is a dependency package on architectures with multilib support,
- holding dependencies for the non-default multilib architecture(s).
+ This is a dependency package, depending on development packages
+ for the non-default multilib architecture(s).
 ')`'dnl multilib
 
 ifenabled(`gfdldoc',`
@@ -3884,12 +3884,12 @@ Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASEDEP, gccgo`'PV`'TS (= ${gcc:Version}), ifdef(`STANDALONEGO',,`gcc`'PV-multilib`'TS (= ${gcc:Version}), ')${dep:libgobiarch}, ${shlibs:Depends}, ${misc:Depends}
 Suggests: ${dep:libgobiarchdbg}
 BUILT_USING`'dnl
-Description: GNU Go compiler (multilib files)`'ifdef(`TARGET)',` (cross compiler for TARGET architecture)', `')
+Description: GNU Go compiler (multilib support)`'ifdef(`TARGET)',` (cross compiler for TARGET architecture)', `')
  This is the GNU Go compiler, which compiles Go on platforms supported
  by the gcc compiler.
  .
- This is a dependency package on architectures with multilib support,
- holding dependencies for the non-default multilib architecture(s).
+ This is a dependency package, depending on development packages
+ for the non-default multilib architecture(s).
 ')`'dnl multilib
 
 ifenabled(`gfdldoc',`
@@ -3933,7 +3933,8 @@ Depends: BASELDEP, libdep(go`'GO_SO,,=), ${misc:Depends}
 BUILT_USING`'dnl
 Description: Runtime library for GNU Go applications (debug symbols)
  Library needed for GNU Go applications linked against the
- shared library.
+ shared library. This currently is an empty package, because the
+ library is completely unstripped.
 ')`'dnl libgo
 
 ifenabled(`lib64ggo',`
@@ -3956,7 +3957,8 @@ Depends: BASELDEP, libdep(go`'GO_SO,64,=), ${misc:Depends}
 BUILT_USING`'dnl
 Description: Runtime library for GNU Go applications (64bit debug symbols)
  Library needed for GNU Go applications linked against the
- shared library.
+ shared library. This currently is an empty package, because the
+ library is completely unstripped.
 ')`'dnl lib64go
 
 ifenabled(`lib32ggo',`
@@ -3980,7 +3982,8 @@ Depends: BASELDEP, libdep(go`'GO_SO,32,=), ${misc:Depends}
 BUILT_USING`'dnl
 Description: Runtime library for GNU Go applications (32 bit debug symbols)
  Library needed for GNU Go applications linked against the
- shared library.
+ shared library. This currently is an empty package, because the
+ library is completely unstripped.
 ')`'dnl lib32go
 
 ifenabled(`libn32ggo',`
@@ -4003,7 +4006,8 @@ Depends: BASELDEP, libdep(go`'GO_SO,n32,=), ${misc:Depends}
 BUILT_USING`'dnl
 Description: Runtime library for GNU Go applications (n32 debug symbols)
  Library needed for GNU Go applications linked against the
- shared library.
+ shared library. This currently is an empty package, because the
+ library is completely unstripped.
 ')`'dnl libn32go
 
 ifenabled(`libx32ggo',`
@@ -4026,7 +4030,8 @@ Depends: BASELDEP, libdep(go`'GO_SO,x32,=), ${misc:Depends}
 BUILT_USING`'dnl
 Description: Runtime library for GNU Go applications (x32 debug symbols)
  Library needed for GNU Go applications linked against the
- shared library.
+ shared library. This currently is an empty package, because the
+ library is completely unstripped.
 ')`'dnl libx32go
 ')`'dnl ggo
 
@@ -5068,12 +5073,12 @@ Architecture: any
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: SOFTBASEDEP, gdc`'PV`'TS (= ${gcc:Version}), gcc`'PV-multilib`'TS (= ${gcc:Version}), ${dep:libphobosbiarchdev}${shlibs:Depends}, ${misc:Depends}
 BUILT_USING`'dnl
-Description: GNU D compiler (version 2, multilib files)`'ifdef(`TARGET)',` (cross compiler for TARGET architecture)', `')
+Description: GNU D compiler (version 2, multilib support)`'ifdef(`TARGET)',` (cross compiler for TARGET architecture)', `')
  This is the GNU D compiler, which compiles D on platforms supported by gcc.
  It uses the gcc backend to generate optimised code.
  .
- This is a dependency package on architectures with multilib support, holding
- dependencies for the non-default multilib architecture(s).
+ This is a dependency package, depending on development packages
+ for the non-default multilib architecture(s).
 ')`'dnl multilib
 
 ifenabled(`libphobos',`

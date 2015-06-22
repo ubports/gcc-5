@@ -1,3 +1,12 @@
+gcc-5 (5.1.1-12) unstable; urgency=medium
+
+  * Update to SVN 20150622 (r224724, 5.1.1) from the gcc-5-branch.
+  * Update symbols files for mips64 libatomic and libstdc++ (YunQiang Su).
+    Closes: #788990.
+  * Fix "empty-binary-package" lintian warnings.
+
+ -- Matthias Klose <doko@debian.org>  Mon, 22 Jun 2015 14:37:49 +0200
+
 gcc-5 (5.1.1-11) unstable; urgency=medium
 
   * Update to SVN 20150616 (r224519, 5.1.1) from the gcc-5-branch.
