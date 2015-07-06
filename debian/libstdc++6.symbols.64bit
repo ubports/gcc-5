@@ -1,4 +1,5 @@
 #include "libstdc++6.symbols.common"
+#include "libstdc++6.symbols.64bit.cxx11"
  _ZN9__gnu_cxx17__pool_alloc_base16_M_get_free_listEm@GLIBCXX_3.4.2 4.1.1
  _ZN9__gnu_cxx17__pool_alloc_base9_M_refillEm@GLIBCXX_3.4.2 4.1.1
  _ZN9__gnu_cxx18stdio_sync_filebufIcSt11char_traitsIcEE6xsgetnEPcl@GLIBCXX_3.4.10 4.3.0~rc2

@@ -582,7 +582,7 @@ ifneq (,$(filter $(DEB_TARGET_ARCH), amd64 i386 hurd-i386 kfreebsd-i386 kfreebsd
 endif
 
 ifneq (,$(findstring mips-linux,$(DEB_TARGET_GNU_TYPE)))
-  CONFARGS += --with-arch-32=mips2 --with-tune-32=mips32
+  CONFARGS += --with-arch-32=mips2 --with-tune-32=mips32 --with-fp-32=xx
   ifeq ($(multilib),yes)
     ifeq ($(biarchn32)-$(biarch64),yes-yes)
       CONFARGS += --enable-targets=all
@@ -592,7 +592,7 @@ ifneq (,$(findstring mips-linux,$(DEB_TARGET_GNU_TYPE)))
 endif
 
 ifneq (,$(findstring mipsel-linux,$(DEB_TARGET_GNU_TYPE)))
-  CONFARGS += --with-arch-32=mips2 --with-tune-32=mips32
+  CONFARGS += --with-arch-32=mips2 --with-tune-32=mips32 --with-fp-32=xx
   ifeq ($(multilib),yes)
     ifeq ($(biarchn32)-$(biarch64),yes-yes)
       CONFARGS += --enable-targets=all
@@ -608,7 +608,7 @@ ifneq (,$(findstring mips64el-linux-gnuabin32,$(DEB_TARGET_GNU_TYPE)))
     ifeq ($(biarchn32)-$(biarch32),yes-yes)
       CONFARGS += --enable-targets=all
       CONFARGS += --with-arch-64=mips3 --with-tune-64=mips64
-      CONFARGS += --with-arch-32=mips2 --with-tune-32=mips32
+      CONFARGS += --with-arch-32=mips2 --with-tune-32=mips32 --with-fp-32=xx
     endif
   endif
 endif
@@ -619,7 +619,7 @@ ifneq (,$(findstring mips64-linux-gnuabin32,$(DEB_TARGET_GNU_TYPE)))
     ifeq ($(biarchn32)-$(biarch32),yes-yes)
       CONFARGS += --enable-targets=all
       CONFARGS += --with-arch-64=mips3 --with-tune-64=mips64
-      CONFARGS += --with-arch-32=mips2 --with-tune-32=mips32
+      CONFARGS += --with-arch-32=mips2 --with-tune-32=mips32 --with-fp-32=xx
     endif
   endif
 endif
@@ -630,7 +630,7 @@ ifneq (,$(findstring mips64el-linux-gnuabi64,$(DEB_TARGET_GNU_TYPE)))
   ifeq ($(multilib),yes)
     ifeq ($(biarchn32)-$(biarch32),yes-yes)
       CONFARGS += --enable-targets=all
-      CONFARGS += --with-arch-32=mips2 --with-tune-32=mips32
+      CONFARGS += --with-arch-32=mips2 --with-tune-32=mips32 --with-fp-32=xx
     endif
   endif
 endif
@@ -641,7 +641,7 @@ ifneq (,$(findstring mips64-linux-gnuabi64,$(DEB_TARGET_GNU_TYPE)))
   ifeq ($(multilib),yes)
     ifeq ($(biarchn32)-$(biarch32),yes-yes)
       CONFARGS += --enable-targets=all
-      CONFARGS += --with-arch-32=mips2 --with-tune-32=mips32
+      CONFARGS += --with-arch-32=mips2 --with-tune-32=mips32 --with-fp-32=xx
     endif
   endif
 endif

@@ -1256,12 +1256,13 @@ Multi-Arch: same
 Pre-Depends: multiarch-support
 Priority: optional
 Depends: gcc-5-base (= ${gcc:Version}), ${shlibs:Depends}, ${misc:Depends}
+Breaks: python-gccjit (<< 0.4-4), python3-gccjit (<< 0.4-4)
 Description: GCC just-in-time compilation (shared library)
  libgccjit provides an embeddable shared library with an API for adding
  compilation to existing programs using GCC.
 
 Package: libgccjit-5-dev
-Section: libs
+Section: libdevel
 Architecture: any
 Multi-Arch: same
 Pre-Depends: multiarch-support
@@ -1936,7 +1937,7 @@ Description: GNU Standard C++ Library v3
 Package: lib32stdc++6
 Architecture: amd64 ppc64 kfreebsd-amd64 s390x sparc64 x32 mipsn32 mipsn32el mips64 mips64el
 Section: libs
-Priority: extra
+Priority: optional
 Depends: gcc-5-base (= ${gcc:Version}), lib32gcc1 (>= ${gcc:Version}), ${shlibs:Depends}, ${misc:Depends}
 Conflicts: ${confl:lib32}
 Description: GNU Standard C++ Library v3 (32 bit Version)

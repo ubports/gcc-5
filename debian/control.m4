@@ -27,7 +27,7 @@ define(`libdep', `lib$2$1`'LS`'AQ (ifelse(`$3',`',`>=',`$3') ifelse(`$4',`',`${g
 define(`libdevdep', `lib$2$1`'LS`'AQ (ifelse(`$3',`',`=',`$3') ifelse(`$4',`',`${gcc:Version}',`$4'))')
 define(`libidevdep', `lib$2$1`'LS`'AQ (ifelse(`$3',`',`=',`$3') ifelse(`$4',`',`${gcc:Version}',`$4'))')
 ifdef(`TARGET',`ifelse(CROSS_ARCH,`all',`
-define(`libidevdep', `lib$2$1`'LS`'AQ (>= ifelse(`$4',`',`${gcc:Version}',`$4'))')
+define(`libidevdep', `lib$2$1`'LS`'AQ (>= ifelse(`$4',`',`${gcc:SoftVersion}',`$4'))')
 ')')
 define(`libdbgdep', `lib$2$1`'LS`'AQ (ifelse(`$3',`',`>=',`$3') ifelse(`$4',`',`${gcc:Version}',`$4'))')
 
@@ -170,8 +170,8 @@ Priority: ifdef(`TARGET',`extra',`PRI(required)')
 Depends: ${misc:Depends}
 BUILT_USING`'dnl
 Description: GCC, the GNU Compiler Collection (library base package)
- This package contains files common to all libraries
- contained in the GNU Compiler Collection (GCC).
+ This empty package contains changelog and copyright files common to
+ all libraries contained in the GNU Compiler Collection (GCC).
 ifdef(`BASE_ONLY', `dnl
  .
  This version of GCC is not yet available for this architecture.
@@ -424,7 +424,7 @@ ifenabled(`lib32gcc',`
 Package: lib32gcc1`'LS
 Architecture: ifdef(`TARGET',`CROSS_ARCH',`biarch32_archs')
 Section: ifdef(`TARGET',`devel',`libs')
-Priority: optional
+Priority: ifdef(`TARGET',`extra',PRI(optional))
 Depends: BASELDEP, ${dep:libcbiarch}, ${misc:Depends}
 Conflicts: ${confl:lib32}
 ifdef(`TARGET',`Provides: lib32gcc1-TARGET-dcv1
@@ -3201,13 +3201,14 @@ Pre-Depends: multiarch-support
 ')`'dnl
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASEDEP, ${shlibs:Depends}, ${misc:Depends}
+Breaks: python-gccjit (<< 0.4-4), python3-gccjit (<< 0.4-4)
 BUILT_USING`'dnl
 Description: GCC just-in-time compilation (shared library)
  libgccjit provides an embeddable shared library with an API for adding
  compilation to existing programs using GCC.
 
 Package: libgccjit`'PV-dev
-Section: ifdef(`TARGET',`devel',`libs')
+Section: ifdef(`TARGET',`devel',`libdevel')
 Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
 ifdef(`MULTIARCH', `Multi-Arch: same
 Pre-Depends: multiarch-support
@@ -3867,7 +3868,7 @@ ifenabled(`godev',`
 Package: gccgo`'PV`'TS
 Architecture: any
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
-Depends: BASEDEP, ifdef(`STANDALONEGO',`${dep:libcc1}, ',`gcc`'PV`'TS (= ${gcc:Version}), ')libdep(go`'GO_SO,), ${dep:libcdev}, ${shlibs:Depends}, ${misc:Depends}
+Depends: BASEDEP, ifdef(`STANDALONEGO',`${dep:libcc1}, ',`gcc`'PV`'TS (= ${gcc:Version}), ')libidevdep(go`'GO_SO,,>=), ${dep:libcdev}, ${shlibs:Depends}, ${misc:Depends}
 Provides: go-compiler
 Suggests: ${go:multilib}, gccgo`'PV-doc, libdbgdep(go`'GO_SO-dbg,)
 Conflicts: ${golang:Conflicts}
@@ -4302,7 +4303,7 @@ ifenabled(`lib32cxx',`
 Package: lib32stdc++CXX_SO`'LS
 Architecture: ifdef(`TARGET',`CROSS_ARCH',`biarch32_archs')
 Section: ifdef(`TARGET',`devel',`libs')
-Priority: extra
+Priority: ifdef(`TARGET',`extra',PRI(optional))
 Depends: BASELDEP, libdep(gcc1,32), ${shlibs:Depends}, ${misc:Depends}
 Conflicts: ${confl:lib32}
 ifdef(`TARGET',`Provides: lib32stdc++CXX_SO-TARGET-dcv1

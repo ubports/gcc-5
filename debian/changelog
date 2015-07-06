@@ -1,3 +1,15 @@
+gcc-5 (5.1.1-13) unstable; urgency=medium
+
+  * Update to SVN 20150706 (r225471, 5.1.1) from the gcc-5-branch.
+  * Update libasan symbol files.
+  * Configure --with-fp-32=xx on all mips targets, setting MIPS O32 default
+    to FPXX (YunQiang Su). Closes: #789612.
+  * Update libgccjit symbol file.
+  * Add x32 symbols files for libgcc1 and libstdc++6.
+  * libgccjit0: Add breaks for python-gccjit and python3-gccjit.
+
+ -- Matthias Klose <doko@debian.org>  Mon, 06 Jul 2015 19:55:08 +0200
+
 gcc-5 (5.1.1-12) unstable; urgency=medium
 
   * Update to SVN 20150622 (r224724, 5.1.1) from the gcc-5-branch.
