@@ -660,14 +660,13 @@ with_cxx := $(call envfilt, c++, obj-c++ java, , $(with_cxx))
 # two objects (which might be some system library and a user's program) need to
 # agree on the version of std::string they're using
 
-libstdcxx_abi = c++11
-libstdcxx_abi = c++98
+libstdcxx_abi = new
 # backports default to the old ABI
-ifneq (,$(filter $(distrelease),squeeze wheezy jessie sid lucid precise trusty utopic vivid))
-  libstdcxx_abi = c++98
+ifneq (,$(filter $(distrelease),squeeze wheezy jessie lucid precise trusty utopic vivid))
+  libstdcxx_abi = gcc4-compatible
 endif
 # FIXME later ... sid is still known as jessie
-libstdcxx_abi = c++98
+libstdcxx_abi = gcc4-compatible
 
 # Build all packages needed for C++ development
 ifeq ($(with_cxx),yes)

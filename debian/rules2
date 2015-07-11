@@ -271,7 +271,9 @@ ifeq ($(with_cxx)-$(with_debug),yes-yes)
 endif
 CONFARGS += --enable-libstdcxx-time=yes
 CONFARGS += --with-default-libstdcxx-abi=$(libstdcxx_abi)
-CONFARGS += --disable-libstdcxx-dual-abi
+ifeq ($(libstdcxx_abi),gcc4-compatible)
+  CONFARGS += --disable-libstdcxx-dual-abi
+endif
 
 ifeq (,$(filter $(DEB_TARGET_ARCH), hurd-i386 kfreebsd-i386 kfreebsd-amd64))
   CONFARGS += --enable-gnu-unique-object
