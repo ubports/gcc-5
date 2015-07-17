@@ -5,7 +5,7 @@ Index: b/src/gcc/gcc.c
 ===================================================================
 --- a/src/gcc/gcc.c
 +++ b/src/gcc/gcc.c
-@@ -6588,6 +6588,16 @@ do_report_bug (const char **new_argv, co
+@@ -6589,6 +6589,16 @@ do_report_bug (const char **new_argv, co
  	  fflush(stderr);
  	  free(cmd);
  	}

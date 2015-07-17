@@ -130,7 +130,7 @@ Index: b/src/gcc/config/i386/i386.h
 ===================================================================
 --- a/src/gcc/config/i386/i386.h
 +++ b/src/gcc/config/i386/i386.h
-@@ -645,6 +645,24 @@ extern const char *host_detect_local_cpu
+@@ -647,6 +647,24 @@ extern const char *host_detect_local_cpu
  /* Target CPU builtins.  */
  #define TARGET_CPU_CPP_BUILTINS() ix86_target_macros ()
  
@@ -294,9 +294,9 @@ Index: b/src/gcc/config/s390/s390.h
 ===================================================================
 --- a/src/gcc/config/s390/s390.h
 +++ b/src/gcc/config/s390/s390.h
-@@ -114,6 +114,22 @@ enum processor_flags
-     }									\
-   while (0)
+@@ -113,6 +113,22 @@ enum processor_flags
+ /* Target CPU builtins.  */
+ #define TARGET_CPU_CPP_BUILTINS() s390_cpu_cpp_builtins (pfile)
  
 +/* Target CPU builtins for D.  */
 +#define TARGET_CPU_D_BUILTINS()				\
@@ -315,8 +315,8 @@ Index: b/src/gcc/config/s390/s390.h
 +  while (0)
 +
  #ifdef DEFAULT_TARGET_64BIT
- #define TARGET_DEFAULT             (MASK_64BIT | MASK_ZARCH | MASK_HARD_DFP | MASK_OPT_HTM)
- #else
+ #define TARGET_DEFAULT     (MASK_64BIT | MASK_ZARCH | MASK_HARD_DFP	\
+                             | MASK_OPT_HTM | MASK_OPT_VX)
 Index: b/src/gcc/config/sh/sh.h
 ===================================================================
 --- a/src/gcc/config/sh/sh.h

@@ -4,7 +4,7 @@ Index: b/src/gcc/ada/sem_prag.adb
 ===================================================================
 --- a/src/gcc/ada/sem_prag.adb
 +++ b/src/gcc/ada/sem_prag.adb
-@@ -11629,7 +11629,16 @@ package body Sem_Prag is
+@@ -11334,7 +11334,16 @@ package body Sem_Prag is
              Str   : Node_Id;
  
           begin

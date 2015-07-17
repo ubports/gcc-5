@@ -5,9 +5,11 @@
  libjava/stacktrace.cc |   27 +++++++++++++++++++++++++++
  1 files changed, 27 insertions(+), 0 deletions(-)
 
+Index: b/src/libjava/stacktrace.cc
+===================================================================
 --- a/src/libjava/stacktrace.cc
 +++ b/src/libjava/stacktrace.cc
-@@ -17,6 +17,11 @@
+@@ -17,6 +17,11 @@ details.  */
  #include <java-stack.h>
  
  #include <stdio.h>
@@ -19,7 +21,7 @@
  
  #include <java/lang/Boolean.h>
  #include <java/lang/Class.h>
-@@ -260,6 +265,28 @@
+@@ -260,6 +265,28 @@ _Jv_StackTrace::getLineNumberForFrame(_J
        finder->lookup (binaryName, (jlong) offset);
        *sourceFileName = finder->getSourceFile();
        *lineNum = finder->getLineNum();

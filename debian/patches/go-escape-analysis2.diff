@@ -13,11 +13,11 @@ gcc/go/
 	* go-gcc.cc (Gcc_backend::stack_allocation_expression): New
 	method.
 
-Index: gcc/go/go-gcc.cc
+Index: b/src/gcc/go/go-gcc.cc
 ===================================================================
---- a/src/gcc/go/go-gcc.cc	(revision
-+++ b/src/gcc/go/go-gcc.cc	(revision
-@@ -324,6 +324,9 @@
+--- a/src/gcc/go/go-gcc.cc
++++ b/src/gcc/go/go-gcc.cc
+@@ -324,6 +324,9 @@ class Gcc_backend : public Backend
    call_expression(Bexpression* fn, const std::vector<Bexpression*>& args,
                    Bexpression* static_chain, Location);
  
@@ -27,7 +27,7 @@ Index: gcc/go/go-gcc.cc
    // Statements.
  
    Bstatement*
-@@ -1884,6 +1887,17 @@
+@@ -1884,6 +1887,17 @@ Gcc_backend::call_expression(Bexpression
    return this->make_expression(ret);
  }
  
@@ -45,11 +45,11 @@ Index: gcc/go/go-gcc.cc
  // An expression as a statement.
  
  Bstatement*
-Index: gcc/go/Make-lang.in
+Index: b/src/gcc/go/Make-lang.in
 ===================================================================
---- a/src/gcc/go/Make-lang.in	(revision
-+++ b/src/gcc/go/Make-lang.in	(revision
-@@ -198,6 +198,7 @@
+--- a/src/gcc/go/Make-lang.in
++++ b/src/gcc/go/Make-lang.in
+@@ -198,6 +198,7 @@ go.uninstall:
  go.mostlyclean:
  	-rm -f go/*$(objext)
  	-rm -f go/*$(coverageexts)
@@ -57,11 +57,11 @@ Index: gcc/go/Make-lang.in
  go.clean:
  go.distclean:
  go.maintainer-clean:
-Index: gcc/go/gofrontend/gogo.h
+Index: b/src/gcc/go/gofrontend/gogo.h
 ===================================================================
---- a/src/gcc/go/gofrontend/gogo.h	(revision
-+++ b/src/gcc/go/gofrontend/gogo.h	(revision
-@@ -1042,6 +1042,11 @@
+--- a/src/gcc/go/gofrontend/gogo.h
++++ b/src/gcc/go/gofrontend/gogo.h
+@@ -1042,6 +1042,11 @@ class Function
      this->is_unnamed_type_stub_method_ = true;
    }
  
@@ -73,11 +73,11 @@ Index: gcc/go/gofrontend/gogo.h
    // Add a new field to the closure variable.
    void
    add_closure_field(Named_object* var, Location loc)
-Index: gcc/go/gofrontend/expressions.h
+Index: b/src/gcc/go/gofrontend/expressions.h
 ===================================================================
---- a/src/gcc/go/gofrontend/expressions.h	(revision
-+++ b/src/gcc/go/gofrontend/expressions.h	(revision
-@@ -2786,7 +2786,7 @@
+--- a/src/gcc/go/gofrontend/expressions.h
++++ b/src/gcc/go/gofrontend/expressions.h
+@@ -2786,7 +2786,7 @@ class Allocation_expression : public Exp
   public:
    Allocation_expression(Type* type, Location location)
      : Expression(EXPRESSION_ALLOCATION, location),
@@ -86,7 +86,7 @@ Index: gcc/go/gofrontend/expressions.h
    { }
  
    void
-@@ -2807,9 +2807,6 @@
+@@ -2807,9 +2807,6 @@ class Allocation_expression : public Exp
    Expression*
    do_copy();
  
@@ -96,7 +96,7 @@ Index: gcc/go/gofrontend/expressions.h
    Bexpression*
    do_get_backend(Translate_context*);
  
-@@ -2821,9 +2818,6 @@
+@@ -2821,9 +2818,6 @@ class Allocation_expression : public Exp
    Type* type_;
    // Whether or not this is a stack allocation.
    bool allocate_on_stack_;
@@ -106,11 +106,11 @@ Index: gcc/go/gofrontend/expressions.h
  };
  
  // Construct a struct.
-Index: gcc/go/gofrontend/backend.h
+Index: b/src/gcc/go/gofrontend/backend.h
 ===================================================================
---- a/src/gcc/go/gofrontend/backend.h	(revision
-+++ b/src/gcc/go/gofrontend/backend.h	(revision
-@@ -377,6 +377,10 @@
+--- a/src/gcc/go/gofrontend/backend.h
++++ b/src/gcc/go/gofrontend/backend.h
+@@ -377,6 +377,10 @@ class Backend
    call_expression(Bexpression* fn, const std::vector<Bexpression*>& args,
  		  Bexpression* static_chain, Location) = 0;
  
@@ -121,11 +121,11 @@ Index: gcc/go/gofrontend/backend.h
    // Statements.
  
    // Create an error statement.  This is used for cases which should
-Index: gcc/go/gofrontend/escape.cc
+Index: b/src/gcc/go/gofrontend/escape.cc
 ===================================================================
---- a/src/gcc/go/gofrontend/escape.cc	(revision
-+++ b/src/gcc/go/gofrontend/escape.cc	(revision
-@@ -906,6 +906,8 @@
+--- a/src/gcc/go/gofrontend/escape.cc
++++ b/src/gcc/go/gofrontend/escape.cc
+@@ -906,6 +906,8 @@ Build_connection_graphs::handle_composit
  	continue;
        else if ((*p)->call_expression() != NULL)
  	this->handle_call(object, *p);
@@ -134,7 +134,7 @@ Index: gcc/go/gofrontend/escape.cc
        else if ((*p)->is_composite_literal()
  	       || (*p)->heap_expression() != NULL)
  	this->handle_composite_literal(object, *p);
-@@ -949,21 +951,24 @@
+@@ -949,21 +951,24 @@ Build_connection_graphs::variable(Named_
  	   p != defs->end();
  	   ++p)
  	{
@@ -166,7 +166,7 @@ Index: gcc/go/gofrontend/escape.cc
  	  if (ref == NULL)
  	    continue;
  
-@@ -989,21 +994,21 @@
+@@ -989,21 +994,21 @@ Build_connection_graphs::variable(Named_
  	      Named_object* lhs_no = this->resolve_var_reference(assn->lhs());
  	      Named_object* rhs_no = this->resolve_var_reference(assn->rhs());
  
@@ -197,7 +197,7 @@ Index: gcc/go/gofrontend/escape.cc
  
  	      // If there is no standalone variable on the rhs, this could be a
  	      // binary expression, which isn't interesting for analysis or a
-@@ -1038,8 +1043,12 @@
+@@ -1038,8 +1043,12 @@ Build_connection_graphs::variable(Named_
  	    break;
  
  	  case Statement::STATEMENT_EXPRESSION:
@@ -212,7 +212,7 @@ Index: gcc/go/gofrontend/escape.cc
  	    break;
  
  	  case Statement::STATEMENT_GO:
-@@ -1064,10 +1073,17 @@
+@@ -1064,10 +1073,17 @@ Build_connection_graphs::variable(Named_
  	      else if (cond->binary_expression() != NULL)
  		{
  		  Binary_expression* comp = cond->binary_expression();
@@ -234,7 +234,7 @@ Index: gcc/go/gofrontend/escape.cc
  		}
  	    }
  	    break;
-@@ -1092,16 +1108,10 @@
+@@ -1092,16 +1108,10 @@ Build_connection_graphs::variable(Named_
  		  // composite literal.
  		  this->handle_composite_literal(decl_no, init);
  		}
@@ -255,7 +255,7 @@ Index: gcc/go/gofrontend/escape.cc
  		this->handle_call(var, init);
  	    }
  	    break;
-@@ -1148,18 +1158,46 @@
+@@ -1148,18 +1158,46 @@ Build_connection_graphs::statement(Block
        if (lhs_no == NULL)
  	break;
  
@@ -269,7 +269,7 @@ Index: gcc/go/gofrontend/escape.cc
 +      if (rhs->call_result_expression() != NULL)
 +	rhs = rhs->call_result_expression()->call();
 +      if (rhs->call_expression() != NULL)
- 	{
++	{
 +	  // It's not clear what variables we are trying to find references to
 +	  // so just use the arguments to this call.
 +	  Expression_list* args = rhs->call_expression()->args();
@@ -291,7 +291,7 @@ Index: gcc/go/gofrontend/escape.cc
 +	  this->handle_call(lhs_no, rhs);
 +	}
 +      else if (rhs->func_expression() != NULL)
-+	{
+ 	{
  	  Node* lhs_node = this->gogo_->add_connection_node(lhs_no);
 -	  Named_object* fn = assn->rhs()->func_expression()->named_object();
 +	  Named_object* fn = rhs->func_expression()->named_object();
@@ -307,7 +307,7 @@ Index: gcc/go/gofrontend/escape.cc
  	  if (rhs_no != NULL)
  	    {
  	      Node* lhs_node = this->gogo_->add_connection_node(lhs_no);
-@@ -1188,6 +1226,8 @@
+@@ -1188,6 +1226,8 @@ Build_connection_graphs::statement(Block
    case Statement::STATEMENT_EXPRESSION:
      {
        Expression* expr = s->expression_statement()->expr();
@@ -316,7 +316,7 @@ Index: gcc/go/gofrontend/escape.cc
        if (expr->call_expression() != NULL)
  	{
  	  // It's not clear what variables we are trying to find references to
-@@ -1208,6 +1248,73 @@
+@@ -1208,6 +1248,73 @@ Build_connection_graphs::statement(Block
      }
      break;
  
@@ -390,7 +390,7 @@ Index: gcc/go/gofrontend/escape.cc
    default:
      break;
    }
-@@ -1276,8 +1383,22 @@
+@@ -1276,8 +1383,22 @@ Gogo::analyze_reachability()
        Node* m = worklist.front();
        worklist.pop_front();
  
@@ -415,7 +415,7 @@ Index: gcc/go/gofrontend/escape.cc
  	   ++n)
  	{
  	  // If an object can be reached from a node with ESCAPE_GLOBAL,
-@@ -1296,7 +1417,7 @@
+@@ -1296,7 +1417,7 @@ Gogo::analyze_reachability()
         p != this->named_connection_nodes_.end();
         ++p)
      {
@@ -424,7 +424,7 @@ Index: gcc/go/gofrontend/escape.cc
  	worklist.push_back(p->second);
      }
  
-@@ -1305,15 +1426,30 @@
+@@ -1305,15 +1426,30 @@ Gogo::analyze_reachability()
        Node* m = worklist.front();
        worklist.pop_front();
  
@@ -459,7 +459,7 @@ Index: gcc/go/gofrontend/escape.cc
  	      worklist.push_back(*n);
  	    }
  	}
-@@ -1429,8 +1565,7 @@
+@@ -1429,8 +1565,7 @@ Optimize_allocations::variable(Named_obj
  
    if (var->is_variable())
      {
@@ -469,7 +469,7 @@ Index: gcc/go/gofrontend/escape.cc
        if (var->var_value()->init() != NULL
  	  && var->var_value()->init()->allocation_expression() != NULL)
  	{
-@@ -1439,9 +1574,6 @@
+@@ -1439,9 +1574,6 @@ Optimize_allocations::variable(Named_obj
  	  alloc->set_allocate_on_stack();
  	}
      }
@@ -479,11 +479,11 @@ Index: gcc/go/gofrontend/escape.cc
  
    return TRAVERSE_CONTINUE;
  }
-Index: gcc/go/gofrontend/expressions.cc
+Index: b/src/gcc/go/gofrontend/expressions.cc
 ===================================================================
---- a/src/gcc/go/gofrontend/expressions.cc	(revision
-+++ b/src/gcc/go/gofrontend/expressions.cc	(revision
-@@ -11428,20 +11428,6 @@
+--- a/src/gcc/go/gofrontend/expressions.cc
++++ b/src/gcc/go/gofrontend/expressions.cc
+@@ -11430,20 +11430,6 @@ Allocation_expression::do_copy()
    return alloc;
  }
  
@@ -504,7 +504,7 @@ Index: gcc/go/gofrontend/expressions.cc
  // Return the backend representation for an allocation expression.
  
  Bexpression*
-@@ -11450,17 +11436,16 @@
+@@ -11452,17 +11438,16 @@ Allocation_expression::do_get_backend(Tr
    Gogo* gogo = context->gogo();
    Location loc = this->location();
  

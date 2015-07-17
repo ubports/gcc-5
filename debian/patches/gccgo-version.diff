@@ -19,7 +19,7 @@ Index: b/src/libgo/Makefile.in
 ===================================================================
 --- a/src/libgo/Makefile.in
 +++ b/src/libgo/Makefile.in
-@@ -448,14 +448,15 @@ SUFFIXES = .c .go .gox .o .obj .lo .a
+@@ -463,14 +463,15 @@ SUFFIXES = .c .go .gox .o .obj .lo .a
  @LIBGO_IS_RTEMS_TRUE@subdirs = testsuite
  SUBDIRS = ${subdirs}
  gcc_version := $(shell $(GOC) -dumpversion)
@@ -60,8 +60,8 @@ Index: b/src/libgo/Makefile.am
  
  LIBFFI = @LIBFFI@
  LIBFFIINCS = @LIBFFIINCS@
-# DP: 
-
+Index: b/src/gotools/Makefile.am
+===================================================================
 --- a/src/gotools/Makefile.am
 +++ b/src/gotools/Makefile.am
 @@ -18,8 +18,9 @@
@@ -75,9 +75,11 @@ Index: b/src/libgo/Makefile.am
  
  mkinstalldirs = $(SHELL) $(toplevel_srcdir)/mkinstalldirs
  PWD_COMMAND = $${PWDCMD-pwd}
+Index: b/src/gotools/Makefile.in
+===================================================================
 --- a/src/gotools/Makefile.in
 +++ b/src/gotools/Makefile.in
-@@ -195,7 +195,8 @@
+@@ -219,7 +219,8 @@ top_builddir = @top_builddir@
  top_srcdir = @top_srcdir@
  ACLOCAL_AMFLAGS = -I ./config -I ../config
  gcc_version := $(shell $(GCC_FOR_TARGET) -dumpversion)

@@ -3,6 +3,8 @@ gmp.h header for the target architecture.  Are libgnatvsn and libgnatprj
 really target libraries, or host libraries? The odd thing is that
 the gnat cross build tools are not linked against these two libraries.
 
+Index: b/src/gcc/wide-int.h
+===================================================================
 --- a/src/gcc/wide-int.h
 +++ b/src/gcc/wide-int.h
 @@ -3097,8 +3097,10 @@ namespace wi
@@ -16,6 +18,8 @@ the gnat cross build tools are not linked against these two libraries.
  
    wide_int mask (unsigned int, bool, unsigned int);
    wide_int shifted_mask (unsigned int, unsigned int, bool, unsigned int);
+Index: b/src/gcc/system.h
+===================================================================
 --- a/src/gcc/system.h
 +++ b/src/gcc/system.h
 @@ -659,8 +659,10 @@ extern int vsnprintf (char *, size_t, co
@@ -29,6 +33,8 @@ the gnat cross build tools are not linked against these two libraries.
  
  /* Get libiberty declarations.  */
  #include "libiberty.h"
+Index: b/src/libgnatprj/Makefile.in
+===================================================================
 --- a/src/libgnatprj/Makefile.in
 +++ b/src/libgnatprj/Makefile.in
 @@ -92,12 +92,12 @@ obj-shared/%.o: %.ads

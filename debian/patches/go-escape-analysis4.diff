@@ -4,9 +4,11 @@ If we have a unary & that takes the address of a variable, do
 not force the variable to escape if the unary & does not
 escape.
 
+Index: b/src/gcc/go/gofrontend/expressions.cc
+===================================================================
 --- a/src/gcc/go/gofrontend/expressions.cc
 +++ b/src/gcc/go/gofrontend/expressions.cc
-@@ -3668,7 +3668,12 @@
+@@ -3668,7 +3668,12 @@ Unary_expression::do_flatten(Gogo* gogo,
  
    if (this->op_ == OPERATOR_AND)
      {

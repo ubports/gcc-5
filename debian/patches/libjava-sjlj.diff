@@ -9,7 +9,7 @@ Index: b/src/libjava/sysdep/generic/backtrace.h
 ===================================================================
 --- a/src/libjava/sysdep/generic/backtrace.h
 +++ b/src/libjava/sysdep/generic/backtrace.h
-@@ -13,6 +13,20 @@
+@@ -13,6 +13,20 @@ details.  */
  
  #include <java-stack.h>
  
@@ -30,7 +30,7 @@ Index: b/src/libjava/sysdep/generic/backtrace.h
  /* Unwind through the call stack calling TRACE_FN with STATE for every stack
     frame.  Returns the reason why the unwinding was stopped.  */
  _Unwind_Reason_Code
-@@ -20,4 +34,7 @@
+@@ -20,4 +34,7 @@ fallback_backtrace (_Unwind_Trace_Fn, _J
  {
    return _URC_NO_REASON;
  }

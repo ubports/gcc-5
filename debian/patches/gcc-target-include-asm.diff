@@ -4,7 +4,7 @@ Index: b/src/configure.ac
 ===================================================================
 --- a/src/configure.ac
 +++ b/src/configure.ac
-@@ -3152,7 +3152,7 @@ fi
+@@ -3195,7 +3195,7 @@ fi
  # being built; programs in there won't even run.
  if test "${build}" = "${host}" && test -d ${srcdir}/gcc; then
    # Search for pre-installed headers if nothing else fits.

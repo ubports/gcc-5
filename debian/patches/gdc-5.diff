@@ -5,7 +5,7 @@ Index: b/src/gcc/config/rs6000/rs6000.c
 ===================================================================
 --- a/src/gcc/config/rs6000/rs6000.c
 +++ b/src/gcc/config/rs6000/rs6000.c
-@@ -25518,6 +25518,7 @@ rs6000_output_function_epilogue (FILE *f
+@@ -25690,6 +25690,7 @@ rs6000_output_function_epilogue (FILE *f
        if (lang_GNU_C ()
  	  || ! strcmp (language_string, "GNU GIMPLE")
  	  || ! strcmp (language_string, "GNU Go")
@@ -17,7 +17,7 @@ Index: b/src/gcc/dwarf2out.c
 ===================================================================
 --- a/src/gcc/dwarf2out.c
 +++ b/src/gcc/dwarf2out.c
-@@ -4749,6 +4749,15 @@ is_ada (void)
+@@ -4754,6 +4754,15 @@ is_ada (void)
    return lang == DW_LANG_Ada95 || lang == DW_LANG_Ada83;
  }
  
@@ -33,7 +33,7 @@ Index: b/src/gcc/dwarf2out.c
  /* Remove the specified attribute if present.  */
  
  static void
-@@ -19789,6 +19798,8 @@ gen_compile_unit_die (const char *filena
+@@ -19836,6 +19845,8 @@ gen_compile_unit_die (const char *filena
  	language = DW_LANG_ObjC;
        else if (strcmp (language_string, "GNU Objective-C++") == 0)
  	language = DW_LANG_ObjC_plus_plus;
@@ -42,7 +42,7 @@ Index: b/src/gcc/dwarf2out.c
        else if (dwarf_version >= 5 || !dwarf_strict)
  	{
  	  if (strcmp (language_string, "GNU Go") == 0)
-@@ -20733,7 +20744,7 @@ declare_in_namespace (tree thing, dw_die
+@@ -20804,7 +20815,7 @@ declare_in_namespace (tree thing, dw_die
  
    if (ns_context != context_die)
      {
@@ -51,7 +51,7 @@ Index: b/src/gcc/dwarf2out.c
  	return ns_context;
        if (DECL_P (thing))
  	gen_decl_die (thing, NULL, ns_context);
-@@ -20756,7 +20767,7 @@ gen_namespace_die (tree decl, dw_die_ref
+@@ -20827,7 +20838,7 @@ gen_namespace_die (tree decl, dw_die_ref
      {
        /* Output a real namespace or module.  */
        context_die = setup_namespace_context (decl, comp_unit_die ());
@@ -60,7 +60,7 @@ Index: b/src/gcc/dwarf2out.c
  			       ? DW_TAG_module : DW_TAG_namespace,
  			       context_die, decl);
        /* For Fortran modules defined in different CU don't add src coords.  */
-@@ -20819,7 +20830,7 @@ gen_decl_die (tree decl, tree origin, dw
+@@ -20890,7 +20901,7 @@ gen_decl_die (tree decl, tree origin, dw
        break;
  
      case CONST_DECL:
@@ -69,7 +69,7 @@ Index: b/src/gcc/dwarf2out.c
  	{
  	  /* The individual enumerators of an enum type get output when we output
  	     the Dwarf representation of the relevant enum type itself.  */
-@@ -21290,7 +21301,7 @@ dwarf2out_decl (tree decl)
+@@ -21361,7 +21372,7 @@ dwarf2out_decl (tree decl)
      case CONST_DECL:
        if (debug_info_level <= DINFO_LEVEL_TERSE)
  	return;
@@ -82,7 +82,7 @@ Index: b/src/gcc/gcc.c
 ===================================================================
 --- a/src/gcc/gcc.c
 +++ b/src/gcc/gcc.c
-@@ -1098,6 +1098,7 @@ static const struct compiler default_com
+@@ -1103,6 +1103,7 @@ static const struct compiler default_com
    {".java", "#Java", 0, 0, 0}, {".class", "#Java", 0, 0, 0},
    {".zip", "#Java", 0, 0, 0}, {".jar", "#Java", 0, 0, 0},
    {".go", "#Go", 0, 1, 0},

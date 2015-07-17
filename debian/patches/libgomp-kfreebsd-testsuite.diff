@@ -1,5 +1,7 @@
 # DP: Disable lock-2.c test on kfreebsd-*
 
+Index: b/src/libgomp/testsuite/libgomp.c/lock-2.c
+===================================================================
 --- a/src/libgomp/testsuite/libgomp.c/lock-2.c
 +++ b/src/libgomp/testsuite/libgomp.c/lock-2.c
 @@ -4,6 +4,9 @@
@@ -12,4 +14,3 @@
    int l = 0;
    omp_nest_lock_t lock;
    omp_init_nest_lock (&lock);
-

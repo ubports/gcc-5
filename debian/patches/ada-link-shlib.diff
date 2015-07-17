@@ -5,7 +5,7 @@ Index: b/src/gcc/ada/mlib-tgt-specific-linux.adb
 ===================================================================
 --- a/src/gcc/ada/mlib-tgt-specific-linux.adb
 +++ b/src/gcc/ada/mlib-tgt-specific-linux.adb
-@@ -81,19 +81,54 @@
+@@ -81,19 +81,54 @@ package body MLib.Tgt.Specific is
        Version_Arg          : String_Access;
        Symbolic_Link_Needed : Boolean := False;
  
@@ -62,7 +62,7 @@ Index: b/src/gcc/ada/mlib-tgt-specific-linux.adb
  
        else
           declare
-@@ -111,18 +146,20 @@
+@@ -111,18 +146,20 @@ package body MLib.Tgt.Specific is
                 Utl.Gcc
                   (Output_File => Lib_Version,
                    Objects     => Ofiles,

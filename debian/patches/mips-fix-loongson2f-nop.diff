@@ -5,7 +5,7 @@ Index: b/src/gcc/config/mips/mips.h
 ===================================================================
 --- a/src/gcc/config/mips/mips.h
 +++ b/src/gcc/config/mips/mips.h
-@@ -1295,6 +1295,7 @@ struct mips_cpu_info {
+@@ -1343,6 +1343,7 @@ struct mips_cpu_info {
  %{msym32} %{mno-sym32} \
  %{mtune=*}" \
  FP_ASM_SPEC "\

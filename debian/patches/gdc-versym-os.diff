@@ -187,7 +187,7 @@ Index: b/src/gcc/config/i386/mingw-w64.h
 ===================================================================
 --- a/src/gcc/config/i386/mingw-w64.h
 +++ b/src/gcc/config/i386/mingw-w64.h
-@@ -84,3 +84,10 @@ along with GCC; see the file COPYING3.
+@@ -89,3 +89,10 @@ along with GCC; see the file COPYING3.
    %{static:-Bstatic} %{!static:-Bdynamic} \
    %{shared|mdll: " SUB_LINK_ENTRY " --enable-auto-image-base} \
    %(shared_libgcc_undefs)"

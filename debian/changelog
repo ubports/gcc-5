@@ -1,3 +1,21 @@
+gcc-5 (5.2.1-11) experimental; urgency=medium
+
+  * Configure without --disable-libstdcxx-dual-abi.
+  * Configure with --with-default-libstdcxx-abi=c++11.
+
+ -- Matthias Klose <doko@debian.org>  Fri, 17 Jul 2015 08:13:08 +0200
+
+gcc-5 (5.2.1-1) experimental; urgency=medium
+
+  * GCC 5.2 release.
+  * Update to SVN 20150716 (r225880, 5.2.1) from the gcc-5-branch.
+  * Require version 5.2 for the libstdc++6 cxx symbols.
+  * Ignore missing libstdc++ symbols on sparc64 (work around #792204).
+  * Go escape analysis: analyze multiple result type assertions (taken
+    from the trunk).
+
+ -- Matthias Klose <doko@debian.org>  Thu, 16 Jul 2015 15:35:44 +0200
+
 gcc-5 (5.1.1-14) unstable; urgency=medium
 
   * Update to SVN 20150711 (r225710, 5.1.1) from the gcc-5-branch.

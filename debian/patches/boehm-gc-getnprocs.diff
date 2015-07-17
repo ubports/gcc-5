@@ -4,9 +4,11 @@
  boehm-gc/pthread_support.c |    3 ++-
  1 files changed, 2 insertions(+), 1 deletions(-)
 
+Index: b/src/boehm-gc/pthread_support.c
+===================================================================
 --- a/src/boehm-gc/pthread_support.c
 +++ b/src/boehm-gc/pthread_support.c
-@@ -724,7 +724,8 @@
+@@ -724,7 +724,8 @@ int GC_get_nprocs()
      f = open("/proc/stat", O_RDONLY);
      if (f < 0 || (len = STAT_READ(f, stat_buf, STAT_BUF_SIZE)) < 100) {
  	WARN("Couldn't read /proc/stat\n", 0);

@@ -666,7 +666,7 @@ ifneq (,$(filter $(distrelease),squeeze wheezy jessie lucid precise trusty utopi
   libstdcxx_abi = gcc4-compatible
 endif
 # FIXME later ... sid is still known as jessie
-libstdcxx_abi = gcc4-compatible
+libstdcxx_abi = new
 
 # Build all packages needed for C++ development
 ifeq ($(with_cxx),yes)
@@ -1937,6 +1937,11 @@ ifeq ($(DEB_STAGE),rtlibs)
   endef
   define cross_mangle_substvars
   endef
+endif
+
+# FIXME: see #792204, libstdc++ symbols on sparc64
+ifneq (,$(filter $(DEB_TARGET_ARCH), sparc64))
+  ignshld = -
 endif
 
 # takes a *list* of package names as $1, the multilib dirname as $2

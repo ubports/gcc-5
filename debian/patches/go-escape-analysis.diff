@@ -7,9 +7,11 @@ gcc/go/
 	* Make-lang.in (GO_OBJS): Add go/escape.o.
 
  
+Index: b/src/gcc/go/Make-lang.in
+===================================================================
 --- a/src/gcc/go/Make-lang.in
 +++ b/src/gcc/go/Make-lang.in
-@@ -51,6 +51,7 @@
+@@ -51,6 +51,7 @@ go-warn = $(STRICT_WARN)
  GO_OBJS = \
  	go/ast-dump.o \
  	go/dataflow.o \
@@ -17,6 +19,8 @@ gcc/go/
  	go/export.o \
  	go/expressions.o \
  	go/go-backend.o \
+Index: b/src/gcc/go/gofrontend/gogo.cc
+===================================================================
 --- a/src/gcc/go/gofrontend/gogo.cc
 +++ b/src/gcc/go/gofrontend/gogo.cc
 @@ -10,14 +10,15 @@
@@ -36,7 +40,7 @@ gcc/go/
  #include "backend.h"
  #include "gogo.h"
  
-@@ -158,11 +159,19 @@
+@@ -158,11 +159,19 @@ Gogo::Gogo(Backend* backend, Linemap* li
    Function_type* new_type = Type::make_function_type(NULL, NULL, NULL, loc);
    new_type->set_is_varargs();
    new_type->set_is_builtin();
@@ -56,7 +60,7 @@ gcc/go/
    this->globals_->add_function_declaration("make", NULL, make_type, loc);
  
    Typed_identifier_list* len_result = new Typed_identifier_list();
-@@ -170,6 +179,10 @@
+@@ -170,6 +179,10 @@ Gogo::Gogo(Backend* backend, Linemap* li
    Function_type* len_type = Type::make_function_type(NULL, NULL, len_result,
  						     loc);
    len_type->set_is_builtin();
@@ -67,7 +71,7 @@ gcc/go/
    this->globals_->add_function_declaration("len", NULL, len_type, loc);
  
    Typed_identifier_list* cap_result = new Typed_identifier_list();
-@@ -177,16 +190,26 @@
+@@ -177,16 +190,26 @@ Gogo::Gogo(Backend* backend, Linemap* li
    Function_type* cap_type = Type::make_function_type(NULL, NULL, len_result,
  						     loc);
    cap_type->set_is_builtin();
@@ -94,7 +98,7 @@ gcc/go/
    this->globals_->add_function_declaration("println", NULL, print_type, loc);
  
    Type *empty = Type::make_empty_interface_type(loc);
-@@ -195,6 +218,10 @@
+@@ -195,6 +218,10 @@ Gogo::Gogo(Backend* backend, Linemap* li
    Function_type *panic_type = Type::make_function_type(NULL, panic_parms,
  						       NULL, loc);
    panic_type->set_is_builtin();
@@ -105,7 +109,7 @@ gcc/go/
    this->globals_->add_function_declaration("panic", NULL, panic_type, loc);
  
    Typed_identifier_list* recover_result = new Typed_identifier_list();
-@@ -208,6 +235,10 @@
+@@ -208,6 +235,10 @@ Gogo::Gogo(Backend* backend, Linemap* li
    Function_type* close_type = Type::make_function_type(NULL, NULL, NULL, loc);
    close_type->set_is_varargs();
    close_type->set_is_builtin();
@@ -116,7 +120,7 @@ gcc/go/
    this->globals_->add_function_declaration("close", NULL, close_type, loc);
  
    Typed_identifier_list* copy_result = new Typed_identifier_list();
-@@ -216,31 +247,56 @@
+@@ -216,31 +247,56 @@ Gogo::Gogo(Backend* backend, Linemap* li
  						      copy_result, loc);
    copy_type->set_is_varargs();
    copy_type->set_is_builtin();
@@ -173,7 +177,7 @@ gcc/go/
    this->globals_->add_function_declaration("delete", NULL, delete_type, loc);
  }
  
-@@ -1604,9 +1660,9 @@
+@@ -1604,9 +1660,9 @@ Gogo::start_function(const std::string&
  
    Block* block = new Block(NULL, location);
  
@@ -185,7 +189,7 @@ gcc/go/
  
    Function* function = new Function(type, enclosing, block, location);
  
-@@ -1904,6 +1960,74 @@
+@@ -1904,6 +1960,74 @@ Gogo::add_label_reference(const std::str
  				   issue_goto_errors);
  }
  
@@ -260,7 +264,7 @@ gcc/go/
  // Return the current binding state.
  
  Bindings_snapshot*
-@@ -4455,7 +4579,7 @@
+@@ -4455,7 +4579,7 @@ Gogo::convert_named_types_in_bindings(Bi
  
  // Class Function.
  
@@ -269,7 +273,7 @@ gcc/go/
  		   Location location)
    : type_(type), enclosing_(enclosing), results_(NULL),
      closure_var_(NULL), block_(block), location_(location), labels_(),
-@@ -4809,6 +4933,13 @@
+@@ -4809,6 +4933,13 @@ Function::export_func_with_type(Export*
        exp->write_c_string("(");
        const Typed_identifier* receiver = fntype->receiver();
        exp->write_name(receiver->name());
@@ -283,7 +287,7 @@ gcc/go/
        exp->write_c_string(" ");
        exp->write_type(receiver->type());
        exp->write_c_string(") ");
-@@ -4820,11 +4951,12 @@
+@@ -4820,17 +4951,25 @@ Function::export_func_with_type(Export*
    const Typed_identifier_list* parameters = fntype->parameters();
    if (parameters != NULL)
      {
@@ -297,7 +301,6 @@ gcc/go/
  	{
  	  if (first)
  	    first = false;
-@@ -4831,6 +4963,13 @@
  	  else
  	    exp->write_c_string(", ");
  	  exp->write_name(p->name());
@@ -311,7 +314,7 @@ gcc/go/
  	  exp->write_c_string(" ");
  	  if (!is_varargs || p + 1 != parameters->end())
  	    exp->write_type(p->type());
-@@ -4878,17 +5017,29 @@
+@@ -4878,17 +5017,29 @@ Function::export_func_with_type(Export*
  void
  Function::import_func(Import* imp, std::string* pname,
  		      Typed_identifier** preceiver,
@@ -342,7 +345,7 @@ gcc/go/
        imp->require_c_string(" ");
        Type* rtype = imp->read_type();
        *preceiver = new Typed_identifier(name, rtype, imp->location());
-@@ -4898,16 +5049,27 @@
+@@ -4898,16 +5049,27 @@ Function::import_func(Import* imp, std::
    *pname = imp->read_identifier();
  
    Typed_identifier_list* parameters;
@@ -371,7 +374,7 @@ gcc/go/
  	  imp->require_c_string(" ");
  
  	  if (imp->match_c_string("..."))
-@@ -4929,6 +5091,7 @@
+@@ -4929,6 +5091,7 @@ Function::import_func(Import* imp, std::
      }
    imp->require_c_string(")");
    *pparameters = parameters;
@@ -379,7 +382,7 @@ gcc/go/
  
    Typed_identifier_list* results;
    if (imp->peek_char() != ' ')
-@@ -5765,7 +5928,7 @@
+@@ -5765,7 +5928,7 @@ Variable::Variable(Type* type, Expressio
      type_from_init_tuple_(false), type_from_range_index_(false),
      type_from_range_value_(false), type_from_chan_element_(false),
      is_type_switch_var_(false), determined_type_(false),
@@ -388,6 +391,8 @@ gcc/go/
  {
    go_assert(type != NULL || init != NULL);
    go_assert(!is_parameter || init == NULL);
+Index: b/src/gcc/go/gofrontend/gogo.h
+===================================================================
 --- a/src/gcc/go/gofrontend/gogo.h
 +++ b/src/gcc/go/gofrontend/gogo.h
 @@ -7,6 +7,7 @@
@@ -398,7 +403,7 @@ gcc/go/
  #include "go-linemap.h"
  
  class Traverse;
-@@ -125,6 +126,21 @@
+@@ -125,6 +126,21 @@ class Gogo
    linemap()
    { return this->linemap_; }
  
@@ -420,7 +425,7 @@ gcc/go/
    // Get the package name.
    const std::string&
    package_name() const;
-@@ -345,6 +361,22 @@
+@@ -345,6 +361,22 @@ class Gogo
    add_label_reference(const std::string&, Location,
  		      bool issue_goto_errors);
  
@@ -443,7 +448,7 @@ gcc/go/
    // Return a snapshot of the current binding state.
    Bindings_snapshot*
    bindings_snapshot(Location);
-@@ -544,6 +576,26 @@
+@@ -544,6 +576,26 @@ class Gogo
    void
    check_return_statements();
  
@@ -470,7 +475,7 @@ gcc/go/
    // Do all exports.
    void
    do_exports();
-@@ -579,6 +631,14 @@
+@@ -579,6 +631,14 @@ class Gogo
    void
    dump_ast(const char* basename);
  
@@ -485,7 +490,7 @@ gcc/go/
    // Convert named types to the backend representation.
    void
    convert_named_types();
-@@ -684,6 +744,10 @@
+@@ -684,6 +744,10 @@ class Gogo
    // where they were defined.
    typedef Unordered_map(std::string, Location) File_block_names;
  
@@ -496,7 +501,7 @@ gcc/go/
    // Type used to queue writing a type specific function.
    struct Specific_type_function
    {
-@@ -716,6 +780,20 @@
+@@ -716,6 +780,20 @@ class Gogo
    // The global binding contour.  This includes the builtin functions
    // and the package we are compiling.
    Bindings* globals_;
@@ -517,7 +522,7 @@ gcc/go/
    // The list of names we have seen in the file block.
    File_block_names file_block_names_;
    // Mapping from import file names to packages.
-@@ -886,7 +964,7 @@
+@@ -886,7 +964,7 @@ class Block
  class Function
  {
   public:
@@ -526,7 +531,7 @@ gcc/go/
  
    // Return the function's type.
    Function_type*
-@@ -894,14 +972,14 @@
+@@ -894,14 +972,14 @@ class Function
    { return this->type_; }
  
    // Return the enclosing function if there is one.
@@ -544,7 +549,7 @@ gcc/go/
    {
      go_assert(this->enclosing_ == NULL);
      this->enclosing_ = enclosing;
-@@ -1152,8 +1230,11 @@
+@@ -1152,8 +1230,11 @@ class Function
    // Import a function.
    static void
    import_func(Import*, std::string* pname, Typed_identifier** receiver,
@@ -557,7 +562,7 @@ gcc/go/
  
   private:
    // Type for mapping from label names to Label objects.
-@@ -1169,7 +1250,7 @@
+@@ -1169,7 +1250,7 @@ class Function
    Function_type* type_;
    // The enclosing function.  This is NULL when there isn't one, which
    // is the normal case.
@@ -566,7 +571,7 @@ gcc/go/
    // The result variables, if any.
    Results* results_;
    // If there is a closure, this is the list of variables which appear
-@@ -1414,7 +1495,11 @@
+@@ -1414,7 +1495,11 @@ class Variable
    // Whether this variable should live in the heap.
    bool
    is_in_heap() const
@@ -579,7 +584,7 @@ gcc/go/
  
    // Note that something takes the address of this variable.
    void
-@@ -1432,6 +1517,16 @@
+@@ -1432,6 +1517,16 @@ class Variable
    set_non_escaping_address_taken()
    { this->is_non_escaping_address_taken_ = true; }
  
@@ -596,7 +601,7 @@ gcc/go/
    // Get the source location of the variable's declaration.
    Location
    location() const
-@@ -1525,6 +1620,11 @@
+@@ -1525,6 +1620,11 @@ class Variable
      this->type_from_chan_element_ = false;
    }
  
@@ -608,7 +613,7 @@ gcc/go/
    // Note that this variable was created for a type switch clause.
    void
    set_is_type_switch_var()
-@@ -1609,7 +1709,7 @@
+@@ -1609,7 +1709,7 @@ class Variable
    bool is_used_ : 1;
    // Whether something takes the address of this variable.  For a
    // local variable this implies that the variable has to be on the
@@ -617,7 +622,7 @@ gcc/go/
    bool is_address_taken_ : 1;
    // Whether something takes the address of this variable such that
    // the address does not escape the function.
-@@ -1635,6 +1735,9 @@
+@@ -1635,6 +1735,9 @@ class Variable
    // True if this variable should be put in a unique section.  This is
    // used for field tracking.
    bool in_unique_section_ : 1;
@@ -627,7 +632,7 @@ gcc/go/
  };
  
  // A variable which is really the name for a function return value, or
-@@ -1647,7 +1750,7 @@
+@@ -1647,7 +1750,7 @@ class Result_variable
  		  Location location)
      : type_(type), function_(function), index_(index), location_(location),
        backend_(NULL), is_address_taken_(false),
@@ -636,7 +641,7 @@ gcc/go/
    { }
  
    // Get the type of the result variable.
-@@ -1690,11 +1793,24 @@
+@@ -1690,11 +1793,24 @@ class Result_variable
    void
    set_non_escaping_address_taken()
    { this->is_non_escaping_address_taken_ = true; }
@@ -645,12 +650,12 @@ gcc/go/
 +  bool
 +  escapes()
 +  { return this->escapes_; }
- 
++
 +  // Note that this variable does not escape the function it is declared in.
 +  void
 +  set_does_not_escape()
 +  { this->escapes_ = false; }
-+
+ 
    // Whether this variable should live in the heap.
    bool
    is_in_heap() const
@@ -662,7 +667,7 @@ gcc/go/
  
    // Set the function.  This is used when cloning functions which call
    // recover.
-@@ -1722,6 +1838,9 @@
+@@ -1722,6 +1838,9 @@ class Result_variable
    // Whether something takes the address of this variable such that
    // the address does not escape the function.
    bool is_non_escaping_address_taken_;
@@ -672,9 +677,11 @@ gcc/go/
  };
  
  // The value we keep for a named constant.  This lets us hold a type
+Index: b/src/gcc/go/gofrontend/dataflow.cc
+===================================================================
 --- a/src/gcc/go/gofrontend/dataflow.cc
 +++ b/src/gcc/go/gofrontend/dataflow.cc
-@@ -169,8 +169,20 @@
+@@ -169,8 +169,20 @@ Dataflow_traverse_statements::statement(
  					Statement *statement)
  {
    Dataflow_traverse_assignment dta(this->dataflow_, statement);
@@ -696,7 +703,7 @@ gcc/go/
        Dataflow_traverse_expressions dte(this->dataflow_, statement);
        statement->traverse(block, pindex, &dte);
      }
-@@ -195,12 +207,21 @@
+@@ -195,12 +207,21 @@ Dataflow::Compare_vars::operator()(const
      return false;
    if (loc1 > loc2)
      return true;
@@ -720,7 +727,9 @@ gcc/go/
    go_unreachable();
  }
  
---- a/src/gcc/go/gofrontend/escape.h
+Index: b/src/gcc/go/gofrontend/escape.h
+===================================================================
+--- /dev/null
 +++ b/src/gcc/go/gofrontend/escape.h
 @@ -0,0 +1,310 @@
 +// escape.h -- Go frontend escape analysis.     -*- C++ -*-
@@ -1033,9 +1042,11 @@ gcc/go/
 +};
 +
 +#endif // !defined(GO_ESCAPE_H)
+Index: b/src/gcc/go/gofrontend/go.cc
+===================================================================
 --- a/src/gcc/go/gofrontend/go.cc
 +++ b/src/gcc/go/gofrontend/go.cc
-@@ -110,6 +110,10 @@
+@@ -110,6 +110,10 @@ go_parse_input_files(const char** filena
    if (only_check_syntax)
      return;
  
@@ -1046,6 +1057,8 @@ gcc/go/
    // Export global identifiers as appropriate.
    ::gogo->do_exports();
  
+Index: b/src/gcc/go/gofrontend/types.h
+===================================================================
 --- a/src/gcc/go/gofrontend/types.h
 +++ b/src/gcc/go/gofrontend/types.h
 @@ -8,6 +8,7 @@
@@ -1056,7 +1069,7 @@ gcc/go/
  
  class Gogo;
  class Package;
-@@ -1778,7 +1779,7 @@
+@@ -1778,7 +1779,7 @@ class Function_type : public Type
      : Type(TYPE_FUNCTION),
        receiver_(receiver), parameters_(parameters), results_(results),
        location_(location), is_varargs_(false), is_builtin_(false),
@@ -1065,7 +1078,7 @@ gcc/go/
    { }
  
    // Get the receiver.
-@@ -1786,6 +1787,16 @@
+@@ -1786,6 +1787,16 @@ class Function_type : public Type
    receiver() const
    { return this->receiver_; }
  
@@ -1082,7 +1095,7 @@ gcc/go/
    // Get the return names and types.
    const Typed_identifier_list*
    results() const
-@@ -1796,6 +1807,16 @@
+@@ -1796,6 +1807,16 @@ class Function_type : public Type
    parameters() const
    { return this->parameters_; }
  
@@ -1099,7 +1112,7 @@ gcc/go/
    // Whether this is a varargs function.
    bool
    is_varargs() const
-@@ -1806,6 +1827,11 @@
+@@ -1806,6 +1827,11 @@ class Function_type : public Type
    is_builtin() const
    { return this->is_builtin_; }
  
@@ -1111,7 +1124,7 @@ gcc/go/
    // The location where this type was defined.
    Location
    location() const
-@@ -1836,6 +1862,11 @@
+@@ -1836,6 +1862,11 @@ class Function_type : public Type
    set_is_builtin()
    { this->is_builtin_ = true; }
  
@@ -1123,7 +1136,7 @@ gcc/go/
    // Import a function type.
    static Function_type*
    do_import(Import*);
-@@ -1947,9 +1978,16 @@
+@@ -1947,9 +1978,16 @@ class Function_type : public Type
    // Whether this is a special builtin function which can not simply
    // be called.  This is used for len, cap, etc.
    bool is_builtin_;
@@ -1140,6 +1153,8 @@ gcc/go/
  };
  
  // The type of a function's backend representation.
+Index: b/src/gcc/go/gofrontend/import.h
+===================================================================
 --- a/src/gcc/go/gofrontend/import.h
 +++ b/src/gcc/go/gofrontend/import.h
 @@ -7,6 +7,7 @@
@@ -1150,7 +1165,7 @@ gcc/go/
  #include "export.h"
  #include "go-linemap.h"
  
-@@ -197,6 +198,10 @@
+@@ -197,6 +198,10 @@ class Import
    Type*
    read_type();
  
@@ -1161,9 +1176,11 @@ gcc/go/
   private:
    static Stream*
    try_package_in_directory(const std::string&, Location);
+Index: b/src/gcc/go/gofrontend/export.cc
+===================================================================
 --- a/src/gcc/go/gofrontend/export.cc
 +++ b/src/gcc/go/gofrontend/export.cc
-@@ -436,6 +436,17 @@
+@@ -436,6 +436,17 @@ Export::write_type(const Type* type)
      this->type_refs_[type] = index;
  }
  
@@ -1181,6 +1198,8 @@ gcc/go/
  // Add the builtin types to the export table.
  
  void
+Index: b/src/gcc/go/gofrontend/export.h
+===================================================================
 --- a/src/gcc/go/gofrontend/export.h
 +++ b/src/gcc/go/gofrontend/export.h
 @@ -7,6 +7,7 @@
@@ -1191,7 +1210,7 @@ gcc/go/
  #include "string-dump.h"
  
  struct sha1_ctx;
-@@ -161,6 +162,10 @@
+@@ -161,6 +162,10 @@ class Export : public String_dump
    void
    write_type(const Type*);
  
@@ -1202,9 +1221,11 @@ gcc/go/
   private:
    Export(const Export&);
    Export& operator=(const Export&);
+Index: b/src/gcc/go/gofrontend/expressions.h
+===================================================================
 --- a/src/gcc/go/gofrontend/expressions.h
 +++ b/src/gcc/go/gofrontend/expressions.h
-@@ -31,19 +31,31 @@
+@@ -31,19 +31,31 @@ class Var_expression;
  class Temporary_reference_expression;
  class Set_and_use_temporary_expression;
  class String_expression;
@@ -1236,7 +1257,7 @@ gcc/go/
  class Numeric_constant;
  class Named_object;
  class Export;
-@@ -553,6 +565,12 @@
+@@ -553,6 +565,12 @@ class Expression
    string_expression()
    { return this->convert<String_expression, EXPRESSION_STRING>(); }
  
@@ -1249,7 +1270,7 @@ gcc/go/
    // Return whether this is the expression nil.
    bool
    is_nil_expression() const
-@@ -582,6 +600,13 @@
+@@ -582,6 +600,13 @@ class Expression
    call_expression()
    { return this->convert<Call_expression, EXPRESSION_CALL>(); }
  
@@ -1263,7 +1284,7 @@ gcc/go/
    // If this is an expression which refers to a function, return the
    // Func_expression structure.  Otherwise, return NULL.
    Func_expression*
-@@ -611,6 +636,13 @@
+@@ -611,6 +636,13 @@ class Expression
    index_expression()
    { return this->convert<Index_expression, EXPRESSION_INDEX>(); }
  
@@ -1277,7 +1298,7 @@ gcc/go/
    // If this is an expression which refers to indexing in a map,
    // return the Map_index_expression structure.  Otherwise, return
    // NULL.
-@@ -643,6 +675,48 @@
+@@ -643,18 +675,78 @@ class Expression
  			 EXPRESSION_INTERFACE_FIELD_REFERENCE>();
    }
  
@@ -1326,7 +1347,6 @@ gcc/go/
    // If this is a type guard expression, return the
    // Type_guard_expression structure.  Otherwise, return NULL.
    Type_guard_expression*
-@@ -649,6 +723,12 @@
    type_guard_expression()
    { return this->convert<Type_guard_expression, EXPRESSION_TYPE_GUARD>(); }
  
@@ -1339,7 +1359,6 @@ gcc/go/
    // If this is a receive expression, return the Receive_expression
    // structure.  Otherwise, return NULL.
    Receive_expression*
-@@ -655,6 +735,18 @@
    receive_expression()
    { return this->convert<Receive_expression, EXPRESSION_RECEIVE>(); }
  
@@ -1358,7 +1377,7 @@ gcc/go/
    // Return true if this is a composite literal.
    bool
    is_composite_literal() const;
-@@ -1322,6 +1414,97 @@
+@@ -1322,6 +1414,97 @@ class String_expression : public Express
    Type* type_;
  };
  
@@ -1456,7 +1475,7 @@ gcc/go/
  // A Unary expression.
  
  class Unary_expression : public Expression
-@@ -1827,6 +2010,57 @@
+@@ -1827,6 +2010,57 @@ class Call_expression : public Expressio
    bool is_flattened_;
  };
  
@@ -1514,7 +1533,7 @@ gcc/go/
  // An expression which represents a pointer to a function.
  
  class Func_expression : public Expression
-@@ -2074,6 +2308,95 @@
+@@ -2074,6 +2308,95 @@ class Index_expression : public Parser_e
    bool is_lvalue_;
  };
  
@@ -1610,7 +1629,7 @@ gcc/go/
  // An index into a map.
  
  class Map_index_expression : public Expression
-@@ -2456,6 +2779,327 @@
+@@ -2456,6 +2779,327 @@ class Interface_field_reference_expressi
    std::string name_;
  };
  
@@ -1938,7 +1957,7 @@ gcc/go/
  // A type guard expression.
  
  class Type_guard_expression : public Expression
-@@ -2514,6 +3158,58 @@
+@@ -2514,6 +3158,58 @@ class Type_guard_expression : public Exp
    Type* type_;
  };
  
@@ -1997,7 +2016,7 @@ gcc/go/
  // A receive expression.
  
  class Receive_expression : public Expression
-@@ -2574,6 +3270,96 @@
+@@ -2574,6 +3270,96 @@ class Receive_expression : public Expres
    Temporary_statement* temp_receiver_;
  };
  
@@ -2094,6 +2113,8 @@ gcc/go/
  // A numeric constant.  This is used both for untyped constants and
  // for constants that have a type.
  
+Index: b/src/gcc/go/gofrontend/statements.cc
+===================================================================
 --- a/src/gcc/go/gofrontend/statements.cc
 +++ b/src/gcc/go/gofrontend/statements.cc
 @@ -14,6 +14,7 @@
@@ -2104,13 +2125,12 @@ gcc/go/
  
  // Class Statement.
  
-@@ -520,46 +521,8 @@
+@@ -520,45 +521,7 @@ Statement::make_temporary(Type* type, Ex
    return new Temporary_statement(type, init, location);
  }
  
 -// An assignment statement.
-+// Class Assignment_statement.
- 
+-
 -class Assignment_statement : public Statement
 -{
 - public:
@@ -2148,17 +2168,16 @@ gcc/go/
 -  // Right hand side--the rvalue.
 -  Expression* rhs_;
 -};
--
++// Class Assignment_statement.
+ 
  // Traversal.
  
- int
-@@ -3150,42 +3113,8 @@
+@@ -3150,41 +3113,7 @@ Statement::make_unnamed_label_statement(
    return new Unnamed_label_statement(label);
  }
  
 -// An if statement.
-+// Class If_statement.
- 
+-
 -class If_statement : public Statement
 -{
 - public:
@@ -2192,11 +2211,11 @@ gcc/go/
 -  Block* then_block_;
 -  Block* else_block_;
 -};
--
++// Class If_statement.
+ 
  // Traversal.
  
- int
-@@ -4676,7 +4605,6 @@
+@@ -4676,7 +4605,6 @@ Select_clauses::Select_clause::lower(Gog
    // through here.
    this->is_lowered_ = true;
    this->val_ = NULL;
@@ -2204,7 +2223,7 @@ gcc/go/
  }
  
  // Lower a default clause in a select statement.
-@@ -4840,6 +4768,22 @@
+@@ -4840,6 +4768,22 @@ Select_clauses::Select_clause::check_typ
      error_at(this->location(), "invalid receive on send-only channel");
  }
  
@@ -2227,7 +2246,7 @@ gcc/go/
  // Whether this clause may fall through to the statement which follows
  // the overall select statement.
  
-@@ -4958,6 +4902,17 @@
+@@ -4958,6 +4902,17 @@ Select_clauses::check_types()
      p->check_types();
  }
  
@@ -2245,9 +2264,11 @@ gcc/go/
  // Return whether these select clauses fall through to the statement
  // following the overall select statement.
  
+Index: b/src/gcc/go/gofrontend/statements.h
+===================================================================
 --- a/src/gcc/go/gofrontend/statements.h
 +++ b/src/gcc/go/gofrontend/statements.h
-@@ -15,6 +15,7 @@
+@@ -15,12 +15,14 @@ class Statement_inserter;
  class Block;
  class Function;
  class Unnamed_label;
@@ -2255,7 +2276,6 @@ gcc/go/
  class Temporary_statement;
  class Variable_declaration_statement;
  class Expression_statement;
-@@ -21,6 +22,7 @@
  class Return_statement;
  class Thunk_statement;
  class Label_statement;
@@ -2263,7 +2283,7 @@ gcc/go/
  class For_statement;
  class For_range_statement;
  class Switch_statement;
-@@ -45,6 +47,7 @@
+@@ -45,6 +47,7 @@ class Bexpression;
  class Bstatement;
  class Bvariable;
  class Ast_dump_context;
@@ -2271,7 +2291,7 @@ gcc/go/
  
  // This class is used to traverse assignments made by a statement
  // which makes assignments.
-@@ -331,6 +334,22 @@
+@@ -331,6 +334,22 @@ class Statement
    is_block_statement() const
    { return this->classification_ == STATEMENT_BLOCK; }
  
@@ -2294,7 +2314,7 @@ gcc/go/
    // If this is a variable declaration statement, return it.
    // Otherwise return NULL.
    Variable_declaration_statement*
-@@ -363,6 +382,11 @@
+@@ -363,6 +382,11 @@ class Statement
    label_statement()
    { return this->convert<Label_statement, STATEMENT_LABEL>(); }
  
@@ -2306,7 +2326,7 @@ gcc/go/
    // If this is a for statement, return it.  Otherwise return NULL.
    For_statement*
    for_statement()
-@@ -385,6 +409,11 @@
+@@ -385,6 +409,11 @@ class Statement
    type_switch_statement()
    { return this->convert<Type_switch_statement, STATEMENT_TYPE_SWITCH>(); }
  
@@ -2318,7 +2338,7 @@ gcc/go/
    // If this is a select statement, return it.  Otherwise return NULL.
    Select_statement*
    select_statement()
-@@ -507,6 +536,54 @@
+@@ -507,6 +536,54 @@ class Statement
    Location location_;
  };
  
@@ -2373,7 +2393,7 @@ gcc/go/
  // A statement which creates and initializes a temporary variable.
  
  class Temporary_statement : public Statement
-@@ -697,6 +774,14 @@
+@@ -697,6 +774,14 @@ class Send_statement : public Statement
        channel_(channel), val_(val)
    { }
  
@@ -2388,7 +2408,7 @@ gcc/go/
   protected:
    int
    do_traverse(Traverse* traverse);
-@@ -775,6 +860,10 @@
+@@ -775,6 +860,10 @@ class Select_clauses
    void
    check_types();
  
@@ -2399,7 +2419,7 @@ gcc/go/
    // Whether the select clauses may fall through to the statement
    // which follows the overall select statement.
    bool
-@@ -831,6 +920,10 @@
+@@ -831,6 +920,10 @@ class Select_clauses
      void
      check_types();
  
@@ -2410,7 +2430,7 @@ gcc/go/
      // Return true if this is the default clause.
      bool
      is_default() const
-@@ -937,6 +1030,10 @@
+@@ -937,6 +1030,10 @@ class Select_statement : public Statemen
    Unnamed_label*
    break_label();
  
@@ -2421,7 +2441,7 @@ gcc/go/
   protected:
    int
    do_traverse(Traverse* traverse)
-@@ -1108,6 +1205,46 @@
+@@ -1108,6 +1205,46 @@ class Label_statement : public Statement
    Label* label_;
  };
  
@@ -2468,7 +2488,9 @@ gcc/go/
  // A for statement.
  
  class For_statement : public Statement
---- a/src/gcc/go/gofrontend/escape.cc
+Index: b/src/gcc/go/gofrontend/escape.cc
+===================================================================
+--- /dev/null
 +++ b/src/gcc/go/gofrontend/escape.cc
 @@ -0,0 +1,1481 @@
 +// escape.cc -- Go frontend escape analysis.
@@ -3952,9 +3974,11 @@ gcc/go/
 +  // function's signature for use when exporting package information.
 +  this->mark_escaping_signatures();
 +}
+Index: b/src/gcc/go/gofrontend/import.cc
+===================================================================
 --- a/src/gcc/go/gofrontend/import.cc
 +++ b/src/gcc/go/gofrontend/import.cc
-@@ -502,16 +502,28 @@
+@@ -502,16 +502,28 @@ Import::import_func(Package* package)
  {
    std::string name;
    Typed_identifier* receiver;
@@ -3985,7 +4009,7 @@ gcc/go/
    Location loc = this->location_;
    Named_object* no;
    if (fntype->is_method())
-@@ -762,6 +774,19 @@
+@@ -762,6 +774,19 @@ Import::read_type()
    return type;
  }
  
@@ -4005,15 +4029,16 @@ gcc/go/
  // Register the builtin types.
  
  void
+Index: b/src/gcc/go/gofrontend/expressions.cc
+===================================================================
 --- a/src/gcc/go/gofrontend/expressions.cc
 +++ b/src/gcc/go/gofrontend/expressions.cc
-@@ -3017,101 +3017,8 @@
+@@ -3017,100 +3017,7 @@ Expression::make_iota()
    return &iota_expression;
  }
  
 -// A type conversion expression.
-+// Class Type_conversion_expression.
- 
+-
 -class Type_conversion_expression : public Expression
 -{
 - public:
@@ -4106,11 +4131,11 @@ gcc/go/
 -  // used internally for method expressions.
 -  bool may_convert_function_types_;
 -};
--
++// Class Type_conversion_expression.
+ 
  // Traversal.
  
- int
-@@ -3300,6 +3207,15 @@
+@@ -3300,6 +3207,15 @@ Type_conversion_expression::do_string_co
    return false;
  }
  
@@ -4126,7 +4151,7 @@ gcc/go/
  // Check that types are convertible.
  
  void
-@@ -3750,6 +3666,19 @@
+@@ -3750,6 +3666,19 @@ Unary_expression::do_flatten(Gogo* gogo,
          }
      }
  
@@ -4146,7 +4171,7 @@ gcc/go/
    if (this->create_temp_ && !this->expr_->is_variable())
      {
        Temporary_statement* temp =
-@@ -4070,10 +3999,7 @@
+@@ -4070,10 +3999,7 @@ Unary_expression::do_check_types(Gogo*)
  	    }
  	}
        else
@@ -4158,7 +4183,7 @@ gcc/go/
        break;
  
      case OPERATOR_MULT:
-@@ -6360,13 +6286,15 @@
+@@ -6362,13 +6288,15 @@ Bound_method_expression::create_thunk(Go
  
    Function_type* new_fntype = orig_fntype->copy_with_names();
  
@@ -4176,7 +4201,7 @@ gcc/go/
    new_no->func_value()->set_closure_var(cp);
  
    gogo->start_block(loc);
-@@ -8080,7 +8008,9 @@
+@@ -8082,7 +8010,9 @@ Builtin_call_expression::do_copy()
  {
    Call_expression* bce =
      new Builtin_call_expression(this->gogo_, this->fn()->copy(),
@@ -4187,13 +4212,12 @@ gcc/go/
  				this->is_varargs(),
  				this->location());
  
-@@ -9505,53 +9435,8 @@
+@@ -9507,52 +9437,7 @@ Expression::make_call(Expression* fn, Ex
    return new Call_expression(fn, args, is_varargs, location);
  }
  
 -// A single result from a call which returns multiple results.
-+// Class Call_result_expression.
- 
+-
 -class Call_result_expression : public Expression
 -{
 - public:
@@ -4238,17 +4262,16 @@ gcc/go/
 -  // Which result we want.
 -  unsigned int index_;
 -};
--
++// Class Call_result_expression.
+ 
  // Traverse a call result.
  
- int
-@@ -9813,86 +9698,8 @@
+@@ -9815,85 +9700,7 @@ Expression::make_index(Expression* left,
    return new Index_expression(left, start, end, cap, location);
  }
  
 -// An array index.  This is used for both indexing and slicing.
-+// Class Array_index_expression.
- 
+-
 -class Array_index_expression : public Expression
 -{
 - public:
@@ -4326,11 +4349,11 @@ gcc/go/
 -  // The type of the expression.
 -  Type* type_;
 -};
--
++// Class Array_index_expression.
+ 
  // Array index traversal.
  
- int
-@@ -11187,13 +10994,15 @@
+@@ -11189,13 +10996,15 @@ Interface_field_reference_expression::cr
  
    Function_type* new_fntype = orig_fntype->copy_with_names();
  
@@ -4348,7 +4371,7 @@ gcc/go/
    new_no->func_value()->set_closure_var(cp);
  
    gogo->start_block(loc);
-@@ -11593,44 +11402,46 @@
+@@ -11595,43 +11404,45 @@ Expression::make_selector(Expression* le
    return new Selector_expression(left, name, location);
  }
  
@@ -4364,27 +4387,34 @@ gcc/go/
 -    : Expression(EXPRESSION_ALLOCATION, location),
 -      type_(type)
 -  { }
-+  return Type::traverse(this->type_, traverse);
-+}
- 
+-
 - protected:
 -  int
 -  do_traverse(Traverse* traverse)
 -  { return Type::traverse(this->type_, traverse); }
+-
+-  Type*
+-  do_type()
+-  { return Type::make_pointer_type(this->type_); }
++  return Type::traverse(this->type_, traverse);
++}
+ 
+-  void
+-  do_determine_type(const Type_context*)
+-  { }
 +Type*
 +Allocation_expression::do_type()
 +{
 +  return Type::make_pointer_type(this->type_);
 +}
  
--  Type*
--  do_type()
--  { return Type::make_pointer_type(this->type_); }
+-  Expression*
+-  do_copy()
+-  { return new Allocation_expression(this->type_, this->location()); }
 +// Make a copy of an allocation expression.
  
--  void
--  do_determine_type(const Type_context*)
--  { }
+-  Bexpression*
+-  do_get_backend(Translate_context*);
 +Expression*
 +Allocation_expression::do_copy()
 +{
@@ -4395,9 +4425,13 @@ gcc/go/
 +  return alloc;
 +}
  
--  Expression*
--  do_copy()
--  { return new Allocation_expression(this->type_, this->location()); }
+-  void
+-  do_dump_expression(Ast_dump_context*) const;
+-  
+- private:
+-  // The type we are allocating.
+-  Type* type_;
+-};
 +Expression*
 +Allocation_expression::do_flatten(Gogo*, Named_object*,
 +				  Statement_inserter* inserter)
@@ -4412,21 +4446,9 @@ gcc/go/
 +  return this;
 +}
  
--  Bexpression*
--  do_get_backend(Translate_context*);
--
--  void
--  do_dump_expression(Ast_dump_context*) const;
--  
-- private:
--  // The type we are allocating.
--  Type* type_;
--};
--
  // Return the backend representation for an allocation expression.
  
- Bexpression*
-@@ -11638,6 +11449,15 @@
+@@ -11640,6 +11451,15 @@ Allocation_expression::do_get_backend(Tr
  {
    Gogo* gogo = context->gogo();
    Location loc = this->location();
@@ -4442,13 +4464,12 @@ gcc/go/
    Bexpression* space = 
      gogo->allocate_memory(this->type_, loc)->get_backend(context);
    Btype* pbtype = gogo->backend()->pointer_type(this->type_->get_backend(gogo));
-@@ -11663,81 +11483,8 @@
+@@ -11665,80 +11485,7 @@ Expression::make_allocation(Type* type,
    return new Allocation_expression(type, location);
  }
  
 -// Construct a struct.
-+// Class Struct_construction_expression.
- 
+-
 -class Struct_construction_expression : public Expression
 -{
 - public:
@@ -4521,19 +4542,18 @@ gcc/go/
 -  // so that we implement the order of evaluation rules correctly.
 -  std::vector<int>* traverse_order_;
 -};
--
++// Class Struct_construction_expression.
+ 
  // Traversal.
  
- int
-@@ -12003,81 +11750,8 @@
+@@ -12005,80 +11752,7 @@ Expression::make_struct_composite_litera
    return new Struct_construction_expression(type, vals, location);
  }
  
 -// Construct an array.  This class is not used directly; instead we
 -// use the child classes, Fixed_array_construction_expression and
 -// Slice_construction_expression.
-+// Class Array_construction_expression.
- 
+-
 -class Array_construction_expression : public Expression
 -{
 - protected:
@@ -4604,11 +4624,11 @@ gcc/go/
 -  // The list of values.  This may be NULL if there are no values.
 -  Expression_list* vals_;
 -};
--
++// Class Array_construction_expression.
+ 
  // Traversal.
  
- int
-@@ -12332,35 +12006,15 @@
+@@ -12334,34 +12008,14 @@ Array_construction_expression::do_dump_e
  
  }
  
@@ -4625,13 +4645,7 @@ gcc/go/
 -    : Array_construction_expression(EXPRESSION_FIXED_ARRAY_CONSTRUCTION,
 -				    type, indexes, vals, location)
 -  { go_assert(type->array_type() != NULL && !type->is_slice_type()); }
-+Fixed_array_construction_expression::Fixed_array_construction_expression(
-+    Type* type, const std::vector<unsigned long>* indexes,
-+    Expression_list* vals, Location location)
-+  : Array_construction_expression(EXPRESSION_FIXED_ARRAY_CONSTRUCTION,
-+				  type, indexes, vals, location)
-+{ go_assert(type->array_type() != NULL && !type->is_slice_type()); }
- 
+-
 - protected:
 -  Expression*
 -  do_copy()
@@ -4647,11 +4661,16 @@ gcc/go/
 -  Bexpression*
 -  do_get_backend(Translate_context*);
 -};
--
++Fixed_array_construction_expression::Fixed_array_construction_expression(
++    Type* type, const std::vector<unsigned long>* indexes,
++    Expression_list* vals, Location location)
++  : Array_construction_expression(EXPRESSION_FIXED_ARRAY_CONSTRUCTION,
++				  type, indexes, vals, location)
++{ go_assert(type->array_type() != NULL && !type->is_slice_type()); }
+ 
  // Return the backend representation for constructing a fixed array.
  
- Bexpression*
-@@ -12379,61 +12033,35 @@
+@@ -12381,60 +12035,34 @@ Expression::make_array_composite_literal
    return new Fixed_array_construction_expression(type, NULL, vals, location);
  }
  
@@ -4675,8 +4694,7 @@ gcc/go/
 -      valtype_(NULL)
 -  {
 -    go_assert(type->is_slice_type());
-+  go_assert(type->is_slice_type());
- 
+-
 -    unsigned long lenval;
 -    Expression* length;
 -    if (vals == NULL || vals->empty())
@@ -4692,6 +4710,23 @@ gcc/go/
 -    length = Expression::make_integer_ul(lenval, int_type, location);
 -    Type* element_type = type->array_type()->element_type();
 -    this->valtype_ = Type::make_array_type(element_type, length);
+-  }
+-
+- protected:
+-  // Note that taking the address of a slice literal is invalid.
+-
+-  int
+-  do_traverse(Traverse* traverse);
++  go_assert(type->is_slice_type());
+ 
+-  Expression*
+-  do_copy()
+-  {
+-    return new Slice_construction_expression(this->type(), this->indexes(),
+-					     (this->vals() == NULL
+-					      ? NULL
+-					      : this->vals()->copy()),
+-					     this->location());
 -  }
 +  unsigned long lenval;
 +  Expression* length;
@@ -4710,22 +4745,6 @@ gcc/go/
 +  this->valtype_ = Type::make_array_type(element_type, length);
 +}
  
-- protected:
--  // Note that taking the address of a slice literal is invalid.
- 
--  int
--  do_traverse(Traverse* traverse);
--
--  Expression*
--  do_copy()
--  {
--    return new Slice_construction_expression(this->type(), this->indexes(),
--					     (this->vals() == NULL
--					      ? NULL
--					      : this->vals()->copy()),
--					     this->location());
--  }
--
 -  Bexpression*
 -  do_get_backend(Translate_context*);
 -
@@ -4733,17 +4752,15 @@ gcc/go/
 -  // The type of the values in this slice.
 -  Type* valtype_;
 -};
--
+ 
  // Traversal.
  
- int
-@@ -12514,64 +12142,8 @@
+@@ -12516,63 +12144,7 @@ Expression::make_slice_composite_literal
    return new Slice_construction_expression(type, NULL, vals, location);
  }
  
 -// Construct a map.
-+// Class Map_construction_expression.
- 
+-
 -class Map_construction_expression : public Expression
 -{
 - public:
@@ -4799,11 +4816,11 @@ gcc/go/
 -  // A temporary reference to the variable storing the constructor initializer.
 -  Temporary_statement* constructor_temp_;
 -};
--
++// Class Map_construction_expression.
+ 
  // Traversal.
  
- int
-@@ -13680,54 +13252,12 @@
+@@ -13682,53 +13254,11 @@ Expression::make_type_guard(Expression*
  
  // Class Heap_expression.
  
@@ -4818,10 +4835,7 @@ gcc/go/
 -    : Expression(EXPRESSION_HEAP, location),
 -      expr_(expr)
 -  { }
-+Type*
-+Heap_expression::do_type()
-+{ return Type::make_pointer_type(this->expr_->type()); }
- 
+-
 - protected:
 -  int
 -  do_traverse(Traverse* traverse)
@@ -4858,17 +4872,18 @@ gcc/go/
 -  // The expression which is being put on the heap.
 -  Expression* expr_;
 -};
--
++Type*
++Heap_expression::do_type()
++{ return Type::make_pointer_type(this->expr_->type()); }
+ 
  // Return the backend representation for allocating an expression on the heap.
  
- Bexpression*
-@@ -14964,49 +14494,8 @@
+@@ -14966,48 +14496,7 @@ Expression::make_label_addr(Label* label
    return new Label_addr_expression(label, location);
  }
  
 -// Conditional expressions.
-+// Class Conditional_expression.
- 
+-
 -class Conditional_expression : public Expression
 -{
 - public:
@@ -4909,17 +4924,16 @@ gcc/go/
 -  // The expression to execute if the condition is false.
 -  Expression* else_;
 -};
--
++// Class Conditional_expression.
+ 
  // Traversal.
  
- int
-@@ -15084,45 +14573,8 @@
+@@ -15086,44 +14575,7 @@ Expression::make_conditional(Expression*
    return new Conditional_expression(cond, then, else_expr, location);
  }
  
 -// Compound expressions.
-+// Class Compound_expression.
- 
+-
 -class Compound_expression : public Expression
 -{
 - public:
@@ -4956,7 +4970,7 @@ gcc/go/
 -  // The expression that is evaluated and returned.
 -  Expression* expr_;
 -};
--
++// Class Compound_expression.
+ 
  // Traversal.
  
- int

@@ -5,9 +5,11 @@ related to an interface parameter were assumed to escape via the
 function arguments.  Now, if an argument is related to a non-escaping
 parameter with an interface type, the argument may be stack-allocated.
 
+Index: b/src/gcc/go/gofrontend/escape.cc
+===================================================================
 --- a/src/gcc/go/gofrontend/escape.cc
 +++ b/src/gcc/go/gofrontend/escape.cc
-@@ -586,8 +586,20 @@
+@@ -586,8 +586,20 @@ Build_connection_graphs::handle_call(Nam
    // Only call expression statements are interesting
    // e.g. 'func(var)' for which we can show var does not escape.
    Call_expression* ce = e->call_expression();
@@ -29,7 +31,7 @@ parameter with an interface type, the argument may be stack-allocated.
    
    // If the function call that references OBJECT is unknown, we must be
    // conservative and assume every argument escapes.  A function call is unknown
-@@ -606,6 +618,8 @@
+@@ -606,6 +618,8 @@ Build_connection_graphs::handle_call(Nam
  		this->gogo_->add_connection_node(arg_no)->connection_node();
  	      arg_node->set_escape_state(Node::ESCAPE_ARG);
  	    }
@@ -38,7 +40,7 @@ parameter with an interface type, the argument may be stack-allocated.
  	}
        return;
      }
-@@ -787,7 +801,6 @@
+@@ -787,7 +801,6 @@ Build_connection_graphs::handle_call(Nam
         ++pos)
      {
        std::string param_name;
@@ -46,7 +48,7 @@ parameter with an interface type, the argument may be stack-allocated.
        if (*pos >= 0 && params->size() <= static_cast<size_t>(*pos))
  	{
  	  // There were more arguments than there are parameters. This must be
-@@ -804,11 +817,7 @@
+@@ -804,11 +817,7 @@ Build_connection_graphs::handle_call(Nam
  	  param_name = fntype->receiver()->name();
  	}
        else
@@ -59,7 +61,7 @@ parameter with an interface type, the argument may be stack-allocated.
  
        if (Gogo::is_sink_name(param_name) || param_name.empty())
  	continue;
-@@ -832,11 +841,6 @@
+@@ -832,11 +841,6 @@ Build_connection_graphs::handle_call(Nam
  
        Node* arg_node = this->gogo_->add_connection_node(object);
        Node* param_node = this->gogo_->add_connection_node(param_no);

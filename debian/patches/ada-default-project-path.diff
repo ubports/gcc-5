@@ -5,7 +5,7 @@ Index: b/src/gcc/ada/Make-generated.in
 ===================================================================
 --- a/src/gcc/ada/Make-generated.in
 +++ b/src/gcc/ada/Make-generated.in
-@@ -118,6 +118,7 @@
+@@ -76,6 +76,7 @@ $(ADA_GEN_SUBDIR)/stamp-sdefault : $(src
  	$(ECHO) "   S2 : constant String := \"$(ADA_RTL_OBJ_DIR)/\";" >>tmp-sdefault.adb
  	$(ECHO) "   S3 : constant String := \"$(target_noncanonical)/\";" >>tmp-sdefault.adb
  	$(ECHO) "   S4 : constant String := \"$(libsubdir)/\";" >>tmp-sdefault.adb
@@ -13,7 +13,7 @@ Index: b/src/gcc/ada/Make-generated.in
  	$(ECHO) "   function Include_Dir_Default_Name return String_Ptr is" >>tmp-sdefault.adb
  	$(ECHO) "   begin" >>tmp-sdefault.adb
  	$(ECHO) "      return Relocate_Path (S0, S1);" >>tmp-sdefault.adb
-@@ -134,6 +135,10 @@
+@@ -92,6 +93,10 @@ $(ADA_GEN_SUBDIR)/stamp-sdefault : $(src
  	$(ECHO) "   begin" >>tmp-sdefault.adb
  	$(ECHO) "      return Relocate_Path (S0, S4);" >>tmp-sdefault.adb
  	$(ECHO) "   end Search_Dir_Prefix;" >>tmp-sdefault.adb
@@ -28,7 +28,7 @@ Index: b/src/gcc/ada/prj-env.adb
 ===================================================================
 --- a/src/gcc/ada/prj-env.adb
 +++ b/src/gcc/ada/prj-env.adb
-@@ -1877,6 +1877,7 @@
+@@ -1877,6 +1877,7 @@ package body Prj.Env is
        Target_Name  : String;
        Runtime_Name : String := "")
     is
@@ -36,7 +36,7 @@ Index: b/src/gcc/ada/prj-env.adb
        Add_Default_Dir : Boolean := Target_Name /= "-";
        First           : Positive;
        Last            : Positive;
-@@ -2075,82 +2076,9 @@
+@@ -2075,82 +2076,9 @@ package body Prj.Env is
  
        --  Set the initial value of Current_Project_Path
  
@@ -126,7 +126,7 @@ Index: b/src/gcc/ada/sdefault.ads
 ===================================================================
 --- a/src/gcc/ada/sdefault.ads
 +++ b/src/gcc/ada/sdefault.ads
-@@ -35,4 +35,5 @@
+@@ -35,4 +35,5 @@ package Sdefault is
     function Object_Dir_Default_Name  return String_Ptr;
     function Target_Name              return String_Ptr;
     function Search_Dir_Prefix        return String_Ptr;

@@ -4,7 +4,7 @@ Index: b/src/gcc/config.gcc
 ===================================================================
 --- a/src/gcc/config.gcc
 +++ b/src/gcc/config.gcc
-@@ -4342,6 +4342,20 @@ do
+@@ -4363,6 +4363,20 @@ do
  			;;
  		esac
  

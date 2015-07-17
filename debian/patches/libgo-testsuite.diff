@@ -4,7 +4,7 @@ Index: b/src/libgo/Makefile.am
 ===================================================================
 --- a/src/libgo/Makefile.am
 +++ b/src/libgo/Makefile.am
-@@ -2055,6 +2055,12 @@ CHECK = \
+@@ -2094,6 +2094,12 @@ CHECK = \
  	export LD_LIBRARY_PATH; \
  	$(MKDIR_P) $(@D); \
  	rm -f $@-testsum $@-testlog; \
@@ -17,7 +17,7 @@ Index: b/src/libgo/Makefile.am
  	if test "$(USE_DEJAGNU)" = "yes"; then \
  	  $(SHELL) $(srcdir)/testsuite/gotest --dejagnu=yes --basedir=$(srcdir) --srcdir=$(srcdir)/go/$(@D) --pkgpath="$(@D)" --pkgfiles="$(go_$(subst /,_,$(@D))_files)" --testname="$(@D)" --goarch="$(GOARCH)" $(GOTESTFLAGS) $(go_$(subst /,_,$(@D))_test_files); \
  	elif test "$(GOBENCH)" != ""; then \
-@@ -2070,6 +2076,7 @@ CHECK = \
+@@ -2109,6 +2115,7 @@ CHECK = \
  	    echo "FAIL: $(@D)" > $@-testsum; \
  	    exit 1; \
  	  fi; \
@@ -29,7 +29,7 @@ Index: b/src/libgo/Makefile.in
 ===================================================================
 --- a/src/libgo/Makefile.in
 +++ b/src/libgo/Makefile.in
-@@ -2122,6 +2122,12 @@ CHECK = \
+@@ -2162,6 +2162,12 @@ CHECK = \
  	export LD_LIBRARY_PATH; \
  	$(MKDIR_P) $(@D); \
  	rm -f $@-testsum $@-testlog; \
@@ -42,7 +42,7 @@ Index: b/src/libgo/Makefile.in
  	if test "$(USE_DEJAGNU)" = "yes"; then \
  	  $(SHELL) $(srcdir)/testsuite/gotest --dejagnu=yes --basedir=$(srcdir) --srcdir=$(srcdir)/go/$(@D) --pkgpath="$(@D)" --pkgfiles="$(go_$(subst /,_,$(@D))_files)" --testname="$(@D)" --goarch="$(GOARCH)" $(GOTESTFLAGS) $(go_$(subst /,_,$(@D))_test_files); \
  	elif test "$(GOBENCH)" != ""; then \
-@@ -2137,6 +2143,7 @@ CHECK = \
+@@ -2177,6 +2183,7 @@ CHECK = \
  	    echo "FAIL: $(@D)" > $@-testsum; \
  	    exit 1; \
  	  fi; \

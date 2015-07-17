@@ -1,3 +1,5 @@
+Index: b/src/boehm-gc/configure.host
+===================================================================
 --- a/src/boehm-gc/configure.host
 +++ b/src/boehm-gc/configure.host
 @@ -41,7 +41,7 @@ else
@@ -9,6 +11,8 @@
      gc_use_mmap=yes
      ;;
  esac
+Index: b/src/boehm-gc/include/private/gcconfig.h
+===================================================================
 --- a/src/boehm-gc/include/private/gcconfig.h
 +++ b/src/boehm-gc/include/private/gcconfig.h
 @@ -2132,7 +2132,7 @@

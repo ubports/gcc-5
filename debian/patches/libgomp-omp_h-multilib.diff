@@ -8,9 +8,11 @@
 
 	* omp.h.in (omp_nest_lock_t): Limit the fix Linux.
 
+Index: b/src/libgomp/omp.h.in
+===================================================================
 --- a/src/libgomp/omp.h.in
 +++ b/src/libgomp/omp.h.in
-@@ -39,8 +39,13 @@ typedef struct
+@@ -40,8 +40,13 @@ typedef struct
  
  typedef struct
  {

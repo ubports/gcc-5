@@ -6,7 +6,7 @@ Index: b/src/gcc/ada/gcc-interface/Makefile.in
 ===================================================================
 --- a/src/gcc/ada/gcc-interface/Makefile.in
 +++ b/src/gcc/ada/gcc-interface/Makefile.in
-@@ -1884,9 +1884,14 @@ ifeq ($(strip $(filter-out powerpc% linu
+@@ -1947,9 +1947,14 @@ ifeq ($(strip $(filter-out powerpc% linu
      LIBGNAT_TARGET_PAIRS_64 = \
      system.ads<system-linux-ppc64.ads
  

@@ -84,7 +84,7 @@ Index: b/src/gcc/config/mips/t-linux64
 ===================================================================
 --- a/src/gcc/config/mips/t-linux64
 +++ b/src/gcc/config/mips/t-linux64
-@@ -20,10 +20,23 @@
+@@ -20,10 +20,23 @@ MULTILIB_OPTIONS = mabi=n32/mabi=32/mabi
  MULTILIB_DIRNAMES = n32 32 64
  MIPS_EL = $(if $(filter %el, $(firstword $(subst -, ,$(target)))),el)
  MIPS_SOFT = $(if $(strip $(filter MASK_SOFT_FLOAT_ABI, $(target_cpu_default)) $(filter soft, $(with_float))),soft)
@@ -108,6 +108,8 @@ Index: b/src/gcc/config/mips/t-linux64
  
  ifneq (,$(findstring abin32,$(target)))
  MULTIARCH_DIRNAME = $(call if_multiarch,mips64$(MIPS_EL)-linux-gnuabin32$(MIPS_SOFT))
+Index: b/src/gcc/config/rs6000/t-linux
+===================================================================
 --- a/src/gcc/config/rs6000/t-linux
 +++ b/src/gcc/config/rs6000/t-linux
 @@ -2,7 +2,7 @@

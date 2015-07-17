@@ -5,14 +5,14 @@ Index: b/src/gcc/BASE-VER
 --- a/src/gcc/BASE-VER
 +++ b/src/gcc/BASE-VER
 @@ -1 +1 @@
--5.1.1
+-5.2.1
 +5
 Index: b/src/gcc/FULL-VER
 ===================================================================
 --- /dev/null
 +++ b/src/gcc/FULL-VER
 @@ -0,0 +1 @@
-+5.1.1
++5.2.1
 Index: b/src/gcc/Makefile.in
 ===================================================================
 --- a/src/gcc/Makefile.in

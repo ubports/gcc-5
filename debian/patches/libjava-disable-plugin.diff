@@ -4,7 +4,7 @@ Index: b/src/libjava/configure.ac
 ===================================================================
 --- a/src/libjava/configure.ac
 +++ b/src/libjava/configure.ac
-@@ -67,6 +67,8 @@
+@@ -67,6 +67,8 @@ AC_ARG_ENABLE(browser-plugin,
       esac],
      [browser_plugin_enabled=no]
  )

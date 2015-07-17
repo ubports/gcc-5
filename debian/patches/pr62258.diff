@@ -10,9 +10,11 @@ libstdc++-v3/
 	uncaught exceptions.
 	* testsuite/18_support/exception_ptr/62258.cc: New.
 
+Index: b/src/libstdc++-v3/libsupc++/eh_ptr.cc
+===================================================================
 --- a/src/libstdc++-v3/libsupc++/eh_ptr.cc
 +++ b/src/libstdc++-v3/libsupc++/eh_ptr.cc
-@@ -245,6 +245,9 @@
+@@ -245,6 +245,9 @@ std::rethrow_exception(std::exception_pt
    __GXX_INIT_DEPENDENT_EXCEPTION_CLASS(dep->unwindHeader.exception_class);
    dep->unwindHeader.exception_cleanup = __gxx_dependent_exception_cleanup;
  
@@ -22,7 +24,9 @@ libstdc++-v3/
  #ifdef _GLIBCXX_SJLJ_EXCEPTIONS
    _Unwind_SjLj_RaiseException (&dep->unwindHeader);
  #else
---- a/src/libstdc++-v3/testsuite/18_support/exception_ptr/62258.cc
+Index: b/src/libstdc++-v3/testsuite/18_support/exception_ptr/62258.cc
+===================================================================
+--- /dev/null
 +++ b/src/libstdc++-v3/testsuite/18_support/exception_ptr/62258.cc
 @@ -0,0 +1,61 @@
 +// { dg-options "-std=gnu++11" }

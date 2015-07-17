@@ -6,9 +6,11 @@ Description: syscall.Sendfile() needs to set the offset.
  See sendfile(2) for details about the semantic of "offset".
 
 Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/gccgo-5/+bug/1460530
+Index: b/src/libgo/go/syscall/libcall_linux.go
+===================================================================
 --- a/src/libgo/go/syscall/libcall_linux.go
 +++ b/src/libgo/go/syscall/libcall_linux.go
-@@ -320,21 +320,13 @@
+@@ -318,21 +318,13 @@ func Pipe2(p []int, flags int) (err erro
  //sys	Renameat(olddirfd int, oldpath string, newdirfd int, newpath string) (err error)
  //renameat(olddirfd _C_int, oldpath *byte, newdirfd _C_int, newpath *byte) _C_int
  
@@ -33,4 +35,3 @@ Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/gccgo-5/+bug/1460530
  	return
  }
  
-

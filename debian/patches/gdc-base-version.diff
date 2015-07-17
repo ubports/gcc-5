@@ -4,7 +4,7 @@ Index: b/src/libphobos/configure.ac
 ===================================================================
 --- a/src/libphobos/configure.ac
 +++ b/src/libphobos/configure.ac
-@@ -167,7 +167,7 @@ fi
+@@ -125,7 +125,7 @@ fi
  AC_SUBST(GDC)
  
  AC_MSG_CHECKING([D GCC version])
@@ -12,4 +12,4 @@ Index: b/src/libphobos/configure.ac
 +d_gcc_ver=`$GDC -dumpversion | sed 's/^\(@<:@0-9@:>@*\).*/\1/'`
  AC_MSG_RESULT($d_gcc_ver)
  
- # Need to export this variables for multilib
+ phobos_toolexecdir=no

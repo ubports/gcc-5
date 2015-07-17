@@ -9,7 +9,7 @@ Index: b/src/libjava/testsuite/Makefile.in
 ===================================================================
 --- a/src/libjava/testsuite/Makefile.in
 +++ b/src/libjava/testsuite/Makefile.in
-@@ -384,12 +384,14 @@
+@@ -384,12 +384,14 @@ CTAGS:
  
  
  check-DEJAGNU: site.exp
