@@ -149,12 +149,6 @@ ifeq ($(DEB_TARGET_ARCH),alpha)
   LDFLAGS += -Wl,--no-relax
 endif
 
-ifneq (,$(filter $(DEB_TARGET_ARCH), sh4))
-  STAGE1_CFLAGS = -g -O1
-  BOOT_CFLAGS = -g -O1
-  CFLAGS_FOR_TARGET = -g -O1
-endif
-
 ifneq (,$(findstring static,$(DEB_BUILD_OPTIONS)))
   LDFLAGS	+= -static
 endif

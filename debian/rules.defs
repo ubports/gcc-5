@@ -1939,11 +1939,6 @@ ifeq ($(DEB_STAGE),rtlibs)
   endef
 endif
 
-# FIXME: see #792204, libstdc++ symbols on sparc64
-ifneq (,$(filter $(DEB_TARGET_ARCH), sparc64))
-  ignshld = -
-endif
-
 # takes a *list* of package names as $1, the multilib dirname as $2
 _shlibdirs = \
 	$(if $(strip $(1)), \

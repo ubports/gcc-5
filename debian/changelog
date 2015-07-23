@@ -1,3 +1,15 @@
+gcc-5 (5.2.1-12) experimental; urgency=medium
+
+  * Update to SVN 20150723 (r226105, 5.2.1) from the gcc-5-branch.
+  * Fix PR libstdc++/66145, std::ios_base::failure objects thrown from
+    libstdc++.so using the gcc4-compatible ABI.
+    Just build src/c++11/functexcept.cc using the new ABI. It will break 
+    code, which will be handled in the archive by adding Breaks for the
+    affected packages.  Third party code using such code will need a rebuild.
+  * Remove the work around to build with -O1 on sh4.
+
+ -- Matthias Klose <doko@debian.org>  Thu, 23 Jul 2015 14:18:44 +0200
+
 gcc-5 (5.2.1-11) experimental; urgency=medium
 
   * Configure without --disable-libstdcxx-dual-abi.

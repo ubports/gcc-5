@@ -1,10 +1,10 @@
-# DP: updates from the 5 branch upto 20150716 (r225880).
+# DP: updates from the 5 branch upto 20150723 (r226105).
 
 last_update()
 {
 	cat > ${dir}LAST_UPDATED <EOF
-Thu Jul 16 15:47:03 CEST 2015
-Thu Jul 16 13:47:03 UTC 2015 (revision 225880)
+Thu Jul 23 14:01:29 CEST 2015
+Thu Jul 23 12:01:29 UTC 2015 (revision 226105)
 EOF
 }
 
@@ -12,11 +12,457 @@ LANG=C svn diff svn://gcc.gnu.org/svn/gcc/tags/gcc_5_2_0_release svn://gcc.gnu.o
 	| sed -r 's,^--- (\S+)\t(\S+)(.*)$,--- a/src/\1\t\2,;s,^\+\+\+ (\S+)\t(\S+)(.*)$,+++ b/src/\1\t\2,' \
 	| awk '/^Index:.*\.(class|texi)/ {skip=1; next} /^Index:/ { skip=0 } skip==0'
 
-Index: b/src/gcc/ChangeLog
+Index: libgcc/ChangeLog
 ===================================================================
---- a/src/gcc/ChangeLog
-+++ b/src/gcc/ChangeLog
-@@ -1,3 +1,7 @@
+--- a/src/libgcc/ChangeLog	(.../tags/gcc_5_2_0_release)
++++ b/src/libgcc/ChangeLog	(.../branches/gcc-5-branch)
+@@ -1,3 +1,11 @@
++2015-07-23  Chung-Lin Tang  <cltang@codesourcery.com>
++
++	Backport from mainline:
++	2015-07-22  Chung-Lin Tang  <cltang@codesourcery.com>
++
++	* config/nios2/linux-atomic.c (<asm/unistd.h>): Remove #include.
++	(EFAULT,EBUSY,ENOSYS): Delete unused #defines.
++
+ 2015-07-16  Release Manager
+ 
+ 	* GCC 5.2.0 released.
+Index: libgcc/config/nios2/linux-atomic.c
+===================================================================
+--- a/src/libgcc/config/nios2/linux-atomic.c	(.../tags/gcc_5_2_0_release)
++++ b/src/libgcc/config/nios2/linux-atomic.c	(.../branches/gcc-5-branch)
+@@ -20,11 +20,6 @@
+ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
+ <http://www.gnu.org/licenses/>.  */
+ 
+-#include <asm/unistd.h>
+-#define EFAULT  14
+-#define EBUSY   16
+-#define ENOSYS  38
+-
+ /* We implement byte, short and int versions of each atomic operation
+    using the kernel helper defined below.  There is no support for
+    64-bit operations yet.  */
+Index: gcc/ipa-chkp.c
+===================================================================
+--- a/src/gcc/ipa-chkp.c	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/ipa-chkp.c	(.../branches/gcc-5-branch)
+@@ -104,7 +104,7 @@
+ 
+ /* Return 1 calls to FNDECL should be replaced with
+    a call to wrapper function.  */
+-static bool
++bool
+ chkp_wrap_function (tree fndecl)
+ {
+   if (!flag_chkp_use_wrappers)
+@@ -139,6 +139,51 @@
+   return false;
+ }
+ 
++static const char *
++chkp_wrap_function_name (tree fndecl)
++{
++  gcc_assert (DECL_BUILT_IN_CLASS (fndecl) == BUILT_IN_NORMAL);
++
++  switch (DECL_FUNCTION_CODE (fndecl))
++    {
++    case BUILT_IN_STRLEN:
++      return CHKP_WRAPPER_SYMBOL_PREFIX "strlen";
++    case BUILT_IN_STRCPY:
++      return CHKP_WRAPPER_SYMBOL_PREFIX "strcpy";
++    case BUILT_IN_STRNCPY:
++      return CHKP_WRAPPER_SYMBOL_PREFIX "strncpy";
++    case BUILT_IN_STPCPY:
++      return CHKP_WRAPPER_SYMBOL_PREFIX "stpcpy";
++    case BUILT_IN_STPNCPY:
++      return CHKP_WRAPPER_SYMBOL_PREFIX "stpncpy";
++    case BUILT_IN_STRCAT:
++      return CHKP_WRAPPER_SYMBOL_PREFIX "strcat";
++    case BUILT_IN_STRNCAT:
++      return CHKP_WRAPPER_SYMBOL_PREFIX "strncat";
++    case BUILT_IN_MEMCPY:
++      return CHKP_WRAPPER_SYMBOL_PREFIX "memcpy";
++    case BUILT_IN_MEMPCPY:
++      return CHKP_WRAPPER_SYMBOL_PREFIX "mempcpy";
++    case BUILT_IN_MEMSET:
++      return CHKP_WRAPPER_SYMBOL_PREFIX "memset";
++    case BUILT_IN_MEMMOVE:
++      return CHKP_WRAPPER_SYMBOL_PREFIX "memmove";
++    case BUILT_IN_BZERO:
++      return CHKP_WRAPPER_SYMBOL_PREFIX "bzero";
++    case BUILT_IN_MALLOC:
++      return CHKP_WRAPPER_SYMBOL_PREFIX "malloc";
++    case BUILT_IN_CALLOC:
++      return CHKP_WRAPPER_SYMBOL_PREFIX "calloc";
++    case BUILT_IN_REALLOC:
++      return CHKP_WRAPPER_SYMBOL_PREFIX "realloc";
++
++    default:
++      gcc_unreachable ();
++    }
++
++  return "";
++}
++
+ /* Build a clone of FNDECL with a modified name.  */
+ 
+ static tree
+@@ -164,9 +209,8 @@
+      instrumented version.  */
+   if (chkp_wrap_function(fndecl))
+     {
+-      s = CHKP_WRAPPER_SYMBOL_PREFIX;
+-      s += IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (fndecl));
+-      new_name = get_identifier (s.c_str ());
++      new_name = get_identifier (chkp_wrap_function_name (fndecl));
++      DECL_VISIBILITY (new_decl) = VISIBILITY_DEFAULT;
+     }
+   else
+     {
+@@ -541,25 +585,10 @@
+ 
+       if (gimple_has_body_p (fndecl))
+ 	{
+-	  /* If function will not be instrumented, then it's instrumented
+-	     version is a thunk for the original.  */
+-	  if (!chkp_instrumentable_p (fndecl))
+-	    {
+-	      clone->remove_callees ();
+-	      clone->remove_all_references ();
+-	      clone->thunk.thunk_p = true;
+-	      clone->thunk.add_pointer_bounds_args = true;
+-	      clone->create_edge (node, NULL, 0, CGRAPH_FREQ_BASE);
+-	      /* Thunk shouldn't be a cdtor.  */
+-	      DECL_STATIC_CONSTRUCTOR (clone->decl) = 0;
+-	      DECL_STATIC_DESTRUCTOR (clone->decl) = 0;
+-	    }
+-	  else
+-	    {
+-	      tree_function_versioning (fndecl, new_decl, NULL, false,
+-					NULL, false, NULL, NULL);
+-	      clone->lowered = true;
+-	    }
++	  gcc_assert (chkp_instrumentable_p (fndecl));
++	  tree_function_versioning (fndecl, new_decl, NULL, false,
++				    NULL, false, NULL, NULL);
++	  clone->lowered = true;
+ 	}
+ 
+       /* New params are inserted after versioning because it
+@@ -586,12 +615,7 @@
+ 
+       /* Clone all aliases.  */
+       for (i = 0; node->iterate_direct_aliases (i, ref); i++)
+-	{
+-	  struct cgraph_node *alias = dyn_cast <cgraph_node *> (ref->referring);
+-	  struct cgraph_node *chkp_alias
+-	    = chkp_maybe_create_clone (alias->decl);
+-	  chkp_alias->create_reference (clone, IPA_REF_ALIAS, NULL);
+-	}
++	chkp_maybe_create_clone (ref->referring->decl);
+ 
+       /* Clone all thunks.  */
+       for (e = node->callers; e; e = e->next_caller)
+@@ -615,7 +639,10 @@
+ 
+ 	  ref = node->ref_list.first_reference ();
+ 	  if (ref)
+-	    chkp_maybe_create_clone (ref->referred->decl);
++	    {
++	      target = chkp_maybe_create_clone (ref->referred->decl);
++	      clone->create_reference (target, IPA_REF_ALIAS);
++	    }
+ 
+ 	  if (node->alias_target)
+ 	    {
+Index: gcc/ipa-chkp.h
+===================================================================
+--- a/src/gcc/ipa-chkp.h	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/ipa-chkp.h	(.../branches/gcc-5-branch)
+@@ -24,5 +24,6 @@
+ extern tree chkp_maybe_clone_builtin_fndecl (tree fndecl);
+ extern cgraph_node *chkp_maybe_create_clone (tree fndecl);
+ extern bool chkp_instrumentable_p (tree fndecl);
++extern bool chkp_wrap_function (tree fndecl);
+ 
+ #endif /* GCC_IPA_CHKP_H */
+Index: gcc/tree-chkp.c
+===================================================================
+--- a/src/gcc/tree-chkp.c	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/tree-chkp.c	(.../branches/gcc-5-branch)
+@@ -479,6 +479,21 @@
+   return false;
+ }
+ 
++/* Emit code to build zero bounds and return RTL holding
++   the result.  */
++rtx
++chkp_expand_zero_bounds ()
++{
++  tree zero_bnd;
++
++  if (flag_chkp_use_static_const_bounds)
++    zero_bnd = chkp_get_zero_bounds_var ();
++  else
++    zero_bnd = chkp_build_make_bounds_call (integer_zero_node,
++					    integer_zero_node);
++  return expand_normal (zero_bnd);
++}
++
+ /* Emit code to store zero bounds for PTR located at MEM.  */
+ void
+ chkp_expand_bounds_reset_for_mem (tree mem, tree ptr)
+@@ -1161,7 +1176,20 @@
+   return bnd_var;
+ }
+ 
++/* If BND is an abnormal bounds copy, return a copied value.
++   Otherwise return BND.  */
++static tree
++chkp_get_orginal_bounds_for_abnormal_copy (tree bnd)
++{
++  if (bitmap_bit_p (chkp_abnormal_copies, SSA_NAME_VERSION (bnd)))
++    {
++      gimple bnd_def = SSA_NAME_DEF_STMT (bnd);
++      gcc_checking_assert (gimple_code (bnd_def) == GIMPLE_ASSIGN);
++      bnd = gimple_assign_rhs1 (bnd_def);
++    }
+ 
++  return bnd;
++}
+ 
+ /* Register bounds BND for object PTR in global bounds table.
+    A copy of bounds may be created for abnormal ssa names.
+@@ -1205,11 +1233,7 @@
+       /* For abnormal copies we may just find original
+ 	 bounds and use them.  */
+       if (!abnormal_ptr && !SSA_NAME_IS_DEFAULT_DEF (bnd))
+-	{
+-	  gimple bnd_def = SSA_NAME_DEF_STMT (bnd);
+-	  gcc_checking_assert (gimple_code (bnd_def) == GIMPLE_ASSIGN);
+-	  bnd = gimple_assign_rhs1 (bnd_def);
+-	}
++	bnd = chkp_get_orginal_bounds_for_abnormal_copy (bnd);
+       /* For undefined values we usually use none bounds
+ 	 value but in case of abnormal edge it may cause
+ 	 coalescing failures.  Use default definition of
+@@ -1241,6 +1265,7 @@
+ 	    copy = make_temp_ssa_name (pointer_bounds_type_node,
+ 				       gimple_build_nop (),
+ 				       CHKP_BOUND_TMP_NAME);
++	  bnd = chkp_get_orginal_bounds_for_abnormal_copy (bnd);
+ 	  assign = gimple_build_assign (copy, bnd);
+ 
+ 	  if (dump_file && (dump_flags & TDF_DETAILS))
+@@ -4090,7 +4115,7 @@
+ 			       void *data ATTRIBUTE_UNUSED)
+ {
+   if (TREE_CODE (*op) == FUNCTION_DECL
+-      && !lookup_attribute ("bnd_legacy", DECL_ATTRIBUTES (*op))
++      && chkp_instrumentable_p (*op)
+       && (DECL_BUILT_IN_CLASS (*op) == NOT_BUILT_IN
+ 	  /* For builtins we replace pointers only for selected
+ 	     function and functions having definitions.  */
+Index: gcc/tree-chkp.h
+===================================================================
+--- a/src/gcc/tree-chkp.h	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/tree-chkp.h	(.../branches/gcc-5-branch)
+@@ -53,6 +53,7 @@
+ 					 struct cgraph_edge *edge);
+ extern bool chkp_gimple_call_builtin_p (gimple call,
+ 					enum built_in_function code);
++extern rtx chkp_expand_zero_bounds (void);
+ extern void chkp_expand_bounds_reset_for_mem (tree mem, tree ptr);
+ extern tree chkp_insert_retbnd_call (tree bndval, tree retval,
+ 				     gimple_stmt_iterator *gsi);
+Index: gcc/DATESTAMP
+===================================================================
+--- a/src/gcc/DATESTAMP	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/DATESTAMP	(.../branches/gcc-5-branch)
+@@ -1 +1 @@
+-20150716
++20150723
+Index: gcc/postreload.c
+===================================================================
+--- a/src/gcc/postreload.c	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/postreload.c	(.../branches/gcc-5-branch)
+@@ -2164,6 +2164,8 @@
+ 	 unknown values.  */
+       if (CALL_P (insn))
+ 	{
++	  rtx link;
++
+ 	  for (i = FIRST_PSEUDO_REGISTER - 1; i >= 0; i--)
+ 	    {
+ 	      if (call_used_regs[i])
+@@ -2170,6 +2172,21 @@
+ 		/* Reset the information about this register.  */
+ 		reg_mode[i] = VOIDmode;
+ 	    }
++
++	  for (link = CALL_INSN_FUNCTION_USAGE (insn); link;
++	       link = XEXP (link, 1))
++	    {
++	      rtx setuse = XEXP (link, 0);
++	      rtx usage_rtx = XEXP (setuse, 0);
++	      if (GET_CODE (setuse) == CLOBBER
++		  && REG_P (usage_rtx))
++	        {
++		  unsigned int end_regno = END_REGNO (usage_rtx);
++		  for (unsigned int r = REGNO (usage_rtx); r < end_regno; ++r)
++		    /* Reset the information about this register.  */
++		    reg_mode[r] = VOIDmode;
++		}
++	    }
+ 	}
+     }
+   return changed;
+Index: gcc/ChangeLog
+===================================================================
+--- a/src/gcc/ChangeLog	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/ChangeLog	(.../branches/gcc-5-branch)
+@@ -1,3 +1,146 @@
++2015-07-23  Ilya Enkovich  <enkovich.gnu@gmail.com>
++
++	Backport from mainline r224602.
++	2015-06-18  Ilya Enkovich  <enkovich.gnu@gmail.com>
++
++	PR target/66569
++	* function.c (assign_bounds): Add arguments assign_regs,
++	assign_special, assign_bt.
++	(assign_parms): For vararg functions handle bounds in BT
++	and special slots after incoming vararg bounds.
++
++2015-07-23  Ilya Enkovich  <enkovich.gnu@gmail.com>
++
++	Backport from mainline r224601.
++	2015-06-18  Ilya Enkovich  <enkovich.gnu@gmail.com>
++
++	PR middle-end/66568
++	* cfgexpand.c (expand_return): Handle missing bounds.
++	(expand_gimple_stmt_1): Likewise.
++	* tree-chkp.c (chkp_expand_zero_bounds): New.
++	* tree-chkp.h (chkp_expand_zero_bounds): New.
++
++2015-07-23  Ilya Enkovich  <enkovich.gnu@gmail.com>
++
++	Backport from mainline r224600.
++	2015-06-18  Ilya Enkovich  <enkovich.gnu@gmail.com>
++
++	PR middle-end/66567
++	* ipa-chkp.c (chkp_maybe_create_clone): Require
++	functions to be instrumentable.
++	* tree-chkp.c (chkp_replace_function_pointer): Use
++	chkp_instrumentable_p instead of attribute check.
++
++2015-07-23  Ilya Enkovich  <enkovich.gnu@gmail.com>
++
++	Backport from mainline r223215.
++	2015-05-15  Ilya Enkovich  <enkovich.gnu@gmail.com>
++
++	PR middle-end/66134
++	* tree-chkp.c (chkp_get_orginal_bounds_for_abnormal_copy): New.
++	(chkp_maybe_copy_and_register_bounds): Don't copy abnormal copy.
++
++2015-07-23  Ilya Enkovich  <ilya.enkovich@intel.com>
++
++	Backport from mainline r223114.
++	2015-05-13  Ilya Enkovich  <ilya.enkovich@intel.com>
++
++	PR target/66048
++	* function.c (diddle_return_value_1): Process bounds first.
++	* config/i38/i386.c (ix86_function_value_regno_p): Add bnd1
++	register.
++
++2015-07-23  Ilya Enkovich  <ilya.enkovich@intel.com>
++
++	Backport from mainline r223216.
++	2015-05-15  Ilya Enkovich  <ilya.enkovich@intel.com>
++
++	* ipa-chkp.h (chkp_wrap_function): New.
++	* ipa-chkp.c (chkp_wrap_function): Remove 'static'.
++	(chkp_wrap_function_name): New.
++	(chkp_build_instrumented_fndecl): Use chkp_wrap_function_name
++	to get wrapper name.
++	* lto-cgraph.c: Include ipa-chkp.h.
++	(input_cgraph_1): Avoid alias chain for wrappers.
++
++2015-07-23  Ilya Enkovich  <ilya.enkovich@intel.com>
++
++	Backport from mainline r224074.
++	2015-06-03  Ilya Enkovich  <ilya.enkovich@intel.com>
++
++	* ipa-chkp.c (chkp_maybe_create_clone): Create alias
++	reference when cloning alias node.
++
++2015-07-21  Georg-Johann Lay  <avr@gjlay.de>
++
++	Backport from 2015-07-21 trunk r226046.
++
++	PR target/66956
++	* config/avr/avr-dimode.md (<extend_u>mulsidi3_insn)
++	(<extend_u>mulsidi3): Don't use if !AVR_HAVE_MUL.
++
++2015-07-21  Richard Biener  <rguenther@suse.de>
++
++	PR tree-optimization/66948
++	* genmatch.c (capture_info::walk_match): Also recurse to
++	captures.  Properly compute expr state from captures of
++	captures.
++
++2015-07-18  Uros Bizjak  <ubizjak@gmail.com>
++
++	PR target/66922
++	* config/i386/i386.c (ix86_expand_pinsr): Reject insertions
++	to misaligned positions.
++
++2015-07-17  Uros Bizjak  <ubizjak@gmail.com>
++
++	PR target/66866
++	* config/i386/i386.c (ix86_expand_pinsr): Reject non-lowpart
++	source subregs.
++
++2015-07-17  Uros Bizjak  <ubizjak@gmail.com>
++
++	Backport from mainline:
++	2015-07-10  Uros Bizjak  <ubizjak@gmail.com>
++
++	* config/i386/sse.md (movdi_to_sse): Use gen_lowpart
++	and gen_higpart instead of gen_rtx_SUBREG.
++	* config/i386/i386.md
++	(floatdi<X87MODEF:mode>2_i387_with_xmm splitter): Ditto.
++	(read-modify peephole2): Use gen_lowpart instead of
++	gen_rtx_SUBREG for operand 5.
++
++2015-07-17  Uros Bizjak  <ubizjak@gmail.com>
++
++	Backport from mainline:
++	2015-07-08  Uros Bizjak  <ubizjak@gmail.com>
++
++	PR target/66814
++	* config/i386/predicates.md (nonimmediate_gr_operand): New predicate.
++	* config/i386/i386.md (not peephole2): Use nonimmediate_gr_operand.
++	(varous peephole2s): Use {GENERAL,SSE,MMX}_REGNO_P instead of
++	{GENERAL,SSE,MMX}_REG_P where appropriate.
++
++2015-07-17  Uros Bizjak  <ubizjak@gmail.com>
++
++	Backport from mainline:
++	2015-07-15  Uros Bizjak  <ubizjak@gmail.com>
++
++	PR rtl-optimization/66838
++	* postreload.c (reload_cse_move2add): Also process
++	CALL_INSN_FUNCTION_USAGE when resetting information of
++	call-clobbered registers.
++
++2015-07-16  Martin Liska  <mliska@suse.cz>
++
++	PR ipa/66896
++	* ipa-prop.c (update_jump_functions_after_inlining): Create properly
++	dst_ctx if it does not exist.
++
 +2015-07-16  Richard Biener  <rguenther@suse.de>
 +
 +	* BASE-VER: Set to 5.2.1.
@@ -24,11 +470,773 @@ Index: b/src/gcc/ChangeLog
  2015-07-16  Release Manager
  
  	* GCC 5.2.0 released.
-Index: b/src/gcc/testsuite/ChangeLog
+@@ -119,8 +262,8 @@
+ 2015-07-09  Iain Sandoe  <iain@codesourcery.com>
+ 
+ 	PR target/66523
+-	* config/darwin.c (darwin_mark_decl_preserved): Exclude 'L' label names from
+-	preservation.
++	* config/darwin.c (darwin_mark_decl_preserved): Exclude 'L' label
++	names from preservation.
+ 
+ 2015-07-06  Alan Lawrence  <alan.lawrence@arm.com>
+ 
+Index: gcc/testsuite/gcc.target/arm/thumb1-far-jump-2.c
 ===================================================================
---- a/src/gcc/testsuite/ChangeLog
-+++ b/src/gcc/testsuite/ChangeLog
-@@ -1,3 +1,11 @@
+--- a/src/gcc/testsuite/gcc.target/arm/thumb1-far-jump-2.c	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/testsuite/gcc.target/arm/thumb1-far-jump-2.c	(.../branches/gcc-5-branch)
+@@ -5,7 +5,7 @@
+ /* { dg-options "-Os" } */
+ /* { dg-skip-if "" { ! { arm_thumb1 } } } */
+ 
+-volatile register r4 asm("r4");
++volatile register int r4 asm ("r4");
+ void f3(int i)
+ {
+ #define GO(n) \
+Index: gcc/testsuite/gcc.target/arm/thumb-ltu.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/arm/thumb-ltu.c	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/testsuite/gcc.target/arm/thumb-ltu.c	(.../branches/gcc-5-branch)
+@@ -2,6 +2,9 @@
+ /* { dg-require-effective-target arm_thumb1_ok } */
+ /* { dg-options "-mcpu=arm1136jf-s -mthumb -O2" } */
+ 
++extern int foo ();
++extern int bar ();
++
+ void f(unsigned a, unsigned b, unsigned c, unsigned d)
+ {
+   if (a <= b || c > d)
+Index: gcc/testsuite/gcc.target/arm/macro_defs0.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/arm/macro_defs0.c	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/testsuite/gcc.target/arm/macro_defs0.c	(.../branches/gcc-5-branch)
+@@ -1,6 +1,7 @@
+ /* { dg-do compile } */
+ /* { dg-skip-if "avoid conflicting multilib options" { *-*-* } { "-march=*" } { "-march=armv7-m" } } */
+ /* { dg-skip-if "avoid conflicting multilib options" { *-*-* } { "-mfloat-abi=*" } { "-mfloat-abi=soft" } } */
++/* { dg-skip-if "avoid conflicting multilib options" { *-*-* } { "-marm" } { "" } } */
+ /* { dg-options "-march=armv7-m -mcpu=cortex-m3 -mfloat-abi=soft -mthumb" } */
+ 
+ #ifdef __ARM_FP
+Index: gcc/testsuite/gcc.target/arm/macro_defs1.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/arm/macro_defs1.c	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/testsuite/gcc.target/arm/macro_defs1.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,6 @@
+ /* { dg-do compile } */
+ /* { dg-skip-if "avoid conflicting multilib options" { *-*-* } { "-march=*" } { "-march=armv6-m" } } */
++/* { dg-skip-if "avoid conflicting multilib options" { *-*-* } { "-marm" } { "" } } */
+ /* { dg-options "-march=armv6-m -mthumb" } */
+ 
+ #ifdef __ARM_NEON_FP
+Index: gcc/testsuite/gcc.target/arm/thumb-bitfld1.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/arm/thumb-bitfld1.c	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/testsuite/gcc.target/arm/thumb-bitfld1.c	(.../branches/gcc-5-branch)
+@@ -10,6 +10,8 @@
+   unsigned b28 : 1;
+   unsigned rest : 28;
+ };
++
++unsigned
+ foo(a)
+      struct foo a;
+ {
+Index: gcc/testsuite/gcc.target/i386/pr66838.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/pr66838.c	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/pr66838.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,36 @@
++/* { dg-do run { target lp64 } } */
++/* { dg-options "-O2" } */
++
++void abort (void);
++
++char global;
++
++__attribute__((sysv_abi, noinline, noclone))
++void sysv_abi_func(char const *desc, void *local)
++{
++  register int esi asm ("esi");
++  register int edi asm ("edi");
++  
++  if (local != &global)
++    abort ();
++
++  /* Clobber some of the extra SYSV ABI registers.  */
++  asm volatile ("movl\t%2, %0\n\tmovl\t%2, %1"
++		: "=r" (esi), "=r" (edi)
++		: "i" (0xdeadbeef));
++}
++
++__attribute__((ms_abi, noinline, noclone))
++void ms_abi_func ()
++{
++  sysv_abi_func ("1st call", &global);
++  sysv_abi_func ("2nd call", &global);
++  sysv_abi_func ("3rd call", &global);
++}
++
++int
++main(void)
++{
++  ms_abi_func();
++  return 0;
++}
+Index: gcc/testsuite/gcc.target/i386/readeflags-1.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/readeflags-1.c	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/readeflags-1.c	(.../branches/gcc-5-branch)
+@@ -9,10 +9,11 @@
+ #define EFLAGS_TYPE unsigned int
+ #endif
+ 
+-static EFLAGS_TYPE
++__attribute__((noinline, noclone))
++EFLAGS_TYPE
+ readeflags_test (unsigned int a, unsigned int b)
+ {
+-  unsigned x = (a == b);
++  volatile char x = (a == b);
+   return __readeflags ();
+ }
+ 
+Index: gcc/testsuite/gcc.target/i386/pr66703.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/pr66703.c	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/pr66703.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,4 @@
++/* { dg-do run { target { ia32 } } } */
++/* { dg-options "-O0 -mtune=pentium" } */
++
++#include "readeflags-1.c"
+Index: gcc/testsuite/gcc.target/i386/pr66922.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/pr66922.c	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/pr66922.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,23 @@
++/* { dg-do run } */
++/* { dg-options "-O1 -msse2" } */
++/* { dg-require-effective-target sse2 } */
++
++#include "sse2-check.h"
++
++struct S 
++{
++  int:31;
++  int:2;
++  int f0:16;
++  int f1;
++  int f2;
++};
++
++static void 
++sse2_test (void)
++{
++  struct S a = { 1, 0, 0 };
++
++  if (a.f0 != 1)
++    __builtin_abort(); 
++}
+Index: gcc/testsuite/gcc.target/i386/pr66814.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/pr66814.c	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/pr66814.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,4 @@
++/* { dg-do compile { target { ia32 } } } */
++/* { dg-options "-march=i586 -mavx512f -O2" } */
++
++#include "avx512f-klogic-2.c"
+Index: gcc/testsuite/gcc.target/i386/mpx/pr66567.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/mpx/pr66567.c	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/mpx/pr66567.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,16 @@
++/* { dg-do compile } */
++/* { dg-options "-fcheck-pointer-bounds -mmpx" } */
++
++void  (*b) ();
++
++void fn1 (const int *p1)
++{
++  static void *a = &&conv_1234_123C;
++ conv_1234_123C:
++  ;
++}
++
++void fn2 ()
++{
++  b = fn1;
++}
+Index: gcc/testsuite/gcc.target/i386/mpx/pr66134.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/mpx/pr66134.c	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/mpx/pr66134.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,17 @@
++/* { dg-do compile } */
++/* { dg-options "-O2 -fcheck-pointer-bounds -mmpx -fno-tree-ccp" } */
++
++extern int vfork (void) __attribute__ ((__nothrow__ , __leaf__));
++void test1 (void);
++void test2 (void);
++void test3 (int *);
++
++void test (int *p)
++{
++ test1 ();
++ p++;
++ test2 ();
++ p++;
++ vfork ();
++ test3 (p);
++}
+Index: gcc/testsuite/gcc.target/i386/mpx/pr66568.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/mpx/pr66568.c	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/mpx/pr66568.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,11 @@
++/* { dg-do compile } */
++/* { dg-require-effective-target fpic } */
++/* { dg-options "-O2 -fcheck-pointer-bounds -mmpx -O2 -fPIC" } */
++
++extern void exit (int);
++int a, b, c;
++void *set_test () {
++  if (b)
++    a ? exit (0) : exit (1);
++  b = c;
++}
+Index: gcc/testsuite/gcc.target/i386/mpx/pr66569.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/mpx/pr66569.c	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/mpx/pr66569.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,14 @@
++/* { dg-do compile } */
++/* { dg-options "-fcheck-pointer-bounds -mmpx" } */
++
++struct s1 {
++  int *p;
++  int i;
++};
++
++struct s2 {
++  struct s1 s;
++  int i;
++};
++
++int test (struct s2 s, ...) { }
+Index: gcc/testsuite/gcc.target/i386/mpx/pr66048.cc
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/mpx/pr66048.cc	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/mpx/pr66048.cc	(.../branches/gcc-5-branch)
+@@ -0,0 +1,16 @@
++/* { dg-do compile } */
++/* { dg-options "-O2 -fcheck-pointer-bounds -mmpx -march=corei7-avx" } */
++
++struct c1
++{
++  c1 (const c1 &other) : p (other.p) { };
++  int *p;
++};
++
++struct c2 : public c1 { };
++
++c1
++test (c2 a)
++{
++  return a;
++}
+Index: gcc/testsuite/gfortran.dg/pr66864.f90
+===================================================================
+--- a/src/gcc/testsuite/gfortran.dg/pr66864.f90	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/testsuite/gfortran.dg/pr66864.f90	(.../branches/gcc-5-branch)
+@@ -0,0 +1,16 @@
++! { dg-do run }
++! PR fortran/66864
++!
++program t
++   implicit none
++   real(8) x
++   x = 2.0d0**26.5d0
++   if (floor(x) /= 94906265) call abort
++   if (floor(2.0d0**26.5d0)/= 94906265) call abort
++   x = 777666555.6d0
++   if (floor(x) /= 777666555) call abort
++   if (floor(777666555.6d0) /= 777666555) call abort
++   x = 2000111222.6d0
++   if (floor(x) /= 2000111222) call abort
++   if (floor(2000111222.6d0) /= 2000111222) call abort
++end program t
+Index: gcc/testsuite/gfortran.dg/pr66545_1.f90
+===================================================================
+--- a/src/gcc/testsuite/gfortran.dg/pr66545_1.f90	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/testsuite/gfortran.dg/pr66545_1.f90	(.../branches/gcc-5-branch)
+@@ -0,0 +1,17 @@
++! { dg-do compile }
++! { dg-options "-Wall" }
++! PR fortran/66545
++!
++subroutine p
++   complex, parameter :: c1 = (c1) ! { dg-error "before its definition" }
++   complex, parameter :: c2 = c2   ! { dg-error "before its definition" }
++   complex :: c3 = (c3)            ! { dg-error "has not been declared or is a variable" }
++   complex :: c4 = c4              ! { dg-error "has not been declared or is a variable" }
++end subroutine p
++
++subroutine q
++   real, parameter :: r1 = (r1)  ! { dg-error "before its definition" }
++   real, parameter :: r2 = r2    ! { dg-error "before its definition" }
++   real :: r3 = (r3)             ! { dg-error "has not been declared or is a variable" }
++   real :: r4 = r4               ! { dg-error "has not been declared or is a variable" }
++end subroutine q
+Index: gcc/testsuite/gfortran.dg/iomsg_2.f90
+===================================================================
+--- a/src/gcc/testsuite/gfortran.dg/iomsg_2.f90	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/testsuite/gfortran.dg/iomsg_2.f90	(.../branches/gcc-5-branch)
+@@ -0,0 +1,44 @@
++! { dg-do compile }
++subroutine foo1
++   implicit none
++   integer i
++   open(1, iomsg=666)      ! { dg-error "IOMSG must be" }
++   open(1, iomsg='sgk')    ! { dg-error "IOMSG must be" }
++   open(1, iomsg=i)        ! { dg-error "IOMSG must be" }
++   close(1, iomsg=666)     ! { dg-error "IOMSG must be" }
++   close(1, iomsg='sgk')   ! { dg-error "IOMSG must be" }
++   close(1, iomsg=i)       ! { dg-error "IOMSG must be" }
++end subroutine foo1
++
++subroutine foo
++   implicit none
++   integer i
++   real :: x = 1
++   write(1, *, iomsg='sgk') x   ! { dg-error "IOMSG must be" }
++   write(1, *, iomsg=i)     x   ! { dg-error "IOMSG must be" }
++   read(1,  *, iomsg='sgk') x   ! { dg-error "IOMSG must be" }
++   read(1,  *, iomsg=i)     x   ! { dg-error "IOMSG must be" }
++   flush(1,    iomsg='sgk')     ! { dg-error "IOMSG must be" }
++   flush(1,    iomsg=i)         ! { dg-error "IOMSG must be" }
++   rewind(1,   iomsg='sgk')     ! { dg-error "IOMSG must be" }
++   rewind(1,   iomsg=i)         ! { dg-error "IOMSG must be" }
++   backspace(1,iomsg='sgk')     ! { dg-error "IOMSG must be" }
++   backspace(1,iomsg=i)         ! { dg-error "IOMSG must be" }
++   wait(1,     iomsg='sgk')     ! { dg-error "IOMSG must be" }
++   wait(1,     iomsg=i)         ! { dg-error "IOMSG must be" }
++end subroutine foo
++
++subroutine bar
++   implicit none
++   integer i
++   real :: x = 1
++   character(len=20) s(2)
++   open(1, iomsg=s)         ! { dg-error "must be scalar" }
++   close(1, iomsg=s)        ! { dg-error "must be scalar" }
++   write(1, *, iomsg=s) x   ! { dg-error "must be scalar" }
++   read(1,  *, iomsg=s) x   ! { dg-error "must be scalar" }
++   flush(1,    iomsg=s)     ! { dg-error "must be scalar" }
++   rewind(1,   iomsg=s)     ! { dg-error "must be scalar" }
++   backspace(1,iomsg=s)     ! { dg-error "must be scalar" }
++   wait(1,     iomsg=s)     ! { dg-error "must be scalar" }
++end subroutine bar
+Index: gcc/testsuite/gfortran.dg/co_reduce_1.f90
+===================================================================
+--- a/src/gcc/testsuite/gfortran.dg/co_reduce_1.f90	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/testsuite/gfortran.dg/co_reduce_1.f90	(.../branches/gcc-5-branch)
+@@ -0,0 +1,33 @@
++! { dg-do compile }
++! { dg-additional-options "-fdump-tree-original -fcoarray=lib" }
++!
++! Check that we don't take twice the address of procedure simple_reduction
++! in the generated code.
++!
++! Contributed by Alessandro Fanfarillo <fanfarillo.gcc@gmail.com>
++
++program simple_reduce
++  implicit none
++
++  integer :: me
++
++  me = this_image()
++
++  sync all
++
++  call co_reduce(me,simple_reduction)
++
++  write(*,*) this_image(),me
++
++contains
++  
++  pure function simple_reduction(a,b)
++    integer,intent(in) :: a,b
++    integer :: simple_reduction
++
++    simple_reduction = a * b
++  end function simple_reduction
++
++end program simple_reduce
++
++! { dg-final { scan-tree-dump "_gfortran_caf_co_reduce \\(&desc\\.\\d+,\\s*simple_reduction," "original" } }
+Index: gcc/testsuite/gfortran.dg/pr56520.f90
+===================================================================
+--- a/src/gcc/testsuite/gfortran.dg/pr56520.f90	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/testsuite/gfortran.dg/pr56520.f90	(.../branches/gcc-5-branch)
+@@ -0,0 +1,13 @@
++! { dg-do compile }
++! PR fortran/56520
++!
++program misleading
++    implicit none
++    real a, c
++    a = 1.0
++    c = exp(+a) )    ! { dg-error "Unclassifiable statement" }
++    c = exp(-a) )    ! { dg-error "Unclassifiable statement" }
++    c = exp((a)) )   ! { dg-error "Unclassifiable statement" }
++    c = exp(a) )     ! { dg-error "Unclassifiable statement" }
++    c = exp(a)
++end program misleading
+Index: gcc/testsuite/gfortran.dg/coarray_collectives_16.f90
+===================================================================
+--- a/src/gcc/testsuite/gfortran.dg/coarray_collectives_16.f90	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/testsuite/gfortran.dg/coarray_collectives_16.f90	(.../branches/gcc-5-branch)
+@@ -33,7 +33,7 @@
+   end function hc
+ end program test
+ 
+-! { dg-final { scan-tree-dump-times "_gfortran_caf_co_reduce \\(&desc.., &fr, 4, _gfortran_caf_num_images \\(0, -1\\), &stat1, errmesg1, 0, 6\\);" 1 "original" } }
+-! { dg-final { scan-tree-dump-times "_gfortran_caf_co_reduce \\(&val2, &gz, 0, 4, &stat2, errmesg2, 0, 7\\);" 1 "original" } }
+-! { dg-final { scan-tree-dump-times "_gfortran_caf_co_reduce \\(&desc.., &hc, 1, res, &stat3, errmesg3, 99, 8\\);" 1 "original" } }
++! { dg-final { scan-tree-dump-times "_gfortran_caf_co_reduce \\(&desc.., fr, 4, _gfortran_caf_num_images \\(0, -1\\), &stat1, errmesg1, 0, 6\\);" 1 "original" } }
++! { dg-final { scan-tree-dump-times "_gfortran_caf_co_reduce \\(&val2, gz, 0, 4, &stat2, errmesg2, 0, 7\\);" 1 "original" } }
++! { dg-final { scan-tree-dump-times "_gfortran_caf_co_reduce \\(&desc.., hc, 1, res, &stat3, errmesg3, 99, 8\\);" 1 "original" } }
+ ! { dg-final { cleanup-tree-dump "original" } }
+Index: gcc/testsuite/gfortran.dg/pr66545_2.f90
+===================================================================
+--- a/src/gcc/testsuite/gfortran.dg/pr66545_2.f90	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/testsuite/gfortran.dg/pr66545_2.f90	(.../branches/gcc-5-branch)
+@@ -0,0 +1,23 @@
++! { dg-do compile }
++! { dg-options "-Wuninitialized" }
++! PR fortran/66545
++!
++program foo
++   implicit none
++   call p1
++   call q1
++end program foo
++
++subroutine p1
++   complex :: c5
++   complex :: c6
++   c5 = (c5)      ! { dg-warning "used uninitialized in this" }
++   c6 = c6        ! { dg-warning "used uninitialized in this" }
++end subroutine p1
++
++subroutine q1
++   real :: r5
++   real :: r6
++   r5 = (r5)   ! { dg-warning "used uninitialized in this" }
++   r6 = r6     ! { dg-warning "used uninitialized in this" }
++end subroutine q1
+Index: gcc/testsuite/gfortran.dg/pr66725.f90
+===================================================================
+--- a/src/gcc/testsuite/gfortran.dg/pr66725.f90	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/testsuite/gfortran.dg/pr66725.f90	(.../branches/gcc-5-branch)
+@@ -0,0 +1,31 @@
++! { dg-do compile }
++! PR fortran/66725
++!
++program foo
++
++   open(unit=1,access = 999)        ! { dg-error "ACCESS requires" }
++   open(unit=1,action = 999)        ! { dg-error "ACTION requires" }
++   open(unit=1,asynchronous = 999)  ! { dg-error "ASYNCHRONOUS requires" }
++   open(unit=1,blank = 999)         ! { dg-error "BLANK requires" }
++   open(unit=1,decimal = 999)       ! { dg-error "DECIMAL requires" }
++   open(unit=1,delim = 999)         ! { dg-error "DELIM requires" }
++   open(unit=1,encoding = 999)      ! { dg-error "ENCODING requires" }
++   open(unit=1,form = 999)          ! { dg-error "FORM requires" }
++   open(unit=1,pad = 999)           ! { dg-error "PAD requires" }
++   open(unit=1,position = 999)      ! { dg-error "POSITION requires" }
++   open(unit=1,round = 999)         ! { dg-error "ROUND requires" }
++   open(unit=1,sign = 999)          ! { dg-error "SIGN requires" }
++   open(unit=1,status = 999)        ! { dg-error "STATUS requires" }
++
++   close(unit=1, status=999)        ! { dg-error "STATUS requires" }
++
++   write (unit=1, asynchronous=257) ! { dg-error "ASYNCHRONOUS requires" }
++   write (unit=1, delim=257)        ! { dg-error "DELIM requires" }
++   write (unit=1, decimal=257)      ! { dg-error "DECIMAL requires" }
++   write (unit=1, round=257)        ! { dg-error "ROUND requires" }
++   write (unit=1, sign=257)         ! { dg-error "SIGN requires" }
++
++   write (unit=1, blank=257)        ! { dg-error "BLANK requires" }
++   write (unit=1, pad=257)          ! { dg-error "PAD requires" }
++
++end program foo
+Index: gcc/testsuite/gfortran.dg/structure_constructor_13.f03
+===================================================================
+--- a/src/gcc/testsuite/gfortran.dg/structure_constructor_13.f03	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/testsuite/gfortran.dg/structure_constructor_13.f03	(.../branches/gcc-5-branch)
+@@ -0,0 +1,28 @@
++! { dg-do run }
++!
++! Contributed by Melven Roehrig-Zoellner  <Melven.Roehrig-Zoellner@DLR.de>
++! PR fortran/66035
++
++program test_pr66035
++  type t
++  end type t
++  type w
++    class(t), allocatable :: c
++  end type w
++
++  type(t) :: o
++
++  call test(o)
++contains
++  subroutine test(o)
++    class(t), intent(inout) :: o
++    type(w), dimension(:), allocatable :: list
++
++    select type (o)
++      class is (t)
++        list = [w(o)] ! This caused an ICE
++      class default
++        call abort()
++    end select
++  end subroutine
++end program
+Index: gcc/testsuite/gcc.dg/lto/chkp-wrap-asm-name_0.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/lto/chkp-wrap-asm-name_0.c	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/testsuite/gcc.dg/lto/chkp-wrap-asm-name_0.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,20 @@
++/* { dg-lto-do link } */
++/* { dg-require-effective-target mpx } */
++/* { dg-lto-options { { -O2 -flto -fcheck-pointer-bounds -mmpx } } } */
++
++typedef long unsigned int size_t;
++
++extern size_t strlen (const char *);
++extern __typeof (strlen) strlen __asm__ ("" "__hidden_strlen") __attribute__ ((visibility ("hidden")));
++
++size_t
++test1 (const char *p) { return strlen (p); }
++
++size_t
++test2 (const char *p) { return __builtin_strlen (p); }
++
++int
++main (int argc, const char **argv)
++{
++  return test1 (argv[0]) - test2 (argv[0]);
++}
+Index: gcc/testsuite/gcc.dg/lto/chkp-removed-alias_0.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/lto/chkp-removed-alias_0.c	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/testsuite/gcc.dg/lto/chkp-removed-alias_0.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,28 @@
++/* { dg-lto-do link } */
++/* { dg-require-effective-target mpx } */
++/* { dg-lto-options { { -O2 -flto -flto-partition=max -fcheck-pointer-bounds -mmpx } } } */
++
++int test1 (const char *c)
++{
++  return c[0] * 2;
++}
++
++int test2 (const char *c)
++{
++  return c[1] * 3;
++}
++
++int test1_alias (const char *c) __attribute__ ((alias ("test1")));
++int test2_alias (const char *c) __attribute__ ((alias ("test2")));
++
++struct S
++{
++  int (*fnptr[2]) (const char *);
++} S;
++
++struct S s = {test1_alias, test2_alias};
++
++int main (int argc, const char **argv)
++{
++  return s.fnptr[argc] (argv[0]);
++}
+Index: gcc/testsuite/ChangeLog
+===================================================================
+--- a/src/gcc/testsuite/ChangeLog	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/testsuite/ChangeLog	(.../branches/gcc-5-branch)
+@@ -1,3 +1,177 @@
++2015-07-23  Ilya Enkovich  <enkovich.gnu@gmail.com>
++
++	Backport from mainline r224602.
++	2015-06-18  Ilya Enkovich  <enkovich.gnu@gmail.com>
++
++	PR target/66569
++	* gcc.target/i386/mpx/chkp-vararg.c: New test.
++
++2015-07-23  Ilya Enkovich  <enkovich.gnu@gmail.com>
++
++	Backport from mainline r224601.
++	2015-06-18  Ilya Enkovich  <enkovich.gnu@gmail.com>
++
++	PR middle-end/66568
++	* gcc.target/i386/mpx/pr66568.c: New test.
++
++	Backport from mainline r225296.
++	2015-07-01  H.J. Lu  <hongjiu.lu@intel.com>
++
++	* gcc.target/i386/mpx/pr66568.c (exit): New prototype.
++2015-07-23  Ilya Enkovich  <enkovich.gnu@gmail.com>
++
++	Backport from mainline r224600.
++	2015-06-18  Ilya Enkovich  <enkovich.gnu@gmail.com>
++
++	PR middle-end/66567
++	* gcc.target/i386/mpx/pr66567.c: New test.
++
++2015-07-23  Ilya Enkovich  <enkovich.gnu@gmail.com>
++
++	Backport from mainline r223215.
++	2015-05-15  Ilya Enkovich  <enkovich.gnu@gmail.com>
++
++	PR middle-end/66134
++	* gcc.target/i386/mpx/pr66134.c: New test.
++
++2015-07-23  Ilya Enkovich  <ilya.enkovich@intel.com>
++
++	Backport from mainline r223114.
++	2015-05-13  Ilya Enkovich  <ilya.enkovich@intel.com>
++
++	PR target/66048
++	* gcc.target/i386/mpx/pr66048.cc: New.
++
++2015-07-23  Ilya Enkovich  <ilya.enkovich@intel.com>
++
++	Backport from mainline r223216.
++	2015-05-15  Ilya Enkovich  <ilya.enkovich@intel.com>
++
++	* gcc.dg/lto/chkp-wrap-asm-name_0.c: New.
++
++2015-07-23  Ilya Enkovich  <ilya.enkovich@intel.com>
++
++	Backport from mainline r224074.
++	2015-06-03  Ilya Enkovich  <ilya.enkovich@intel.com>
++
++	* gcc.dg/lto/chkp-removed-alias_0.c: New.
++
++2015-07-21  Alex Velenko  <Alex.Velenko@arm.com>
++
++	Backport from mainline:
++	2015-07-21  Alex Velenko  <Alex.Velenko@arm.com>
++
++	* gcc.target/arm/thumb-bitfld1.c (foo): Add explicit return type.
++
++2015-07-21  Andre Vehreschild  <vehre@gcc.gnu.org>
++
++	PR fortran/66035
++	* gfortran.dg/structure_constructor_13.f03: New test.
++
++2015-07-21  Alex Velenko  <Alex.Velenko@arm.com>
++
++	Backport from mainline:
++	2015-05-20  Alex Velenko  <Alex.Velenko@arm.com>
++
++	* gcc.target/arm/thumb1-far-jump-2.c (r4): Added int in definition.
++
++2015-07-21  Alex Velenko  <Alex.Velenko@arm.com>
++
++	Backport from mainline:
++	2015-06-01  Alex Velenko  <Alex.Velenko@arm.com>
++
++	* gcc.target/arm/thumb-ltu.c (foo): Predefined.
++	(bar): Predefined.
++
++2015-07-21  Mantas Mikaitis  <mantas.mikaitis@arm.com>
++
++	* gcc.target/arm/macro_defs0.c: Add directive to skip
++	test if -marm is present.
++	* gcc.target/arm/macro_defs1.c: Likewise.
++
++2015-07-18  Uros Bizjak  <ubizjak@gmail.com>
++
++	PR target/66922
++	* gcc.target/i386/pr66922.c: New test.
++
++2015-07-17  Mikael Morin  <mikael@gcc.gnu.org>
++
++	* gfortran.dg/coarray_collectives_16.f90: Fix patterns
++	as follow-up to r225932.
++
++2015-07-17  Uros Bizjak  <ubizjak@gmail.com>
++
++	PR target/66866
++	* g++.dg/pr66866.C: New test.
++
++2015-07-17  Uros Bizjak  <ubizjak@gmail.com>
++
++	Backport from mainline:
++	2015-07-10  Uros Bizjak  <ubizjak@gmail.com>
++
++	PR target/66703
++	* gcc.target/i386/readeflags-1.c (readeflags_test): Declare with
++	__attribute__((noinline, noclone)).  Change "x" to "volatile char"
++	type to prevent possible flag-clobbering zero-extensions.
++	* gcc.target/i386/pr66703.c: New test.
++
++2015-07-17  Uros Bizjak  <ubizjak@gmail.com>
++
++	Backport from mainline:
++	2015-07-09  Uros Bizjak  <ubizjak@gmail.com>
++
++	PR target/66814
++	* gcc.target/i386/pr66814.c: New test.
++
++2015-07-17  Uros Bizjak  <ubizjak@gmail.com>
++
++	Backport from mainline:
++	2015-07-15  Uros Bizjak  <ubizjak@gmail.com>
++
++	PR rtl-optimization/66838
++	* gcc.target/i386/pr66838.c: New test.
++
++2015-07-17  Alessandro Fanfarillo  <fanfarillo.gcc@gmail.com>
++
++	* gfortran.dg/co_reduce_1.f90: New file.
++
++2015-07-16  Steven G. Kargl  <kargl@gcc.gnu.org>
++
++	PR fortran/66864
++	* gfortran.dg/pr66864.f90: New test.
++
++2015-07-16  Steven G. Kargl   <kargl@gcc.gnu.org>
++
++	PR fortran/66545
++	* gfortran.dg/pr66545_1.f90: New test.
++	* gfortran.dg/pr66545_2.f90: New test.
++
++2015-07-16  Steven G. Kargl  <kargl@gcc.gnu.org>
++
++	PR fortran/56520
++	* gfortran.dg/pr56520.f90: New test.
++
++2015-07-16  Steven G. Kargl  <kargl@gcc.gnu.org>
++
++	* gfortran.dg/iomsg_2.f90: New test.
++
++2015-07-16  Steven G. Kargl  <kargl@gcc.gnu.org>
++
++	PR fortran/66725
++	* gfortran.dg/pr66725.f90: New test.
++
++2015-07-16  Martin Liska  <mliska@suse.cz>
++
++	* g++.dg/ipa/pr66896.c: New test.
++
 +2015-07-16  Marek Polacek  <polacek@redhat.com>
 +
 +	Backported from mainline
@@ -40,19 +1248,62 @@ Index: b/src/gcc/testsuite/ChangeLog
  2015-07-16  Release Manager
  
  	* GCC 5.2.0 released.
-Index: b/src/gcc/testsuite/g++.dg/abi/abi-tag15.C
+@@ -792,7 +966,7 @@
+ 	Add missing ChangeLog entry for r222341.
+ 
+ 	Backport from trunk r222273
+-        2015-04-21  Andreas Tobler  <andreast@gcc.gnu.org>
++	2015-04-21  Andreas Tobler  <andreast@gcc.gnu.org>
+ 	* gcc.target/i386/avx512bw-vpermi2w-2.c: Fix includes to use actual
+ 	headers.
+ 	* gcc.target/i386/avx512bw-vpermt2w-2.c: Likewise.
+Index: gcc/testsuite/g++.dg/abi/abi-tag15.C
 ===================================================================
---- /dev/null
-+++ b/src/gcc/testsuite/g++.dg/abi/abi-tag15.C
+--- a/src/gcc/testsuite/g++.dg/abi/abi-tag15.C	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/testsuite/g++.dg/abi/abi-tag15.C	(.../branches/gcc-5-branch)
 @@ -0,0 +1,3 @@
 +// PR c++/66748
 +
 +enum __attribute__((abi_tag("foo"))) E {}; // { dg-error "redeclaration of" }
-Index: b/src/gcc/cp/tree.c
+Index: gcc/testsuite/g++.dg/pr66866.C
 ===================================================================
---- a/src/gcc/cp/tree.c
-+++ b/src/gcc/cp/tree.c
-@@ -3602,13 +3602,15 @@ handle_abi_tag_attribute (tree* node, tr
+--- a/src/gcc/testsuite/g++.dg/pr66866.C	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/testsuite/g++.dg/pr66866.C	(.../branches/gcc-5-branch)
+@@ -0,0 +1,29 @@
++// { dg-do run { target i?86-*-* x86_64-*-* } }
++// { dg-require-effective-target sse2_runtime }
++// { dg-options "-O -msse2" }
++
++extern "C" void abort (void);
++
++typedef long long __m128i __attribute__ ((__vector_size__ (16), __may_alias__));
++typedef short A __attribute__((__may_alias__));
++
++__m128i __attribute__((noinline))
++shuf(const __m128i v)
++{
++  __m128i r;
++
++  reinterpret_cast<A *>(&r)[5] = reinterpret_cast<const A *>(&v)[4];
++  return r;
++}
++
++int main()
++{
++  __attribute__((aligned(16))) short mem[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
++
++  *reinterpret_cast<__m128i *>(mem) = shuf (*reinterpret_cast<__m128i *>(mem));
++
++  if (mem[5] != 4)
++    abort ();
++
++  return 0;
++}
+Index: gcc/cp/tree.c
+===================================================================
+--- a/src/gcc/cp/tree.c	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/cp/tree.c	(.../branches/gcc-5-branch)
+@@ -3602,13 +3602,15 @@
  		 name, *node);
  	  goto fail;
  	}
@@ -70,10 +1321,10 @@ Index: b/src/gcc/cp/tree.c
  	{
  	  warning (OPT_Wattributes, "ignoring %qE attribute applied to "
  		   "template specialization %qT", name, *node);
-Index: b/src/gcc/cp/ChangeLog
+Index: gcc/cp/ChangeLog
 ===================================================================
---- a/src/gcc/cp/ChangeLog
-+++ b/src/gcc/cp/ChangeLog
+--- a/src/gcc/cp/ChangeLog	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/cp/ChangeLog	(.../branches/gcc-5-branch)
 @@ -1,3 +1,12 @@
 +2015-07-16  Marek Polacek  <polacek@redhat.com>
 +
@@ -87,10 +1338,1035 @@ Index: b/src/gcc/cp/ChangeLog
  2015-07-16  Release Manager
  
  	* GCC 5.2.0 released.
-Index: b/src/gcc/BASE-VER
+Index: gcc/lto-cgraph.c
 ===================================================================
---- a/src/gcc/BASE-VER
-+++ b/src/gcc/BASE-VER
+--- a/src/gcc/lto-cgraph.c	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/lto-cgraph.c	(.../branches/gcc-5-branch)
+@@ -80,6 +80,7 @@
+ #include "pass_manager.h"
+ #include "ipa-utils.h"
+ #include "omp-low.h"
++#include "ipa-chkp.h"
+ 
+ /* True when asm nodes has been output.  */
+ bool asm_nodes_output = false;
+@@ -1641,10 +1642,13 @@
+ 		    cnode->instrumented_version->instrumented_version = cnode;
+ 		}
+ 
+-	      /* Restore decl names reference.  */
+-	      IDENTIFIER_TRANSPARENT_ALIAS (DECL_ASSEMBLER_NAME (cnode->decl)) = 1;
+-	      TREE_CHAIN (DECL_ASSEMBLER_NAME (cnode->decl))
+-		  = DECL_ASSEMBLER_NAME (cnode->orig_decl);
++	      /* Restore decl names reference except for wrapper functions.  */
++	      if (!chkp_wrap_function (cnode->orig_decl))
++		{
++		  tree name = DECL_ASSEMBLER_NAME (cnode->decl);
++		  IDENTIFIER_TRANSPARENT_ALIAS (name) = 1;
++		  TREE_CHAIN (name) = DECL_ASSEMBLER_NAME (cnode->orig_decl);
++		}
+ 	    }
+ 	}
+ 
+Index: gcc/fortran/trans-expr.c
+===================================================================
+--- a/src/gcc/fortran/trans-expr.c	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/fortran/trans-expr.c	(.../branches/gcc-5-branch)
+@@ -6732,6 +6732,29 @@
+ 				       TREE_TYPE (tmp), tmp,
+ 				       fold_convert (TREE_TYPE (tmp), size));
+     }
++  else if (cm->ts.type == BT_CLASS)
++    {
++      gcc_assert (expr2->ts.type == BT_CLASS || expr2->ts.type == BT_DERIVED);
++      if (expr2->ts.type == BT_DERIVED)
++	{
++	  tmp = gfc_get_symbol_decl (expr2->ts.u.derived);
++	  size = TYPE_SIZE_UNIT (tmp);
++	}
++      else
++	{
++	  gfc_expr *e2vtab;
++	  gfc_se se;
++	  e2vtab = gfc_find_and_cut_at_last_class_ref (expr2);
++	  gfc_add_vptr_component (e2vtab);
++	  gfc_add_size_component (e2vtab);
++	  gfc_init_se (&se, NULL);
++	  gfc_conv_expr (&se, e2vtab);
++	  gfc_add_block_to_block (block, &se.pre);
++	  size = fold_convert (size_type_node, se.expr);
++	  gfc_free_expr (e2vtab);
++	}
++      size_in_bytes = size;
++    }
+   else
+     {
+       /* Otherwise use the length in bytes of the rhs.  */
+@@ -6859,7 +6882,8 @@
+       gfc_add_expr_to_block (&block, tmp);
+     }
+   else if (init && (cm->attr.allocatable
+-	   || (cm->ts.type == BT_CLASS && CLASS_DATA (cm)->attr.allocatable)))
++	   || (cm->ts.type == BT_CLASS && CLASS_DATA (cm)->attr.allocatable
++	       && expr->ts.type != BT_CLASS)))
+     {
+       /* Take care about non-array allocatable components here.  The alloc_*
+ 	 routine below is motivated by the alloc_scalar_allocatable_for_
+Index: gcc/fortran/ChangeLog
+===================================================================
+--- a/src/gcc/fortran/ChangeLog	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/fortran/ChangeLog	(.../branches/gcc-5-branch)
+@@ -1,3 +1,56 @@
++2015-07-21  Andre Vehreschild  <vehre@gcc.gnu.org>
++
++	PR fortran/66035
++	* trans-expr.c (alloc_scalar_allocatable_for_subcomponent_assignment):
++	Compute the size to allocate for class and derived type objects
++	correclty.
++	(gfc_trans_subcomponent_assign): Only allocate memory for a
++	component when the object to assign is not an allocatable class
++	object (the memory is already present for allocatable class objects).
++	Furthermore use copy_class_to_class for assigning the rhs to the
++	component (may happen for dummy class objects on the rhs).
++
++2015-07-17  Alessandro Fanfarillo  <fanfarillo.gcc@gmail.com>
++
++	* trans-intrinsic.c (conv_co_collective): Remove redundant address
++	operator in the generated code.
++
++2015-07-16  Steven G. Kargl  <kargl@gcc.gnu.org>
++
++	PR fortran/66724
++	PR fortran/66724
++	* io.c (is_char_type): Call gfc_resolve_expr ().
++	(match_open_element, match_dt_element, match_inquire_element): Fix
++	ASYNCHRONOUS case.
++
++2015-07-16  Steven G. Kargl  <kargl@gcc.gnu.org>
++
++	PR fortran/66864
++	* simplify.c (gfc_simplify_floor): Set precision of temporary to
++	that of arg.
++
++2015-07-16  Steven G. Kargl   <kargl@gcc.gnu.org>
++
++	PR fortran/66545
++	* primary.c (match_sym_complex_part): Do not dereference NULL pointer.
++
++2015-07-16  Steven G. Kargl  <kargl@gcc.gnu.org>
++
++	PR fortran/56520
++	* match.c (gfc_match_name): Special case unary minus and plus.
++
++2015-07-16  Steven G. Kargl  <kargl@gcc.gnu.org>
++
++	* io.c (check_char_variable): New function.
++	(match_open_element, match_close_element, match_file_element,
++	match_dt_element, match_inquire_element, match_wait_element): Use it.
++
++2015-07-16  Steven G. Kargl  <kargl@gcc.gnu.org>
++
++	PR fortran/66725
++	* io.c (is_char_type): New function to test for BT_CHARACTER
++	(gfc_match_open, gfc_match_close, match_dt_element): Use it.
++
+ 2015-07-16  Release Manager
+ 
+ 	* GCC 5.2.0 released.
+Index: gcc/fortran/io.c
+===================================================================
+--- a/src/gcc/fortran/io.c	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/fortran/io.c	(.../branches/gcc-5-branch)
+@@ -1181,7 +1181,7 @@
+ }
+ 
+ 
+-/************ Fortran 95 I/O statement matchers *************/
++/************ Fortran I/O statement matchers *************/
+ 
+ /* Match a FORMAT statement.  This amounts to actually parsing the
+    format descriptors in order to correctly locate the end of the
+@@ -1242,6 +1242,36 @@
+ }
+ 
+ 
++/* Check for a CHARACTER variable.  The check for scalar is done in
++   resolve_tag.  */
++
++static bool
++check_char_variable (gfc_expr *e)
++{
++  if (e->expr_type != EXPR_VARIABLE || e->ts.type != BT_CHARACTER)
++    {
++      gfc_error("IOMSG must be a scalar-default-char-variable at %L", &e->where);
++      return false;
++    }
++  return true;
++}
++
++
++static bool
++is_char_type (const char *name, gfc_expr *e)
++{
++  gfc_resolve_expr (e);
++
++  if (e->ts.type != BT_CHARACTER)
++    {
++      gfc_error ("%s requires a scalar-default-char-expr at %L",
++		   name, &e->where);
++      return false;
++    }
++  return true;
++}
++
++
+ /* Match an expression I/O tag of some sort.  */
+ 
+ static match
+@@ -1552,12 +1582,16 @@
+   match m;
+ 
+   m = match_etag (&tag_e_async, &open->asynchronous);
++  if (m == MATCH_YES && !is_char_type ("ASYNCHRONOUS", open->asynchronous))
++    return MATCH_ERROR;
+   if (m != MATCH_NO)
+     return m;
+   m = match_etag (&tag_unit, &open->unit);
+   if (m != MATCH_NO)
+     return m;
+-  m = match_out_tag (&tag_iomsg, &open->iomsg);
++  m = match_etag (&tag_iomsg, &open->iomsg);
++  if (m == MATCH_YES && !check_char_variable (open->iomsg))
++    return MATCH_ERROR;
+   if (m != MATCH_NO)
+     return m;
+   m = match_out_tag (&tag_iostat, &open->iostat);
+@@ -1870,6 +1904,9 @@
+       static const char *access_f2003[] = { "STREAM", NULL };
+       static const char *access_gnu[] = { "APPEND", NULL };
+ 
++      if (!is_char_type ("ACCESS", open->access))
++	goto cleanup;
++
+       if (!compare_to_allowed_values ("ACCESS", access_f95, access_f2003,
+ 				      access_gnu,
+ 				      open->access->value.character.string,
+@@ -1882,6 +1919,9 @@
+     {
+       static const char *action[] = { "READ", "WRITE", "READWRITE", NULL };
+ 
++      if (!is_char_type ("ACTION", open->action))
++	goto cleanup;
++
+       if (!compare_to_allowed_values ("ACTION", action, NULL, NULL,
+ 				      open->action->value.character.string,
+ 				      "OPEN", warn))
+@@ -1895,6 +1935,9 @@
+ 			   "not allowed in Fortran 95"))
+ 	goto cleanup;
+ 
++      if (!is_char_type ("ASYNCHRONOUS", open->asynchronous))
++	goto cleanup;
++
+       if (open->asynchronous->expr_type == EXPR_CONSTANT)
+ 	{
+ 	  static const char * asynchronous[] = { "YES", "NO", NULL };
+@@ -1913,6 +1956,9 @@
+ 			   "not allowed in Fortran 95"))
+ 	goto cleanup;
+ 
++      if (!is_char_type ("BLANK", open->blank))
++	goto cleanup;
++
+       if (open->blank->expr_type == EXPR_CONSTANT)
+ 	{
+ 	  static const char *blank[] = { "ZERO", "NULL", NULL };
+@@ -1931,6 +1977,9 @@
+ 			   "not allowed in Fortran 95"))
+ 	goto cleanup;
+ 
++      if (!is_char_type ("DECIMAL", open->decimal))
++	goto cleanup;
++
+       if (open->decimal->expr_type == EXPR_CONSTANT)
+ 	{
+ 	  static const char * decimal[] = { "COMMA", "POINT", NULL };
+@@ -1949,6 +1998,9 @@
+ 	{
+ 	  static const char *delim[] = { "APOSTROPHE", "QUOTE", "NONE", NULL };
+ 
++	if (!is_char_type ("DELIM", open->delim))
++	  goto cleanup;
++
+ 	  if (!compare_to_allowed_values ("DELIM", delim, NULL, NULL,
+ 					  open->delim->value.character.string,
+ 					  "OPEN", warn))
+@@ -1962,7 +2014,10 @@
+       if (!gfc_notify_std (GFC_STD_F2003, "ENCODING= at %C "
+ 			   "not allowed in Fortran 95"))
+ 	goto cleanup;
+-    
++
++      if (!is_char_type ("ENCODING", open->encoding))
++	goto cleanup;
++
+       if (open->encoding->expr_type == EXPR_CONSTANT)
+ 	{
+ 	  static const char * encoding[] = { "DEFAULT", "UTF-8", NULL };
+@@ -1979,6 +2034,9 @@
+     {
+       static const char *form[] = { "FORMATTED", "UNFORMATTED", NULL };
+ 
++      if (!is_char_type ("FORM", open->form))
++	goto cleanup;
++
+       if (!compare_to_allowed_values ("FORM", form, NULL, NULL,
+ 				      open->form->value.character.string,
+ 				      "OPEN", warn))
+@@ -1990,6 +2048,9 @@
+     {
+       static const char *pad[] = { "YES", "NO", NULL };
+ 
++      if (!is_char_type ("PAD", open->pad))
++	goto cleanup;
++
+       if (!compare_to_allowed_values ("PAD", pad, NULL, NULL,
+ 				      open->pad->value.character.string,
+ 				      "OPEN", warn))
+@@ -2001,6 +2062,9 @@
+     {
+       static const char *position[] = { "ASIS", "REWIND", "APPEND", NULL };
+ 
++      if (!is_char_type ("POSITION", open->position))
++	goto cleanup;
++
+       if (!compare_to_allowed_values ("POSITION", position, NULL, NULL,
+ 				      open->position->value.character.string,
+ 				      "OPEN", warn))
+@@ -2014,6 +2078,9 @@
+ 			   "not allowed in Fortran 95"))
+       goto cleanup;
+ 
++      if (!is_char_type ("ROUND", open->round))
++	goto cleanup;
++
+       if (open->round->expr_type == EXPR_CONSTANT)
+ 	{
+ 	  static const char * round[] = { "UP", "DOWN", "ZERO", "NEAREST",
+@@ -2034,6 +2101,9 @@
+ 			   "not allowed in Fortran 95"))
+ 	goto cleanup;
+ 
++      if (!is_char_type ("SIGN", open->sign))
++	goto cleanup;
++
+       if (open->sign->expr_type == EXPR_CONSTANT)
+ 	{
+ 	  static const char * sign[] = { "PLUS", "SUPPRESS", "PROCESSOR_DEFINED",
+@@ -2071,6 +2141,9 @@
+       static const char *status[] = { "OLD", "NEW", "SCRATCH",
+ 	"REPLACE", "UNKNOWN", NULL };
+ 
++      if (!is_char_type ("STATUS", open->status))
++	goto cleanup;
++
+       if (!compare_to_allowed_values ("STATUS", status, NULL, NULL,
+ 				      open->status->value.character.string,
+ 				      "OPEN", warn))
+@@ -2182,7 +2255,9 @@
+   m = match_etag (&tag_status, &close->status);
+   if (m != MATCH_NO)
+     return m;
+-  m = match_out_tag (&tag_iomsg, &close->iomsg);
++  m = match_etag (&tag_iomsg, &close->iomsg);
++  if (m == MATCH_YES && !check_char_variable (close->iomsg))
++    return MATCH_ERROR;
+   if (m != MATCH_NO)
+     return m;
+   m = match_out_tag (&tag_iostat, &close->iostat);
+@@ -2256,6 +2331,9 @@
+     {
+       static const char *status[] = { "KEEP", "DELETE", NULL };
+ 
++      if (!is_char_type ("STATUS", close->status))
++	goto cleanup;
++
+       if (!compare_to_allowed_values ("STATUS", status, NULL, NULL,
+ 				      close->status->value.character.string,
+ 				      "CLOSE", warn))
+@@ -2340,7 +2418,9 @@
+   m = match_etag (&tag_unit, &fp->unit);
+   if (m != MATCH_NO)
+     return m;
+-  m = match_out_tag (&tag_iomsg, &fp->iomsg);
++  m = match_etag (&tag_iomsg, &fp->iomsg);
++  if (m == MATCH_YES && !check_char_variable (fp->iomsg))
++    return MATCH_ERROR;
+   if (m != MATCH_NO)
+     return m;
+   m = match_out_tag (&tag_iostat, &fp->iostat);
+@@ -2676,6 +2756,8 @@
+     }
+ 
+   m = match_etag (&tag_e_async, &dt->asynchronous);
++  if (m == MATCH_YES && !is_char_type ("ASYNCHRONOUS", dt->asynchronous))
++    return MATCH_ERROR;
+   if (m != MATCH_NO)
+     return m;
+   m = match_etag (&tag_e_blank, &dt->blank);
+@@ -2705,9 +2787,12 @@
+   m = match_etag (&tag_spos, &dt->pos);
+   if (m != MATCH_NO)
+     return m;
+-  m = match_out_tag (&tag_iomsg, &dt->iomsg);
++  m = match_etag (&tag_iomsg, &dt->iomsg);
++  if (m == MATCH_YES && !check_char_variable (dt->iomsg))
++    return MATCH_ERROR;
+   if (m != MATCH_NO)
+     return m;
++
+   m = match_out_tag (&tag_iostat, &dt->iostat);
+   if (m != MATCH_NO)
+     return m;
+@@ -3305,6 +3390,9 @@
+ 	  return MATCH_ERROR;
+ 	}
+ 
++      if (!is_char_type ("ASYNCHRONOUS", dt->asynchronous))
++	return MATCH_ERROR;
++
+       if (!compare_to_allowed_values
+ 		("ASYNCHRONOUS", asynchronous, NULL, NULL,
+ 		 dt->asynchronous->value.character.string,
+@@ -3334,6 +3422,9 @@
+ 	{
+ 	  static const char * decimal[] = { "COMMA", "POINT", NULL };
+ 
++      if (!is_char_type ("DECIMAL", dt->decimal))
++	return MATCH_ERROR;
++
+ 	  if (!compare_to_allowed_values ("DECIMAL", decimal, NULL, NULL,
+ 					  dt->decimal->value.character.string,
+ 					  io_kind_name (k), warn))
+@@ -3351,10 +3442,14 @@
+ 			   "not allowed in Fortran 95"))
+ 	return MATCH_ERROR;
+ 
++      if (!is_char_type ("BLANK", dt->blank))
++	return MATCH_ERROR;
++
+       if (dt->blank->expr_type == EXPR_CONSTANT)
+ 	{
+ 	  static const char * blank[] = { "NULL", "ZERO", NULL };
+ 
++
+ 	  if (!compare_to_allowed_values ("BLANK", blank, NULL, NULL,
+ 					  dt->blank->value.character.string,
+ 					  io_kind_name (k), warn))
+@@ -3372,6 +3467,9 @@
+ 			   "not allowed in Fortran 95"))
+ 	return MATCH_ERROR;
+ 
++      if (!is_char_type ("PAD", dt->pad))
++	return MATCH_ERROR;
++
+       if (dt->pad->expr_type == EXPR_CONSTANT)
+ 	{
+ 	  static const char * pad[] = { "YES", "NO", NULL };
+@@ -3393,6 +3491,9 @@
+ 			   "not allowed in Fortran 95"))
+ 	return MATCH_ERROR;
+ 
++      if (!is_char_type ("ROUND", dt->round))
++	return MATCH_ERROR;
++
+       if (dt->round->expr_type == EXPR_CONSTANT)
+ 	{
+ 	  static const char * round[] = { "UP", "DOWN", "ZERO", "NEAREST",
+@@ -3412,6 +3513,10 @@
+       if (gfc_notify_std (GFC_STD_F2003, "SIGN= at %C "
+ 	  "not allowed in Fortran 95") == false)
+ 	return MATCH_ERROR;  */
++
++      if (!is_char_type ("SIGN", dt->sign))
++	return MATCH_ERROR;
++
+       if (dt->sign->expr_type == EXPR_CONSTANT)
+ 	{
+ 	  static const char * sign[] = { "PLUS", "SUPPRESS", "PROCESSOR_DEFINED",
+@@ -3438,6 +3543,9 @@
+ 			   "not allowed in Fortran 95"))
+ 	return MATCH_ERROR;
+ 
++      if (!is_char_type ("DELIM", dt->delim))
++	return MATCH_ERROR;
++
+       if (dt->delim->expr_type == EXPR_CONSTANT)
+ 	{
+ 	  static const char *delim[] = { "APOSTROPHE", "QUOTE", "NONE", NULL };
+@@ -3860,7 +3968,9 @@
+   m = match_etag (&tag_unit, &inquire->unit);
+   RETM m = match_etag (&tag_file, &inquire->file);
+   RETM m = match_ltag (&tag_err, &inquire->err);
+-  RETM m = match_out_tag (&tag_iomsg, &inquire->iomsg);
++  RETM m = match_etag (&tag_iomsg, &inquire->iomsg);
++  if (m == MATCH_YES && !check_char_variable (inquire->iomsg))
++    return MATCH_ERROR;
+   RETM m = match_out_tag (&tag_iostat, &inquire->iostat);
+   RETM m = match_vtag (&tag_exist, &inquire->exist);
+   RETM m = match_vtag (&tag_opened, &inquire->opened);
+@@ -3882,6 +3992,8 @@
+   RETM m = match_vtag (&tag_write, &inquire->write);
+   RETM m = match_vtag (&tag_readwrite, &inquire->readwrite);
+   RETM m = match_vtag (&tag_s_async, &inquire->asynchronous);
++  if (m == MATCH_YES && !is_char_type ("ASYNCHRONOUS", inquire->asynchronous))
++    return MATCH_ERROR;
+   RETM m = match_vtag (&tag_s_delim, &inquire->delim);
+   RETM m = match_vtag (&tag_s_decimal, &inquire->decimal);
+   RETM m = match_out_tag (&tag_size, &inquire->size);
+@@ -4143,7 +4255,9 @@
+   RETM m = match_ltag (&tag_err, &wait->err);
+   RETM m = match_ltag (&tag_end, &wait->eor);
+   RETM m = match_ltag (&tag_eor, &wait->end);
+-  RETM m = match_out_tag (&tag_iomsg, &wait->iomsg);
++  RETM m = match_etag (&tag_iomsg, &wait->iomsg);
++  if (m == MATCH_YES && !check_char_variable (wait->iomsg))
++    return MATCH_ERROR;
+   RETM m = match_out_tag (&tag_iostat, &wait->iostat);
+   RETM m = match_etag (&tag_id, &wait->id);
+   RETM return MATCH_NO;
+Index: gcc/fortran/match.c
+===================================================================
+--- a/src/gcc/fortran/match.c	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/fortran/match.c	(.../branches/gcc-5-branch)
+@@ -544,7 +544,10 @@
+   c = gfc_next_ascii_char ();
+   if (!(ISALPHA (c) || (c == '_' && flag_allow_leading_underscore)))
+     {
+-      if (!gfc_error_flag_test () && c != '(')
++      /* Special cases for unary minus and plus, which allows for a sensible
++	 error message for code of the form 'c = exp(-a*b) )' where an
++	 extra ')' appears at the end of statement.  */
++      if (!gfc_error_flag_test () && c != '(' && c != '-' && c != '+')
+ 	gfc_error ("Invalid character in name at %C");
+       gfc_current_locus = old_loc;
+       return MATCH_NO;
+Index: gcc/fortran/primary.c
+===================================================================
+--- a/src/gcc/fortran/primary.c	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/fortran/primary.c	(.../branches/gcc-5-branch)
+@@ -1202,6 +1202,9 @@
+       return MATCH_ERROR;
+     }
+ 
++  if (!sym->value)
++    goto error;
++
+   if (!gfc_numeric_ts (&sym->value->ts))
+     {
+       gfc_error ("Numeric PARAMETER required in complex constant at %C");
+Index: gcc/fortran/trans-intrinsic.c
+===================================================================
+--- a/src/gcc/fortran/trans-intrinsic.c	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/fortran/trans-intrinsic.c	(.../branches/gcc-5-branch)
+@@ -8801,7 +8801,7 @@
+ 	}
+       opr_flags = build_int_cst (integer_type_node, opr_flag_int);
+       gfc_conv_expr (&argse, opr_expr);
+-      opr = gfc_build_addr_expr (NULL_TREE, argse.expr);
++      opr = argse.expr;
+       fndecl = build_call_expr_loc (input_location, fndecl, 8, array, opr, opr_flags,
+ 				    image_index, stat, errmsg, strlen, errmsg_len);
+     }
+Index: gcc/fortran/simplify.c
+===================================================================
+--- a/src/gcc/fortran/simplify.c	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/fortran/simplify.c	(.../branches/gcc-5-branch)
+@@ -2352,9 +2352,7 @@
+   if (e->expr_type != EXPR_CONSTANT)
+     return NULL;
+ 
+-  gfc_set_model_kind (kind);
+-
+-  mpfr_init (floor);
++  mpfr_init2 (floor, mpfr_get_prec (e->value.real));
+   mpfr_floor (floor, e->value.real);
+ 
+   result = gfc_get_constant_expr (BT_INTEGER, kind, &e->where);
+Index: gcc/BASE-VER
+===================================================================
+--- a/src/gcc/BASE-VER	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/BASE-VER	(.../branches/gcc-5-branch)
 @@ -1 +1 @@
 -5.2.0
 +5.2.1
+Index: gcc/function.c
+===================================================================
+--- a/src/gcc/function.c	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/function.c	(.../branches/gcc-5-branch)
+@@ -3500,9 +3500,11 @@
+ 
+ static void
+ assign_bounds (vec<bounds_parm_data> &bndargs,
+-	       struct assign_parm_data_all &all)
++	       struct assign_parm_data_all &all,
++	       bool assign_regs, bool assign_special,
++	       bool assign_bt)
+ {
+-  unsigned i, pass, handled = 0;
++  unsigned i, pass;
+   bounds_parm_data *pbdata;
+ 
+   if (!bndargs.exists ())
+@@ -3516,17 +3518,20 @@
+       {
+ 	/* Pass 0 => regs only.  */
+ 	if (pass == 0
+-	    && (!pbdata->parm_data.entry_parm
+-		|| GET_CODE (pbdata->parm_data.entry_parm) != REG))
++	    && (!assign_regs
++		||(!pbdata->parm_data.entry_parm
++		   || GET_CODE (pbdata->parm_data.entry_parm) != REG)))
+ 	  continue;
+ 	/* Pass 1 => slots only.  */
+ 	else if (pass == 1
+-		 && (!pbdata->parm_data.entry_parm
+-		     || GET_CODE (pbdata->parm_data.entry_parm) == REG))
++		 && (!assign_special
++		     || (!pbdata->parm_data.entry_parm
++			 || GET_CODE (pbdata->parm_data.entry_parm) == REG)))
+ 	  continue;
+ 	/* Pass 2 => BT only.  */
+ 	else if (pass == 2
+-		 && pbdata->parm_data.entry_parm)
++		 && (!assign_bt
++		     || pbdata->parm_data.entry_parm))
+ 	  continue;
+ 
+ 	if (!pbdata->parm_data.entry_parm
+@@ -3547,14 +3552,7 @@
+ 	else
+ 	  assign_parm_setup_stack (&all, pbdata->bounds_parm,
+ 				   &pbdata->parm_data);
+-
+-	/* Count handled bounds to make sure we miss nothing.  */
+-	handled++;
+       }
+-
+-  gcc_assert (handled == bndargs.length ());
+-
+-  bndargs.release ();
+ }
+ 
+ /* Assign RTL expressions to the function's parameters.  This may involve
+@@ -3679,12 +3677,14 @@
+ 	      /* We expect this is the last parm.  Otherwise it is wrong
+ 		 to assign bounds right now.  */
+ 	      gcc_assert (i == (fnargs.length () - 1));
+-	      assign_bounds (bndargs, all);
++	      assign_bounds (bndargs, all, true, false, false);
+ 	      targetm.calls.setup_incoming_vararg_bounds (all.args_so_far,
+ 							  data.promoted_mode,
+ 							  data.passed_type,
+ 							  &pretend_bytes,
+ 							  false);
++	      assign_bounds (bndargs, all, false, true, true);
++	      bndargs.release ();
+ 	    }
+ 	}
+ 
+@@ -3696,7 +3696,8 @@
+ 	bound_no++;
+     }
+ 
+-  assign_bounds (bndargs, all);
++  assign_bounds (bndargs, all, true, true, true);
++  bndargs.release ();
+ 
+   if (targetm.calls.split_complex_arg)
+     assign_parms_unsplit_complex (&all, fnargs);
+@@ -5193,8 +5194,8 @@
+ void
+ diddle_return_value (void (*doit) (rtx, void *), void *arg)
+ {
++  diddle_return_value_1 (doit, arg, crtl->return_bnd);
+   diddle_return_value_1 (doit, arg, crtl->return_rtx);
+-  diddle_return_value_1 (doit, arg, crtl->return_bnd);
+ }
+ 
+ static void
+Index: gcc/genmatch.c
+===================================================================
+--- a/src/gcc/genmatch.c	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/genmatch.c	(.../branches/gcc-5-branch)
+@@ -1515,16 +1515,25 @@
+ {
+   if (capture *c = dyn_cast <capture *> (o))
+     {
+-      info[c->where].toplevel_msk |= 1 << toplevel_arg;
+-      info[c->where].force_no_side_effects_p |= conditional_p;
+-      info[c->where].cond_expr_cond_p |= cond_expr_cond_p;
+-      /* Mark expr (non-leaf) captures and recurse.  */
++      unsigned where = c->where;
++      info[where].toplevel_msk |= 1 << toplevel_arg;
++      info[where].force_no_side_effects_p |= conditional_p;
++      info[where].cond_expr_cond_p |= cond_expr_cond_p;
++      if (!c->what)
++	return;
++      /* Recurse to exprs and captures.  */
++      if (is_a <capture *> (c->what)
++	  || is_a <expr *> (c->what))
++	walk_match (c->what, toplevel_arg, conditional_p, false);
++      /* We need to look past multiple captures to find a captured
++	 expression as with conditional converts two captures
++	 can be collapsed onto the same expression.  */
++      while (c->what && is_a <capture *> (c->what))
++	c = as_a <capture *> (c->what);
++      /* Mark expr (non-leaf) captures.  */
+       if (c->what
+ 	  && is_a <expr *> (c->what))
+-	{
+-	  info[c->where].expr_p = true;
+-	  walk_match (c->what, toplevel_arg, conditional_p, false);
+-	}
++	info[where].expr_p = true;
+     }
+   else if (expr *e = dyn_cast <expr *> (o))
+     {
+Index: gcc/cfgexpand.c
+===================================================================
+--- a/src/gcc/cfgexpand.c	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/cfgexpand.c	(.../branches/gcc-5-branch)
+@@ -3219,9 +3219,10 @@
+   bounds_rtl = DECL_BOUNDS_RTL (DECL_RESULT (current_function_decl));
+   if (bounds_rtl)
+     {
+-      rtx addr, bnd;
++      rtx addr = NULL;
++      rtx bnd = NULL;
+ 
+-      if (bounds)
++      if (bounds && bounds != error_mark_node)
+ 	{
+ 	  bnd = expand_normal (bounds);
+ 	  targetm.calls.store_returned_bounds (bounds_rtl, bnd);
+@@ -3228,9 +3229,15 @@
+ 	}
+       else if (REG_P (bounds_rtl))
+ 	{
+-	  addr = expand_normal (build_fold_addr_expr (retval_rhs));
+-	  addr = gen_rtx_MEM (Pmode, addr);
+-	  bnd = targetm.calls.load_bounds_for_arg (addr, NULL, NULL);
++	  if (bounds)
++	    bnd = chkp_expand_zero_bounds ();
++	  else
++	    {
++	      addr = expand_normal (build_fold_addr_expr (retval_rhs));
++	      addr = gen_rtx_MEM (Pmode, addr);
++	      bnd = targetm.calls.load_bounds_for_arg (addr, NULL, NULL);
++	    }
++
+ 	  targetm.calls.store_returned_bounds (bounds_rtl, bnd);
+ 	}
+       else
+@@ -3239,15 +3246,23 @@
+ 
+ 	  gcc_assert (GET_CODE (bounds_rtl) == PARALLEL);
+ 
+-	  addr = expand_normal (build_fold_addr_expr (retval_rhs));
+-	  addr = gen_rtx_MEM (Pmode, addr);
++	  if (bounds)
++	    bnd = chkp_expand_zero_bounds ();
++	  else
++	    {
++	      addr = expand_normal (build_fold_addr_expr (retval_rhs));
++	      addr = gen_rtx_MEM (Pmode, addr);
++	    }
+ 
+ 	  for (n = 0; n < XVECLEN (bounds_rtl, 0); n++)
+ 	    {
+-	      rtx offs = XEXP (XVECEXP (bounds_rtl, 0, n), 1);
+ 	      rtx slot = XEXP (XVECEXP (bounds_rtl, 0, n), 0);
+-	      rtx from = adjust_address (addr, Pmode, INTVAL (offs));
+-	      rtx bnd = targetm.calls.load_bounds_for_arg (from, NULL, NULL);
++	      if (!bounds)
++		{
++		  rtx offs = XEXP (XVECEXP (bounds_rtl, 0, n), 1);
++		  rtx from = adjust_address (addr, Pmode, INTVAL (offs));
++		  bnd = targetm.calls.load_bounds_for_arg (from, NULL, NULL);
++		}
+ 	      targetm.calls.store_returned_bounds (slot, bnd);
+ 	    }
+ 	}
+@@ -3344,33 +3359,40 @@
+       break;
+ 
+     case GIMPLE_RETURN:
+-      op0 = gimple_return_retval (as_a <greturn *> (stmt));
++      {
++	tree bnd = gimple_return_retbnd (as_a <greturn *> (stmt));
++	op0 = gimple_return_retval (as_a <greturn *> (stmt));
+ 
+-      if (op0 && op0 != error_mark_node)
+-	{
+-	  tree result = DECL_RESULT (current_function_decl);
++	if (op0 && op0 != error_mark_node)
++	  {
++	    tree result = DECL_RESULT (current_function_decl);
+ 
+-	  /* If we are not returning the current function's RESULT_DECL,
+-	     build an assignment to it.  */
+-	  if (op0 != result)
+-	    {
+-	      /* I believe that a function's RESULT_DECL is unique.  */
+-	      gcc_assert (TREE_CODE (op0) != RESULT_DECL);
++	    /* If we are not returning the current function's RESULT_DECL,
++	       build an assignment to it.  */
++	    if (op0 != result)
++	      {
++		/* I believe that a function's RESULT_DECL is unique.  */
++		gcc_assert (TREE_CODE (op0) != RESULT_DECL);
+ 
+-	      /* ??? We'd like to use simply expand_assignment here,
+-	         but this fails if the value is of BLKmode but the return
+-		 decl is a register.  expand_return has special handling
+-		 for this combination, which eventually should move
+-		 to common code.  See comments there.  Until then, let's
+-		 build a modify expression :-/  */
+-	      op0 = build2 (MODIFY_EXPR, TREE_TYPE (result),
+-			    result, op0);
+-	    }
+-	}
+-      if (!op0)
+-	expand_null_return ();
+-      else
+-	expand_return (op0, gimple_return_retbnd (stmt));
++		/* ??? We'd like to use simply expand_assignment here,
++		   but this fails if the value is of BLKmode but the return
++		   decl is a register.  expand_return has special handling
++		   for this combination, which eventually should move
++		   to common code.  See comments there.  Until then, let's
++		   build a modify expression :-/  */
++		op0 = build2 (MODIFY_EXPR, TREE_TYPE (result),
++			      result, op0);
++	      }
++	    /* Mark we have return statement with missing bounds.  */
++	    if (!bnd && chkp_function_instrumented_p (cfun->decl))
++	      bnd = error_mark_node;
++	  }
++
++	if (!op0)
++	  expand_null_return ();
++	else
++	  expand_return (op0, bnd);
++      }
+       break;
+ 
+     case GIMPLE_ASSIGN:
+Index: gcc/ipa-prop.c
+===================================================================
+--- a/src/gcc/ipa-prop.c	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/ipa-prop.c	(.../branches/gcc-5-branch)
+@@ -2472,11 +2472,15 @@
+ 	      ctx.offset_by (dst->value.ancestor.offset);
+ 	      if (!ctx.useless_p ())
+ 		{
+-		  vec_safe_grow_cleared (args->polymorphic_call_contexts,
+-					 count);
+-		  dst_ctx = ipa_get_ith_polymorhic_call_context (args, i);
++		  if (!dst_ctx)
++		    {
++		      vec_safe_grow_cleared (args->polymorphic_call_contexts,
++					     count);
++		      dst_ctx = ipa_get_ith_polymorhic_call_context (args, i);
++		    }
++
++		  dst_ctx->combine_with (ctx);
+ 		}
+-	      dst_ctx->combine_with (ctx);
+ 	    }
+ 
+ 	  if (src->agg.items
+Index: gcc/config/i386/i386.md
+===================================================================
+--- a/src/gcc/config/i386/i386.md	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/config/i386/i386.md	(.../branches/gcc-5-branch)
+@@ -5051,11 +5051,11 @@
+   /* The DImode arrived in a pair of integral registers (e.g. %edx:%eax).
+      Assemble the 64-bit DImode value in an xmm register.  */
+   emit_insn (gen_sse2_loadld (operands[3], CONST0_RTX (V4SImode),
+-			      gen_rtx_SUBREG (SImode, operands[1], 0)));
++			      gen_lowpart (SImode, operands[1])));
+   emit_insn (gen_sse2_loadld (operands[4], CONST0_RTX (V4SImode),
+-			      gen_rtx_SUBREG (SImode, operands[1], 4)));
++			      gen_highpart (SImode, operands[1])));
+   emit_insn (gen_vec_interleave_lowv4si (operands[3], operands[3],
+-  	    				 operands[4]));
++					 operands[4]));
+ 
+   operands[3] = gen_rtx_REG (DImode, REGNO (operands[3]));
+ })
+@@ -17431,8 +17431,8 @@
+ ;; lifetime information then.
+ 
+ (define_peephole2
+-  [(set (match_operand:SWI124 0 "nonimmediate_operand")
+-	(not:SWI124 (match_operand:SWI124 1 "nonimmediate_operand")))]
++  [(set (match_operand:SWI124 0 "nonimmediate_gr_operand")
++	(not:SWI124 (match_operand:SWI124 1 "nonimmediate_gr_operand")))]
+   "optimize_insn_for_speed_p ()
+    && ((TARGET_NOT_UNPAIRABLE
+ 	&& (!MEM_P (operands[0])
+@@ -17576,8 +17576,10 @@
+                      [(match_dup 0)
+                       (match_operand 2 "memory_operand")]))]
+   "REGNO (operands[0]) != REGNO (operands[1])
+-   && ((MMX_REG_P (operands[0]) && MMX_REG_P (operands[1])) 
+-       || (SSE_REG_P (operands[0]) && SSE_REG_P (operands[1])))"
++   && ((MMX_REGNO_P (REGNO (operands[0]))
++        && MMX_REGNO_P (REGNO (operands[1]))) 
++       || (SSE_REGNO_P (REGNO (operands[0]))
++           && SSE_REGNO_P (REGNO (operands[1]))))"
+   [(set (match_dup 0) (match_dup 2))
+    (set (match_dup 0)
+         (match_op_dup 3 [(match_dup 0) (match_dup 1)]))])
+@@ -17725,7 +17727,7 @@
+ 	(match_operand 1 "const0_operand"))]
+   "GET_MODE_SIZE (GET_MODE (operands[0])) <= UNITS_PER_WORD
+    && (! TARGET_USE_MOV0 || optimize_insn_for_size_p ())
+-   && GENERAL_REG_P (operands[0])
++   && GENERAL_REGNO_P (REGNO (operands[0]))
+    && peep2_regno_dead_p (0, FLAGS_REG)"
+   [(parallel [(set (match_dup 0) (const_int 0))
+ 	      (clobber (reg:CC FLAGS_REG))])]
+@@ -17746,6 +17748,7 @@
+   [(set (match_operand:SWI248 0 "register_operand")
+ 	(const_int -1))]
+   "(optimize_insn_for_size_p () || TARGET_MOVE_M1_VIA_OR)
++   && GENERAL_REGNO_P (REGNO (operands[0]))
+    && peep2_regno_dead_p (0, FLAGS_REG)"
+   [(parallel [(set (match_dup 0) (const_int -1))
+ 	      (clobber (reg:CC FLAGS_REG))])]
+@@ -18113,11 +18116,13 @@
+ 
+   operands[1] = gen_rtx_PLUS (word_mode, base,
+ 			      gen_rtx_MULT (word_mode, index, GEN_INT (scale)));
+-  operands[5] = base;
+   if (mode != word_mode)
+     operands[1] = gen_rtx_SUBREG (mode, operands[1], 0);
++
++  operands[5] = base;
+   if (op1mode != word_mode)
+-    operands[5] = gen_rtx_SUBREG (op1mode, operands[5], 0);
++    operands[5] = gen_lowpart (op1mode, operands[5]);
++
+   operands[0] = dest;
+ })
+ 
+Index: gcc/config/i386/predicates.md
+===================================================================
+--- a/src/gcc/config/i386/predicates.md	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/config/i386/predicates.md	(.../branches/gcc-5-branch)
+@@ -37,6 +37,12 @@
+   (and (match_code "reg")
+        (match_test "GENERAL_REG_P (op)")))
+ 
++;; True if the operand is a nonimmediate operand with GENERAL class register.
++(define_predicate "nonimmediate_gr_operand"
++  (if_then_else (match_code "reg")
++    (match_test "GENERAL_REGNO_P (REGNO (op))")
++    (match_operand 0 "nonimmediate_operand")))
++
+ ;; Return true if OP is a register operand other than an i387 fp register.
+ (define_predicate "register_and_not_fp_reg_operand"
+   (and (match_code "reg")
+Index: gcc/config/i386/sse.md
+===================================================================
+--- a/src/gcc/config/i386/sse.md	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/config/i386/sse.md	(.../branches/gcc-5-branch)
+@@ -1078,9 +1078,9 @@
+       /* The DImode arrived in a pair of integral registers (e.g. %edx:%eax).
+ 	 Assemble the 64-bit DImode value in an xmm register.  */
+       emit_insn (gen_sse2_loadld (operands[0], CONST0_RTX (V4SImode),
+-				  gen_rtx_SUBREG (SImode, operands[1], 0)));
++				  gen_lowpart (SImode, operands[1])));
+       emit_insn (gen_sse2_loadld (operands[2], CONST0_RTX (V4SImode),
+-				  gen_rtx_SUBREG (SImode, operands[1], 4)));
++				  gen_highpart (SImode, operands[1])));
+       emit_insn (gen_vec_interleave_lowv4si (operands[0], operands[0],
+ 					     operands[2]));
+    }
+Index: gcc/config/i386/i386.c
+===================================================================
+--- a/src/gcc/config/i386/i386.c	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/config/i386/i386.c	(.../branches/gcc-5-branch)
+@@ -8211,7 +8211,8 @@
+     case SI_REG:
+       return TARGET_64BIT && ix86_cfun_abi () != MS_ABI;
+ 
+-    case FIRST_BND_REG:
++    case BND0_REG:
++    case BND1_REG:
+       return chkp_function_instrumented_p (current_function_decl);
+ 
+       /* Complex values are returned in %st(0)/%st(1) pair.  */
+@@ -50335,6 +50336,14 @@
+   unsigned int size = INTVAL (operands[1]);
+   unsigned int pos = INTVAL (operands[2]);
+ 
++  if (GET_CODE (src) == SUBREG)
++    {
++      /* Reject non-lowpart subregs.  */
++      if (SUBREG_BYTE (src) != 0)
++       return false;
++      src = SUBREG_REG (src);
++    }
++
+   if (GET_CODE (dst) == SUBREG)
+     {
+       pos += SUBREG_BYTE (dst) * BITS_PER_UNIT;
+@@ -50341,9 +50350,6 @@
+       dst = SUBREG_REG (dst);
+     }
+ 
+-  if (GET_CODE (src) == SUBREG)
+-    src = SUBREG_REG (src);
+-
+   switch (GET_MODE (dst))
+     {
+     case V16QImode:
+@@ -50391,6 +50397,10 @@
+ 	    return false;
+ 	  }
+ 
++	/* Reject insertions to misaligned positions.  */
++	if (pos & (size-1))
++	  return false;
++
+ 	rtx d = dst;
+ 	if (GET_MODE (dst) != dstmode)
+ 	  d = gen_reg_rtx (dstmode);
+Index: gcc/config/avr/avr-dimode.md
+===================================================================
+--- a/src/gcc/config/avr/avr-dimode.md	(.../tags/gcc_5_2_0_release)
++++ b/src/gcc/config/avr/avr-dimode.md	(.../branches/gcc-5-branch)
+@@ -461,7 +461,8 @@
+               (match_operand:SI 2 "general_operand" "")
+               ;; Just to mention the iterator 
+               (clobber (any_extend:SI (match_dup 1)))])]
+-  "avr_have_dimode"
++  "avr_have_dimode
++   && AVR_HAVE_MUL"
+   {
+     avr_fix_inputs (operands, 1 << 2, regmask (SImode, 22));
+     emit_move_insn (gen_rtx_REG (SImode, 22), operands[1]);
+@@ -480,7 +481,8 @@
+                  (any_extend:DI (reg:SI 22))))
+    (clobber (reg:HI REG_X))
+    (clobber (reg:HI REG_Z))]
+-  "avr_have_dimode"
++  "avr_have_dimode
++   && AVR_HAVE_MUL"
+   "%~call __<extend_u>mulsidi3"
+   [(set_attr "adjust_len" "call")
+    (set_attr "cc" "clobber")])

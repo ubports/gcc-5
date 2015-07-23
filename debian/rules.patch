@@ -89,6 +89,10 @@ debian_patches += \
 	gccgo-sendfile-fix \
 	pr66368 \
 
+ifeq ($(libstdcxx_abi),new)
+  debian_patches += libstdc++-functexcept
+endif
+
 # don't apply yet, test it first ...
 #	go-escape-analysis \
 #	go-escape-analysis2 \
