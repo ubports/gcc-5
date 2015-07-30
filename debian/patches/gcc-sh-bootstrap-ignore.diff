@@ -1,0 +1,15 @@
+# DP: Ignore differences in gcc/real.o in the bootstrap build for
+# DP: sh*-*linux-gnu targets.  According to PR 67002, "A rare indeterminacy
+# DP: of the register choice.  Both codes are valid.  It seems very hard to
+# DP: find where has this indeterminacy come from".
+
+--- a/src/configure.ac	2015-05-03 19:29:57.000000000 +0200
++++ b/src/configure.ac	2015-07-29 15:05:55.367918725 +0200
+@@ -3553,6 +3553,7 @@
+   hppa*64*-*-hpux*) ;;
+   hppa*-*-hpux*) compare_exclusions="gcc/cc*-checksum\$(objext) | */libgcc/lib2funcs* | gcc/ada/*tools/*" ;;
+   powerpc*-ibm-aix*) compare_exclusions="gcc/cc*-checksum\$(objext) | gcc/ada/*tools/* | *libgomp*\$(objext)" ;;
++  sh*-*linux-gnu) compare_exclusions="gcc/cc*-checksum\$(objext) | gcc/ada/*tools/* | gcc/real$(objext)" ;;
+ esac
+ AC_SUBST(compare_exclusions)
+ 

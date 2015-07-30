@@ -665,8 +665,6 @@ libstdcxx_abi = new
 ifneq (,$(filter $(distrelease),squeeze wheezy jessie lucid precise trusty utopic vivid))
   libstdcxx_abi = gcc4-compatible
 endif
-# FIXME later ... sid is still known as jessie
-libstdcxx_abi = new
 
 # Build all packages needed for C++ development
 ifeq ($(with_cxx),yes)

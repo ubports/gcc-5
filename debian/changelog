@@ -1,9 +1,27 @@
+gcc-5 (5.2.1-13) unstable; urgency=high
+
+  * Upload to unstable (https://wiki.debian.org/GCC5). See also
+    https://lists.debian.org/debian-devel-announce/2015/07/msg00000.html
+  * Update to SVN 20150730 (r226411, 5.2.1) from the gcc-5-branch.
+    - Fix PR libstdc++/67015. Closes: #793784.
+  * Fix version macros in the plugin-header.h header. Closes: #793478.
+  * libstdc++6: Add breaks for issues tagged with gcc-pr66145.
+  * Add libcpprest2.4 to libstdc++6 breaks. Closes: #784655.
+  * Fix PR c++/66857, taken from the trunk.
+  * Ignore differences in gcc/real.o in the bootstrap build for
+    sh*-*linux-gnu targets.  According to PR 67002, "A rare indeterminacy
+    of the register choice.  Both codes are valid.  It seems very hard to
+    find where has this indeterminacy come from". Suggested by Adrian
+    Glaubitz.
+
+ -- Matthias Klose <doko@debian.org>  Thu, 30 Jul 2015 21:51:25 +0200
+
 gcc-5 (5.2.1-12) experimental; urgency=medium
 
   * Update to SVN 20150723 (r226105, 5.2.1) from the gcc-5-branch.
   * Fix PR libstdc++/66145, std::ios_base::failure objects thrown from
     libstdc++.so using the gcc4-compatible ABI.
-    Just build src/c++11/functexcept.cc using the new ABI. It will break 
+    Just build src/c++11/functexcept.cc using the new ABI. It will break
     code, which will be handled in the archive by adding Breaks for the
     affected packages.  Third party code using such code will need a rebuild.
   * Remove the work around to build with -O1 on sh4.
