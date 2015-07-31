@@ -20,7 +20,6 @@ libboost-date-time1.55.0
 libcpprest2.4
 printer-driver-brlaser
 c++-annotations
-chromium-browser
 clustalx
 cython
 cython3

@@ -1,3 +1,9 @@
+gcc-5 (5.2.1-14) unstable; urgency=high
+
+  * Fix libstdc++6 breaks.
+
+ -- Matthias Klose <doko@debian.org>  Fri, 31 Jul 2015 04:12:08 +0200
+
 gcc-5 (5.2.1-13) unstable; urgency=high
 
   * Upload to unstable (https://wiki.debian.org/GCC5). See also
