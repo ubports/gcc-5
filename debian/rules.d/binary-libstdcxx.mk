@@ -209,14 +209,14 @@ define __do_libstdcxx
 	dh_compress -p$(p_l)
 	dh_fixperms -p$(p_l)
 
-	$(if $(filter $(DEB_TARGET_ARCH), armel hppa), \
+	$(if $(filter $(DEB_TARGET_ARCH), armel hppa sparc64), \
 	  -$(cross_makeshlibs) dh_makeshlibs -p$(p_l) \
 	  @echo "FIXME: libstdc++ not feature complete (https://gcc.gnu.org/ml/gcc/2014-07/msg00000.html)", \
 	  $(cross_makeshlibs) dh_makeshlibs -p$(p_l) \
 	)
 
 	$(call cross_mangle_shlibs,$(p_l))
-	$(if $(filter sparc64, $(DEB_HOST_ARCH)),$(if $(2),-,$(ignshld)),$(ignshld))DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_l) \
+	$(ignshld)DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_l) \
 		$(call shlibdirs_to_search,$(subst stdc++$(CXX_SONAME),gcc$(GCC_SONAME),$(p_l)),$(2))
 	$(call cross_mangle_substvars,$(p_l))
 

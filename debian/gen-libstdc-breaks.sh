@@ -21,8 +21,6 @@ libcpprest2.4
 printer-driver-brlaser
 c++-annotations
 clustalx
-cython
-cython3
 libdavix0
 libdballe6
 dff
@@ -83,8 +81,7 @@ wesnoth-1.12-core
 widelands
 libwreport2
 xflr5
-libxmltooling6
-xsdcxx')
+libxmltooling6')
 else
     pkgs=$(echo '
 antlr
@@ -98,8 +95,6 @@ printer-driver-brlaser
 c++-annotations
 chromium-browser
 clustalx
-cython
-cython3
 libdavix0
 libdballe6
 dff
@@ -161,8 +156,7 @@ wesnoth-1.12-core
 widelands
 libwreport2
 xflr5
-libxmltooling6
-xsdcxx')
+libxmltooling6')
 fi
 
 fn=debian/libstdc++-breaks.$vendor

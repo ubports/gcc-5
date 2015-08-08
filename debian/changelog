@@ -1,3 +1,15 @@
+gcc-5 (5.2.1-15) unstable; urgency=medium
+
+  * Update to SVN 20150808 (r226731, 5.2.1) from the gcc-5-branch.
+  * Adjust libstdc++-breaks: Break libantlr-dev instead of antlr;
+    adjust libreoffice version (closes: #794203), drop xxsd break (see
+    #793289), remove cython breaks (closes: #794511), add breaks for
+    packages built using cython (chemps2, fiona, guiqwt, htseq, imposm,
+    pysph, pytaglib, python-scipy, python-sfml, rasterio).
+  * Ignore missing libstdc++ symbols on sparc64 (work around #792204).
+
+ -- Matthias Klose <doko@debian.org>  Sat, 08 Aug 2015 11:18:24 +0200
+
 gcc-5 (5.2.1-14) unstable; urgency=high
 
   * Fix libstdc++6 breaks.
