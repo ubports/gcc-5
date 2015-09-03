@@ -88,8 +88,8 @@ debian_patches += \
 	go-escape-analysis6 \
 	gccgo-sendfile-fix \
 	pr66368 \
-	pr66857 \
 	gcc-sh-bootstrap-ignore \
+	pr67280 \
 
 ifeq ($(libstdcxx_abi),new)
   debian_patches += libstdc++-functexcept

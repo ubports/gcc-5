@@ -145,6 +145,7 @@ do_gccgo = $(call __do_gccgo,lib$(1)go$(GO_SONAME),$(1))
 
 define install_gccgo_lib
 	mv $(d)/$(usr_lib$(3))/$(1).a debian/$(4)/$(gcc_lib_dir$(3))/
+	mv $(d)/$(usr_lib$(3))/$(1)libbegin.a debian/$(4)/$(gcc_lib_dir$(3))/
 	rm -f $(d)/$(usr_lib$(3))/$(1)*.{la,so}
 	dh_link -p$(4) \
 	  /$(usr_lib$(3))/$(1).so.$(2) /$(gcc_lib_dir$(3))/$(1).so

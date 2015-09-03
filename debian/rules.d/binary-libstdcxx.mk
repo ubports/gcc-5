@@ -111,7 +111,8 @@ dirs_dev = \
 files_dev = \
 	$(PFL)/include/c++/$(BASE_VERSION) \
 	$(gcc_lib_dir)/libstdc++.{a,so} \
-	$(gcc_lib_dir)/libsupc++.a
+	$(gcc_lib_dir)/libsupc++.a \
+	$(gcc_lib_dir)/libstdc++fs.a
 
 ifeq ($(with_multiarch_cxxheaders),yes)
   dirs_dev += \
@@ -127,7 +128,8 @@ dirs_dbg = \
 	$(PF)/share/gdb/auto-load/$(usr_lib)/debug \
 	$(gcc_lib_dir)
 files_dbg = \
-	$(usr_lib)/debug/libstdc++.{a,so*}
+	$(usr_lib)/debug/libstdc++.{a,so*} \
+	$(usr_lib)/debug/libstdc++fs.a
 
 dirs_pic = \
 	$(docdir) \
@@ -281,7 +283,7 @@ define __do_libstdcxx_dev
 	dh_testroot
 	mv $(install_stamp) $(install_stamp)-tmp
 
-	mv $(d)/$(usr_lib$(2))/libstdc++.a $(d)/$(usr_lib$(2))/libsupc++.a \
+	mv $(d)/$(usr_lib$(2))/libstdc++.a $(d)/$(usr_lib$(2))/libstdc++fs.a $(d)/$(usr_lib$(2))/libsupc++.a \
 		$(d)/$(gcc_lib_dir$(2))/
 
 	rm -rf $(d_l)
@@ -289,6 +291,7 @@ define __do_libstdcxx_dev
 
 	DH_COMPAT=2 dh_movefiles -p$(p_l) \
 		$(gcc_lib_dir$(2))/libstdc++.a \
+		$(gcc_lib_dir$(2))/libstdc++fs.a \
 		$(gcc_lib_dir$(2))/libsupc++.a \
 		$(if $(with_multiarch_cxxheaders),$(PF)/include/$(DEB_TARGET_MULTIARCH)/c++/$(BASE_VERSION)/$(2))
 	$(call install_gcc_lib,libstdc++,$(CXX_SONAME),$(2),$(p_l))
@@ -391,6 +394,7 @@ $(binary_stamp)-libstdcxx-dev: $(libcxxdev_deps)
 
 	: # - correct libstdc++-v3 file locations
 	mv $(d)/$(usr_lib)/libsupc++.a $(d)/$(gcc_lib_dir)/
+	mv $(d)/$(usr_lib)/libstdc++fs.a $(d)/$(gcc_lib_dir)/
 	mv $(d)/$(usr_lib)/libstdc++.{a,so} $(d)/$(gcc_lib_dir)/
 	ln -sf ../../../$(DEB_TARGET_GNU_TYPE)/libstdc++.so.$(CXX_SONAME) \
 		$(d)/$(gcc_lib_dir)/libstdc++.so
