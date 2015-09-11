@@ -1,3 +1,28 @@
+gcc-5 (5.2.1-17) unstable; urgency=medium
+
+  * Update to SVN 20150911 (r227671, 5.2.1) from the gcc-5-branch.
+    - Fix PR c++/67369, ICE on valid code. LP: #1489173.
+
+  [ Matthias Klose ]
+  * Build-depend on linux-libc-dev [m68k] for gcc and gcc-snapshot builds.
+    Closes: #796906.
+  * Don't ignore anymore bootstrap comparison failures on sh4. Closes: #796939.
+  * Fix stage1 cross build for KFreeBSD. Closes: #796901.
+  * libgo: Fix PR go/67508, rewrite lfstack packing/unpacking to look more
+    like that in Go (Michael Hudson). LP: #1472650.
+  * Fix PR target/67143 (AArch64), ICE on valid code. LP: #1481333.
+
+  [ Aurelien Jarno ]
+  * Use --with-mips-plt on mips*.
+  * Build for R2 ISA on mips, mips64 and mips64el.
+  * Optimize for R2 ISA on mipsel.
+  * Only apply mips-fix-loongson2f-nop on mipsel.
+
+  [ YunQiang Su ]
+  * Fix running the acats tests. Closes: #798531.
+
+ -- Matthias Klose <doko@debian.org>  Fri, 11 Sep 2015 03:17:20 +0200
+
 gcc-5 (5.2.1-16) unstable; urgency=medium
 
   * Update to SVN 20150903 (r227431, 5.2.1) from the gcc-5-branch.

@@ -78,7 +78,6 @@ debian_patches += \
 	libitm-no-fortify-source \
 	sparc64-biarch-long-double-128 \
 	gcc-ia64-bootstrap-ignore \
-	pr62258 \
 	gotools-configury \
 	go-escape-analysis \
 	go-escape-analysis2 \
@@ -88,8 +87,9 @@ debian_patches += \
 	go-escape-analysis6 \
 	gccgo-sendfile-fix \
 	pr66368 \
-	gcc-sh-bootstrap-ignore \
 	pr67280 \
+	pr67508 \
+	pr67143 \
 
 ifeq ($(libstdcxx_abi),new)
   debian_patches += libstdc++-functexcept
@@ -311,7 +311,9 @@ ifneq (,$(filter $(derivative),Ubuntu))
 else # Debian
     #debian_patches += gcc-as-needed
 endif
-debian_patches += mips-fix-loongson2f-nop
+ifeq ($(DEB_TARGET_ARCH),mipsel)
+  debian_patches += mips-fix-loongson2f-nop
+endif
 debian_patches += libgomp-kfreebsd-testsuite
 debian_patches += go-testsuite
 # FIXME: Still relevant?

@@ -32,3 +32,20 @@ Index: b/src/libgcc/config.host
  	extra_parts="$extra_parts crtprec32.o crtprec64.o crtprec80.o crtfastmath.o"
  	tmake_file="${tmake_file} i386/t-crtpc i386/t-crtfm i386/t-crtstuff t-dfprules"
  	tm_file="${tm_file} i386/elf-lib.h"
+--- a/src/libgcc/config/i386/freebsd-unwind.h
++++ a/src/libgcc/config/i386/freebsd-unwind.h
+@@ -26,6 +26,8 @@
+ /* Do code reading to identify a signal frame, and set the frame
+    state data appropriately.  See unwind-dw2.c for the structs. */
+
++#ifndef inhibit_libc
++
+ #include <sys/types.h>
+ #include <signal.h>
+ #include <sys/ucontext.h>
+@@ -171,3 +171,5 @@
+   return _URC_NO_REASON;
+ }
+ #endif /* ifdef __x86_64__  */
++
++#endif /* ifndef inhibit_libc */

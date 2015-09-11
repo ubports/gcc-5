@@ -60,7 +60,7 @@ Standards-Version: 3.9.6
 ifdef(`TARGET',`dnl cross
 Build-Depends: debhelper (>= 5.0.62), DPKG_BUILD_DEP
   LIBC_BUILD_DEP, LIBC_BIARCH_BUILD_DEP
-  kfreebsd-kernel-headers (>= 0.84) [kfreebsd-any],
+  kfreebsd-kernel-headers (>= 0.84) [kfreebsd-any], linux-libc-dev [m68k],
   LIBUNWIND_BUILD_DEP LIBATOMIC_OPS_BUILD_DEP AUTO_BUILD_DEP
   SOURCE_BUILD_DEP CROSS_BUILD_DEP
   ISL_BUILD_DEP MPC_BUILD_DEP MPFR_BUILD_DEP GMP_BUILD_DEP,
@@ -71,7 +71,7 @@ Build-Depends: debhelper (>= 5.0.62), DPKG_BUILD_DEP
 Build-Depends: debhelper (>= 5.0.62), DPKG_BUILD_DEP
   GCC_MULTILIB_BUILD_DEP
   LIBC_BUILD_DEP, LIBC_BIARCH_BUILD_DEP LIBC_DBG_DEP
-  kfreebsd-kernel-headers (>= 0.84) [kfreebsd-any],
+  kfreebsd-kernel-headers (>= 0.84) [kfreebsd-any], linux-libc-dev [m68k],
   AUTO_BUILD_DEP BASE_BUILD_DEP
   libunwind7-dev (>= 0.98.5-6) [ia64], libatomic-ops-dev [ia64],
   autogen, gawk, lzma, xz-utils, patchutils,

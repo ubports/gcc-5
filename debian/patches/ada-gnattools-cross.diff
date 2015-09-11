@@ -356,7 +356,7 @@ Index: b/src/gcc/ada/gcc-interface/Makefile.in
  	test -f $(RTSDIR)/s-oscons.ads || exit 1
  # C files
  	$(MAKE) -C $(RTSDIR) \
-@@ -2795,32 +2670,47 @@ gnatlib: ../stamp-gnatlib1-$(RTSDIR) ../
+@@ -2795,32 +2670,44 @@ gnatlib: ../stamp-gnatlib1-$(RTSDIR) ../
  
  # Warning: this target assumes that LIBRARY_VERSION has been set correctly.
  gnatlib-shared-default:
@@ -413,14 +413,11 @@ Index: b/src/gcc/ada/gcc-interface/Makefile.in
 +		l=lib$${lib}$(hyphen)$(LIBRARY_VERSION)$(soext); \
 +		$(LN_S) $$l.1 $$l; \
 +	done
-+# Delete the object files, lest they be linked statically into the tools
-+# executables.  Only the .ali, .a and .so files must remain.
-+	rm -f $(RTSDIR)/*.o
 +	$(CHMOD) a-wx $(RTSDIR)/*.ali
  
  gnatlib-shared-dual:
  	$(MAKE) $(FLAGS_TO_PASS) \
-@@ -2829,17 +2719,15 @@ gnatlib-shared-dual:
+@@ -2829,17 +2716,15 @@ gnatlib-shared-dual:
  	     GNATLIBCFLAGS_FOR_C="$(GNATLIBCFLAGS_FOR_C)" \
  	     MULTISUBDIR="$(MULTISUBDIR)" \
  	     THREAD_KIND="$(THREAD_KIND)" \
@@ -441,7 +438,7 @@ Index: b/src/gcc/ada/gcc-interface/Makefile.in
  
  gnatlib-shared-dual-win32:
  	$(MAKE) $(FLAGS_TO_PASS) \
-@@ -2849,17 +2737,15 @@ gnatlib-shared-dual-win32:
+@@ -2849,17 +2734,15 @@ gnatlib-shared-dual-win32:
  	     PICFLAG_FOR_TARGET="$(PICFLAG_FOR_TARGET)" \
  	     MULTISUBDIR="$(MULTISUBDIR)" \
  	     THREAD_KIND="$(THREAD_KIND)" \
@@ -462,7 +459,7 @@ Index: b/src/gcc/ada/gcc-interface/Makefile.in
  
  # ??? we need to add the option to support auto-import of arrays/records to
  # the GNATLIBFLAGS when this will be supported by GNAT. At this point we will
-@@ -3097,6 +2983,68 @@ targext.o : targext.c
+@@ -3097,6 +2980,68 @@ targext.o : targext.c
  		$(ALL_CPPFLAGS) $(INCLUDES_FOR_SUBDIR) \
  		$< $(OUTPUT_OPTION)
  

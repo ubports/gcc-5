@@ -6,7 +6,7 @@ Index: b/src/gcc/testsuite/ada/acats/run_acats
 ===================================================================
 --- a/src/gcc/testsuite/ada/acats/run_acats
 +++ b/src/gcc/testsuite/ada/acats/run_acats
-@@ -20,52 +20,29 @@ which () {
+@@ -20,52 +20,30 @@ which () {
      return 1
  }
  
@@ -48,10 +48,11 @@ Index: b/src/gcc/testsuite/ada/acats/run_acats
 -   exit 1
 -fi
 -
-+GNATTOOLS=`cd $BASE/../gnattools; ${PWDCMD-pwd}`
-+LIBGNATVSN=`cd $BASE/../libgnatvsn; ${PWDCMD-pwd}`
-+LIBGNATPRJ=`cd $BASE/../libgnatprj; ${PWDCMD-pwd}`
  GCC_DRIVER="$BASE/xgcc"
++TARGET=`${GCC_DRIVER} -v  2>&1 |grep '^Target:' | cut -d' ' -f2`
++GNATTOOLS=`cd $BASE/../gnattools; ${PWDCMD-pwd}`
++LIBGNATVSN=`cd $BASE/../${TARGET}/libgnatvsn; ${PWDCMD-pwd}`
++LIBGNATPRJ=`cd $BASE/../${TARGET}/libgnatprj; ${PWDCMD-pwd}`
  GCC="$BASE/xgcc -B$BASE/"
  export PATH ADA_INCLUDE_PATH ADA_OBJECTS_PATH GCC_DRIVER GCC LD_LIBRARY_PATH
 -
