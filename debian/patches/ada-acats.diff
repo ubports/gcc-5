@@ -124,7 +124,7 @@ Index: b/src/gcc/testsuite/lib/gnat.exp
 ===================================================================
 --- a/src/gcc/testsuite/lib/gnat.exp
 +++ b/src/gcc/testsuite/lib/gnat.exp
-@@ -88,18 +88,24 @@ proc gnat_init { args } {
+@@ -88,18 +88,25 @@ proc gnat_init { args } {
      global GNAT_UNDER_TEST
      global TOOL_EXECUTABLE
      global gnat_target_current
@@ -141,10 +141,11 @@ Index: b/src/gcc/testsuite/lib/gnat.exp
 -	    set GNAT_UNDER_TEST "[local_find_gnatmake]"
 -	}
 -    }
++    set target [target_info name]
 +    set GNAT_UNDER_TEST "$rootme/../gnattools/gnatmake -I$rootme/ada/rts --GCC=$rootme/xgcc --GNATBIND=$rootme/../gnattools/gnatbind --GNATLINK=$rootme/../gnattools/gnatlink -cargs -B$rootme -largs --GCC=$rootme/xgcc -B$rootme -margs"
 +    append ld_library_path ":$rootme/ada/rts"
-+    append ld_library_path ":$rootme/../libgnatvsn"
-+    append ld_library_path ":$rootme/../libgnatprj"
++    append ld_library_path ":$rootme/../$target/libgnatvsn"
++    append ld_library_path ":$rootme/../$target/libgnatprj"
 +    set_ld_library_path_env_vars
 +
 +    # gnatlink looks for system.ads itself and has no --RTS option, so
@@ -156,7 +157,7 @@ Index: b/src/gcc/testsuite/lib/gnat.exp
  
      if ![info exists tmpdir] then {
  	set tmpdir /tmp
-@@ -121,31 +127,6 @@ proc gnat_target_compile { source dest t
+@@ -121,31 +128,6 @@ proc gnat_target_compile { source dest t
  	return [gcc_target_compile $source $dest $type $options]
      }
  

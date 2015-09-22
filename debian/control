@@ -302,7 +302,7 @@ Package: gcc-5-plugin-dev
 Architecture: any
 Section: devel
 Priority: optional
-Depends: gcc-5-base (= ${gcc:Version}), gcc-5 (= ${gcc:Version}), libgmp-dev (>= 2:5.0.1~), ${shlibs:Depends}, ${misc:Depends}
+Depends: gcc-5-base (= ${gcc:Version}), gcc-5 (= ${gcc:Version}), libgmp-dev (>= 2:5.0.1~), libmpc-dev (>= 1.0), ${shlibs:Depends}, ${misc:Depends}
 Description: Files for GNU GCC plugin development.
  This package contains (header) files for GNU GCC plugin development. It
  is only used for the development of GCC plugins, but not needed to run
@@ -2194,6 +2194,19 @@ Description: GNU Ada compiler
  .
  This package provides the compiler, tools and runtime library that handles
  exceptions using the default zero-cost mechanism.
+
+Package: gnat-5-sjlj
+Architecture: any
+Priority: extra
+Pre-Depends: multiarch-support
+Depends: gcc-5-base (= ${gcc:Version}), gnat-5 (= ${gnat:Version}), ${misc:Depends}
+Description: GNU Ada compiler (setjump/longjump runtime library)
+ GNAT is a compiler for the Ada programming language. It produces optimized
+ code on platforms supported by the GNU Compiler Collection (GCC).
+ .
+ This package provides an alternative runtime library that handles
+ exceptions using the setjump/longjump mechanism (as a static library
+ only).  You can install it to supplement the normal compiler.
 
 Package: libgnat-5
 Section: libs

@@ -12,9 +12,11 @@ Change-Id: I13423872e37f3ca8e0bd61e8eac4a06e8e107a2c
  gcc/cgraphunit.c | 1 +
  1 file changed, 1 insertion(+)
 
+Index: b/src/gcc/cgraphunit.c
+===================================================================
 --- a/src/gcc/cgraphunit.c
 +++ b/src/gcc/cgraphunit.c
-@@ -2543,6 +2543,7 @@ cgraph_node::create_wrapper (cgraph_node *target)
+@@ -2505,6 +2505,7 @@ cgraph_node::create_wrapper (cgraph_node
    memset (&thunk, 0, sizeof (cgraph_thunk_info));
    thunk.thunk_p = true;
    create_edge (target, NULL, count, CGRAPH_FREQ_BASE);
@@ -22,6 +24,3 @@ Change-Id: I13423872e37f3ca8e0bd61e8eac4a06e8e107a2c
  
    tree arguments = DECL_ARGUMENTS (decl);
  
--- 
-1.9.1
-

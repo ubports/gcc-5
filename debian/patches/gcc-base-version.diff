@@ -201,7 +201,7 @@ Index: b/src/gcc/configure.ac
      if test x$host != x$target; then
         libstdcxx_incdir="$target_alias/$libstdcxx_incdir"
      fi
-@@ -1691,6 +1691,7 @@
+@@ -1688,6 +1688,7 @@ changequote([,])dnl
  
  changequote(,)dnl
  gcc_BASEVER=`cat $srcdir/BASE-VER`
@@ -209,7 +209,7 @@ Index: b/src/gcc/configure.ac
  gcc_DEVPHASE=`cat $srcdir/DEV-PHASE`
  gcc_DATESTAMP=`cat $srcdir/DATESTAMP`
  if test -f $srcdir/REVISION ; then
-@@ -1701,12 +1702,12 @@
+@@ -1698,12 +1699,12 @@ fi
  cat > plugin-version.h <<EOF
  #include "configargs.h"
  

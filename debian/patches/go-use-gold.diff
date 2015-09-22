@@ -88,7 +88,7 @@ Index: b/src/gcc/configure.ac
 ===================================================================
 --- a/src/gcc/configure.ac
 +++ b/src/gcc/configure.ac
-@@ -2225,6 +2225,12 @@ if test x$gcc_cv_ld != x; then
+@@ -2226,6 +2226,12 @@ if test x$gcc_cv_ld != x; then
  fi
  AC_MSG_RESULT($ld_is_gold)
  

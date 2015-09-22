@@ -90,6 +90,9 @@ debian_patches += \
 	pr67280 \
 	pr67508 \
 	pr67143 \
+	pr67589 \
+	pr67590 \
+	pr65913 \
 
 ifeq ($(libstdcxx_abi),new)
   debian_patches += libstdc++-functexcept
@@ -171,9 +174,7 @@ ifeq ($(with_ada),yes)
   endif
   ifeq ($(with_gnatsjlj),yes)
     debian_patches += \
-	ada-acats-sjlj
-    debian_patches += \
-	ada-sjlj FIXME needs update
+	ada-sjlj
   endif
 
   debian_patches += ada-link-shlib

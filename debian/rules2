@@ -1271,17 +1271,19 @@ endif
 
 	touch $(build_stamp)
 
-ifeq ($(DEB_CROSS),yes)
+ifneq ($(build_type),build-native)
   BUILT_CC = $(CC)
   BUILT_CXX = $(CXX)
 else
   BUILT_CC = $(builddir)/gcc/xgcc -B$(builddir)/gcc/
   BUILT_CXX = $(builddir)/gcc/xg++ -B$(builddir)/gcc/ \
+	-B$(builddir)/$(TARGET_ALIAS)/libatomic/.libs \
 	-B$(builddir)/$(TARGET_ALIAS)/libstdc++-v3/src/.libs \
 	-B$(builddir)/$(TARGET_ALIAS)/libstdc++-v3/libsupc++/.libs \
 	-I$(builddir)/$(TARGET_ALIAS)/libstdc++-v3/include \
 	-I$(builddir)/$(TARGET_ALIAS)/libstdc++-v3/include/$(TARGET_ALIAS) \
 	-I$(srcdir)/libstdc++-v3/libsupc++ \
+	-L$(builddir)/$(TARGET_ALIAS)/libatomic/.libs \
 	-L$(builddir)/$(TARGET_ALIAS)/libstdc++-v3/src/.libs \
 	-L$(builddir)/$(TARGET_ALIAS)/libstdc++-v3/libsupc++/.libs
 endif

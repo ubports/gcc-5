@@ -24,11 +24,11 @@ gcc/testsuite/
 	(atomic_fetch_add_negative_RELAXED): New.
 	(atomic_fetch_sub_negative_ACQUIRE): New.
 
-Index: gcc/testsuite/gcc.target/aarch64/atomic-op-imm.c
+Index: b/src/gcc/testsuite/gcc.target/aarch64/atomic-op-imm.c
 ===================================================================
---- a/src/gcc/testsuite/gcc.target/aarch64/atomic-op-imm.c	(revision 226894)
-+++ a/src/gcc/testsuite/gcc.target/aarch64/atomic-op-imm.c	(revision 226895)
-@@ -16,6 +16,18 @@
+--- a/src/gcc/testsuite/gcc.target/aarch64/atomic-op-imm.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/atomic-op-imm.c
+@@ -16,6 +16,18 @@ atomic_fetch_sub_ACQUIRE ()
  }
  
  int
@@ -47,16 +47,16 @@ Index: gcc/testsuite/gcc.target/aarch64/atomic-op-imm.c
  atomic_fetch_and_SEQ_CST ()
  {
    return __atomic_fetch_and (&v, 4096, __ATOMIC_SEQ_CST);
-@@ -75,4 +87,4 @@
+@@ -75,4 +87,4 @@ atomic_or_fetch_CONSUME ()
    return __atomic_or_fetch (&v, 4096, __ATOMIC_CONSUME);
  }
  
 -/* { dg-final { scan-assembler-times "\tw\[0-9\]+, w\[0-9\]+, #*4096" 12 } } */
 +/* { dg-final { scan-assembler-times "\tw\[0-9\]+, w\[0-9\]+, #*4096" 14 } } */
-Index: gcc/testsuite/gcc.c-torture/compile/pr67143.c
+Index: b/src/gcc/testsuite/gcc.c-torture/compile/pr67143.c
 ===================================================================
---- a/src/gcc/testsuite/gcc.c-torture/compile/pr67143.c	(revision 0)
-+++ a/src/gcc/testsuite/gcc.c-torture/compile/pr67143.c	(revision 226895)
+--- /dev/null
++++ b/src/gcc/testsuite/gcc.c-torture/compile/pr67143.c
 @@ -0,0 +1,21 @@
 +long a, c;
 +int b;
@@ -79,11 +79,11 @@ Index: gcc/testsuite/gcc.c-torture/compile/pr67143.c
 +  for (long i; i; ++i)
 +    btr_validate_level(-i);
 +}
-Index: gcc/config/aarch64/atomics.md
+Index: b/src/gcc/config/aarch64/atomics.md
 ===================================================================
---- a/src/gcc/config/aarch64/atomics.md	(revision 226894)
-+++ a/src/gcc/config/aarch64/atomics.md	(revision 226895)
-@@ -171,7 +171,7 @@
+--- a/src/gcc/config/aarch64/atomics.md
++++ b/src/gcc/config/aarch64/atomics.md
+@@ -119,7 +119,7 @@
    [(set (match_operand:ALLI 0 "aarch64_sync_memory_operand" "+Q")
      (unspec_volatile:ALLI
        [(atomic_op:ALLI (match_dup 0)
@@ -92,7 +92,7 @@ Index: gcc/config/aarch64/atomics.md
         (match_operand:SI 2 "const_int_operand")]		;; model
        UNSPECV_ATOMIC_OP))
         (clobber (reg:CC CC_REGNUM))
-@@ -216,7 +216,7 @@
+@@ -164,7 +164,7 @@
     (set (match_dup 1)
      (unspec_volatile:ALLI
        [(atomic_op:ALLI (match_dup 1)
@@ -101,7 +101,7 @@ Index: gcc/config/aarch64/atomics.md
         (match_operand:SI 3 "const_int_operand")]		;; model
        UNSPECV_ATOMIC_OP))
     (clobber (reg:CC CC_REGNUM))
-@@ -261,7 +261,7 @@
+@@ -209,7 +209,7 @@
    [(set (match_operand:ALLI 0 "register_operand" "=&r")
      (atomic_op:ALLI
        (match_operand:ALLI 1 "aarch64_sync_memory_operand" "+Q")
@@ -110,11 +110,11 @@ Index: gcc/config/aarch64/atomics.md
     (set (match_dup 1)
      (unspec_volatile:ALLI
        [(match_dup 1) (match_dup 2)
-Index: gcc/config/aarch64/iterators.md
+Index: b/src/gcc/config/aarch64/iterators.md
 ===================================================================
---- a/src/gcc/config/aarch64/iterators.md	(revision 226894)
-+++ a/src/gcc/config/aarch64/iterators.md	(revision 226895)
-@@ -345,9 +345,6 @@
+--- a/src/gcc/config/aarch64/iterators.md
++++ b/src/gcc/config/aarch64/iterators.md
+@@ -342,9 +342,6 @@
  ;; Attribute to describe constants acceptable in logical operations
  (define_mode_attr lconst [(SI "K") (DI "L")])
  
@@ -124,7 +124,7 @@ Index: gcc/config/aarch64/iterators.md
  ;; Map a mode to a specific constraint character.
  (define_mode_attr cmode [(QI "q") (HI "h") (SI "s") (DI "d")])
  
-@@ -843,6 +840,16 @@
+@@ -845,6 +842,16 @@
     (plus "aarch64_plus_operand")
     (minus "aarch64_plus_operand")])
  

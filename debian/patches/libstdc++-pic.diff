@@ -4,7 +4,7 @@ Index: b/src/libstdc++-v3/src/Makefile.am
 ===================================================================
 --- a/src/libstdc++-v3/src/Makefile.am
 +++ b/src/libstdc++-v3/src/Makefile.am
-@@ -301,10 +301,12 @@ if GLIBCXX_BUILD_DEBUG
+@@ -310,10 +310,12 @@ if GLIBCXX_BUILD_DEBUG
  STAMP_DEBUG = build-debug
  STAMP_INSTALL_DEBUG = install-debug
  CLEAN_DEBUG = debug
@@ -17,7 +17,7 @@ Index: b/src/libstdc++-v3/src/Makefile.am
  endif
  
  # Build a debug variant.
-@@ -339,6 +341,7 @@ build-debug: stamp-debug
+@@ -348,6 +350,7 @@ build-debug: stamp-debug
  	  mv Makefile Makefile.tmp; \
  	  sed -e 's,all-local: all-once,all-local:,' \
  	      -e 's,install-data-local: install-data-once,install-data-local:,' \
@@ -25,7 +25,7 @@ Index: b/src/libstdc++-v3/src/Makefile.am
  	      -e '/vpath/!s,src/c,src/debug/c,' \
  	  < Makefile.tmp > Makefile ; \
  	  rm -f Makefile.tmp ; \
-@@ -349,3 +352,8 @@ build-debug: stamp-debug
+@@ -358,3 +361,8 @@ build-debug: stamp-debug
  install-debug: build-debug
  	(cd ${debugdir} && $(MAKE) CXXFLAGS='$(DEBUG_FLAGS)' \
  	toolexeclibdir=$(glibcxx_toolexeclibdir)/debug install) ;
@@ -38,7 +38,7 @@ Index: b/src/libstdc++-v3/src/Makefile.in
 ===================================================================
 --- a/src/libstdc++-v3/src/Makefile.in
 +++ b/src/libstdc++-v3/src/Makefile.in
-@@ -500,6 +500,8 @@ CXXLINK = \
+@@ -530,6 +530,8 @@ CXXLINK = \
  @GLIBCXX_BUILD_DEBUG_TRUE@STAMP_INSTALL_DEBUG = install-debug
  @GLIBCXX_BUILD_DEBUG_FALSE@CLEAN_DEBUG = 
  @GLIBCXX_BUILD_DEBUG_TRUE@CLEAN_DEBUG = debug
@@ -47,7 +47,7 @@ Index: b/src/libstdc++-v3/src/Makefile.in
  
  # Build a debug variant.
  # Take care to fix all possibly-relative paths.
-@@ -791,7 +793,7 @@ install-dvi: install-dvi-recursive
+@@ -828,7 +830,7 @@ install-dvi: install-dvi-recursive
  
  install-dvi-am:
  
@@ -56,7 +56,7 @@ Index: b/src/libstdc++-v3/src/Makefile.in
  
  install-html: install-html-recursive
  
-@@ -842,11 +844,11 @@ uninstall-am: uninstall-toolexeclibLTLIB
+@@ -879,11 +881,11 @@ uninstall-am: uninstall-toolexeclibLTLIB
  	distclean-libtool distclean-tags dvi dvi-am html html-am info \
  	info-am install install-am install-data install-data-am \
  	install-data-local install-dvi install-dvi-am install-exec \
@@ -73,7 +73,7 @@ Index: b/src/libstdc++-v3/src/Makefile.in
  	maintainer-clean-generic mostlyclean mostlyclean-compile \
  	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
  	tags tags-recursive uninstall uninstall-am \
-@@ -978,6 +980,7 @@ build-debug: stamp-debug
+@@ -1016,6 +1018,7 @@ build-debug: stamp-debug
  	  mv Makefile Makefile.tmp; \
  	  sed -e 's,all-local: all-once,all-local:,' \
  	      -e 's,install-data-local: install-data-once,install-data-local:,' \
@@ -81,7 +81,7 @@ Index: b/src/libstdc++-v3/src/Makefile.in
  	      -e '/vpath/!s,src/c,src/debug/c,' \
  	  < Makefile.tmp > Makefile ; \
  	  rm -f Makefile.tmp ; \
-@@ -989,6 +992,11 @@ install-debug: build-debug
+@@ -1027,6 +1030,11 @@ install-debug: build-debug
  	(cd ${debugdir} && $(MAKE) CXXFLAGS='$(DEBUG_FLAGS)' \
  	toolexeclibdir=$(glibcxx_toolexeclibdir)/debug install) ;
  

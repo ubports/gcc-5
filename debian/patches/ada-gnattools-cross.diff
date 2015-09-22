@@ -44,8 +44,8 @@ Index: b/src/gcc/ada/gcc-interface/Makefile.in
 -  ../../libcommon.a ../../../libcpp/libcpp.a $(LIBGNAT) $(LIBINTL) $(LIBICONV) \
 -  ../$(LIBBACKTRACE) ../$(LIBIBERTY) $(SYSLIBS) $(TGT_LIB)
 +
-+TOOLS_LIBS = ../link.o ../targext.o ../../ggc-none.o ../../version.o ../../errors.o ../../../libiberty/pic/lrealpath.o \
-+      ../../libbackend.a ../$(LIBBACKTRACE) ../../libcommon-target.a ../$(LIBIBERTY) ../../libcommon.a ../../../libcpp/libcpp.a
++TOOLS_LIBS = ../link.o ../targext.o ../../ggc-none.o ../../version.o ../../../libiberty/pic/lrealpath.o \
++      ../../libbackend.a ../../libcommon-target.a ../../libcommon.a ../../../libcpp/libcpp.a ../$(LIBBACKTRACE) ../$(LIBIBERTY) -lstdc++
 +
 +ifeq ($(host),$(target))
 +  TOOLS_LIBS +=  -L../$(RTSDIR) -lgnat-5 \

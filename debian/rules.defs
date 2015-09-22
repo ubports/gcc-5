@@ -561,7 +561,7 @@ ifneq (,$(filter $(distrelease),trusty))
   ada_no_cpus += arm64
 endif
 ada_no_systems	:= 
-ada_no_cross	:= yes
+ada_no_cross	:= no
 ada_no_snap	:= no
 ifeq ($(single_package),yes)
   ada_no_cpus += m68k powerpcspe sh4 sparc64
@@ -637,7 +637,7 @@ endif
 ifeq ($(with_ada),yes)
   enabled_languages += ada
   with_libgnat := yes
-  with_gnatsjlj := disabled # FIXME
+  with_gnatsjlj := yes
 endif
 
 # C++ -------------------------

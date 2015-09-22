@@ -1,3 +1,17 @@
+gcc-5 (5.2.1-18) unstable; urgency=medium
+
+  * Update to SVN 20150922 (r228023, 5.2.1) from the gcc-5-branch.
+
+  [ Matthias Klose ]
+  * gcc-5-plugin-dev: Depend on libmpc-dev. Closes: #798997.
+  * Fix PR libstdc++/65913, taken from the trunk. Closes: #797577.
+
+  [ YunQiang Su ]
+  * Build again the gnat-5-sjlj package. Closes: #798782.
+  * Fix gnat cross builds, and cross building gnat.
+
+ -- Matthias Klose <doko@debian.org>  Tue, 22 Sep 2015 23:15:17 +0200
+
 gcc-5 (5.2.1-17) unstable; urgency=medium
 
   * Update to SVN 20150911 (r227671, 5.2.1) from the gcc-5-branch.

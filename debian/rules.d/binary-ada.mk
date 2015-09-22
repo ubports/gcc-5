@@ -26,7 +26,7 @@ else
 endif
 
 p_gnat	= gnat-$(GNAT_VERSION)$(cross_bin_arch)
-p_gnsjlj= gnat-$(GNAT_VERSION)-sjlj$(cross_bin_arch)
+p_gnatsjlj= gnat-$(GNAT_VERSION)-sjlj$(cross_bin_arch)
 p_lgnat	= libgnat-$(GNAT_VERSION)$(cross_lib_arch)
 p_lgnat_dbg = libgnat-$(GNAT_VERSION)-dbg$(cross_lib_arch)
 p_lgnatvsn = libgnatvsn$(GNAT_VERSION)$(cross_lib_arch)
@@ -39,6 +39,7 @@ p_gnatd	= $(p_gnat)-doc
 
 d_gbase	= debian/$(p_gbase)
 d_gnat	= debian/$(p_gnat)
+d_gnatsjlj	= debian/$(p_gnatsjlj)
 d_lgnat	= debian/$(p_lgnat)
 d_lgnatvsn = debian/$(p_lgnatvsn)
 d_lgnatprj = debian/$(p_lgnatprj)
@@ -48,7 +49,7 @@ GNAT_TOOLS = gnat gnatbind gnatchop gnatclean gnatfind gnatkr gnatlink \
 	     gnatls gnatmake gnatname gnatprep gnatxref gnathtml
 
 ifeq ($(with_gnatsjlj),yes)
-	rts_subdir = rts-native/
+	rts_subdir = 
 endif
 
 dirs_gnat = \
@@ -62,12 +63,6 @@ files_gnat = \
 	$(gcc_lexec_dir)/gnat1 \
 	$(gcc_lib_dir)/{adalib,adainclude} \
 	$(foreach i,$(GNAT_TOOLS),$(PF)/bin/$(cmd_prefix)$(i)$(pkg_ver))
-
-ifeq ($(with_gnatsjlj),yes)
-files_gnat += \
-	$(gcc_lib_dir)/$(rts_subdir)
-endif
-# rts-sjlj moved to a separate package
 
 dirs_lgnat = \
 	$(docdir) \
@@ -294,16 +289,8 @@ endif
 	dh_movefiles -p$(p_gnat) $(files_gnat)
 
 ifeq ($(with_gnatsjlj),yes)
-	dh_installdirs -p$(p_gnsjlj) $(gcc_lib_dir)
-	dh_movefiles -p$(p_gnsjlj) $(gcc_lib_dir)/rts-sjlj
-	dh_link -p$(p_gnsjlj) \
-	   $(gcc_lib_dir)/rts-sjlj usr/share/ada/adainclude/rts-sjlj
-	dh_link -p$(p_gnsjlj) \
-	   $(gcc_lib_dir)/rts-sjlj/adalib/libgnat.a \
-	   $(gcc_lib_dir)/rts-sjlj/adalib/libgnat-$(GNAT_VERSION).a
-	dh_link -p$(p_gnsjlj) \
-	   $(gcc_lib_dir)/rts-sjlj/adalib/libgnarl.a \
-	   $(gcc_lib_dir)/rts-sjlj/adalib/libgnarl-$(GNAT_VERSION).a
+	dh_installdirs -p$(p_gnatsjlj) $(gcc_lib_dir)
+	dh_movefiles -p$(p_gnatsjlj) $(gcc_lib_dir)/rts-sjlj/adalib $(gcc_lib_dir)/rts-sjlj/adainclude
 endif
 
 ifeq ($(with_libgnat),yes)
@@ -321,7 +308,7 @@ ifeq ($(with_libgnat),yes)
 endif
 	debian/dh_doclink -p$(p_gnat)      $(p_gbase)
 ifeq ($(with_gnatsjlj),yes)
-	debian/dh_doclink -p$(p_gnsjlj) $(p_gbase)
+	debian/dh_doclink -p$(p_gnatsjlj) $(p_gbase)
 endif
 ifeq ($(PKGSOURCE),gnat-$(BASE_VERSION))
   ifeq ($(with_check),yes)
@@ -410,17 +397,16 @@ endif
 	dh_builddeb -p$(p_gnat)
 
 ifeq ($(with_gnatsjlj),yes)
-	dh_strip -p$(p_gnsjlj)
-	dh_compress -p$(p_gnsjlj)
-	dh_fixperms -p$(p_gnsjlj)
-	find $(d_gnat)-sjlj -name '*.ali' | xargs chmod 444
-	$(cross_shlibdeps) dh_shlibdeps -p$(p_gnsjlj)
-	$(cross_gencontrol) dh_gencontrol -p$(p_gnsjlj) \
+	dh_strip -p$(p_gnatsjlj)
+	dh_compress -p$(p_gnatsjlj)
+	dh_fixperms -p$(p_gnatsjlj)
+	find $(d_gnatsjlj) -name '*.ali' | xargs chmod 444
+	$(cross_makeshlibs) dh_shlibdeps -p$(p_gnatsjlj)
+	dh_gencontrol -p$(p_gnatsjlj) \
 		-- -v$(DEB_VERSION) $(common_substvars)
-	$(call cross_mangle_control,$(p_gnsjlj))
-	dh_installdeb -p$(p_gnsjlj)
-	dh_md5sums -p$(p_gnsjlj)
-	dh_builddeb -p$(p_gnsjlj)
+	dh_installdeb -p$(p_gnatsjlj)
+	dh_md5sums -p$(p_gnatsjlj)
+	dh_builddeb -p$(p_gnatsjlj)
 endif
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)

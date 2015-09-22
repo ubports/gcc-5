@@ -112,7 +112,7 @@ Index: b/src/gcc/config.gcc
 ===================================================================
 --- a/src/gcc/config.gcc
 +++ b/src/gcc/config.gcc
-@@ -2032,6 +2032,10 @@ mips*-*-linux*)				# Linux MIPS, either
+@@ -2038,6 +2038,10 @@ mips*-*-linux*)				# Linux MIPS, either
  			default_mips_arch=mips64r2
  			enable_mips_multilibs="yes"
  			;;
@@ -123,7 +123,7 @@ Index: b/src/gcc/config.gcc
  		mips64*-*-linux* | mipsisa64*-*-linux*)
  			default_mips_abi=n32
  			enable_mips_multilibs="yes"
-@@ -4241,7 +4245,7 @@ case ${target} in
+@@ -4247,7 +4251,7 @@ case ${target} in
  	i[34567]86-*-darwin* | x86_64-*-darwin*)
  		;;
  	i[34567]86-*-linux* | x86_64-*-linux*)

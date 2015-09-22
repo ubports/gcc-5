@@ -807,7 +807,7 @@ Package: gcc`'PV-plugin-dev`'TS
 Architecture: any
 Section: devel
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
-Depends: BASEDEP, gcc`'PV`'TS (= ${gcc:Version}), GMP_BUILD_DEP ${shlibs:Depends}, ${misc:Depends}
+Depends: BASEDEP, gcc`'PV`'TS (= ${gcc:Version}), GMP_BUILD_DEP MPC_BUILD_DEP ${shlibs:Depends}, ${misc:Depends}
 BUILT_USING`'dnl
 Description: Files for GNU GCC plugin development.
  This package contains (header) files for GNU GCC plugin development. It
@@ -4866,7 +4866,7 @@ Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
 ifdef(`MULTIARCH', `Multi-Arch: same
 Pre-Depends: multiarch-support
 ')`'dnl
-Priority: PRI(optional)
+Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASELDEP, ${shlibs:Depends}, ${misc:Depends}
 BUILT_USING`'dnl
 Description: runtime for applications compiled with GNAT (shared library)
@@ -4919,7 +4919,7 @@ Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
 ifdef(`MULTIARCH', `Multi-Arch: same
 Pre-Depends: multiarch-support
 ')`'dnl
-Priority: PRI(optional)
+Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Section: ifdef(`TARGET',`devel',`libs')
 Depends: BASEDEP, libgnat`'-GNAT_V`'LS (= ${gnat:Version}), ${misc:Depends}
 BUILT_USING`'dnl
@@ -4980,7 +4980,7 @@ Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
 ifdef(`MULTIARCH', `Multi-Arch: same
 Pre-Depends: multiarch-support
 ')`'dnl
-Priority: PRI(optional)
+Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Section: ifdef(`TARGET',`devel',`libs')
 Depends: BASEDEP, libgnat`'-GNAT_V`'LS (= ${gnat:Version}), libgnatvsn`'GNAT_V`'LS (= ${gnat:Version}), ${misc:Depends}
 BUILT_USING`'dnl
