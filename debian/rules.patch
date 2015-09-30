@@ -41,7 +41,7 @@ debian_patches += \
 
 debian_patches += \
 	gcc-textdomain \
-	gcc-driver-extra-langs
+	gcc-driver-extra-langs$(if $(with_linaro_branch),-linaro)
 
 ifneq (,$(filter $(distrelease),etch lenny squeeze wheezy dapper hardy intrepid jaunty karmic lucid))
   debian_patches += gcc-hash-style-both
@@ -89,10 +89,11 @@ debian_patches += \
 	pr66368 \
 	pr67280 \
 	pr67508 \
-	pr67143 \
 	pr67589 \
 	pr67590 \
 	pr65913 \
+	pr67707 \
+	armv8-fix_slt_lda_missing_conditional_code \
 
 ifeq ($(libstdcxx_abi),new)
   debian_patches += libstdc++-functexcept
@@ -282,7 +283,7 @@ debian_patches += libjava-fixed-symlinks
 
 debian_patches += libffi-ro-eh_frame_sect
 
-debian_patches += gcc-multiarch$(if $(with_linaro_branch),-linaro)
+debian_patches += gcc-multiarch
 ifeq ($(with_multiarch_lib),yes)
   ifneq ($(single_package),yes)
     debian_patches += libjava-multiarch
@@ -315,6 +316,10 @@ endif
 ifeq ($(DEB_TARGET_ARCH),mipsel)
   debian_patches += mips-fix-loongson2f-nop
 endif
+ifneq (,$(filter $(DEB_TARGET_ARCH), mips64 mips64el))
+  debian_patches += pr67736
+endif
+
 debian_patches += libgomp-kfreebsd-testsuite
 debian_patches += go-testsuite
 # FIXME: Still relevant?

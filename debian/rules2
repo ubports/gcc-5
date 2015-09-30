@@ -396,7 +396,7 @@ endif
 
 ifneq (,$(findstring powerpc64le-linux,$(DEB_TARGET_GNU_TYPE)))
     CONFARGS += --enable-secureplt
-    ifneq (,$(filter $(distrelease),jessie stretch sid trusty utopic vivid))
+    ifneq (,$(filter $(distrelease),jessie trusty utopic vivid))
       CONFARGS += --with-cpu=power7 --with-tune=power8
     else
       CONFARGS += --with-cpu=power8
@@ -531,6 +531,12 @@ endif
 
 ifneq (,$(findstring m68k-linux,$(DEB_TARGET_GNU_TYPE)))
   CONFARGS += --disable-multilib
+endif
+
+ifeq ($(derivative),Ubuntu)
+  ifneq (,$(findstring s390x-linux,$(DEB_TARGET_GNU_TYPE)))
+    CONFARGS += --with-arch=zEC12
+  endif
 endif
 
 ifeq ($(DEB_TARGET_ARCH_OS),linux)
@@ -1251,7 +1257,7 @@ else
 	  echo $$? > status; \
 	) 2>&1 | tee bootstrap-protocol
 	s=`cat status`; rm -f status; \
-	if [ $$s -ne 0 ] && [ -z "$$NO_CONFIG_LOG_DUMP" ]; then \
+	if [ $$s -ne 0 ] && [ -z "$$NO_CONFIG_LOG_DUMP$$NO_CONFIG_LOG_DUMPS" ]; then \
 	  for log in $$(find $(builddir) -name config.log); do \
 	    case "$$log" in */prev-*) continue; esac; \
 	    echo LOGFILE START $$log; \

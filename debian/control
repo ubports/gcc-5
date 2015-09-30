@@ -43,7 +43,7 @@ Priority: required
 Depends: gcc-5-base (= ${gcc:Version}), ${shlibs:Depends}, ${misc:Depends}
 Provides: libgcc1-armel [armel], libgcc1-armhf [armhf]
 Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Breaks: ${multiarch:breaks}
 Description: GCC support library
  Shared version of the support library, a library of internal subroutines
@@ -66,7 +66,7 @@ Section: libs
 Priority: required
 Depends: gcc-5-base (= ${gcc:Version}), ${shlibs:Depends}, ${misc:Depends}
 Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Breaks: ${multiarch:breaks}
 Description: GCC support library
  Shared version of the support library, a library of internal subroutines
@@ -101,7 +101,7 @@ Description: GCC support library (development files)
 Package: libgcc4
 Architecture: hppa
 Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Breaks: ${multiarch:breaks}
 Section: libs
 Priority: required
@@ -371,7 +371,7 @@ Section: libs
 Architecture: any
 Provides: libgomp1-armel [armel], libgomp1-armhf [armhf]
 Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Breaks: ${multiarch:breaks}
 Priority: optional
 Depends: gcc-5-base (= ${gcc:Version}), ${shlibs:Depends}, ${misc:Depends}
@@ -466,7 +466,7 @@ Section: libs
 Architecture: any
 Provides: libitm1-armel [armel], libitm1-armhf [armhf]
 Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Priority: optional
 Depends: gcc-5-base (= ${gcc:Version}), ${shlibs:Depends}, ${misc:Depends}
 Description: GNU Transactional Memory Library
@@ -574,7 +574,7 @@ Section: libs
 Architecture: any
 Provides: libatomic1-armel [armel], libatomic1-armhf [armhf]
 Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Priority: optional
 Depends: gcc-5-base (= ${gcc:Version}), ${shlibs:Depends}, ${misc:Depends}
 Description: support library providing __atomic built-in functions
@@ -670,7 +670,7 @@ Section: libs
 Architecture: any
 Provides: libasan2-armel [armel], libasan2-armhf [armhf]
 Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Priority: optional
 Depends: gcc-5-base (= ${gcc:Version}), ${shlibs:Depends}, ${misc:Depends}
 Description: AddressSanitizer -- a fast memory error detector
@@ -767,7 +767,7 @@ Package: liblsan0
 Section: libs
 Architecture: any
 Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Priority: optional
 Depends: gcc-5-base (= ${gcc:Version}), ${shlibs:Depends}, ${misc:Depends}
 Description: LeakSanitizer -- a memory leak detector (runtime)
@@ -866,7 +866,7 @@ Section: libs
 Architecture: any
 Provides: libtsan0-armel [armel], libtsan0-armhf [armhf]
 Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Priority: optional
 Depends: gcc-5-base (= ${gcc:Version}), ${shlibs:Depends}, ${misc:Depends}
 Description: ThreadSanitizer -- a Valgrind-based detector of data races (runtime)
@@ -889,7 +889,7 @@ Section: libs
 Architecture: any
 Provides: libubsan0-armel [armel], libubsan0-armhf [armhf]
 Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Priority: optional
 Depends: gcc-5-base (= ${gcc:Version}), ${shlibs:Depends}, ${misc:Depends}
 Description: UBSan -- undefined behaviour sanitizer (runtime)
@@ -997,7 +997,7 @@ Section: libs
 Architecture: any
 Provides: libcilkrts5-armel [armel], libcilkrts5-armhf [armhf]
 Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Priority: optional
 Depends: gcc-5-base (= ${gcc:Version}), ${shlibs:Depends}, ${misc:Depends}
 Description: Intel Cilk Plus language extensions (runtime)
@@ -1075,7 +1075,7 @@ Section: libs
 Architecture: any
 Provides: libmpx0-armel [armel], libmpx0-armhf [armhf]
 Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Priority: optional
 Depends: gcc-5-base (= ${gcc:Version}), ${shlibs:Depends}, ${misc:Depends}
 Description: Intel memory protection extensions (runtime)
@@ -1146,7 +1146,7 @@ Package: libquadmath0
 Section: libs
 Architecture: any
 Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Priority: optional
 Depends: gcc-5-base (= ${gcc:Version}), ${shlibs:Depends}, ${misc:Depends}
 Description: GCC Quad-Precision Math Library
@@ -1247,7 +1247,7 @@ Package: libcc1-0
 Section: libs
 Architecture: any
 Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Priority: optional
 Depends: gcc-5-base (= ${gcc:Version}), ${shlibs:Depends}, ${misc:Depends}
 Description: GCC cc1 plugin for GDB
@@ -1257,7 +1257,7 @@ Package: libgccjit0
 Section: libs
 Architecture: any
 Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Priority: optional
 Depends: gcc-5-base (= ${gcc:Version}), ${shlibs:Depends}, ${misc:Depends}
 Breaks: python-gccjit (<< 0.4-4), python3-gccjit (<< 0.4-4)
@@ -1269,7 +1269,7 @@ Package: libgccjit-5-dev
 Section: libdevel
 Architecture: any
 Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Priority: optional
 Depends: gcc-5-base (= ${gcc:Version}), libgccjit0 (= ${gcc:Version}),
  ${shlibs:Depends}, ${misc:Depends}
@@ -1282,7 +1282,7 @@ Package: libgccjit-5-dbg
 Section: debug
 Architecture: any
 Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Priority: extra
 Depends: gcc-5-base (= ${gcc:Version}), libgccjit0 (= ${gcc:Version}),
  ${shlibs:Depends}, ${misc:Depends}
@@ -1396,7 +1396,7 @@ Section: libs
 Architecture: any
 Provides: libobjc4-armel [armel], libobjc4-armhf [armhf]
 Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Priority: optional
 Depends: gcc-5-base (= ${gcc:Version}), ${shlibs:Depends}, ${misc:Depends}
 Description: Runtime library for GNU Objective-C applications
@@ -1551,7 +1551,7 @@ Section: libs
 Architecture: any
 Provides: libgfortran3-armel [armel], libgfortran3-armhf [armhf]
 Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Breaks: ${multiarch:breaks}
 Priority: optional
 Depends: gcc-5-base (= ${gcc:Version}), ${shlibs:Depends}, ${misc:Depends}
@@ -1672,7 +1672,7 @@ Section: libs
 Architecture: any
 Provides: libgo7-armel [armel], libgo7-armhf [armhf]
 Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Priority: optional
 Depends: gcc-5-base (= ${gcc:Version}), ${shlibs:Depends}, ${misc:Depends}
 Replaces: libgo3
@@ -1779,10 +1779,14 @@ Architecture: any
 Priority: optional
 Depends: gcc-5-base (= ${gcc:Version}), ${dep:gcj}, ${dep:gcjcross}, ${dep:libcdev}, ${dep:ecj}, ${shlibs:Depends}, dpkg (>= 1.15.4) | install-info, ${misc:Depends}
 Recommends: libecj-java-gcj
+Replaces: gcj-5-jdk (<< 5.2.1-19)
+Suggests: gcj-5-jdk
 Description: GCJ byte code and native compiler for Java(TM)
  GCJ is a front end to the GCC compiler which can natively compile both
  Java(tm) source and bytecode files. The compiler can also generate class
  files.
+ .
+ Install the gcj-5-jdk package for a more complete SDK environment.
 
 Package: gcj-5-jdk
 Section: java
@@ -1839,7 +1843,7 @@ Package: libgcj16
 Section: libs
 Architecture: any
 Priority: optional
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Multi-Arch: same
 Depends: gcc-5-base (>= ${gcc:SoftVersion}), libgcj-common (>= 1:4.1.1-21), ${shlibs:Depends}, ${misc:Depends}
 Recommends: gcj-5-jre-lib (>= ${gcj:SoftVersion})
@@ -1864,7 +1868,7 @@ Package: libgcj16-awt
 Section: libs
 Architecture: any
 Priority: optional
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Multi-Arch: same
 Depends: gcc-5-base (>= ${gcc:SoftVersion}), libgcj16 (= ${gcj:Version}), ${shlibs:Depends}, ${misc:Depends}
 Suggests: ${pkg:gcjqt}
@@ -1889,7 +1893,7 @@ Package: libgcj16-dbg
 Section: debug
 Architecture: any
 Priority: extra
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Multi-Arch: same
 Depends: gcc-5-base (= ${gcc:Version}), libgcj16 (= ${gcj:Version}), ${misc:Depends}
 Recommends: binutils, libc6-dbg | libc-dbg
@@ -1926,7 +1930,7 @@ Priority: important
 Depends: gcc-5-base (= ${gcc:Version}), ${dep:libc}, ${shlibs:Depends}, ${misc:Depends}
 Provides: libstdc++6-armel [armel], libstdc++6-armhf [armhf]
 Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Breaks: ${multiarch:breaks}, libantlr-dev (<= 2.7.7+dfsg-6), libaqsis1 (<= 1.8.2-1), libassimp3 (<= 3.0~dfsg-4), blockattack (<= 1.4.1+ds1-2.1+b2), boo (<= 0.9.5~git20110729.r1.202a430-2), libboost-date-time1.54.0, libboost-date-time1.55.0, libcpprest2.4 (<= 2.4.0-2), printer-driver-brlaser (<= 3-3), c++-annotations (<= 10.2.0-1), clustalx (<= 2.1+lgpl-3), libdavix0 (<= 0.4.0-1+b1), libdballe6 (<= 6.8-1), dff (<= 1.3.0+dfsg.1-4.1+b3), libdiet-sed2.8 (<= 2.8.0-1+b3), libdiet-client2.8 (<= 2.8.0-1+b3), libdiet-admin2.8 (<= 2.8.0-1+b3), digikam-private-libs (<= 4:4.4.0-1.1+b2), emscripten (<= 1.22.1-1), ergo (<= 3.4.0-1), fceux (<= 2.2.2+dfsg0-1), flush (<= 0.9.12-3.1), libfreefem++ (<= 3.37.1-1), freeorion (<= 0.4.4+git20150327-2), fslview (<= 4.0.1-4), fwbuilder (<= 5.1.0-4), libgazebo5 (<= 5.0.1+dfsg-2.1), libgetfem4++ (<= 4.2.1~beta1~svn4635~dfsg-3+b1), libgmsh2 (<= 2.9.3+dfsg1-1), gnote (<= 3.16.2-1), gnudatalanguage (<= 0.9.5-2+b2), python-healpy (<= 1.8.1-1+b1), innoextract (<= 1.4-1+b1), libinsighttoolkit4.7 (<= 4.7.2-2), libdap17 (<= 3.14.0-2), libdapclient6 (<= 3.14.0-2), libdapserver7 (<= 3.14.0-2), libkolabxml1 (<= 1.1.0-3), libpqxx-4.0 (<= 4.0.1+dfsg-3), libreoffice-core (<= 1:4.4.5-2), librime1 (<= 1.2+dfsg-2), libwibble-dev (<= 1.1-1), lightspark (<= 0.7.2+git20150512-2+b1), libmarisa0 (<= 0.2.4-8), mira-assembler (<= 4.9.5-1), mongodb (<= 1:2.4.14-2), mongodb-server (<= 1:2.4.14-2), ncbi-blast+ (<= 2.2.30-4), libogre-1.8.0 (<= 1.8.0+dfsg1-7+b1), libogre-1.9.0 (<= 1.9.0+dfsg1-4), openscad (<= 2014.03+dfsg-1+b1), libopenwalnut1 (<= 1.4.0~rc1+hg3a3147463ee2-1+b1), passepartout (<= 0.7.1-1.1), pdf2djvu (<= 0.7.21-2), photoprint (<= 0.4.2~pre2-2.3+b2), plastimatch (<= 1.6.2+dfsg-1), plee-the-bear (<= 0.6.0-3.1), povray (<= 1:3.7.0.0-8), powertop (<= 2.6.1-1), psi4 (<= 4.0~beta5+dfsg-2+b1), python3-taglib (<= 0.3.6+dfsg-2+b2), realtimebattle (<= 1.0.8-14), ruby-passenger (<= 5.0.7-1), libapache2-mod-passenger (<= 5.0.7-1), schroot (<= 1.6.10-1+b1), sqlitebrowser (<= 3.5.1-3), tecnoballz (<= 0.93.1-6), wesnoth-1.12-core (<= 1:1.12.4-1), widelands (<= 1:18-3+b1), libwreport2 (<= 2.14-1), xflr5 (<= 6.09.06-2), libxmltooling6 (<= 1.5.3-2.1), libchemps2-1 (<= 1.5-1), python-fiona (<= 1.5.1-2), python3-fiona (<= 1.5.1-2), fiona (<= 1.5.1-2), python-guiqwt (<= 2.3.1-1), python-htseq (<= 0.5.4p3-2), python-imposm (<= 2.5.0-3+b2), python-pysph (<= 0~20150606.gitfa26de9-5), python3-taglib (<= 0.3.6+dfsg-2+b2), python-scipy (<= 0.14.1-1), python3-scipy (<= 0.14.1-1), python-sfml (<= 2.2~git20150611.196c88+dfsg-1+b1), python3-sfml (<= 2.2~git20150611.196c88+dfsg-1+b1), python-rasterio (<= 0.24.0-1), 
 Conflicts: scim (<< 1.4.2-1)
 Replaces: libstdc++6-5-dbg (<< 4.9.0-3)
@@ -2172,7 +2176,7 @@ Description: GNU Standard C++ Library v3 (documentation files)
 Package: gnat-5
 Architecture: any
 Priority: optional
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Depends: gcc-5-base (= ${gcc:Version}), gcc-5 (>= ${gcc:SoftVersion}), ${dep:libgnat}, ${dep:libcdev}, ${shlibs:Depends}, ${misc:Depends}
 Suggests: gnat-5-doc, ada-reference-manual-2012, gnat-5-sjlj
 Breaks:   gnat (<< 4.6.1), dh-ada-library (<< 6.0), gnat-4.6-base (= 4.6.4-2),
@@ -2198,7 +2202,7 @@ Description: GNU Ada compiler
 Package: gnat-5-sjlj
 Architecture: any
 Priority: extra
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Depends: gcc-5-base (= ${gcc:Version}), gnat-5 (= ${gnat:Version}), ${misc:Depends}
 Description: GNU Ada compiler (setjump/longjump runtime library)
  GNAT is a compiler for the Ada programming language. It produces optimized
@@ -2212,7 +2216,7 @@ Package: libgnat-5
 Section: libs
 Architecture: any
 Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Priority: optional
 Depends: gcc-5-base (= ${gcc:Version}), ${shlibs:Depends}, ${misc:Depends}
 Description: runtime for applications compiled with GNAT (shared library)
@@ -2228,7 +2232,7 @@ Package: libgnat-5-dbg
 Section: debug
 Architecture: any
 Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Priority: extra
 Depends: gcc-5-base (= ${gcc:Version}), libgnat-5 (= ${gnat:Version}), ${misc:Depends}
 Description: runtime for applications compiled with GNAT (debugging symbols)
@@ -2260,10 +2264,11 @@ Description: GNU Ada compiler selected components (development files)
 Package: libgnatvsn5
 Architecture: any
 Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Priority: optional
 Section: libs
-Depends: gcc-5-base (= ${gcc:Version}), libgnat-5 (= ${gnat:Version}), ${misc:Depends}
+Depends: gcc-5-base (= ${gcc:Version}), libgnat-5 (= ${gnat:Version}),
+ ${shlibs:Depends}, ${misc:Depends}
 Description: GNU Ada compiler selected components (shared library)
  GNAT is a compiler for the Ada programming language. It produces optimized
  code on platforms supported by the GNU Compiler Collection (GCC).
@@ -2277,7 +2282,7 @@ Description: GNU Ada compiler selected components (shared library)
 Package: libgnatvsn5-dbg
 Architecture: any
 Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Priority: extra
 Section: debug
 Depends: gcc-5-base (= ${gcc:Version}), libgnatvsn5 (= ${gnat:Version}), ${misc:Depends}
@@ -2316,10 +2321,12 @@ Description: GNU Ada compiler Project Manager (development files)
 Package: libgnatprj5
 Architecture: any
 Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Priority: optional
 Section: libs
-Depends: gcc-5-base (= ${gcc:Version}), libgnat-5 (= ${gnat:Version}), libgnatvsn5 (= ${gnat:Version}), ${misc:Depends}
+Depends: gcc-5-base (= ${gcc:Version}), libgnat-5 (= ${gnat:Version}),
+ libgnatvsn5 (= ${gnat:Version}),
+ ${shlibs:Depends}, ${misc:Depends}
 Description: GNU Ada compiler Project Manager (shared library)
  GNAT is a compiler for the Ada programming language. It produces optimized
  code on platforms supported by the GNU Compiler Collection (GCC).
@@ -2336,7 +2343,7 @@ Description: GNU Ada compiler Project Manager (shared library)
 Package: libgnatprj5-dbg
 Architecture: any
 Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Priority: extra
 Section: debug
 Depends: gcc-5-base (= ${gcc:Version}), libgnatprj5 (= ${gnat:Version}), ${misc:Depends}

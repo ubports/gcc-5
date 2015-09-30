@@ -98,7 +98,7 @@ Index: b/src/libgnatprj/Makefile.in
 +
 +# These object files have already been built, both PIC and non-PIC.
 +# prefix.o depends on them.
-+LIBIBERTY_OBJECTS := concat.o filename_cmp.o safe-ctype.o xexit.o xmalloc.o xstrdup.o
++LIBIBERTY_OBJECTS := concat.o filename_cmp.o lrealpath.o safe-ctype.o xexit.o xmalloc.o xstrdup.o
 +
 +vpath %.c @srcdir@ @srcdir@/../gcc @srcdir@/../gcc/common @srcdir@/../gcc/ada
 +

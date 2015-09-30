@@ -1,31 +1,10 @@
 # DP : Don't add the __LINARO_RELEASE__ and __LINARO_SPIN__ macros for distro builds.
 
-Index: b/src/gcc/ChangeLog.linaro
-===================================================================
---- a/src/gcc/ChangeLog.linaro
-+++ b/src/gcc/ChangeLog.linaro
-@@ -3,16 +3,6 @@
- 	GCC Linaro 4.9-2014.11 released.
- 	* LINARO-VERSION: Update.
- 
--2014-11-14  Yvan Roux  <yvan.roux@linaro.org>
--
--	Add Linaro release macros (Linaro only patch.)
--
--	* Makefile.in (LINAROVER, LINAROVER_C, LINAROVER_S): Define.
--	(CFLAGS-cppbuiltin.o): Add LINAROVER macro definition.
--	(cppbuiltin.o): Depend on $(LINAROVER).
--	* cppbuiltin.c (parse_linarover): New.
--	(define_GNUC__): Define __LINARO_RELEASE__ and __LINARO_SPIN__ macros.
--
- 2014-11-13  Yvan Roux  <yvan.roux@linaro.org>
- 
- 	Backport from trunk r216229, r216230.
 Index: b/src/gcc/cppbuiltin.c
 ===================================================================
 --- a/src/gcc/cppbuiltin.c
 +++ b/src/gcc/cppbuiltin.c
-@@ -53,41 +53,18 @@ parse_basever (int *major, int *minor, i
+@@ -62,41 +62,18 @@ parse_basever (int *major, int *minor, i
      *patchlevel = s_patchlevel;
  }
  
@@ -72,7 +51,7 @@ Index: b/src/gcc/Makefile.in
 ===================================================================
 --- a/src/gcc/Makefile.in
 +++ b/src/gcc/Makefile.in
-@@ -814,12 +814,10 @@ BASEVER     := $(srcdir)/BASE-VER  # 4.x
+@@ -810,12 +810,10 @@ BASEVER     := $(srcdir)/BASE-VER  # 4.x
  DEVPHASE    := $(srcdir)/DEV-PHASE # experimental, prerelease, ""
  DATESTAMP   := $(srcdir)/DATESTAMP # YYYYMMDD or empty
  REVISION    := $(srcdir)/REVISION  # [BRANCH revision XXXXXX]
@@ -85,15 +64,15 @@ Index: b/src/gcc/Makefile.in
  
  ifeq (,$(wildcard $(REVISION)))
  REVISION_c  :=
-@@ -840,7 +838,6 @@ DEVPHASE_s  := "\"$(if $(DEVPHASE_c), ($
- DATESTAMP_s := "\"$(if $(DEVPHASE_c), $(DATESTAMP_c))\""
+@@ -842,7 +840,6 @@ DATESTAMP_s := \
+   "\"$(if $(DEVPHASE_c)$(filter-out 0,$(PATCHLEVEL_c)), $(DATESTAMP_c))\""
  PKGVERSION_s:= "\"@PKGVERSION@\""
  BUGURL_s    := "\"@REPORT_BUGS_TO@\""
 -LINAROVER_s := "\"$(LINAROVER_c)\""
  
  PKGVERSION  := @PKGVERSION@
  BUGURL_TEXI := @REPORT_BUGS_TEXI@
-@@ -2545,9 +2542,8 @@ PREPROCESSOR_DEFINES = \
+@@ -2622,9 +2619,8 @@ PREPROCESSOR_DEFINES = \
    -DSTANDARD_EXEC_PREFIX=\"$(libdir)/gcc/\" \
    @TARGET_SYSTEM_ROOT_DEFINE@
  
@@ -105,3 +84,22 @@ Index: b/src/gcc/Makefile.in
  
  CFLAGS-cppdefault.o += $(PREPROCESSOR_DEFINES)
  
+Index: b/src/gcc/LINARO-VERSION
+===================================================================
+--- a/src/gcc/LINARO-VERSION
++++ /dev/null
+@@ -1 +0,0 @@
+-5.1-2015.07~dev
+Index: b/src/gcc/configure.ac
+===================================================================
+--- a/src/gcc/configure.ac
++++ b/src/gcc/configure.ac
+@@ -862,7 +862,7 @@ AC_ARG_WITH(specs,
+ )
+ AC_SUBST(CONFIGURE_SPECS)
+ 
+-ACX_PKGVERSION([Linaro GCC `cat $srcdir/LINARO-VERSION`])
++ACX_PKGVERSION([GCC])
+ ACX_BUGURL([http://gcc.gnu.org/bugs.html])
+ 
+ # Sanity check enable_languages in case someone does not run the toplevel

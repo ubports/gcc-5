@@ -45,18 +45,6 @@ Index: b/src/gcc/go/go-gcc.cc
  // An expression as a statement.
  
  Bstatement*
-Index: b/src/gcc/go/Make-lang.in
-===================================================================
---- a/src/gcc/go/Make-lang.in
-+++ b/src/gcc/go/Make-lang.in
-@@ -198,6 +198,7 @@ go.uninstall:
- go.mostlyclean:
- 	-rm -f go/*$(objext)
- 	-rm -f go/*$(coverageexts)
-+	-rm -f gccgo$(exeext) gccgo-cross$(exeext) go1$(exeext)
- go.clean:
- go.distclean:
- go.maintainer-clean:
 Index: b/src/gcc/go/gofrontend/gogo.h
 ===================================================================
 --- a/src/gcc/go/gofrontend/gogo.h

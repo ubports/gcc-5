@@ -87,6 +87,13 @@ files_gcj = \
 	$(PF)/bin/$(cmd_prefix)gcj$(pkg_ver) \
 	$(gcc_lexec_dir)/{ecj1,jc1,jvgenmain}
 
+# FIXME: this really should be included, or else the cross compiler
+# can only be used to build libjava itself.
+ifneq (,$(filter $(build_type), build-native cross-build-native))
+  files_gcj += \
+	$(PF)/$(libdir)/libgcj.spec
+endif
+
 ifneq ($(GFDL_INVARIANT_FREE),yes)
   files_gcj += \
 	$(PF)/share/man/man1/$(cmd_prefix)gcj$(pkg_ver).1
@@ -107,7 +114,6 @@ files_jdk = \
 	$(gcc_lib_dir)/include/{jawt.h,jawt_md.h} \
 	$(gcc_lib_dir)/include/gcj/libgcj-config.h \
 	$(PF)/$(libdir)/lib{gij,gcj,gcj-tools}.so \
-	$(PF)/$(libdir)/libgcj.spec \
 	$(jvm_dir)/include \
 	$(jvm_dir)/bin/{appletviewer,jar,jarsigner,javadoc,javah,native2ascii,rmic,serialver} \
 	$(PF)/lib/jvm-exports
@@ -277,6 +283,9 @@ ifeq ($(DEB_CROSS),yes)
 		$(d)/$(gcc_lib_dir)/ecj1
 endif
 	DH_COMPAT=2 dh_movefiles -p$(p_gcj)  $(files_gcj)
+ifneq (,$(filter $(build_type), build-native cross-build-native))
+	mv $(d_gcj)/$(PF)/$(libdir)/libgcj.spec $(d_gcj)/$(gcc_lib_dir)/
+endif
 
 ifneq (,$(filter $(DEB_HOST_ARCH), arm armel))
 	ln -sf ../../ecj1 $(d_gcj)/$(gcc_lexec_dir)/ecj1
@@ -619,8 +628,6 @@ endif
 	done
 
 	install -m755 debian/jdb.sh $(d_jdk)/$(jvm_dir)/bin/jdb
-
-	mv $(d_jdk)/$(PF)/$(libdir)/libgcj.spec $(d_jdk)/$(gcc_lib_dir)/
 
 	install -m 755 $(d)/$(PF)/$(libdir)/libgcj_bc.so.1 \
 		$(d_jdk)/$(gcc_lib_dir)/libgcj_bc.so

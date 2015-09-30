@@ -238,7 +238,7 @@ Priority: ifdef(`TARGET',`extra',required)
 Depends: BASELDEP, ${shlibs:Depends}, ${misc:Depends}
 Provides: ifdef(`TARGET',`libgcc1-TARGET-dcv1',`libgcc1-armel [armel], libgcc1-armhf [armhf]')
 ifdef(`MULTIARCH', `Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Breaks: ${multiarch:breaks}
 ')`'dnl
 BUILT_USING`'dnl
@@ -278,7 +278,7 @@ Depends: BASELDEP, ${shlibs:Depends}, ${misc:Depends}
 ifdef(`TARGET',`Provides: libgcc2-TARGET-dcv1
 ')`'dnl
 ifdef(`MULTIARCH', `Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Breaks: ${multiarch:breaks}
 ')`'dnl
 BUILT_USING`'dnl
@@ -333,7 +333,7 @@ ifenabled(`lib4gcc',`
 Package: libgcc4`'LS
 Architecture: ifdef(`TARGET',`CROSS_ARCH',`hppa')
 ifdef(`MULTIARCH', `Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Breaks: ${multiarch:breaks}
 ')`'dnl
 Section: ifdef(`TARGET',`devel',`libs')
@@ -719,7 +719,7 @@ ifenabled(`libgmath',`
 Package: libgccmath`'GCCMATH_SO`'LS
 Architecture: i386
 ifdef(`MULTIARCH', `Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 ')`'dnl
 Section: libs
 Priority: PRI(optional)
@@ -915,7 +915,7 @@ ifenabled(`ssp',`
 Package: libssp`'SSP_SO`'LS
 Architecture: any
 ifdef(`MULTIARCH', `Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 ')`'dnl
 Section: libs
 Priority: PRI(optional)
@@ -1006,7 +1006,7 @@ Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
 ifdef(`TARGET',`',`Provides: libgomp'GOMP_SO`-armel [armel], libgomp'GOMP_SO`-armhf [armhf]
 ')`'dnl
 ifdef(`MULTIARCH', `Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Breaks: ${multiarch:breaks}
 ')`'dnl
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
@@ -1180,7 +1180,7 @@ Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
 ifdef(`TARGET',`',`Provides: libitm'ITM_SO`-armel [armel], libitm'ITM_SO`-armhf [armhf]
 ')`'dnl
 ifdef(`MULTIARCH', `Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 ')`'dnl
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASELDEP, ${shlibs:Depends}, ${misc:Depends}
@@ -1370,7 +1370,7 @@ Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
 ifdef(`TARGET',`',`Provides: libatomic'ATOMIC_SO`-armel [armel], libatomic'ATOMIC_SO`-armhf [armhf]
 ')`'dnl
 ifdef(`MULTIARCH', `Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 ')`'dnl
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASELDEP, ${shlibs:Depends}, ${misc:Depends}
@@ -1545,7 +1545,7 @@ Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
 ifdef(`TARGET',`',`Provides: libasan'ASAN_SO`-armel [armel], libasan'ASAN_SO`-armhf [armhf]
 ')`'dnl
 ifdef(`MULTIARCH', `Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 ')`'dnl
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASELDEP, ${shlibs:Depends}, ${misc:Depends}
@@ -1718,7 +1718,7 @@ Package: liblsan`'LSAN_SO`'LS
 Section: ifdef(`TARGET',`devel',`libs')
 Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
 ifdef(`MULTIARCH', `Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 ')`'dnl
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASELDEP, ${shlibs:Depends}, ${misc:Depends}
@@ -1897,7 +1897,7 @@ Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
 ifdef(`TARGET',`',`Provides: libtsan'TSAN_SO`-armel [armel], libtsan'TSAN_SO`-armhf [armhf]
 ')`'dnl
 ifdef(`MULTIARCH', `Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 ')`'dnl
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASELDEP, ${shlibs:Depends}, ${misc:Depends}
@@ -2076,7 +2076,7 @@ Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
 ifdef(`TARGET',`',`Provides: libubsan'UBSAN_SO`-armel [armel], libubsan'UBSAN_SO`-armhf [armhf]
 ')`'dnl
 ifdef(`MULTIARCH', `Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 ')`'dnl
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASELDEP, ${shlibs:Depends}, ${misc:Depends}
@@ -2270,7 +2270,7 @@ Package: libvtv`'VTV_SO`'LS
 Section: ifdef(`TARGET',`devel',`libs')
 Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
 ifdef(`MULTIARCH', `Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 ')`'dnl
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASELDEP, ${shlibs:Depends}, ${misc:Depends}
@@ -2479,7 +2479,7 @@ Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
 ifdef(`TARGET',`',`Provides: libcilkrts'CILKRTS_SO`-armel [armel], libcilkrts'CILKRTS_SO`-armhf [armhf]
 ')`'dnl
 ifdef(`MULTIARCH', `Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 ')`'dnl
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASELDEP, ${shlibs:Depends}, ${misc:Depends}
@@ -2660,7 +2660,7 @@ Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
 ifdef(`TARGET',`',`Provides: libmpx'MPX_SO`-armel [armel], libmpx'MPX_SO`-armhf [armhf]
 ')`'dnl
 ifdef(`MULTIARCH', `Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 ')`'dnl
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASELDEP, ${shlibs:Depends}, ${misc:Depends}
@@ -2854,7 +2854,7 @@ Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
 ifdef(`TARGET',`',`Provides: libbacktrace'BTRACE_SO`-armel [armel], libbacktrace'BTRACE_SO`-armhf [armhf]
 ')`'dnl
 ifdef(`MULTIARCH', `Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 ')`'dnl
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASELDEP, ${shlibs:Depends}, ${misc:Depends}
@@ -3028,7 +3028,7 @@ Package: libquadmath`'QMATH_SO`'LS
 Section: ifdef(`TARGET',`devel',`libs')
 Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
 ifdef(`MULTIARCH', `Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 ')`'dnl
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASELDEP, ${shlibs:Depends}, ${misc:Depends}
@@ -3189,7 +3189,7 @@ Package: libcc1-`'CC1_SO
 Section: ifdef(`TARGET',`devel',`libs')
 Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
 ifdef(`MULTIARCH', `Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 ')`'dnl
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASEDEP, ${shlibs:Depends}, ${misc:Depends}
@@ -3203,7 +3203,7 @@ Package: libgccjit`'GCCJIT_SO
 Section: ifdef(`TARGET',`devel',`libs')
 Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
 ifdef(`MULTIARCH', `Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 ')`'dnl
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASEDEP, ${shlibs:Depends}, ${misc:Depends}
@@ -3217,7 +3217,7 @@ Package: libgccjit`'PV-dev
 Section: ifdef(`TARGET',`devel',`libdevel')
 Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
 ifdef(`MULTIARCH', `Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 ')`'dnl
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASEDEP, libgccjit`'GCCJIT_SO (= ${gcc:Version}),
@@ -3232,7 +3232,7 @@ Package: libgccjit`'PV-dbg
 Section: debug
 Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
 ifdef(`MULTIARCH', `Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 ')`'dnl
 Priority: extra
 Depends: BASEDEP, libgccjit`'GCCJIT_SO (= ${gcc:Version}),
@@ -3399,7 +3399,7 @@ Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
 ifdef(`TARGET',`',`Provides: libobjc'OBJC_SO`-armel [armel], libobjc'OBJC_SO`-armhf [armhf]
 ')`'dnl
 ifdef(`MULTIARCH', `Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 ifelse(OBJC_SO,`2',`Breaks: ${multiarch:breaks}
 ',`')')`'dnl
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
@@ -3687,7 +3687,7 @@ Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
 ifdef(`TARGET',`',`Provides: libgfortran'FORTRAN_SO`-armel [armel], libgfortran'FORTRAN_SO`-armhf [armhf]
 ')`'dnl
 ifdef(`MULTIARCH', `Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Breaks: ${multiarch:breaks}
 ')`'dnl
 Priority: ifdef(`TARGET',`extra',PRI(optional))
@@ -3854,7 +3854,7 @@ Package: libgfortran`'FORTRAN_SO-neon`'LS
 Section: libs
 Architecture: NEON_ARCHS
 ifdef(`MULTIARCH', `Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Breaks: ${multiarch:breaks}
 ')`'dnl
 Priority: extra
@@ -3918,7 +3918,7 @@ Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
 ifdef(`TARGET',`',`Provides: libgo'GO_SO`-armel [armel], libgo'GO_SO`-armhf [armhf]
 ')`'dnl
 ifdef(`MULTIARCH', `Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 ')`'dnl
 Priority: ifdef(`TARGET',`extra',PRI(optional))
 Depends: BASELDEP, ${shlibs:Depends}, ${misc:Depends}
@@ -4050,11 +4050,17 @@ Architecture: any
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASEDEP, ${dep:gcj}, ${dep:gcjcross}, ${dep:libcdev}, ${dep:ecj}, ${shlibs:Depends}, dpkg (>= 1.15.4) | install-info, ${misc:Depends}
 Recommends: libecj-java-gcj
+Replaces: gcj-5-jdk (<< 5.2.1-19)
+Suggests: gcj`'PV-jdk
 BUILT_USING`'dnl
 Description: GCJ byte code and native compiler for Java(TM)
  GCJ is a front end to the GCC compiler which can natively compile both
  Java(tm) source and bytecode files. The compiler can also generate class
  files.
+ .
+ifdef(`TARGET',`'dnl
+,` Install the gcj`'PV`'TS-jdk package for a more complete SDK environment.
+')`'dnl
 ')`'dnl gcj
 
 ifenabled(`libgcj',`
@@ -4130,7 +4136,7 @@ Package: libgcj`'LIBGCJ_EXT`'LS
 Section: libs
 Architecture: any
 Priority: PRI(optional)
-ifdef(`MULTIARCH', `Pre-Depends: multiarch-support
+ifdef(`MULTIARCH', `Pre-Depends: ${misc:Pre-Depends}
 Multi-Arch: same
 ')`'dnl
 Depends: SOFTBASEDEP, libgcj-common (>= 1:4.1.1-21), ${shlibs:Depends}, ${misc:Depends}
@@ -4159,7 +4165,7 @@ Package: libgcj-bc
 Section: java
 Architecture: any
 Priority: PRI(optional)
-ifdef(`MULTIARCH', `Pre-Depends: multiarch-support
+ifdef(`MULTIARCH', `Pre-Depends: ${misc:Pre-Depends}
 Multi-Arch: same
 ')`'dnl
 Depends: BASEDEP, libdep(gcj`'LIBGCJ_EXT,,>=,${gcj:Version}), ${misc:Depends}
@@ -4175,7 +4181,7 @@ Package: libgcj`'LIBGCJ_EXT-awt`'LS
 Section: libs
 Architecture: any
 Priority: PRI(optional)
-ifdef(`MULTIARCH', `Pre-Depends: multiarch-support
+ifdef(`MULTIARCH', `Pre-Depends: ${misc:Pre-Depends}
 Multi-Arch: same
 ')`'dnl
 Depends: SOFTBASEDEP, libdep(gcj`'LIBGCJ_EXT,,=,${gcj:Version}), ${shlibs:Depends}, ${misc:Depends}
@@ -4191,7 +4197,7 @@ Package: libgcj`'GCJ_SO-awt-gtk`'LS
 Section: libs
 Architecture: any
 Priority: PRI(optional)
-ifdef(`MULTIARCH', `Pre-Depends: multiarch-support
+ifdef(`MULTIARCH', `Pre-Depends: ${misc:Pre-Depends}
 Multi-Arch: same
 ')`'dnl
 Depends: SOFTBASEDEP, libgcj`'LIBGCJ_EXT-awt`'LS (= ${gcj:Version}), ${shlibs:Depends}, ${misc:Depends}
@@ -4206,7 +4212,7 @@ Package: libgcj`'GCJ_SO-awt-qt`'LS
 Section: libs
 Architecture: any
 Priority: PRI(optional)
-ifdef(`MULTIARCH', `Pre-Depends: multiarch-support
+ifdef(`MULTIARCH', `Pre-Depends: ${misc:Pre-Depends}
 Multi-Arch: same
 ')`'dnl
 Depends: SOFTBASEDEP, libdep(gcj`'LIBGCJ_EXT-awt,,=,${gcj:Version}), ${shlibs:Depends}, ${misc:Depends}
@@ -4236,7 +4242,7 @@ Package: libgcj`'GCJ_SO-dbg`'LS
 Section: debug
 Architecture: any
 Priority: extra
-ifdef(`MULTIARCH', `Pre-Depends: multiarch-support
+ifdef(`MULTIARCH', `Pre-Depends: ${misc:Pre-Depends}
 Multi-Arch: same
 ')`'dnl
 Depends: BASEDEP, libdep(gcj`'LIBGCJ_EXT,,=,${gcj:Version}), ${misc:Depends}
@@ -4285,7 +4291,7 @@ Priority: ifdef(`TARGET',`extra',PRI(important))
 Depends: BASELDEP, ${dep:libc}, ${shlibs:Depends}, ${misc:Depends}
 Provides: ifdef(`TARGET',`libstdc++CXX_SO-TARGET-dcv1',`libstdc++'CXX_SO`-armel [armel], libstdc++'CXX_SO`-armhf [armhf]')
 ifdef(`MULTIARCH', `Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Breaks: ${multiarch:breaks}, PR66145BREAKS
 ')`'dnl
 Conflicts: scim (<< 1.4.2-1)
@@ -4817,7 +4823,7 @@ ifenabled(`ada',`
 Package: gnat`'-GNAT_V`'TS
 Architecture: any
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
-ifdef(`MULTIARCH', `Pre-Depends: multiarch-support
+ifdef(`MULTIARCH', `Pre-Depends: ${misc:Pre-Depends}
 ')`'dnl
 Depends: BASEDEP, gcc`'PV`'TS (>= ${gcc:SoftVersion}), ${dep:libgnat}, ${dep:libcdev}, ${shlibs:Depends}, ${misc:Depends}
 Suggests: gnat`'PV-doc, ada-reference-manual-2012, gnat`'-GNAT_V-sjlj
@@ -4846,7 +4852,7 @@ ifenabled(`adasjlj',`
 Package: gnat`'-GNAT_V-sjlj`'TS
 Architecture: any
 Priority: extra
-ifdef(`MULTIARCH', `Pre-Depends: multiarch-support
+ifdef(`MULTIARCH', `Pre-Depends: ${misc:Pre-Depends}
 ')`'dnl
 Depends: BASEDEP, gnat`'-GNAT_V`'TS (= ${gnat:Version}), ${misc:Depends}
 BUILT_USING`'dnl
@@ -4864,7 +4870,7 @@ Package: libgnat`'-GNAT_V`'LS
 Section: ifdef(`TARGET',`devel',`libs')
 Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
 ifdef(`MULTIARCH', `Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 ')`'dnl
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASELDEP, ${shlibs:Depends}, ${misc:Depends}
@@ -4882,7 +4888,7 @@ Package: libgnat`'-GNAT_V-dbg`'LS
 Section: debug
 Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
 ifdef(`MULTIARCH', `Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 ')`'dnl
 Priority: extra
 Depends: BASELDEP, libgnat`'-GNAT_V`'LS (= ${gnat:Version}), ${misc:Depends}
@@ -4900,7 +4906,7 @@ Package: libgnatvsn`'GNAT_V-dev`'LS
 Section: libdevel
 Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
 Priority: extra
-Depends: BASEDEP, gnat`'PV`'LS (= ${gnat:Version}),
+Depends: BASELDEP, gnat`'PV`'LS (= ${gnat:Version}),
  libgnatvsn`'GNAT_V`'LS (= ${gnat:Version}), ${misc:Depends}
 Conflicts: libgnatvsn-dev (<< `'GNAT_V), libgnatvsn4.1-dev, libgnatvsn4.3-dev, libgnatvsn4.4-dev, libgnatvsn4.5-dev, libgnatvsn4.6-dev
 BUILT_USING`'dnl
@@ -4917,11 +4923,12 @@ Description: GNU Ada compiler selected components (development files)
 Package: libgnatvsn`'GNAT_V`'LS
 Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
 ifdef(`MULTIARCH', `Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 ')`'dnl
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Section: ifdef(`TARGET',`devel',`libs')
-Depends: BASEDEP, libgnat`'-GNAT_V`'LS (= ${gnat:Version}), ${misc:Depends}
+Depends: BASELDEP, libgnat`'-GNAT_V`'LS (= ${gnat:Version}),
+ ${shlibs:Depends}, ${misc:Depends}
 BUILT_USING`'dnl
 Description: GNU Ada compiler selected components (shared library)
  GNAT is a compiler for the Ada programming language. It produces optimized
@@ -4936,11 +4943,11 @@ Description: GNU Ada compiler selected components (shared library)
 Package: libgnatvsn`'GNAT_V-dbg`'LS
 Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
 ifdef(`MULTIARCH', `Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 ')`'dnl
 Priority: extra
 Section: debug
-Depends: BASEDEP, libgnatvsn`'GNAT_V`'LS (= ${gnat:Version}), ${misc:Depends}
+Depends: BASELDEP, libgnatvsn`'GNAT_V`'LS (= ${gnat:Version}), ${misc:Depends}
 Suggests: gnat
 BUILT_USING`'dnl
 Description: GNU Ada compiler selected components (debugging symbols)
@@ -4957,7 +4964,7 @@ Package: libgnatprj`'GNAT_V-dev`'LS
 Section: libdevel
 Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
 Priority: extra
-Depends: BASEDEP, gnat`'PV`'TS (= ${gnat:Version}),
+Depends: BASELDEP, gnat`'PV`'TS (= ${gnat:Version}),
  libgnatprj`'GNAT_V`'LS (= ${gnat:Version}),
  libgnatvsn`'GNAT_V-dev`'LS (= ${gnat:Version}), ${misc:Depends}
 Conflicts: libgnatprj-dev (<< `'GNAT_V), libgnatprj4.1-dev, libgnatprj4.3-dev, libgnatprj4.4-dev, libgnatprj4.5-dev, libgnatprj4.6-dev
@@ -4978,11 +4985,13 @@ Description: GNU Ada compiler Project Manager (development files)
 Package: libgnatprj`'GNAT_V`'LS
 Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
 ifdef(`MULTIARCH', `Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 ')`'dnl
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Section: ifdef(`TARGET',`devel',`libs')
-Depends: BASEDEP, libgnat`'-GNAT_V`'LS (= ${gnat:Version}), libgnatvsn`'GNAT_V`'LS (= ${gnat:Version}), ${misc:Depends}
+Depends: BASELDEP, libgnat`'-GNAT_V`'LS (= ${gnat:Version}),
+ libgnatvsn`'GNAT_V`'LS (= ${gnat:Version}),
+ ${shlibs:Depends}, ${misc:Depends}
 BUILT_USING`'dnl
 Description: GNU Ada compiler Project Manager (shared library)
  GNAT is a compiler for the Ada programming language. It produces optimized
@@ -5000,11 +5009,11 @@ Description: GNU Ada compiler Project Manager (shared library)
 Package: libgnatprj`'GNAT_V-dbg`'LS
 Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
 ifdef(`MULTIARCH', `Multi-Arch: same
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 ')`'dnl
 Priority: extra
 Section: debug
-Depends: BASEDEP, libgnatprj`'GNAT_V`'LS (= ${gnat:Version}), ${misc:Depends}
+Depends: BASELDEP, libgnatprj`'GNAT_V`'LS (= ${gnat:Version}), ${misc:Depends}
 Suggests: gnat
 BUILT_USING`'dnl
 Description: GNU Ada compiler Project Manager (debugging symbols)

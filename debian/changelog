@@ -1,3 +1,28 @@
+gcc-5 (5.2.1-19) unstable; urgency=medium
+
+  * Update to SVN 20150930 (r228302, 5.2.1) from the gcc-5-branch.
+    - Fix PR ipa/66424. Closes: #800318.
+
+  [ Matthias Klose ]
+  * Update the Linaro support to the 5-2015.09 snapshot.
+  * Fix PR libstdc++/67707, taken from the trunk. LP: #1499564.
+  * Ship libgcj.spec in gcj-5 instead of gcj-5-jdk. Closes: #800010.
+  * gcj-5: Suggest gcj-5-jdk.
+  * Fix base dependency for ada cross library packages.
+  * Add ${shlibs:Depends} for libgnatvsn and libgnatprj.
+  * Link lrealpath.o into libgnatprj. Closes: #800045.
+  * libgnat{svn,prj}-dev: For cross builds, move adainclude and adalib files
+    into the gcc libdir.
+  * Default to POWER8 on ppc64el.
+  * armv8: Fix slt lda missing conditional code (taken from the trunk).
+  * Fix lintian pre-depends-directly-on-multiarch-support warnings.
+
+  [ Aurelien Jarno ]
+  * Apply proposed patch for PR rtl-optimization/67736 when building for
+    mips64 or mips64el. Closes: #800321.
+
+ -- Matthias Klose <doko@debian.org>  Wed, 30 Sep 2015 20:36:50 +0200
+
 gcc-5 (5.2.1-18) unstable; urgency=medium
 
   * Update to SVN 20150922 (r228023, 5.2.1) from the gcc-5-branch.
