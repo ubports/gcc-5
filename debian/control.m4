@@ -76,7 +76,7 @@ Build-Depends: debhelper (>= 5.0.62), DPKG_BUILD_DEP
   libunwind7-dev (>= 0.98.5-6) [ia64], libatomic-ops-dev [ia64],
   autogen, gawk, lzma, xz-utils, patchutils,
   zlib1g-dev, SDT_BUILD_DEP
-  BINUTILS_BUILD_DEP, binutils-hppa64 (>= BINUTILSBDV) [hppa],
+  BINUTILS_BUILD_DEP, binutils-hppa64-linux-gnu (>= BINUTILSBDV) [hppa],
   gperf (>= 3.0.1), bison (>= 1:2.3), flex, gettext,
   gdb,
   texinfo (>= 4.3), locales, sharutils,
@@ -4906,7 +4906,7 @@ Package: libgnatvsn`'GNAT_V-dev`'LS
 Section: libdevel
 Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
 Priority: extra
-Depends: BASELDEP, gnat`'PV`'LS (= ${gnat:Version}),
+Depends: BASELDEP, gnat`'PV`'TS (= ${gnat:Version}),
  libgnatvsn`'GNAT_V`'LS (= ${gnat:Version}), ${misc:Depends}
 Conflicts: libgnatvsn-dev (<< `'GNAT_V), libgnatvsn4.1-dev, libgnatvsn4.3-dev, libgnatvsn4.4-dev, libgnatvsn4.5-dev, libgnatvsn4.6-dev
 BUILT_USING`'dnl

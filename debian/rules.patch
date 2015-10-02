@@ -93,7 +93,6 @@ debian_patches += \
 	pr67590 \
 	pr65913 \
 	pr67707 \
-	armv8-fix_slt_lda_missing_conditional_code \
 
 ifeq ($(libstdcxx_abi),new)
   debian_patches += libstdc++-functexcept
