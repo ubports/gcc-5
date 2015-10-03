@@ -1,15 +1,16 @@
 ifeq ($(with_separate_gnat),yes)
   $(lib_binaries) += gnatbase
 endif
+
+ifeq ($(with_libgnat),yes)
+  $(lib_binaries) += libgnat libgnatvsn libgnatprj
+endif
+
 arch_binaries := $(arch_binaries) ada
 ifneq ($(DEB_CROSS),yes)
   ifneq ($(GFDL_INVARIANT_FREE),yes)
     indep_binaries := $(indep_binaries) ada-doc
   endif
-endif
-
-ifeq ($(with_libgnat),yes)
-  $(lib_binaries) += libgnat libgnatvsn libgnatprj
 endif
 
 p_gbase		= $(p_xbase)
@@ -401,7 +402,10 @@ endif
 	dh_compress -p$(p_gnat)
 	dh_fixperms -p$(p_gnat)
 	find $(d_gnat) -name '*.ali' | xargs chmod 444
-	$(cross_makeshlibs) dh_shlibdeps -p$(p_gnat)
+	$(cross_shlibdeps) dh_shlibdeps -p$(p_gnat) \
+		$(call shlibdirs_to_search, \
+			$(p_lgcc) $(p_lgnat) $(p_lgnatvsn) $(p_lgnatprj) \
+		,)
 	dh_gencontrol -p$(p_gnat) -- -v$(DEB_VERSION) $(common_substvars)
 	dh_installdeb -p$(p_gnat)
 	dh_md5sums -p$(p_gnat)

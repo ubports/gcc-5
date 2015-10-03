@@ -92,7 +92,6 @@ debian_patches += \
 	pr67589 \
 	pr67590 \
 	pr65913 \
-	pr67707 \
 
 ifeq ($(libstdcxx_abi),new)
   debian_patches += libstdc++-functexcept
