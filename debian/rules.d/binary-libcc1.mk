@@ -15,7 +15,7 @@ $(binary_stamp)-libcc1: $(install_dependencies)
 	dh_installdirs -p$(p_cc1) \
 		$(docdir) \
 		$(usr_lib)
-	DH_COMPAT=2 dh_movefiles -p$(p_cc1) \
+	$(dh_compat2) dh_movefiles -p$(p_cc1) \
 		$(usr_lib)/libcc1.so.*
 
 	debian/dh_doclink -p$(p_cc1) $(p_xbase)

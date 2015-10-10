@@ -1,3 +1,24 @@
+gcc-5 (5.2.1-22) unstable; urgency=medium
+
+  * Update to SVN 20151010 (r228681, 5.2.1) from the gcc-5-branch.
+    - Fix PR libstdc++/65913, PR libstdc++/67173, PR libstdc++/67747,
+      PR c/67730, PR middle-end/67563, PR lto/67699, PR tree-optimization/67821,
+      PR debug/58315.
+
+  [ Matthias Klose ]
+  * Restore the work around for PR libstdc++/65913, still needed at least
+    for powerpc.
+  * Rename gcc-5-hppa64 to gcc-5-hppa64-linux-gnu, update (build) dependency
+    on binutils. Closes: #800563.
+  * Adjust setting DH_COMPAT for dh_movefiles with updated debhelper supporting
+    globbing of arguments. Closes: #800250.
+  * Build-depend on gnat-5 instead of gnat-4.9.
+
+  [ Aurelien Jarno ]
+  * Do not Use --with-mips-plt on mips and mipsel. Closes: #799811.
+
+ -- Matthias Klose <doko@debian.org>  Sat, 10 Oct 2015 22:17:09 +0200
+
 gcc-5 (5.2.1-21) unstable; urgency=medium
 
   * Update to SVN 20151003 (r228449, 5.2.1) from the gcc-5-branch.

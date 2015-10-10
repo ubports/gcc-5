@@ -9,6 +9,9 @@
 include debian/rules.defs
 include debian/rules.parameters
 
+dh_compat2 := $(shell dpkg --compare-versions "$$(dpkg-query -f '$${Version}' -W debhelper)" lt 9.20150811ubuntu2 \
+			&& echo DH_COMPAT=2)
+
 # some tools
 SHELL	= /bin/bash -e		# brace expansion in rules file
 IR	= install -m 644	# Install regular file
@@ -591,7 +594,6 @@ ifneq (,$(filter $(DEB_TARGET_ARCH), amd64 i386 hurd-i386 kfreebsd-i386 kfreebsd
 endif
 
 ifneq (,$(findstring mips-linux,$(DEB_TARGET_GNU_TYPE)))
-  CONFARGS += --with-mips-plt
   CONFARGS += --with-arch-32=mips32r2 --with-fp-32=xx
   ifeq ($(multilib),yes)
     ifeq ($(biarchn32)-$(biarch64),yes-yes)
@@ -602,7 +604,6 @@ ifneq (,$(findstring mips-linux,$(DEB_TARGET_GNU_TYPE)))
 endif
 
 ifneq (,$(findstring mipsel-linux,$(DEB_TARGET_GNU_TYPE)))
-  CONFARGS += --with-mips-plt
   CONFARGS += --with-arch-32=mips2 --with-tune-32=mips32r2 --with-fp-32=xx
   ifeq ($(multilib),yes)
     ifeq ($(biarchn32)-$(biarch64),yes-yes)
@@ -614,7 +615,6 @@ endif
 
 #FIXME: howto for mipsn32?
 ifneq (,$(findstring mips64el-linux-gnuabin32,$(DEB_TARGET_GNU_TYPE)))
-  CONFARGS += --with-mips-plt
   ifeq ($(multilib),yes)
     ifeq ($(biarchn32)-$(biarch32),yes-yes)
       CONFARGS += --enable-targets=all
@@ -625,7 +625,6 @@ ifneq (,$(findstring mips64el-linux-gnuabin32,$(DEB_TARGET_GNU_TYPE)))
 endif
 
 ifneq (,$(findstring mips64-linux-gnuabin32,$(DEB_TARGET_GNU_TYPE)))
-  CONFARGS += --with-mips-plt
   ifeq ($(multilib),yes)
     ifeq ($(biarchn32)-$(biarch32),yes-yes)
       CONFARGS += --enable-targets=all
@@ -1842,7 +1841,7 @@ else
   p_gcc  = gcc$(pkg_ver)$(cross_bin_arch)
   p_cxx  = g++$(pkg_ver)$(cross_bin_arch)
 endif
-p_hppa64 = gcc$(pkg_ver)-hppa64
+p_hppa64 = gcc$(pkg_ver)-hppa64-linux-gnu
 
 d	= debian/tmp
 d_base	= debian/$(p_base)

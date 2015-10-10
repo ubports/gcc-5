@@ -29,11 +29,11 @@ $(binary_stamp)-libgccjit: $(install_jit_stamp)
 
 	dh_installdirs -p$(p_jitdbg)
 
-	DH_COMPAT=2 dh_movefiles -p$(p_jitlib) \
+	$(dh_compat2) dh_movefiles -p$(p_jitlib) \
 		$(usr_lib)/libgccjit.so.*
 	rm -f $(d)/$(usr_lib)/libgccjit.so
 
-	DH_COMPAT=2 dh_movefiles -p$(p_jitdev) \
+	$(dh_compat2) dh_movefiles -p$(p_jitdev) \
 		$(gcc_lib_dir)/include/libgccjit*.h
 	dh_link -p$(p_jitdev) \
 		$(usr_lib)/libgccjit.so.$(GCCJIT_SONAME) $(gcc_lib_dir)/libgccjit.so
@@ -68,7 +68,7 @@ $(binary_stamp)-libgccjitdoc: $(install_jit_stamp)
 	dh_installdirs -p$(p_jitdoc) \
 		$(PF)/share/info
 
-	DH_COMPAT=2 dh_movefiles -p$(p_jitdoc) \
+	$(dh_compat2) dh_movefiles -p$(p_jitdoc) \
 		$(PF)/share/info/libgccjit*
 
 	debian/dh_doclink -p$(p_jitdoc) $(p_base)

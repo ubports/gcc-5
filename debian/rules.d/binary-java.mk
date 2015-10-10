@@ -282,7 +282,7 @@ ifeq ($(DEB_CROSS),yes)
 	ln -sf ../../../gcc/$(DEB_HOST_GNU_TYPE)/$(BASE_VERSION)/ecj1 \
 		$(d)/$(gcc_lib_dir)/ecj1
 endif
-	DH_COMPAT=2 dh_movefiles -p$(p_gcj)  $(files_gcj)
+	$(dh_compat2) dh_movefiles -p$(p_gcj)  $(files_gcj)
 ifneq (,$(filter $(build_type), build-native cross-build-native))
 	mv $(d_gcj)/$(PF)/$(libdir)/libgcj.spec $(d_gcj)/$(gcc_lib_dir)/
 endif
@@ -327,7 +327,7 @@ $(binary_stamp)-libgcjjar: $(install_stamp)
 	mv $(install_stamp) $(install_stamp)-tmp
 
 	dh_installdirs -p$(p_jar) $(dirs_jar)
-	DH_COMPAT=2 dh_movefiles -p$(p_jar) $(files_jar)
+	$(dh_compat2) dh_movefiles -p$(p_jar) $(files_jar)
 
 	ln -sf libgcj-$(BASE_VERSION).jar \
 		$(d_jar)/$(PF)/share/java/libgcj-$(GCC_VERSION).jar
@@ -440,14 +440,14 @@ $(binary_stamp)-java: $(install_stamp)
 	dh_installdirs -p$(p_jlib)  $(dirs_jlib)
 	dh_installdirs -p$(p_jlibx) $(dirs_jlibx)
 
-	DH_COMPAT=2 dh_movefiles -p$(p_jrehl)   $(files_jrehl)
-	DH_COMPAT=2 dh_movefiles -p$(p_jlib)  $(files_jlib)
-	DH_COMPAT=2 dh_movefiles -p$(p_jlibx) $(files_jlibx)
+	$(dh_compat2) dh_movefiles -p$(p_jrehl)   $(files_jrehl)
+	$(dh_compat2) dh_movefiles -p$(p_jlib)  $(files_jlib)
+	$(dh_compat2) dh_movefiles -p$(p_jlibx) $(files_jlibx)
 #ifneq (,$(findstring gtk, $(java_awt_peers)))
-#	DH_COMPAT=2 dh_movefiles -p$(p_jgtk) $(files_jgtk)
+#	$(dh_compat2) dh_movefiles -p$(p_jgtk) $(files_jgtk)
 #endif
 #ifneq (,$(findstring qt, $(java_awt_peers)))
-#	DH_COMPAT=2 dh_movefiles -p$(p_jqt) $(files_jqt)
+#	$(dh_compat2) dh_movefiles -p$(p_jqt) $(files_jqt)
 #endif
 
 	dh_link -p$(p_jrehl) \
@@ -618,7 +618,7 @@ ifeq ($(with_standalone_gcj),yes)
 	rm -f $(d)/$(PF)/$(libdir)/libgcc_s.so
 	ln -sf /$(libdir)/libgcc_s.so.$(GCC_SONAME) $(d)/$(gcc_lib_dir)/libgcc_s.so
 endif
-	DH_COMPAT=2 dh_movefiles -p$(p_jdk)  $(files_jdk)
+	$(dh_compat2) dh_movefiles -p$(p_jdk)  $(files_jdk)
 
 	for i in libgij libgcj libgcj-tools; do \
 	  dh_link -p$(p_jdk) \
@@ -685,7 +685,7 @@ $(binary_stamp)-libgcjdev: $(build_html_stamp) $(install_stamp) $(binary_stamp)-
 
 	dh_installdirs -p$(p_jdev) $(dirs_jdev)
 
-	DH_COMPAT=2 dh_movefiles -p$(p_jdev) $(files_jdev)
+	$(dh_compat2) dh_movefiles -p$(p_jdev) $(files_jdev)
 
 ifeq ($(with_static_java),yes)
 	for i in libgij libgcj libgcj-tools; do \
@@ -759,7 +759,7 @@ $(binary_stamp)-gcjjre: $(install_stamp) $(binary_stamp)-java
 	mv $(install_stamp) $(install_stamp)-tmp
 
 	dh_installdirs -p$(p_jre) $(dirs_jre)
-	DH_COMPAT=2 dh_movefiles -p$(p_jre)   $(files_jre)
+	$(dh_compat2) dh_movefiles -p$(p_jre)   $(files_jre)
 
 	debian/dh_doclink -p$(p_jre) $(p_jbase)
 	DH_COMPAT=5 dh_strip -p$(p_jre) --dbg-package=$(p_jdbg)

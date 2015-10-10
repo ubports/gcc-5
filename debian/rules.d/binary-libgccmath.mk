@@ -49,7 +49,7 @@ $(binary_stamp)-libgmath: $(install_stamp)
 	mv $(install_stamp) $(install_stamp)-tmp
 	rm -rf $(d_gmath)
 	dh_installdirs -p$(p_gmath) $(dirs_gmath)
-	DH_COMPAT=2 dh_movefiles -p$(p_gmath) $(files_gmath)
+	$(dh_compat2) dh_movefiles -p$(p_gmath) $(files_gmath)
 	debian/dh_doclink -p$(p_gmath) $(p_base)
 	debian/dh_rmemptydirs -p$(p_gmath)
 	dh_strip -p$(p_gmath)
@@ -72,7 +72,7 @@ $(binary_stamp)-libgmathdev: $(install_stamp)
 
 	rm -rf $(d_gmathd)
 	dh_installdirs -p$(p_gmathd) $(dirs_gmathd)
-	DH_COMPAT=2 dh_movefiles -p$(p_gmathd) $(files_gmathd)
+	$(dh_compat2) dh_movefiles -p$(p_gmathd) $(files_gmathd)
 	debian/dh_doclink -p$(p_gmathd) $(p_base)
 	cp -p $(srcdir)/libgcc-math/ChangeLog \
 		$(d_gmathd)/$(docdir)/$(p_base)/changelog.libgcc-math
@@ -97,7 +97,7 @@ $(binary_stamp)-lib64gmath: $(install_stamp)
 	rm -rf $(d_l64gmath)
 	dh_installdirs -p$(p_l64gmath) \
 		$(PF)/lib64
-	DH_COMPAT=2 dh_movefiles -p$(p_l64gmath) \
+	$(dh_compat2) dh_movefiles -p$(p_l64gmath) \
 		$(PF)/lib64/libgcc-math.so.*
 
 	debian/dh_doclink -p$(p_l64gmath) $(p_base)
@@ -123,7 +123,7 @@ $(binary_stamp)-lib32gmath: $(install_stamp)
 	rm -rf $(d_l32gmath)
 	dh_installdirs -p$(p_l32gmath) \
 		$(lib32)
-	DH_COMPAT=2 dh_movefiles -p$(p_l32gmath) \
+	$(dh_compat2) dh_movefiles -p$(p_l32gmath) \
 		$(lib32)/libgcc-math.so.*
 
 	debian/dh_doclink -p$(p_l32gmath) $(p_base)

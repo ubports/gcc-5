@@ -25,7 +25,7 @@ define __do_mpx
 
 	rm -rf $(d_l) $(d_d)
 	dh_installdirs -p$(p_l) $(usr_lib$(2))
-	DH_COMPAT=2 dh_movefiles -p$(p_l) \
+	$(dh_compat2) dh_movefiles -p$(p_l) \
 		$(usr_lib$(2))/libmpx.so.* \
 		$(usr_lib$(2))/libmpxwrappers.so.*
 

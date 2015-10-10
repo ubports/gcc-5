@@ -59,7 +59,7 @@ define __do_libobjc
 	rm -rf $(d_l) $(d_d)
 	dh_installdirs -p$(p_l) \
 		$(usr_lib$(2))
-	DH_COMPAT=2 dh_movefiles -p$(p_l) \
+	$(dh_compat2) dh_movefiles -p$(p_l) \
 		$(files_lobjc)
 
 	debian/dh_doclink -p$(p_l) $(p_lbase)
@@ -92,7 +92,7 @@ define __do_libobjc_dev
 	rm -rf $(d_l)
 	dh_installdirs -p$(p_l) \
 		$(gcc_lib_dir$(2))
-	DH_COMPAT=2 dh_movefiles -p$(p_l) \
+	$(dh_compat2) dh_movefiles -p$(p_l) \
 		$(files_lobjcdev)
 
 	$(call install_gcc_lib,libobjc,$(OBJC_SONAME),$(2),$(p_l))

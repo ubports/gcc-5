@@ -19,7 +19,7 @@ $(binary_stamp)-softfloat: $(install_stamp)
 
 	rm -rf $(d_softfloat)
 	dh_installdirs -p$(p_softfloat) $(dirs_softfloat)
-	DH_COMPAT=2 dh_movefiles -p$(p_softfloat) $(files_softfloat)
+	$(dh_compat2) dh_movefiles -p$(p_softfloat) $(files_softfloat)
 	rm -rf $(d_softfloat)/$(PFL)/$(libdir)/soft-float/libssp.so*
 	mv $(d_softfloat)/$(PFL)/$(libdir)/soft-float/libssp.a \
 		$(d_softfloat)/$(PFL)/$(libdir)/soft-float/libssp_nonshared.a

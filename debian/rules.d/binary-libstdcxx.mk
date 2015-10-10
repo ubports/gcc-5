@@ -193,7 +193,7 @@ define __do_libstdcxx
 	$(if $(DEB_CROSS),,$(if $(2),,
 	dh_installdirs -p$(p_l) \
 		$(PF)/share/gcc-$(BASE_VERSION)/python
-	DH_COMPAT=2 dh_movefiles -p$(p_l) \
+	$(dh_compat2) dh_movefiles -p$(p_l) \
 		$(PF)/share/gcc-$(BASE_VERSION)/python/libstdcxx
 	))
 	cp -p $(d)/$(usr_lib$(2))/libstdc++.so.*.py \
@@ -289,7 +289,7 @@ define __do_libstdcxx_dev
 	rm -rf $(d_l)
 	dh_installdirs -p$(p_l) $(gcc_lib_dir$(2))
 
-	DH_COMPAT=2 dh_movefiles -p$(p_l) \
+	$(dh_compat2) dh_movefiles -p$(p_l) \
 		$(gcc_lib_dir$(2))/libstdc++.a \
 		$(gcc_lib_dir$(2))/libstdc++fs.a \
 		$(gcc_lib_dir$(2))/libsupc++.a \
@@ -410,10 +410,10 @@ $(binary_stamp)-libstdcxx-dev: $(libcxxdev_deps)
 	  if [ -d $$i ]; then mv $$i $$i-gnu; fi; \
 	done
 
-	DH_COMPAT=2 dh_movefiles -p$(p_dev) $(files_dev)
-	DH_COMPAT=2 dh_movefiles -p$(p_pic) $(files_pic)
+	$(dh_compat2) dh_movefiles -p$(p_dev) $(files_dev)
+	$(dh_compat2) dh_movefiles -p$(p_pic) $(files_pic)
 ifeq ($(with_debug),yes)
-	DH_COMPAT=2 dh_movefiles -p$(p_dbg) $(files_dbg)
+	$(dh_compat2) dh_movefiles -p$(p_dbg) $(files_dbg)
 endif
 
 	dh_link -p$(p_dev) \

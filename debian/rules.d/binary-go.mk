@@ -109,7 +109,7 @@ define __do_gccgo
 
 	rm -rf $(d_l) $(d_d)
 	dh_installdirs -p$(p_l) $(usr_lib$(2))
-	DH_COMPAT=2 dh_movefiles -p$(p_l) \
+	$(dh_compat2) dh_movefiles -p$(p_l) \
 		$(usr_lib$(2))/libgo.so.* $(usr_lib$(2))/go
 
 	debian/dh_doclink -p$(p_l) $(p_lbase)
@@ -172,7 +172,7 @@ endef
 
 define do_go_dev
 	dh_installdirs -p$(2) $(gcc_lib_dir$(1))
-	DH_COMPAT=2 dh_movefiles -p$(2) \
+	$(dh_compat2) dh_movefiles -p$(2) \
 		$(gcc_lib_dir$(1))/{libgobegin,libnetgo}.a
 	$(if $(filter yes, $(with_standalone_go)), \
 	  $(call install_gccgo_lib,libgomp,$(GOMP_SONAME),$(1),$(2)))
@@ -225,7 +225,7 @@ $(binary_stamp)-gccgo: $(install_stamp)
 
 	$(call do_go_dev,,$(p_go))
 
-	DH_COMPAT=2 dh_movefiles -p$(p_go) $(files_go)
+	$(dh_compat2) dh_movefiles -p$(p_go) $(files_go)
 
 ifneq (,$(findstring gccgo,$(PKGSOURCE)))
 	rm -rf $(d_go)/$(gcc_lib_dir)/include/cilk
@@ -331,7 +331,7 @@ $(binary_stamp)-go-doc: $(build_html_stamp) $(install_stamp)
 	dh_installdirs -p$(p_god) \
 		$(docdir)/$(p_xbase)/go \
 		$(PF)/share/info
-	DH_COMPAT=2 dh_movefiles -p$(p_god) \
+	$(dh_compat2) dh_movefiles -p$(p_god) \
 		$(PF)/share/info/gccgo*
 
 	debian/dh_doclink -p$(p_god) $(p_xbase)

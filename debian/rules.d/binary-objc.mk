@@ -25,7 +25,7 @@ $(binary_stamp)-objc: $(install_stamp)
 
 	rm -rf $(d_objc)
 	dh_installdirs -p$(p_objc) $(dirs_objc)
-	DH_COMPAT=2 dh_movefiles -p$(p_objc) $(files_objc)
+	$(dh_compat2) dh_movefiles -p$(p_objc) $(files_objc)
 
 	cp -p $(srcdir)/libobjc/{README*,THREADS*} \
 		$(d_objc)/$(docdir)/$(p_xbase)/ObjC/.

@@ -25,7 +25,7 @@ $(binary_stamp)-objcxx: $(install_stamp)
 
 	rm -rf $(d_objcx)
 	dh_installdirs -p$(p_objcx) $(dirs_objcx)
-	DH_COMPAT=2 dh_movefiles -p$(p_objcx) $(files_objcx)
+	$(dh_compat2) dh_movefiles -p$(p_objcx) $(files_objcx)
 
 	debian/dh_doclink -p$(p_objcx) $(p_xbase)
 	cp -p $(srcdir)/gcc/objcp/ChangeLog \

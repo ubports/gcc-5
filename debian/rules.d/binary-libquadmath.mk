@@ -25,7 +25,7 @@ define __do_qmath
 
 	rm -rf $(d_l) $(d_d)
 	dh_installdirs -p$(p_l) $(usr_lib$(2))
-	DH_COMPAT=2 dh_movefiles -p$(p_l) $(usr_lib$(2))/libquadmath.so.*
+	$(dh_compat2) dh_movefiles -p$(p_l) $(usr_lib$(2))/libquadmath.so.*
 
 	debian/dh_doclink -p$(p_l) $(p_lbase)
 	debian/dh_doclink -p$(p_d) $(p_lbase)

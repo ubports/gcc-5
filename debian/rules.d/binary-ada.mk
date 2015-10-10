@@ -102,7 +102,7 @@ $(binary_stamp)-libgnat: $(install_stamp)
 	  mv $(d)/$(gcc_lib_dir)/$(rts_subdir)/adalib/$$vlib.so.1 $(d)/$(usr_lib)/. ; \
 	  rm -f $(d)/$(gcc_lib_dir)/adalib/$$lib.so.1; \
 	done
-	DH_COMPAT=2 dh_movefiles -p$(p_lgnat) $(files_lgnat)
+	$(dh_compat2) dh_movefiles -p$(p_lgnat) $(files_lgnat)
 
 	debian/dh_doclink -p$(p_lgnat) $(p_glbase)
 
@@ -158,8 +158,8 @@ endif
 $(binary_stamp)-libgnatvsn: $(install_stamp)
 	: # $(p_lgnatvsn_dev)
 ifneq (,$(filter $(build_type), build-native cross-build-native))
-	DH_COMPAT=2 dh_movefiles -p$(p_lgnatvsn_dev) usr/lib/ada/adalib/gnatvsn
-	DH_COMPAT=2 dh_movefiles -p$(p_lgnatvsn_dev) usr/share/ada/adainclude/gnatvsn
+	$(dh_compat2) dh_movefiles -p$(p_lgnatvsn_dev) usr/lib/ada/adalib/gnatvsn
+	$(dh_compat2) dh_movefiles -p$(p_lgnatvsn_dev) usr/share/ada/adainclude/gnatvsn
 	dh_install -p$(p_lgnatvsn_dev) \
 	   debian/gnatvsn.gpr usr/share/ada/adainclude
 else
@@ -169,7 +169,7 @@ else
 	dh_install -p$(p_lgnatvsn_dev) \
 	   debian/gnatvsn.gpr $(gcc_lib_dir)/adainclude
 endif
-	DH_COMPAT=2 dh_movefiles -p$(p_lgnatvsn_dev) $(usr_lib)/libgnatvsn.a
+	$(dh_compat2) dh_movefiles -p$(p_lgnatvsn_dev) $(usr_lib)/libgnatvsn.a
 	dh_link -p$(p_lgnatvsn_dev) \
 	   $(usr_lib)/libgnatvsn.so.$(GNAT_VERSION) \
 	   $(usr_lib)/libgnatvsn.so
@@ -188,7 +188,7 @@ ifneq (,$(filter $(build_type), build-native cross-build-native))
 	cp -p debian/$(p_lgnatvsn).overrides \
 		$(d_lgnatvsn)/usr/share/lintian/overrides/$(p_lgnatvsn)
 endif
-	DH_COMPAT=2 dh_movefiles -p$(p_lgnatvsn) $(usr_lib)/libgnatvsn.so.$(GNAT_VERSION)
+	$(dh_compat2) dh_movefiles -p$(p_lgnatvsn) $(usr_lib)/libgnatvsn.so.$(GNAT_VERSION)
 	debian/dh_doclink -p$(p_lgnatvsn) $(p_glbase)
 	dh_strip -p$(p_lgnatvsn) --dbg-package=$(p_lgnatvsn_dbg)
 	$(cross_makeshlibs) dh_makeshlibs -p$(p_lgnatvsn) \
@@ -224,8 +224,8 @@ endif
 $(binary_stamp)-libgnatprj: $(install_stamp)
 	: # $(p_lgnatprj_dev)
 ifneq (,$(filter $(build_type), build-native cross-build-native))
-	DH_COMPAT=2 dh_movefiles -p$(p_lgnatprj_dev) usr/lib/ada/adalib/gnatprj
-	DH_COMPAT=2 dh_movefiles -p$(p_lgnatprj_dev) usr/share/ada/adainclude/gnatprj
+	$(dh_compat2) dh_movefiles -p$(p_lgnatprj_dev) usr/lib/ada/adalib/gnatprj
+	$(dh_compat2) dh_movefiles -p$(p_lgnatprj_dev) usr/share/ada/adainclude/gnatprj
 	dh_install -p$(p_lgnatprj_dev) \
 	   debian/gnatprj.gpr usr/share/ada/adainclude
 else
@@ -235,7 +235,7 @@ else
 	dh_install -p$(p_lgnatprj_dev) \
 	   debian/gnatprj.gpr $(gcc_lib_dir)/adainclude
 endif
-	DH_COMPAT=2 dh_movefiles -p$(p_lgnatprj_dev) $(usr_lib)/libgnatprj.a
+	$(dh_compat2) dh_movefiles -p$(p_lgnatprj_dev) $(usr_lib)/libgnatprj.a
 	dh_link -p$(p_lgnatprj_dev) \
 	   $(usr_lib)/libgnatprj.so.$(GNAT_VERSION) \
 	   $(usr_lib)/libgnatprj.so
@@ -254,7 +254,7 @@ ifneq (,$(filter $(build_type), build-native cross-build-native))
 	cp -p debian/$(p_lgnatprj).overrides \
 		$(d_lgnatprj)/usr/share/lintian/overrides/$(p_lgnatprj)
 endif
-	DH_COMPAT=2 dh_movefiles -p$(p_lgnatprj) $(usr_lib)/libgnatprj.so.$(GNAT_VERSION)
+	$(dh_compat2) dh_movefiles -p$(p_lgnatprj) $(usr_lib)/libgnatprj.so.$(GNAT_VERSION)
 	debian/dh_doclink -p$(p_lgnatprj) $(p_glbase)
 	dh_strip -p$(p_lgnatprj) --dbg-package=$(p_lgnatprj_dbg)
 	dh_fixperms -p$(p_lgnatprj)
@@ -298,11 +298,11 @@ $(binary_stamp)-ada: $(install_stamp)
 	# Upstream does not install gnathtml.
 	cp src/gcc/ada/gnathtml.pl debian/tmp/$(PF)/bin/$(cmd_prefix)gnathtml$(pkg_ver)
 	chmod 755 debian/tmp/$(PF)/bin/$(cmd_prefix)gnathtml$(pkg_ver)
-	DH_COMPAT=2 dh_movefiles -p$(p_gnat) $(files_gnat)
+	$(dh_compat2) dh_movefiles -p$(p_gnat) $(files_gnat)
 
 ifeq ($(with_gnatsjlj),yes)
 	dh_installdirs -p$(p_gnatsjlj) $(gcc_lib_dir)
-	DH_COMPAT=2 dh_movefiles -p$(p_gnatsjlj) $(gcc_lib_dir)/rts-sjlj/adalib $(gcc_lib_dir)/rts-sjlj/adainclude
+	$(dh_compat2) dh_movefiles -p$(p_gnatsjlj) $(gcc_lib_dir)/rts-sjlj/adalib $(gcc_lib_dir)/rts-sjlj/adainclude
 endif
 
 ifeq ($(with_libgnat),yes)

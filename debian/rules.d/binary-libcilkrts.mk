@@ -25,7 +25,7 @@ define __do_cilkrts
 
 	rm -rf $(d_l) $(d_d)
 	dh_installdirs -p$(p_l) $(usr_lib$(2))
-	DH_COMPAT=2 dh_movefiles -p$(p_l) $(usr_lib$(2))/libcilkrts.so.*
+	$(dh_compat2) dh_movefiles -p$(p_l) $(usr_lib$(2))/libcilkrts.so.*
 
 	debian/dh_doclink -p$(p_l) $(p_lbase)
 	debian/dh_doclink -p$(p_d) $(p_lbase)

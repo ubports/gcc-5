@@ -193,7 +193,7 @@ define __do_gcc_devels2
 		$(if $(1), dh_link -p$(2) /$(3)/libgcc_s.so \
 		    /$(gcc_lib_dir)/libgcc_s_$(1).so;)
 	)
-	DH_COMPAT=2 dh_movefiles -p$(2) \
+	$(dh_compat2) dh_movefiles -p$(2) \
 		$(3)/{libgcc*,libgcov.a,*.o} \
 		$(if $(1),,$(header_files)) # Only move headers for the "main" package
 

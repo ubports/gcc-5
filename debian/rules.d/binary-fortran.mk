@@ -87,7 +87,7 @@ define __do_fortran
 
 	rm -rf $(d_l) $(d_d)
 	dh_installdirs -p$(p_l) $(usr_lib$(2))
-	DH_COMPAT=2 dh_movefiles -p$(p_l) $(usr_lib$(2))/libgfortran.so.*
+	$(dh_compat2) dh_movefiles -p$(p_l) $(usr_lib$(2))/libgfortran.so.*
 
 	debian/dh_doclink -p$(p_l) $(p_lbase)
 	debian/dh_doclink -p$(p_d) $(p_lbase)
@@ -129,7 +129,7 @@ define __do_libgfortran_dev
 	rm -rf $(d_l)
 	dh_installdirs -p$(1) $(gcc_lib_dir$(2))
 
-	DH_COMPAT=2 dh_movefiles -p$(p_l) \
+	$(dh_compat2) dh_movefiles -p$(p_l) \
 		$(gcc_lib_dir$(2))/libgfortranbegin.a \
 		$(gcc_lib_dir$(2))/libcaf_single.a
 	$(call install_gcc_lib,libgfortran,$(FORTRAN_SONAME),$(2),$(p_l))
@@ -184,7 +184,7 @@ $(binary_stamp)-fdev: $(install_stamp)
 	rm -rf $(d_g95)
 	dh_installdirs -p$(p_g95) $(dirs_g95)
 
-	DH_COMPAT=2 dh_movefiles -p$(p_g95) $(files_g95)
+	$(dh_compat2) dh_movefiles -p$(p_g95) $(files_g95)
 
 	mv $(d)/$(usr_lib)/libgfortran.spec $(d_g95)/$(gcc_lib_dir)/
 
@@ -257,7 +257,7 @@ $(binary_stamp)-fortran-doc: $(build_html_stamp) $(install_stamp)
 	dh_installdirs -p$(p_g95d) \
 		$(docdir)/$(p_xbase)/fortran \
 		$(PF)/share/info
-	DH_COMPAT=2 dh_movefiles -p$(p_g95d) \
+	$(dh_compat2) dh_movefiles -p$(p_g95d) \
 		$(PF)/share/info/gfortran*
 
 	debian/dh_doclink -p$(p_g95d) $(p_xbase)

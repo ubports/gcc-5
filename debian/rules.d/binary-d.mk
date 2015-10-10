@@ -98,7 +98,7 @@ $(binary_stamp)-gdc: $(install_stamp)
 	dh_installdocs -p$(p_gdc) src/gcc/d/README
 	dh_installchangelogs -p$(p_gdc) src/gcc/d/ChangeLog
 
-	DH_COMPAT=2 dh_movefiles -p$(p_gdc) -X/zlib/ $(files_gdc)
+	$(dh_compat2) dh_movefiles -p$(p_gdc) -X/zlib/ $(files_gdc)
 
 ifneq ($(DEB_CROSS),yes)
 	ln -sf gdc$(pkg_ver) \
@@ -174,7 +174,7 @@ $(binary_stamp)-libphobos: $(install_stamp)
 
 	mv $(d)/$(usr_lib)/libgphobos2.a \
 		$(d)/$(gcc_lib_dir)/.
-	DH_COMPAT=2 dh_movefiles -p$(p_libphobos) $(files_libphobos)
+	$(dh_compat2) dh_movefiles -p$(p_libphobos) $(files_libphobos)
 
 	# included in gdc package
 	rm -f $(d_libphobos)/$(gdc_include_dir)/object.di
@@ -208,10 +208,10 @@ define __do_libphobos_dev
 		$(gcc_lib_dir$(2))
 	mv $(d)/$(usr_lib$(2))/libgphobos2.a \
 		$(d)/$(gcc_lib_dir$(2))/.
-	DH_COMPAT=2 dh_movefiles -p$(p_l) \
+	$(dh_compat2) dh_movefiles -p$(p_l) \
 		$(gcc_lib_dir$(2))/libgphobos2.a
 	$(if $(2),,
-	DH_COMPAT=2 dh_movefiles -p$(p_l) \
+	$(dh_compat2) dh_movefiles -p$(p_l) \
 		$(gdc_include_dir)
 	)
 

@@ -817,11 +817,13 @@ Description: Files for GNU GCC plugin development.
 ')`'dnl cdev
 
 ifenabled(`cdev',`
-Package: gcc`'PV-hppa64
+Package: gcc`'PV-hppa64-linux-gnu
 Architecture: ifdef(`TARGET',`any',hppa)
 Section: devel
 Priority: PRI(optional)
-Depends: BASEDEP, ${shlibs:Depends}, ${misc:Depends}
+Depends: BASEDEP, ${shlibs:Depends}, ${misc:Depends}, binutils-hppa64-linux-gnu | binutils-hppa64
+Replaces: gcc-5-hppa64 (<< 5.2.1-22)
+Provides: gcc-5-hppa64
 Conflicts: gcc-3.3-hppa64 (<= 1:3.3.4-5), gcc-3.4-hppa64 (<= 3.4.1-3), gcc-4.7-hppa64 (<< 4.7.3-13), gcc-4.8-hppa64 (<< 4.8.2-22), gcc-4.9-hppa64 (<< 4.9.3-1)
 BUILT_USING`'dnl
 Description: GNU C compiler (cross compiler for hppa64)

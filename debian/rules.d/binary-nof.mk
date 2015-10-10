@@ -35,7 +35,7 @@ $(binary_stamp)-nof: $(install_stamp)
 
 	rm -rf $(d_nof)
 	dh_installdirs -p$(p_nof) $(dirs_nof)
-	DH_COMPAT=2 dh_movefiles -p$(p_nof) $(files_nof)
+	$(dh_compat2) dh_movefiles -p$(p_nof) $(files_nof)
 	debian/dh_doclink -p$(p_nof) $(p_xbase)
 	dh_strip -p$(p_nof)
 	dh_compress -p$(p_nof)

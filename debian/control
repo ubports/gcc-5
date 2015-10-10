@@ -16,7 +16,7 @@ Build-Depends: debhelper (>= 5.0.62), dpkg-dev (>= 1.17.11),
   gperf (>= 3.0.1), bison (>= 1:2.3), flex, gettext, 
   gdb, 
   texinfo (>= 4.3), locales, sharutils, 
-  procps, zlib1g-dev, libantlr-java, python, libffi-dev, fastjar, libmagic-dev, libecj-java (>= 3.3.0-2), zip, libasound2-dev [ !hurd-any !kfreebsd-any], libxtst-dev, libxt-dev, libgtk2.0-dev (>= 2.4.4-2), libart-2.0-dev, libcairo2-dev, gnat-4.9 [!m32r !sh3 !sh3eb !sh4 !sh4eb !m68k !powerpcspe !sparc64 !x32], g++-4.9, netbase, 
+  procps, zlib1g-dev, libantlr-java, python, libffi-dev, fastjar, libmagic-dev, libecj-java (>= 3.3.0-2), zip, libasound2-dev [ !hurd-any !kfreebsd-any], libxtst-dev, libxt-dev, libgtk2.0-dev (>= 2.4.4-2), libart-2.0-dev, libcairo2-dev, gnat-5 [!m32r !sh3 !sh3eb !sh4 !sh4eb !m68k !powerpcspe !sparc64 !x32], g++-5, netbase, 
   libisl-dev (>= 0.14), libmpc-dev (>= 1.0), libmpfr-dev (>= 3.0.0-9~), libgmp-dev (>= 2:5.0.1~), 
   dejagnu [!m68k], realpath (>= 1.9.12), chrpath, lsb-release, quilt
 Build-Depends-Indep: doxygen (>= 1.7.2), graphviz (>= 2.2), ghostscript, texlive-latex-base, xsltproc, libxml2-utils, docbook-xsl-ns, 
@@ -308,11 +308,13 @@ Description: Files for GNU GCC plugin development.
  is only used for the development of GCC plugins, but not needed to run
  plugins.
 
-Package: gcc-5-hppa64
+Package: gcc-5-hppa64-linux-gnu
 Architecture: hppa
 Section: devel
 Priority: optional
-Depends: gcc-5-base (= ${gcc:Version}), ${shlibs:Depends}, ${misc:Depends}
+Depends: gcc-5-base (= ${gcc:Version}), ${shlibs:Depends}, ${misc:Depends}, binutils-hppa64-linux-gnu | binutils-hppa64
+Replaces: gcc-5-hppa64 (<< 5.2.1-22)
+Provides: gcc-5-hppa64
 Conflicts: gcc-3.3-hppa64 (<= 1:3.3.4-5), gcc-3.4-hppa64 (<= 3.4.1-3), gcc-4.7-hppa64 (<< 4.7.3-13), gcc-4.8-hppa64 (<< 4.8.2-22), gcc-4.9-hppa64 (<< 4.9.3-1)
 Description: GNU C compiler (cross compiler for hppa64)
  This is the GNU C compiler, a fairly portable optimizing compiler for C.

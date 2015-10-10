@@ -31,7 +31,7 @@ $(binary_stamp)-cxx: $(install_stamp)
 
 	rm -rf $(d_cxx)
 	dh_installdirs -p$(p_cxx) $(dirs_cxx)
-	DH_COMPAT=2 dh_movefiles -p$(p_cxx) $(files_cxx)
+	$(dh_compat2) dh_movefiles -p$(p_cxx) $(files_cxx)
 
 ifneq ($(DEB_CROSS),yes)
 	ln -sf g++$(pkg_ver) \

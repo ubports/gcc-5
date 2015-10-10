@@ -31,7 +31,7 @@ $(binary_stamp)-cpp: $(install_stamp)
 
 	rm -rf $(d_cpp)
 	dh_installdirs -p$(p_cpp) $(dirs_cpp)
-	DH_COMPAT=2 dh_movefiles -p$(p_cpp) $(files_cpp)
+	$(dh_compat2) dh_movefiles -p$(p_cpp) $(files_cpp)
 
 ifneq ($(DEB_CROSS),yes)
 	ln -sf cpp$(pkg_ver) \
@@ -77,7 +77,7 @@ $(binary_stamp)-cpp-doc: $(build_html_stamp) $(install_stamp)
 	dh_installdirs -p$(p_cppd) \
 		$(docdir)/$(p_xbase) \
 		$(PF)/share/info
-	DH_COMPAT=2 dh_movefiles -p$(p_cppd) \
+	$(dh_compat2) dh_movefiles -p$(p_cppd) \
 		$(PF)/share/info/cpp*
 
 	debian/dh_doclink -p$(p_cppd) $(p_xbase)

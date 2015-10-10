@@ -21,7 +21,7 @@ $(binary_stamp)-fixincl: $(install_stamp)
 
 	rm -rf $(d_fix)
 	dh_installdirs -p$(p_fix) $(dirs_fix)
-	DH_COMPAT=2 dh_movefiles -p$(p_fix) $(files_fix)
+	$(dh_compat2) dh_movefiles -p$(p_fix) $(files_fix)
 
 #	$(IP) $(builddir)/gcc/fixinc/fixincl $(d_fix)/$(PF)/lib/fixincludes/
 #	sed -e "s,^FIXINCL=\(.*\),FIXINCL=/$(PF)/lib/fixincludes/fixincl," \

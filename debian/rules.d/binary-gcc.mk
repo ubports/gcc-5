@@ -126,7 +126,7 @@ ifeq ($(with_cc1),yes)
 		/$(usr_lib)/libcc1.so.$(CC1_SONAME) /$(gcc_lib_dir)/libcc1.so
 endif
 
-	DH_COMPAT=2 dh_movefiles -p$(p_gcc) $(files_gcc)
+	$(dh_compat2) dh_movefiles -p$(p_gcc) $(files_gcc)
 
 ifneq ($(DEB_CROSS),yes)
 	for i in gcc gcov gcov-tool gcc-ar gcc-nm gcc-ranlib; do \
@@ -229,7 +229,7 @@ $(binary_stamp)-gcc-plugindev: $(install_dependencies)
 	dh_installdirs -p$(p_pld) \
 		$(docdir) \
 		$(gcc_lib_dir)/plugin
-	DH_COMPAT=2 dh_movefiles -p$(p_pld) \
+	$(dh_compat2) dh_movefiles -p$(p_pld) \
 		$(gcc_lib_dir)/plugin/include \
 		$(gcc_lib_dir)/plugin/gtype.state \
 		$(gcc_lexec_dir)/plugin/gengtype
@@ -257,7 +257,7 @@ $(binary_stamp)-gcc-locales: $(install_dependencies)
 	rm -rf $(d_loc)
 	dh_installdirs -p$(p_loc) \
 		$(docdir)
-	DH_COMPAT=2 dh_movefiles -p$(p_loc) \
+	$(dh_compat2) dh_movefiles -p$(p_loc) \
 		$(PF)/share/locale/*/*/cpplib*.* \
 		$(PF)/share/locale/*/*/gcc*.*
 
@@ -284,7 +284,7 @@ $(binary_stamp)-gcc-doc: $(build_html_stamp) $(install_stamp)
 	dh_installdirs -p$(p_doc) \
 		$(docdir)/$(p_xbase) \
 		$(PF)/share/info
-	DH_COMPAT=2 dh_movefiles -p$(p_doc) \
+	$(dh_compat2) dh_movefiles -p$(p_doc) \
 		$(PF)/share/info/cpp{,internals}-* \
 		$(PF)/share/info/gcc{,int}-* \
 		$(PF)/share/info/lib{gomp,itm}-* \
