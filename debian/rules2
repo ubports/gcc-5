@@ -399,12 +399,12 @@ endif
 
 ifneq (,$(findstring powerpc64le-linux,$(DEB_TARGET_GNU_TYPE)))
     CONFARGS += --enable-secureplt
-    ifneq (,$(filter $(distrelease),jessie trusty utopic vivid))
+    ifneq (,$(filter $(distrelease),jessie trusty utopic vivid wily))
       CONFARGS += --with-cpu=power7 --with-tune=power8
     else
       CONFARGS += --with-cpu=power8
     endif
-    ifneq (,$(filter $(distrelease),jessie stretch sid trusty utopic vivid wily))
+    ifneq (,$(filter $(distrelease),jessie stretch sid trusty utopic vivid wily xenial))
       CONFARGS += --enable-targets=powerpcle-linux
     endif
     CONFARGS += --disable-multilib

@@ -22,25 +22,6 @@ Index: b/src/gcc/doc/frontends.texi
  
  The abbreviation @dfn{GCC} has multiple meanings in common use.  The
  current official meaning is ``GNU Compiler Collection'', which refers
-Index: b/src/gcc/doc/install.texi
-===================================================================
---- a/src/gcc/doc/install.texi
-+++ b/src/gcc/doc/install.texi
-@@ -1547,12 +1547,12 @@ their runtime libraries should be built.
- grep language= */config-lang.in
- @end smallexample
- Currently, you can use any of the following:
--@code{all}, @code{ada}, @code{c}, @code{c++}, @code{fortran},
-+@code{all}, @code{ada}, @code{c}, @code{c++}, @code{d}, @code{fortran},
- @code{go}, @code{java}, @code{objc}, @code{obj-c++}.
- Building the Ada compiler has special requirements, see below.
- If you do not pass this flag, or specify the option @code{all}, then all
- default languages available in the @file{gcc} sub-tree will be configured.
--Ada, Go and Objective-C++ are not default languages; the rest are.
-+Ada, D, Go and Objective-C++ are not default languages; the rest are.
- 
- @item --enable-stage1-languages=@var{lang1},@var{lang2},@dots{}
- Specify that a particular subset of compilers and their runtime
 Index: b/src/gcc/doc/invoke.texi
 ===================================================================
 --- a/src/gcc/doc/invoke.texi

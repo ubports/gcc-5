@@ -751,13 +751,16 @@ with_java_plugin := no
 
 ifeq ($(with_java),yes)
   # use the same names as OpenJDK
-  java_cpu_map = armel=arm armhf=arm hppa=parisc i686=i386 i586=i386 i486=i386 mipsel=mips mips64=mips mips64el=mips mipsn32=mips mipsn32el=mips powerpc=ppc ppc64el=ppc64 sh4=sh x32=x32
+  java_cpu_map = armel=arm armhf=arm arm64=aarch64 hppa=parisc \
+	i686=i386 i586=i386 i486=i386 x32=x32 \
+	mipsel=mips mips64=mips mips64el=mips mipsn32=mips mipsn32el=mips \
+	powerpc=ppc ppc64el=ppc64le sh4=sh x32=x32
   java_cpu = $(patsubst $(DEB_TARGET_ARCH_CPU)=%,%, \
                          $(filter $(DEB_TARGET_ARCH_CPU)=%,$(java_cpu_map)))
   ifeq (,$(java_cpu))
     java_cpu = $(DEB_TARGET_ARCH_CPU)
   endif
-  java_priority = 10$(subst .,,$(BASE_VERSION))
+  java_priority = 10$(subst .,,$(BASE_VERSION))0
 
   with_libgcj := yes
   with_libgcjbc := no

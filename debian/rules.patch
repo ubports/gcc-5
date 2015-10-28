@@ -87,9 +87,10 @@ debian_patches += \
 	go-escape-analysis6 \
 	gccgo-sendfile-fix \
 	pr66368 \
-	pr67280 \
+	$(if $(with_linaro_branch),,pr67280) \
 	pr67508 \
 	pr67590 \
+	pr67736 \
 
 # this is still needed on powerpc, e.g. firefox and insighttoolkit4 will ftbfs.
 ifneq (,$(filter $(DEB_TARGET_ARCH),powerpc))
@@ -248,7 +249,7 @@ ifeq ($(single_package),yes)
   debian_patches =
 endif
 
-debian_patches += gcc-sysroot
+debian_patches += $(if $(with_linaro_branch),,gcc-sysroot)
 debian_patches += \
 	sys-auxv-header \
 	libcilkrts-targets \
@@ -316,9 +317,6 @@ else # Debian
 endif
 ifeq ($(DEB_TARGET_ARCH),mipsel)
   debian_patches += mips-fix-loongson2f-nop
-endif
-ifneq (,$(filter $(DEB_TARGET_ARCH), mips64 mips64el))
-  debian_patches += pr67736
 endif
 
 debian_patches += libgomp-kfreebsd-testsuite

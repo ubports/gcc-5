@@ -393,8 +393,9 @@ ifneq (,$(filter $(build_type), build-native cross-build-native))
 	mv $(d_gnat)/usr/share/ada/debian_packaging.mk \
 	    $(d_gnat)/usr/share/ada/debian_packaging-$(GNAT_VERSION).mk
 endif
-	dh_link -p$(p_gnat) usr/bin/$(cmd_prefix)gcc$(pkg_ver) usr/bin/$(cmd_prefix)gnatgcc$(pkg_ver)
-	dh_link -p$(p_gnat) usr/share/man/man1/$(cmd_prefix)gnat$(pkg_ver).1.gz usr/share/man/man1/$(cmd_prefix)gnatgcc$(pkg_ver).1.gz
+	: # keep this one unversioned, see Debian #802838.
+	dh_link -p$(p_gnat) usr/bin/$(cmd_prefix)gcc$(pkg_ver) usr/bin/$(cmd_prefix)gnatgcc
+	dh_link -p$(p_gnat) usr/share/man/man1/$(cmd_prefix)gcc$(pkg_ver).1.gz usr/share/man/man1/$(cmd_prefix)gnatgcc.1.gz
 
 	debian/dh_rmemptydirs -p$(p_gnat)
 
