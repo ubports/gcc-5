@@ -94,22 +94,17 @@ ifeq ($(with_check),yes)
 	done
   endif
 	if which xz 2>&1 >/dev/null; then \
-		xz -7v $(d_cxx)/$(docdir)/$(p_xbase)/test-summaries/*; \
+	  echo -n $(d_cxx)/$(docdir)/$(p_xbase)/test-summaries/* \
+	    | xargs -d ' ' -L 1 -P $(USE_CPUS)	xz -7v; \
 	fi
 else
 	echo "Nothing to compare (testsuite not run)"
 endif	
 	echo "TEST COMPARE END"
 
-	dh_strip -p$(p_cxx) \
-	  $(if $(unstripped_exe),-X/cc1plus)
-	dh_compress -p$(p_cxx) -X.log.xz -X.sum.xz
-	dh_fixperms -p$(p_cxx)
 	dh_shlibdeps -p$(p_cxx)
-	dh_gencontrol -p$(p_cxx) -- -v$(DEB_VERSION) $(common_substvars)
-	dh_installdeb -p$(p_cxx)
-	dh_md5sums -p$(p_cxx)
-	dh_builddeb -p$(p_cxx)
+	dh_strip -p$(p_cxx)
+	echo $(p_cxx) >> debian/arch_binaries
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 
@@ -126,12 +121,7 @@ $(binary_stamp)-cxx-multi: $(install_stamp)
 	debian/dh_rmemptydirs -p$(p_cxx_m)
 
 	dh_strip -p$(p_cxx_m)
-	dh_compress -p$(p_cxx_m)
-	dh_fixperms -p$(p_cxx_m)
 	dh_shlibdeps -p$(p_cxx_m)
-	dh_gencontrol -p$(p_cxx_m) -- -v$(DEB_VERSION) $(common_substvars)
-	dh_installdeb -p$(p_cxx_m)
-	dh_md5sums -p$(p_cxx_m)
-	dh_builddeb -p$(p_cxx_m)
+	echo $(p_cxx_m) >> debian/arch_binaries
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)

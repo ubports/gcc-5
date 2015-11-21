@@ -127,30 +127,16 @@ ifneq (,$(filter $(build_type), build-native cross-build-native))
 endif
 
 	dh_strip -p$(p_lgnat) --dbg-package=$(p_lgnat_dbg)
-	dh_compress -p$(p_lgnat)
-	dh_fixperms -p$(p_lgnat)
 	$(cross_shlibdeps) dh_shlibdeps -p$(p_lgnat) \
 		$(call shlibdirs_to_search, \
 			$(subst gnat-$(GNAT_SONAME),gcc$(GCC_SONAME),$(p_lgnat)) \
 		,)
 	$(call cross_mangle_substvars,$(p_lgnat))
-	$(cross_gencontrol) dh_gencontrol -p$(p_lgnat) \
-		-- -v$(DEB_VERSION) $(common_substvars)
-	$(call cross_mangle_control,$(p_lgnat))
-	dh_installdeb -p$(p_lgnat)
-	dh_md5sums -p$(p_lgnat)
-	dh_builddeb -p$(p_lgnat)
 
 	: # $(p_lgnat_dbg)
 	debian/dh_doclink -p$(p_lgnat_dbg) $(p_glbase)
-	dh_compress -p$(p_lgnat_dbg)
-	dh_fixperms -p$(p_lgnat_dbg)
-	$(cross_gencontrol) dh_gencontrol -p$(p_lgnat_dbg) \
-		-- -v$(DEB_VERSION) $(common_substvars)
-	$(call cross_mangle_control,$(p_lgnat_dbg))
-	dh_installdeb -p$(p_lgnat_dbg)
-	dh_md5sums -p$(p_lgnat_dbg)
-	dh_builddeb -p$(p_lgnat_dbg)
+
+	echo $(p_lgnat) $(p_lgnat_dbg) >> debian/$(lib_binaries)
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 
@@ -175,12 +161,6 @@ endif
 	   $(usr_lib)/libgnatvsn.so
 	debian/dh_doclink -p$(p_lgnatvsn_dev) $(p_glbase)
 	dh_strip -p$(p_lgnatvsn_dev) -X.a --keep-debug
-	dh_fixperms -p$(p_lgnatvsn_dev)
-	$(cross_gencontrol) dh_gencontrol -p$(p_lgnatvsn_dev) \
-		-- -v$(DEB_VERSION) $(common_substvars)
-	$(call cross_mangle_control,$(p_lgnatvsn_dev))
-	dh_md5sums -p$(p_lgnatvsn_dev)
-	dh_builddeb -p$(p_lgnatvsn_dev)
 
 	: # $(p_lgnatvsn)
 ifneq (,$(filter $(build_type), build-native cross-build-native))
@@ -195,30 +175,17 @@ endif
 		-V '$(p_lgnatvsn) (>= $(DEB_VERSION))'
 	$(call cross_mangle_shlibs,$(p_lgnatvsn))
 	cat debian/$(p_lgnatvsn)/DEBIAN/shlibs >> debian/shlibs.local
-	dh_fixperms -p$(p_lgnatvsn)
 	$(cross_shlibdeps) dh_shlibdeps -p$(p_lgnatvsn) \
 		$(call shlibdirs_to_search, \
 			$(subst gnatvsn$(GNAT_SONAME),gcc$(GCC_SONAME),$(p_lgnatvsn)) \
 			$(subst gnatvsn$(GNAT_SONAME),gnat-$(GNAT_SONAME),$(p_lgnatvsn)) \
 		,)
 	$(call cross_mangle_substvars,$(p_lgnatvsn))
-	$(cross_gencontrol) dh_gencontrol -p$(p_lgnatvsn) \
-		-- -v$(DEB_VERSION) $(common_substvars)
-	$(call cross_mangle_control,$(p_lgnatvsn))
-	dh_installdeb -p$(p_lgnatvsn)
-	dh_md5sums -p$(p_lgnatvsn)
-	dh_builddeb -p$(p_lgnatvsn)
 
 	: # $(p_lgnatvsn_dbg)
 	debian/dh_doclink -p$(p_lgnatvsn_dbg) $(p_glbase)
-	dh_compress -p$(p_lgnatvsn_dbg)
-	dh_fixperms -p$(p_lgnatvsn_dbg)
-	$(cross_gencontrol) dh_gencontrol -p$(p_lgnatvsn_dbg) \
-		-- -v$(DEB_VERSION) $(common_substvars)
-	$(call cross_mangle_control,$(p_lgnatvsn_dbg))
-	dh_installdeb -p$(p_lgnatvsn_dbg)
-	dh_md5sums -p$(p_lgnatvsn_dbg)
-	dh_builddeb -p$(p_lgnatvsn_dbg)
+
+	echo $(p_lgnatvsn) $(p_lgnatvsn_dev) $(p_lgnatvsn_dbg) >> debian/$(lib_binaries)
 	touch $@
 
 $(binary_stamp)-libgnatprj: $(install_stamp)
@@ -241,12 +208,6 @@ endif
 	   $(usr_lib)/libgnatprj.so
 	dh_strip -p$(p_lgnatprj_dev) -X.a --keep-debug
 	debian/dh_doclink -p$(p_lgnatprj_dev) $(p_glbase)
-	dh_fixperms -p$(p_lgnatprj_dev)
-	$(cross_gencontrol) dh_gencontrol -p$(p_lgnatprj_dev) \
-		-- -v$(DEB_VERSION) $(common_substvars)
-	$(call cross_mangle_control,$(p_lgnatprj_dev))
-	dh_md5sums -p$(p_lgnatprj_dev)
-	dh_builddeb -p$(p_lgnatprj_dev)
 
 	: # $(p_lgnatprj)
 ifneq (,$(filter $(build_type), build-native cross-build-native))
@@ -257,7 +218,6 @@ endif
 	$(dh_compat2) dh_movefiles -p$(p_lgnatprj) $(usr_lib)/libgnatprj.so.$(GNAT_VERSION)
 	debian/dh_doclink -p$(p_lgnatprj) $(p_glbase)
 	dh_strip -p$(p_lgnatprj) --dbg-package=$(p_lgnatprj_dbg)
-	dh_fixperms -p$(p_lgnatprj)
 	$(cross_makeshlibs) dh_makeshlibs -p$(p_lgnatprj) \
 		-V '$(p_lgnatprj) (>= $(DEB_VERSION))'
 	$(call cross_mangle_shlibs,$(p_lgnatprj))
@@ -269,23 +229,11 @@ endif
 			$(subst gnatprj$(GNAT_SONAME),gnatvsn$(GNAT_SONAME),$(p_lgnatprj)) \
 		,)
 	$(call cross_mangle_substvars,$(p_lgnatprj))
-	$(cross_gencontrol) dh_gencontrol -p$(p_lgnatprj) \
-		-- -v$(DEB_VERSION) $(common_substvars)
-	$(call cross_mangle_control,$(p_lgnatprj))
-	dh_installdeb -p$(p_lgnatprj)
-	dh_md5sums -p$(p_lgnatprj)
-	dh_builddeb -p$(p_lgnatprj)
 
 	: # $(p_lgnatprj_dbg)
 	debian/dh_doclink -p$(p_lgnatprj_dbg) $(p_glbase)
-	dh_compress -p$(p_lgnatprj_dbg)
-	dh_fixperms -p$(p_lgnatprj_dbg)
-	$(cross_gencontrol) dh_gencontrol -p$(p_lgnatprj_dbg) \
-		-- -v$(DEB_VERSION) $(common_substvars)
-	$(call cross_mangle_control,$(p_lgnatprj_dbg))
-	dh_installdeb -p$(p_lgnatprj_dbg)
-	dh_md5sums -p$(p_lgnatprj_dbg)
-	dh_builddeb -p$(p_lgnatprj_dbg)
+
+	echo $(p_lgnatprj) $(p_lgnatprj_dev) $(p_lgnatprj_dbg) >> debian/$(lib_binaries)
 	touch $@
 
 $(binary_stamp)-ada: $(install_stamp)
@@ -295,7 +243,7 @@ $(binary_stamp)-ada: $(install_stamp)
 	: # $(p_gnat)
 	rm -rf $(d_gnat)
 	dh_installdirs -p$(p_gnat) $(dirs_gnat)
-	# Upstream does not install gnathtml.
+	: # Upstream does not install gnathtml.
 	cp src/gcc/ada/gnathtml.pl debian/tmp/$(PF)/bin/$(cmd_prefix)gnathtml$(pkg_ver)
 	chmod 755 debian/tmp/$(PF)/bin/$(cmd_prefix)gnathtml$(pkg_ver)
 	$(dh_compat2) dh_movefiles -p$(p_gnat) $(files_gnat)
@@ -400,37 +348,35 @@ endif
 	debian/dh_rmemptydirs -p$(p_gnat)
 
 	dh_strip -p$(p_gnat)
-	dh_compress -p$(p_gnat)
-	dh_fixperms -p$(p_gnat)
 	find $(d_gnat) -name '*.ali' | xargs chmod 444
 	$(cross_shlibdeps) dh_shlibdeps -p$(p_gnat) \
 		$(call shlibdirs_to_search, \
 			$(p_lgcc) $(p_lgnat) $(p_lgnatvsn) $(p_lgnatprj) \
 		,)
-	dh_gencontrol -p$(p_gnat) -- -v$(DEB_VERSION) $(common_substvars)
-	dh_installdeb -p$(p_gnat)
-	dh_md5sums -p$(p_gnat)
-	dh_builddeb -p$(p_gnat)
+	echo $(p_gnat) >> debian/arch_binaries
 
 ifeq ($(with_gnatsjlj),yes)
 	dh_strip -p$(p_gnatsjlj)
-	dh_compress -p$(p_gnatsjlj)
-	dh_fixperms -p$(p_gnatsjlj)
 	find $(d_gnatsjlj) -name '*.ali' | xargs chmod 444
 	$(cross_makeshlibs) dh_shlibdeps -p$(p_gnatsjlj)
-	dh_gencontrol -p$(p_gnatsjlj) \
-		-- -v$(DEB_VERSION) $(common_substvars)
-	dh_installdeb -p$(p_gnatsjlj)
-	dh_md5sums -p$(p_gnatsjlj)
-	dh_builddeb -p$(p_gnatsjlj)
+	echo $(p_gnatsjlj) >> debian/arch_binaries
 endif
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 
 
-ada_info_dir = $(d_gnatd)/$(PF)/share/info
+$(build_gnatdoc_stamp): $(build_stamp)
+	mkdir -p html
+	echo -n gnat_ugn gnat_rm gnat-style | xargs -d ' ' -L 1 -P $(USE_CPUS) -I{} \
+	  sh -c 'cd html && \
+	    echo "generating {}-$(GNAT_VERSION).info"; \
+	    makeinfo -I $(srcdir)/gcc/doc/include -I $(srcdir)/gcc/ada \
+		-I $(builddir)/gcc \
+		-o {}-$(GNAT_VERSION).info \
+		$(srcdir)/gcc/ada/{}.texi'
+	touch $@
 
-$(binary_stamp)-ada-doc: $(build_html_stamp)
+$(binary_stamp)-ada-doc: $(build_html_stamp) $(build_gnatdoc_stamp)
 	dh_testdir
 	dh_testroot
 	mv $(install_stamp) $(install_stamp)-tmp
@@ -438,31 +384,9 @@ $(binary_stamp)-ada-doc: $(build_html_stamp)
 	rm -rf $(d_gnatd)
 	dh_installdirs -p$(p_gnatd) \
 		$(PF)/share/info
-
-	cd $(ada_info_dir) && \
-	    makeinfo -I $(srcdir)/gcc/doc/include -I $(srcdir)/gcc/ada \
-		-I $(builddir)/gcc \
-		-o gnat_ugn-$(GNAT_VERSION).info \
-		$(srcdir)/gcc/ada/gnat_ugn.texi
-	cd $(ada_info_dir) && \
-	    makeinfo -I $(srcdir)/gcc/doc/include -I $(srcdir)/gcc/ada \
-		-I $(builddir)/gcc \
-		-o gnat_rm-$(GNAT_VERSION).info \
-		$(srcdir)/gcc/ada/gnat_rm.texi
-	cd $(ada_info_dir) && \
-	    makeinfo -I $(srcdir)/gcc/doc/include -I $(srcdir)/gcc/ada \
-		-I $(builddir)/gcc \
-		-o gnat-style-$(GNAT_VERSION).info \
-		$(srcdir)/gcc/ada/gnat-style.texi
-
+	cp -p html/gnat*info* $(d_gnatd)/$(PF)/share/info/.
 	dh_installdocs -p$(p_gnatd) \
 	    html/gnat_ugn.html html/gnat_rm.html html/gnat-style.html
-	dh_installchangelogs -p$(p_gnatd)
-	dh_compress -p$(p_gnatd)
-	dh_fixperms -p$(p_gnatd)
-	dh_installdeb -p$(p_gnatd)
-	dh_gencontrol -p$(p_gnatd) -- -v$(DEB_VERSION) $(common_substvars)
-	dh_md5sums -p$(p_gnatd)
-	dh_builddeb -p$(p_gnatd)
+	echo $(p_gnatd) >> debian/indep_binaries
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)

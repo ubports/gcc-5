@@ -43,18 +43,11 @@ $(binary_stamp)-libgccjit: $(install_jit_stamp)
 	debian/dh_doclink -p$(p_jitdbg) $(p_base)
 
 	dh_strip -p$(p_jitlib) --dbg-package=$(p_jitdbg)
-	dh_compress -p$(p_jitlib) -p$(p_jitdev) -p$(p_jitdbg)
-	dh_fixperms -p$(p_jitlib) -p$(p_jitdev) -p$(p_jitdbg)
 	$(cross_makeshlibs) dh_makeshlibs -p$(p_jitlib)
 	$(call cross_mangle_shlibs,$(p_jitlib))
 	$(ignshld)$(cross_shlibdeps) dh_shlibdeps -p$(p_jitlib)
 	$(call cross_mangle_substvars,$(p_jitlib))
-	$(cross_gencontrol) dh_gencontrol -p$(p_jitlib) -p$(p_jitdev) -p$(p_jitdbg) \
-		-- -v$(DEB_VERSION) $(common_substvars)
-	$(call cross_mangle_control,$(p_jitlib))
-	dh_installdeb -p$(p_jitlib) -p$(p_jitdev) -p$(p_jitdbg)
-	dh_md5sums -p$(p_jitlib) -p$(p_jitdev) -p$(p_jitdbg)
-	dh_builddeb -p$(p_jitlib) -p$(p_jitdev) -p$(p_jitdbg)
+	echo $(p_jitlib) $(p_jitdev) $(p_jitdbg) >> debian/arch_binaries
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 	touch $@
@@ -72,14 +65,7 @@ $(binary_stamp)-libgccjitdoc: $(install_jit_stamp)
 		$(PF)/share/info/libgccjit*
 
 	debian/dh_doclink -p$(p_jitdoc) $(p_base)
-
-	dh_compress -p$(p_jitdoc)
-	dh_fixperms -p$(p_jitdoc)
-	dh_gencontrol -p$(p_jitdoc) \
-		-- -v$(DEB_VERSION) $(common_substvars)
-	dh_installdeb -p$(p_jitdoc)
-	dh_md5sums -p$(p_jitdoc)
-	dh_builddeb -p$(p_jitdoc)
+	echo $(p_jitdoc) >> debian/indep_binaries
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 	touch $@

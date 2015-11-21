@@ -41,14 +41,8 @@ endif
 
 	dh_strip -p$(p_objcx) \
 	  $(if $(unstripped_exe),-X/cc1objplus)
-	dh_compress -p$(p_objcx)
-
-	dh_fixperms -p$(p_objcx)
 	dh_shlibdeps -p$(p_objcx)
-	dh_gencontrol -p$(p_objcx) -- -v$(DEB_VERSION) $(common_substvars)
-	dh_installdeb -p$(p_objcx)
-	dh_md5sums -p$(p_objcx)
-	dh_builddeb -p$(p_objcx)
+	echo $(p_objcx) >> debian/arch_binaries
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 
@@ -56,19 +50,11 @@ $(binary_stamp)-objcxx-multi: $(install_stamp)
 	dh_testdir
 	dh_testroot
 	mv $(install_stamp) $(install_stamp)-tmp
-
 	rm -rf $(d_objcx_m)
-
 	debian/dh_doclink -p$(p_objcx_m) $(p_xbase)
 	debian/dh_rmemptydirs -p$(p_objcx_m)
 	dh_strip -p$(p_objcx_m)
-	dh_compress -p$(p_objcx_m)
-
-	dh_fixperms -p$(p_objcx_m)
 	dh_shlibdeps -p$(p_objcx_m)
-	dh_gencontrol -p$(p_objcx_m) -- -v$(DEB_VERSION) $(common_substvars)
-	dh_installdeb -p$(p_objcx_m)
-	dh_md5sums -p$(p_objcx_m)
-	dh_builddeb -p$(p_objcx_m)
+	echo $(p_objcx_m) >> debian/arch_binaries
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)

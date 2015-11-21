@@ -22,13 +22,8 @@ $(binary_stamp)-libcc1: $(install_dependencies)
 	debian/dh_rmemptydirs -p$(p_cc1)
 
 	dh_strip -p$(p_cc1)
-	dh_compress -p$(p_cc1)
 	dh_makeshlibs -p$(p_cc1)
 	dh_shlibdeps -p$(p_cc1)
-	dh_fixperms -p$(p_cc1)
-	dh_installdeb -p$(p_cc1)
-	dh_gencontrol -p$(p_cc1) -- -v$(DEB_VERSION) $(common_substvars)
-	dh_md5sums -p$(p_cc1)
-	dh_builddeb -p$(p_cc1)
+	echo $(p_cc1) >> debian/arch_binaries
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)

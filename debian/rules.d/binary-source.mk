@@ -7,7 +7,7 @@ else
 endif
 d_source= debian/$(p_source)
 
-$(binary_stamp)-gcc-source:
+$(binary_stamp)-gcc-source: $(install_stamp)
 	dh_testdir
 	dh_testroot
 
@@ -15,7 +15,6 @@ $(binary_stamp)-gcc-source:
 	dh_installchangelogs -p$(p_source)
 
 	dh_install -p$(p_source) $(gcc_tarball) usr/src/gcc$(pkg_ver)
-#	dh_install -p$(p_source) $(gcj_tarball) usr/src/gcc$(pkg_ver)
 ifneq (,$(gdc_tarball))
 	dh_install -p$(p_source) $(gdc_tarball) usr/src/gcc$(pkg_ver)
 endif
@@ -45,12 +44,6 @@ endif
 	mkdir -p $(d_source)/usr/share/lintian/overrides
 	cp -p debian/$(p_source).overrides \
 		$(d_source)/usr/share/lintian/overrides/$(p_source)
-
-	dh_fixperms -p$(p_source)
-	dh_compress -p$(p_source)
-	dh_gencontrol -p$(p_source) -- -v$(DEB_VERSION) $(common_substvars)
-	dh_installdeb -p$(p_source)
-	dh_md5sums -p$(p_source)
-	dh_builddeb -p$(p_source)
+	echo $(p_source) >> debian/indep_binaries
 
 	touch $@

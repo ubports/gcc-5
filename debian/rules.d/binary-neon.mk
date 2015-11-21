@@ -40,14 +40,8 @@ $(binary_stamp)-neon: $(install_neon_stamp)
 	for p in $(p_nlgcc) $(p_ngomp) $(p_nlobjc) $(p_nflib) $(p_nlcxx); do \
 	  ln -s ../$(p_base) debian/$$p/usr/share/doc/$$p; \
 	done
-
 	dh_strip $(neon_pkgs)
-	dh_compress $(neon_pkgs)
-	dh_fixperms $(neon_pkgs)
 	dh_shlibdeps $(neon_pkgs)
-	dh_gencontrol $(neon_pkgs) -- -v$(DEB_VERSION) $(common_substvars)
-	dh_installdeb $(neon_pkgs)
-	dh_md5sums $(neon_pkgs)
-	dh_builddeb $(neon_pkgs)
+	echo $(p_nlgcc) $(p_ngomp) $(p_nlobjc) $(p_nflib) $(p_nlcxx) >> debian/arch_binaries
 
 	touch $@

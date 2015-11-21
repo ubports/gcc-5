@@ -25,12 +25,7 @@ $(binary_stamp)-softfloat: $(install_stamp)
 		$(d_softfloat)/$(PFL)/$(libdir)/soft-float/libssp_nonshared.a
 	debian/dh_doclink -p$(p_softfloat) $(p_xbase)
 	dh_strip -p$(p_softfloat) -Xlibgcj.a
-	dh_compress -p$(p_softfloat)
-	dh_fixperms -p$(p_softfloat)
 	dh_shlibdeps -p$(p_softfloat)
-	dh_gencontrol -p$(p_softfloat) -- -v$(DEB_VERSION) $(common_substvars)
-	dh_installdeb -p$(p_softfloat)
-	dh_md5sums -p$(p_softfloat)
-	dh_builddeb -p$(p_softfloat)
+	echo $(p_softfloat) >> debian/arch_binaries
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)

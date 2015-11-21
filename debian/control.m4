@@ -329,7 +329,6 @@ Description: GCC support library (development files)
  building C programs which use libgcc, libgomp, libquadmath, libssp or libitm.
 ')`'dnl libgcc
 
-ifenabled(`lib4gcc',`
 Package: libgcc4`'LS
 Architecture: ifdef(`TARGET',`CROSS_ARCH',`hppa')
 ifdef(`MULTIARCH', `Multi-Arch: same
@@ -365,7 +364,6 @@ ifdef(`TARGET', `dnl
  This package contains files for TARGET architecture, for use in cross-compile
  environment.
 ')`'dnl
-')`'dnl lib4gcc
 
 ifenabled(`lib64gcc',`
 Package: lib64gcc1`'LS

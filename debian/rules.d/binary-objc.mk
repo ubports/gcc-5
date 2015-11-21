@@ -45,14 +45,8 @@ endif
 
 	dh_strip -p$(p_objc) \
 	  $(if $(unstripped_exe),-X/cc1obj)
-	dh_compress -p$(p_objc)
-
-	dh_fixperms -p$(p_objc)
 	dh_shlibdeps -p$(p_objc)
-	dh_gencontrol -p$(p_objc) -- -v$(DEB_VERSION) $(common_substvars)
-	dh_installdeb -p$(p_objc)
-	dh_md5sums -p$(p_objc)
-	dh_builddeb -p$(p_objc)
+	echo $(p_objc) >> debian/arch_binaries
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 
@@ -67,13 +61,7 @@ $(binary_stamp)-objc-multi: $(install_stamp)
 	debian/dh_doclink -p$(p_objc_m) $(p_xbase)
 
 	dh_strip -p$(p_objc_m)
-	dh_compress -p$(p_objc_m)
-
-	dh_fixperms -p$(p_objc_m)
 	dh_shlibdeps -p$(p_objc_m)
-	dh_gencontrol -p$(p_objc_m) -- -v$(DEB_VERSION) $(common_substvars)
-	dh_installdeb -p$(p_objc_m)
-	dh_md5sums -p$(p_objc_m)
-	dh_builddeb -p$(p_objc_m)
+	echo $(p_objc_m) >> debian/arch_binaries
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)

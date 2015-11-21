@@ -121,8 +121,6 @@ define __do_gccgo
 
 	: # don't strip: https://gcc.gnu.org/ml/gcc-patches/2015-02/msg01722.html
 	: # dh_strip -p$(p_l) --dbg-package=$(p_d)
-	dh_compress -p$(p_l) -p$(p_d)
-	dh_fixperms -p$(p_l) -p$(p_d)
 	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)
 	$(call cross_mangle_shlibs,$(p_l))
 	$(ignshld)DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_l) \
@@ -131,12 +129,7 @@ define __do_gccgo
 			$(subst go$(GO_SONAME),atomic$(ATOMIC_SONAME),$(p_l)) \
 		,$(2))
 	$(call cross_mangle_substvars,$(p_l))
-	$(cross_gencontrol) dh_gencontrol -p$(p_l) -p$(p_d) \
-		-- -v$(DEB_VERSION) $(common_substvars)
-	$(call cross_mangle_control,$(p_l))
-	dh_installdeb -p$(p_l) -p$(p_d)
-	dh_md5sums -p$(p_l) -p$(p_d)
-	dh_builddeb -p$(p_l) -p$(p_d)
+	echo $(p_l) $(p_d) >> debian/$(lib_binaries)
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 endef
@@ -286,13 +279,8 @@ endif
 
 	dh_strip -v -p$(p_go) -X/cgo -X/go$(pkg_ver) -X/gofmt$(pkg_ver) \
 	  $(if $(unstripped_exe),-X/go1)
-	dh_compress -p$(p_go)
-	dh_fixperms -p$(p_go)
 	dh_shlibdeps -p$(p_go)
-	dh_gencontrol -p$(p_go) -- -v$(DEB_VERSION) $(common_substvars)
-	dh_installdeb -p$(p_go)
-	dh_md5sums -p$(p_go)
-	dh_builddeb -p$(p_go)
+	echo $(p_go) >> debian/arch_binaries
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 
@@ -311,13 +299,8 @@ $(binary_stamp)-gccgo-multi: $(install_stamp)
 	debian/dh_doclink -p$(p_go_m) $(p_xbase)
 	debian/dh_rmemptydirs -p$(p_go_m)
 	dh_strip -p$(p_go_m)
-	dh_compress -p$(p_go_m)
-	dh_fixperms -p$(p_go_m)
 	dh_shlibdeps -p$(p_go_m)
-	dh_gencontrol -p$(p_go_m) -- -v$(DEB_VERSION) $(common_substvars)
-	dh_installdeb -p$(p_go_m)
-	dh_md5sums -p$(p_go_m)
-	dh_builddeb -p$(p_go_m)
+	echo $(p_go_m) >> debian/arch_binaries
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 
@@ -338,12 +321,6 @@ $(binary_stamp)-go-doc: $(build_html_stamp) $(install_stamp)
 	dh_installdocs -p$(p_god)
 	rm -f $(d_god)/$(docdir)/$(p_xbase)/copyright
 	cp -p html/gccgo.html $(d_god)/$(docdir)/$(p_xbase)/go/
-
-	dh_compress -p$(p_god)
-	dh_fixperms -p$(p_god)
-	dh_installdeb -p$(p_god)
-	dh_gencontrol -p$(p_god) -- -v$(DEB_VERSION) $(common_substvars)
-	dh_md5sums -p$(p_god)
-	dh_builddeb -p$(p_god)
+	echo $(p_god) >> debian/indep_binaries
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)

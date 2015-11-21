@@ -36,8 +36,6 @@ define __do_vtv
 	fi
 
 	dh_strip -p$(p_l) --dbg-package=$(p_d)
-	dh_compress -p$(p_l) -p$(p_d)
-	dh_fixperms -p$(p_l) -p$(p_d)
 	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)
 	$(call cross_mangle_shlibs,$(p_l))
 	$(ignshld)DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_l) \
@@ -46,12 +44,7 @@ define __do_vtv
 			$(subst vtv$(VTV_SONAME),stdc++$(CXX_SONAME),$(p_l)) \
 		,$(2))
 	$(call cross_mangle_substvars,$(p_l))
-	$(cross_gencontrol) dh_gencontrol -p$(p_l) -p$(p_d)	\
-		-- -v$(DEB_VERSION) $(common_substvars)
-	$(call cross_mangle_control,$(p_l))
-	dh_installdeb -p$(p_l) -p$(p_d)
-	dh_md5sums -p$(p_l) -p$(p_d)
-	dh_builddeb -p$(p_l) -p$(p_d)
+	echo $(p_l) $(p_d) >> debian/$(lib_binaries)
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 endef

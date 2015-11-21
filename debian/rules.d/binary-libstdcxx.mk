@@ -208,8 +208,6 @@ define __do_libstdcxx
 	debian/dh_rmemptydirs -p$(p_l)
 
 	dh_strip -p$(p_l) $(if $(filter rtlibs,$(DEB_STAGE)),,--dbg-package=$(1)-$(BASE_VERSION)-dbg$(cross_lib_arch))
-	dh_compress -p$(p_l)
-	dh_fixperms -p$(p_l)
 
 	$(if $(filter $(DEB_TARGET_ARCH), armel hppa sparc64), \
 	  -$(cross_makeshlibs) dh_makeshlibs -p$(p_l) \
@@ -221,12 +219,7 @@ define __do_libstdcxx
 	$(ignshld)DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_l) \
 		$(call shlibdirs_to_search,$(subst stdc++$(CXX_SONAME),gcc$(GCC_SONAME),$(p_l)),$(2))
 	$(call cross_mangle_substvars,$(p_l))
-
-	$(cross_gencontrol) dh_gencontrol -p$(p_l) -- -v$(DEB_VERSION) $(common_substvars)
-	$(call cross_mangle_control,$(p_l))
-	dh_installdeb -p$(p_l)
-	dh_md5sums -p$(p_l)
-	dh_builddeb -p$(p_l)
+	echo $(p_l) >> debian/$(lib_binaries)
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 endef
@@ -265,15 +258,7 @@ define __do_libstdcxx_dbg
 
 	debian/dh_doclink -p$(p_d) $(p_lbase)
 	debian/dh_rmemptydirs -p$(p_d)
-
-	dh_compress -p$(p_d)
-	dh_fixperms -p$(p_d)
-	$(cross_gencontrol) dh_gencontrol -p$(p_d) -- -v$(DEB_VERSION) $(common_substvars)
-	$(call cross_mangle_control,$(p_d))
-
-	dh_installdeb -p$(p_d)
-	dh_md5sums -p$(p_d)
-	dh_builddeb -p$(p_d)
+	echo $(p_d) >> debian/$(lib_binaries)
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 endef
@@ -298,16 +283,10 @@ define __do_libstdcxx_dev
 
 	debian/dh_doclink -p$(p_l) $(p_lbase)
 	debian/dh_rmemptydirs -p$(p_l)
-
 	dh_strip -p$(p_l)
-	dh_compress -p$(p_l)
-	dh_fixperms -p$(p_l)
 	dh_shlibdeps -p$(p_l) \
 		$(call shlibdirs_to_search,$(subst stdc++$(CXX_SONAME),gcc$(GCC_SONAME),$(p_l)),$(2))
-	$(cross_gencontrol) dh_gencontrol -p$(p_l) -- -v$(DEB_VERSION) $(common_substvars)
-	dh_installdeb -p$(p_l)
-	dh_md5sums -p$(p_l)
-	dh_builddeb -p$(p_l)
+	echo $(p_l) >> debian/$(lib_binaries)
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 endef
@@ -468,17 +447,10 @@ ifeq ($(with_cxxdev),yes)
 	debian/dh_rmemptydirs -p$(p_dbg)
 endif
 
-	dh_compress -p$(p_dev) -p$(p_pic) -p$(p_dbg) -X.txt
-	dh_fixperms -p$(p_dev) -p$(p_pic) -p$(p_dbg)
 	$(ignshld)DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_dev) -p$(p_pic) -p$(p_dbg) \
 		$(call shlibdirs_to_search,,)
 	$(call cross_mangle_substvars,$(p_dbg))
-	$(cross_gencontrol) dh_gencontrol -p$(p_dev) -p$(p_pic) -p$(p_dbg) \
-		-- -v$(DEB_VERSION) $(common_substvars)
-
-	dh_installdeb -p$(p_dev) -p$(p_pic) -p$(p_dbg)
-	dh_md5sums -p$(p_dev) -p$(p_pic) -p$(p_dbg)
-	dh_builddeb -p$(p_dev) -p$(p_pic) -p$(p_dbg)
+	echo $(p_dev) $(p_pic) $(p_dbg) >> debian/$(lib_binaries)
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 
@@ -487,7 +459,7 @@ endif
 doxygen_doc_dir = $(buildlibdir)/libstdc++-v3/doc
 
 doxygen-docs: $(build_doxygen_stamp)
-$(build_doxygen_stamp):
+$(build_doxygen_stamp): $(build_stamp)
 	$(MAKE) -C $(buildlibdir)/libstdc++-v3/doc SHELL=/bin/bash doc-html-doxygen
 	$(MAKE) -C $(buildlibdir)/libstdc++-v3/doc SHELL=/bin/bash doc-man-doxygen
 	-find $(doxygen_doc_dir)/doxygen/html -name 'struct*' -empty | xargs rm -f
@@ -547,12 +519,6 @@ $(binary_stamp)-libstdcxx-doc: $(install_stamp) doxygen-docs
 	cp -p debian/$(p_libd).overrides \
 		$(d_libd)/usr/share/lintian/overrides/$(p_libd)
 
-	dh_compress -p$(p_libd) -Xhtml/17_intro -X.txt -X.tag -X.map
-	dh_fixperms -p$(p_libd)
-	dh_gencontrol -p$(p_libd) -- -v$(DEB_VERSION) $(common_substvars)
-
-	dh_installdeb -p$(p_libd)
-	dh_md5sums -p$(p_libd)
-	dh_builddeb -p$(p_libd)
+	echo $(p_libd) >> debian/indep_binaries
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)

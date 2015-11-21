@@ -36,12 +36,7 @@ $(binary_stamp)-fixincl: $(install_stamp)
 
 	debian/dh_doclink -p$(p_fix) $(p_xbase)
 	dh_strip -p$(p_fix)
-	dh_compress -p$(p_fix)
-	dh_fixperms -p$(p_fix)
 	dh_shlibdeps -p$(p_fix)
-	dh_gencontrol -p$(p_fix) -- -v$(DEB_EVERSION) $(common_substvars)
-	dh_installdeb -p$(p_fix)
-	dh_md5sums -p$(p_fix)
-	dh_builddeb -p$(p_fix)
+	echo $(p_fix) >> debian/arch_binaries
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)

@@ -53,14 +53,9 @@ $(binary_stamp)-libgmath: $(install_stamp)
 	debian/dh_doclink -p$(p_gmath) $(p_base)
 	debian/dh_rmemptydirs -p$(p_gmath)
 	dh_strip -p$(p_gmath)
-	dh_compress -p$(p_gmath)
-	dh_fixperms -p$(p_gmath)
 	dh_makeshlibs -p$(p_gmath) -V '$(p_gmath) (>= $(DEB_GCCMATH_SOVERSION))'
 	dh_shlibdeps -p$(p_gmath)
-	dh_gencontrol -p$(p_gmath) -- -v$(DEB_VERSION) $(common_substvars)
-	dh_installdeb -p$(p_gmath)
-	dh_md5sums -p$(p_gmath)
-	dh_builddeb -p$(p_gmath)
+	echo $(p_gmath) >> debian/arch_binaries
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 
@@ -78,13 +73,8 @@ $(binary_stamp)-libgmathdev: $(install_stamp)
 		$(d_gmathd)/$(docdir)/$(p_base)/changelog.libgcc-math
 	debian/dh_rmemptydirs -p$(p_gmathd)
 	dh_strip -p$(p_gmathd)
-	dh_compress -p$(p_gmathd)
-	dh_fixperms -p$(p_gmathd)
 	dh_shlibdeps -p$(p_gmathd)
-	dh_gencontrol -p$(p_gmathd) -- -v$(DEB_VERSION) $(common_substvars)
-	dh_installdeb -p$(p_gmathd)
-	dh_md5sums -p$(p_gmathd)
-	dh_builddeb -p$(p_gmathd)
+	echo $(p_gmathd) >> debian/arch_binaries
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 
@@ -103,14 +93,9 @@ $(binary_stamp)-lib64gmath: $(install_stamp)
 	debian/dh_doclink -p$(p_l64gmath) $(p_base)
 
 	dh_strip -p$(p_l64gmath)
-	dh_compress -p$(p_l64gmath)
-	dh_fixperms -p$(p_l64gmath)
 	dh_makeshlibs -p$(p_l64gmath) -V '$(p_l64gmath) (>= $(DEB_GCCMATH_SOVERSION))'
 #	dh_shlibdeps -p$(p_l64gmath)
-	dh_gencontrol -p$(p_l64gmath) -- -v$(DEB_VERSION) $(common_substvars)
-	dh_installdeb -p$(p_l64gmath)
-	dh_md5sums -p$(p_l64gmath)
-	dh_builddeb -p$(p_l64gmath)
+	echo $(p_l64gmath) >> debian/arch_binaries
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 
@@ -129,13 +114,8 @@ $(binary_stamp)-lib32gmath: $(install_stamp)
 	debian/dh_doclink -p$(p_l32gmath) $(p_base)
 
 	dh_strip -p$(p_l32gmath)
-	dh_compress -p$(p_l32gmath)
-	dh_fixperms -p$(p_l32gmath)
 	dh_makeshlibs -p$(p_l32gmath) -V '$(p_l32gmath) (>= $(DEB_GCCMATH_SOVERSION))'
 	dh_shlibdeps -p$(p_l32gmath)
-	dh_gencontrol -p$(p_l32gmath) -- -v$(DEB_VERSION) $(common_substvars)
-	dh_installdeb -p$(p_l32gmath)
-	dh_md5sums -p$(p_l32gmath)
-	dh_builddeb -p$(p_l32gmath)
+	echo $(p_l32gmath) >> debian/arch_binaries
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)

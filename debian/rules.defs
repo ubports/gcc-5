@@ -584,6 +584,11 @@ endif
 ifneq (,$(filter $(DEB_TARGET_ARCH),x32))
   with_ada := disabled for architecture $(DEB_TARGET_ARCH)
 endif
+ifneq (,$(findstring cross,$(build_type)))
+  ifneq (,$(filter $(DEB_BUILD_ARCH),m68k powerpcspe sh4 x32))
+    with_ada := no gnat host compiler on $(DEB_BUILD_ARCH)
+  endif
+endif
 ifneq (,$(findstring $(DEB_TARGET_GNU_SYSTEM),$(ada_no_systems)))
   with_ada := disabled for system $(DEB_TARGET_GNU_SYSTEM)
 endif
@@ -1828,11 +1833,14 @@ patch_stamp		:= $(stampdir)/02-patch-stamp
 control_stamp		:= $(stampdir)/03-control-stamp
 configure_stamp		:= $(stampdir)/04-configure-stamp
 build_stamp		:= $(stampdir)/05-build-stamp
+build_arch_stamp	:= $(stampdir)/05-build-arch-stamp
+build_indep_stamp	:= $(stampdir)/05-build-indep-stamp
 build_html_stamp	:= $(stampdir)/05-build-html-stamp
 build_locale_stamp	:= $(stampdir)/05-build-locale-stamp
 build_doxygen_stamp	:= $(stampdir)/05-build-doxygen-stamp
 build_javasrc_stamp	:= $(stampdir)/05-build-javasrc-stamp
 build_javadoc_stamp	:= $(stampdir)/05-build-javadoc-stamp
+build_gnatdoc_stamp	:= $(stampdir)/05-build-gnatdoc-stamp
 check_stamp		:= $(stampdir)/06-check-stamp
 check_inst_stamp	:= $(stampdir)/06-check-inst-stamp
 install_stamp		:= $(stampdir)/07-install-stamp
@@ -1906,6 +1914,26 @@ endif
 
 build_dependencies += $(check_dependencies)
 
+build_arch_dependencies = $(build_dependencies)
+build_indep_dependencies = $(build_dependencies)
+
+ifneq (,$(findstring build-native, $(build_type)))
+  ifneq ($(single_package),yes)
+    build_indep_dependencies += $(build_html_stamp)
+    ifeq ($(with_cxx),yes)
+      build_indep_dependencies += $(build_doxygen_stamp)
+    endif
+    ifeq ($(with_java),yes)
+      build_arch_dependencies += $(build_html_stamp)
+      build_indep_dependencies += $(build_javasrc_stamp)
+      build_indep_dependencies += $(build_javadoc_stamp)
+    endif
+    ifeq ($(with_ada),yes)
+      build_indep_dependencies += $(build_gnatdoc_stamp)
+    endif
+  endif
+endif
+
 stamp-dir:
 	mkdir -p $(stampdir)
 
@@ -1952,15 +1980,3 @@ _shlibdirs = \
 	$(if $(filter yes,$(biarchsf) $(biarchhf)), \
 	  $(with_build_sysroot)/usr/$(call mlib_to_march,$(2))/lib)
 shlibdirs_to_search = -l$(subst $(SPACE),:,$(foreach d,$(_shlibdirs),$(d)))
-
-# native ... 
-
-ifneq (,$(filter $(DEB_TARGET_ARCH), mips mipsel mips64 mips64el mipsn32 mipsn32el))
-  define cross_mangle_control
-	$(if $(findstring lib64,$(1)),sed -i -r '/^(Dep|Rec|Sug)/s/libn?32[^$(COMMA)]+($(COMMA) *|$$)//g;/^(Dep|Rec|Sug)/s/$(p_lgcc)/$(p_l64gcc)/;/^(Dep|Rec|Sug)/s/ *$(COMMA) *$$//' debian/$(1)/DEBIAN/control,@:)
-	$(if $(findstring libn32,$(1)),sed -i -r '/^(Dep|Rec|Sug)/s/lib64[^$(COMMA)]+($(COMMA) *|$$)//g;/^(Dep|Rec|Sug)/s/$(p_lgcc)/$(p_ln32gcc)/;/^(Dep|Rec|Sug)/s/ *$(COMMA) *$$//' debian/$(1)/DEBIAN/control,@:)
-  endef
-else
-  define cross_mangle_control
-  endef
-endif

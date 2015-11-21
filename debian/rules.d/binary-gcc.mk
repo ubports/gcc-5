@@ -179,21 +179,10 @@ endif
 	debian/dh_rmemptydirs -p$(p_gcc)
 	dh_strip -p$(p_gcc) \
 	  $(if $(unstripped_exe),-X/lto1)
-	dh_compress -p$(p_gcc) -X README.Bugs
-	dh_fixperms -p$(p_gcc)
 	dh_shlibdeps -p$(p_gcc)
-	dh_gencontrol -p$(p_gcc) -- -v$(DEB_VERSION) $(common_substvars)
-	dh_installdeb -p$(p_gcc)
-	dh_md5sums -p$(p_gcc)
-	dh_builddeb -p$(p_gcc)
+	echo $(p_gcc) >> debian/arch_binaries
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
-
-	: # remove empty directories, when all components are in place
-	-find $(d) -type d -empty -delete
-
-	@echo "Listing installed files not included in any package:"
-	-find $(d) ! -type d
 
 # ----------------------------------------------------------------------
 
@@ -209,13 +198,8 @@ $(binary_stamp)-gcc-multi: $(install_dependencies)
 	debian/dh_rmemptydirs -p$(p_gcc_m)
 
 	dh_strip -p$(p_gcc_m)
-	dh_compress -p$(p_gcc_m)
 	dh_shlibdeps -p$(p_gcc_m)
-	dh_fixperms -p$(p_gcc_m)
-	dh_installdeb -p$(p_gcc_m)
-	dh_gencontrol -p$(p_gcc_m) -- -v$(DEB_VERSION) $(common_substvars)
-	dh_md5sums -p$(p_gcc_m)
-	dh_builddeb -p$(p_gcc_m)
+	echo $(p_gcc_m) >> debian/arch_binaries
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 
@@ -236,15 +220,9 @@ $(binary_stamp)-gcc-plugindev: $(install_dependencies)
 
 	debian/dh_doclink -p$(p_pld) $(p_xbase)
 	debian/dh_rmemptydirs -p$(p_pld)
-
 	dh_strip -p$(p_pld)
-	dh_compress -p$(p_pld)
 	dh_shlibdeps -p$(p_pld)
-	dh_fixperms -p$(p_pld)
-	dh_installdeb -p$(p_pld)
-	dh_gencontrol -p$(p_pld) -- -v$(DEB_VERSION) $(common_substvars)
-	dh_md5sums -p$(p_pld)
-	dh_builddeb -p$(p_pld)
+	echo $(p_pld) >> debian/arch_binaries
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 
@@ -263,13 +241,7 @@ $(binary_stamp)-gcc-locales: $(install_dependencies)
 
 	debian/dh_doclink -p$(p_loc) $(p_xbase)
 	debian/dh_rmemptydirs -p$(p_loc)
-
-	dh_compress -p$(p_loc)
-	dh_fixperms -p$(p_loc)
-	dh_installdeb -p$(p_loc)
-	dh_gencontrol -p$(p_loc) -- -v$(DEB_VERSION) $(common_substvars)
-	dh_md5sums -p$(p_loc)
-	dh_builddeb -p$(p_loc)
+	echo $(p_loc) >> debian/indep_binaries
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 
@@ -315,12 +287,6 @@ ifeq ($(with_qmath),yes)
 endif
 	rm -f $(d_doc)/$(docdir)/$(p_xbase)/copyright
 	debian/dh_rmemptydirs -p$(p_doc)
-
-	dh_compress -p$(p_doc)
-	dh_fixperms -p$(p_doc)
-	dh_installdeb -p$(p_doc)
-	dh_gencontrol -p$(p_doc) -- -v$(DEB_VERSION) $(common_substvars)
-	dh_md5sums -p$(p_doc)
-	dh_builddeb -p$(p_doc)
+	echo $(p_doc) >> debian/indep_binaries
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)

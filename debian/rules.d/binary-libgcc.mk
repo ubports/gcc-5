@@ -162,15 +162,9 @@ define __do_gcc_devels
 	debian/dh_rmemptydirs -p$(2)
 
 	dh_strip -p$(2)
-	dh_compress -p$(2)
 	$(cross_shlibdeps) dh_shlibdeps -p$(2)
 	$(call cross_mangle_substvars,$(2))
-	dh_fixperms -p$(2)
-	dh_installdeb -p$(2)
-	$(cross_gencontrol) dh_gencontrol -p$(2) -- -v$(DEB_VERSION) $(common_substvars)
-	$(call cross_mangle_control,$(2))
-	dh_md5sums -p$(2)
-	dh_builddeb -p$(2)
+	echo $(2) >> debian/$(lib_binaries)
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 endef
@@ -325,15 +319,7 @@ define __do_libgcc
 			> $(d_l)/usr/share/lintian/overrides/$(p_l)
 	)
 
-	dh_compress -p$(p_l) -p$(p_d)
-	dh_fixperms -p$(p_l) -p$(p_d)
-	$(cross_gencontrol) dh_gencontrol -p$(p_l) -p$(p_d) \
-		-- -v$(DEB_LIBGCC_VERSION) $(common_substvars)
-	$(call cross_mangle_control,$(p_l))
-
-	dh_installdeb -p$(p_l) -p$(p_d)
-	dh_md5sums -p$(p_l) -p$(p_d)
-	dh_builddeb -p$(p_l) -p$(p_d)
+	echo $(p_l) $(p_d) >> debian/$(lib_binaries)
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 endef

@@ -64,15 +64,9 @@ $(binary_stamp)-libssp: $(install_stamp)
 	debian/dh_rmemptydirs -p$(p_ssp)
 
 	dh_strip -p$(p_ssp)
-	dh_compress -p$(p_ssp)
-	dh_fixperms -p$(p_ssp)
 	dh_makeshlibs -p$(p_ssp) -V '$(p_ssp) (>= $(DEB_SOVERSION))'
 	dh_shlibdeps -p$(p_ssp)
-	dh_gencontrol -p$(p_ssp) \
-		-- -v$(DEB_VERSION) $(common_substvars)
-	dh_installdeb -p$(p_ssp)
-	dh_md5sums -p$(p_ssp)
-	dh_builddeb -p$(p_ssp)
+	echo $(p_ssp) >> debian/arch_binaries
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 
@@ -91,14 +85,9 @@ $(binary_stamp)-lib64ssp: $(install_stamp)
 	debian/dh_doclink -p$(p_ssp64) $(p_lbase)
 
 	dh_strip -p$(p_ssp64)
-	dh_compress -p$(p_ssp64)
-	dh_fixperms -p$(p_ssp64)
 	dh_makeshlibs -p$(p_ssp64) -V '$(p_ssp64) (>= $(DEB_SOVERSION))'
 #	dh_shlibdeps -p$(p_ssp64)
-	dh_gencontrol -p$(p_ssp64) -- -v$(DEB_VERSION) $(common_substvars)
-	dh_installdeb -p$(p_ssp64)
-	dh_md5sums -p$(p_ssp64)
-	dh_builddeb -p$(p_ssp64)
+	echo $(p_ssp64) >> debian/arch_binaries
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 
@@ -117,14 +106,9 @@ $(binary_stamp)-lib32ssp: $(install_stamp)
 	debian/dh_doclink -p$(p_ssp32) $(p_lbase)
 
 	dh_strip -p$(p_ssp32)
-	dh_compress -p$(p_ssp32)
-	dh_fixperms -p$(p_ssp32)
 	dh_makeshlibs -p$(p_ssp32) -V '$(p_ssp32) (>= $(DEB_SOVERSION))'
 #	dh_shlibdeps -p$(p_ssp32)
-	dh_gencontrol -p$(p_ssp32) -- -v$(DEB_VERSION) $(common_substvars)
-	dh_installdeb -p$(p_ssp32)
-	dh_md5sums -p$(p_ssp32)
-	dh_builddeb -p$(p_ssp32)
+	echo $(p_ssp32) >> debian/arch_binaries
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 
@@ -143,14 +127,9 @@ $(binary_stamp)-libn32ssp: $(install_stamp)
 	debian/dh_doclink -p$(p_sspn32) $(p_lbase)
 
 	dh_strip -p$(p_sspn32)
-	dh_compress -p$(p_sspn32)
-	dh_fixperms -p$(p_sspn32)
 	dh_makeshlibs -p$(p_sspn32) -V '$(p_sspn32) (>= $(DEB_SOVERSION))'
 #	dh_shlibdeps -p$(p_sspn32)
-	dh_gencontrol -p$(p_sspn32) -- -v$(DEB_VERSION) $(common_substvars)
-	dh_installdeb -p$(p_sspn32)
-	dh_md5sums -p$(p_sspn32)
-	dh_builddeb -p$(p_sspn32)
+	echo $(p_sspn32) >> debian/arch_binaries
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 
@@ -169,13 +148,8 @@ $(binary_stamp)-libx32ssp: $(install_stamp)
 	debian/dh_doclink -p$(p_sspx32) $(p_lbase)
 
 	dh_strip -p$(p_sspx32)
-	dh_compress -p$(p_sspx32)
-	dh_fixperms -p$(p_sspx32)
 	dh_makeshlibs -p$(p_sspx32) -V '$(p_sspx32) (>= $(DEB_SOVERSION))'
 #	dh_shlibdeps -p$(p_sspx32)
-	dh_gencontrol -p$(p_sspx32) -- -v$(DEB_VERSION) $(common_substvars)
-	dh_installdeb -p$(p_sspx32)
-	dh_md5sums -p$(p_sspx32)
-	dh_builddeb -p$(p_sspx32)
+	echo $(p_sspx32) >> debian/arch_binaries
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)

@@ -38,8 +38,6 @@ $(binary_stamp)-nof: $(install_stamp)
 	$(dh_compat2) dh_movefiles -p$(p_nof) $(files_nof)
 	debian/dh_doclink -p$(p_nof) $(p_xbase)
 	dh_strip -p$(p_nof)
-	dh_compress -p$(p_nof)
-	dh_fixperms -p$(p_nof)
 	dh_shlibdeps -p$(p_nof)
 
 	dh_makeshlibs -p$(p_nof)
@@ -48,9 +46,6 @@ $(binary_stamp)-nof: $(install_stamp)
 		> debian/$(p_nof)/DEBIAN/shlibs.tmp
 	mv -f debian/$(p_nof)/DEBIAN/shlibs.tmp debian/$(p_nof)/DEBIAN/shlibs
 
-	dh_gencontrol -p$(p_nof) -- -v$(DEB_VERSION) $(common_substvars)
-	dh_installdeb -p$(p_nof)
-	dh_md5sums -p$(p_nof)
-	dh_builddeb -p$(p_nof)
+	echo $(p_nof) >> debian/arch_binaries
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)

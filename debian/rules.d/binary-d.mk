@@ -130,13 +130,8 @@ endif
 
 	dh_strip -p$(p_gdc) \
 	  $(if $(unstripped_exe),-X/cc1d)
-	dh_compress -p$(p_gdc)
-	dh_fixperms -p$(p_gdc)
 	dh_shlibdeps -p$(p_gdc)
-	dh_gencontrol -p$(p_gdc) --  -v$(DEB_GDC_VERSION) $(common_substvars)
-	dh_installdeb -p$(p_gdc)
-	dh_md5sums -p$(p_gdc)
-	dh_builddeb -p$(p_gdc)
+	echo $(p_gdc) >> debian/arch_binaries
 
 	find $(d_gdc) -type d -empty -delete
 
@@ -153,14 +148,8 @@ $(binary_stamp)-gdc-multi: $(install_stamp)
 	debian/dh_doclink -p$(p_gdc_m) $(p_xbase)
 
 	dh_strip -p$(p_gdc_m)
-	dh_compress -p$(p_gdc_m)
-
-	dh_fixperms -p$(p_gdc_m)
 	dh_shlibdeps -p$(p_gdc_m)
-	dh_gencontrol -p$(p_gdc_m) -- -v$(DEB_VERSION) $(common_substvars)
-	dh_installdeb -p$(p_gdc_m)
-	dh_md5sums -p$(p_gdc_m)
-	dh_builddeb -p$(p_gdc_m)
+	echo $(p_gdc_m) >> debian/arch_binaries
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 
@@ -186,13 +175,8 @@ else
 endif
 
 	dh_strip -p$(p_libphobos)
-	dh_compress -p$(p_libphobos)
-	dh_fixperms -p$(p_libphobos)
 	dh_shlibdeps -p$(p_libphobos)
-	dh_gencontrol -p$(p_libphobos) --  -v$(DEB_GDC_VERSION) $(common_substvars)
-	dh_installdeb -p$(p_libphobos)
-	dh_md5sums -p$(p_libphobos)
-	dh_builddeb -p$(p_libphobos)
+	echo $(p_libphobos) >> debian/arch_binaries
 
 	find $(d_libphobos) -type d -empty -delete
 
@@ -220,15 +204,7 @@ define __do_libphobos_dev
 
 	debian/dh_doclink -p$(p_l) \
 		$(if $(filter yes,$(with_separate_gdc)),$(p_gdc),$(p_lbase))
-
-	dh_compress -p$(p_l)
-	dh_fixperms -p$(p_l)
-	$(cross_gencontrol) dh_gencontrol -p$(p_l) \
-		-- -v$(DEB_VERSION) $(common_substvars)
-	$(call cross_mangle_control,$(p_l))
-	dh_installdeb -p$(p_l)
-	dh_md5sums -p$(p_l)
-	dh_builddeb -p$(p_l)
+	echo $(p_l) >> debian/$(lib_binaries)
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 endef

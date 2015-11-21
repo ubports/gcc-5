@@ -98,8 +98,6 @@ define __do_fortran
 	fi
 
 	dh_strip -p$(p_l) --dbg-package=$(p_d)
-	dh_compress -p$(p_l) -p$(p_d)
-	dh_fixperms -p$(p_l) -p$(p_d)
 	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)
 	$(call cross_mangle_shlibs,$(p_l))
 	$(ignshld)DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_l) \
@@ -108,12 +106,7 @@ define __do_fortran
 			$(subst gfortran$(FORTRAN_SONAME),gcc$(QUADMATH_SONAME),$(p_l)) \
 		,$(2))
 	$(call cross_mangle_substvars,$(p_l))
-	$(cross_gencontrol) dh_gencontrol -p$(p_l) -p$(p_d) \
-		-- -v$(DEB_VERSION) $(common_substvars)
-	$(call cross_mangle_control,$(p_l))
-	dh_installdeb -p$(p_l) -p$(p_d)
-	dh_md5sums -p$(p_l) -p$(p_d)
-	dh_builddeb -p$(p_l) -p$(p_d)
+	echo $(p_l) $(p_d) >> debian/$(lib_binaries)
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 endef
@@ -138,15 +131,9 @@ define __do_libgfortran_dev
 	debian/dh_rmemptydirs -p$(p_l)
 
 	dh_strip -p$(p_l)
-	dh_compress -p$(p_l)
-	dh_fixperms -p$(p_l)
 	$(cross_shlibdeps) dh_shlibdeps -p$(p_l)
 	$(call cross_mangle_substvars,$(p_l))
-	$(cross_gencontrol) dh_gencontrol -p$(p_l) -- -v$(DEB_VERSION) $(common_substvars)
-	$(call cross_mangle_control,$(p_l))
-	dh_installdeb -p$(p_l)
-	dh_md5sums -p$(p_l)
-	dh_builddeb -p$(p_l)
+	echo $(p_l) >> debian/$(lib_binaries)
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 endef
@@ -215,13 +202,8 @@ endif
 
 	dh_strip -p$(p_g95) \
 	  $(if $(unstripped_exe),-X/f951)
-	dh_compress -p$(p_g95)
-	dh_fixperms -p$(p_g95)
 	dh_shlibdeps -p$(p_g95)
-	dh_gencontrol -p$(p_g95) -- -v$(DEB_VERSION) $(common_substvars)
-	dh_installdeb -p$(p_g95)
-	dh_md5sums -p$(p_g95)
-	dh_builddeb -p$(p_g95)
+	echo $(p_g95) >> debian/arch_binaries
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 
@@ -237,13 +219,8 @@ $(binary_stamp)-fdev-multi: $(install_stamp)
 	debian/dh_doclink -p$(p_g95_m) $(p_xbase)
 	debian/dh_rmemptydirs -p$(p_g95_m)
 	dh_strip -p$(p_g95_m)
-	dh_compress -p$(p_g95_m)
-	dh_fixperms -p$(p_g95_m)
 	dh_shlibdeps -p$(p_g95_m)
-	dh_gencontrol -p$(p_g95_m) -- -v$(DEB_VERSION) $(common_substvars)
-	dh_installdeb -p$(p_g95_m)
-	dh_md5sums -p$(p_g95_m)
-	dh_builddeb -p$(p_g95_m)
+	echo $(p_g95_m) >> debian/arch_binaries
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 
@@ -266,13 +243,7 @@ ifneq ($(GFDL_INVARIANT_FREE),yes)
 	rm -f $(d_g95d)/$(docdir)/$(p_xbase)/copyright
 	cp -p html/gfortran.html $(d_g95d)/$(docdir)/$(p_xbase)/fortran/
 endif
-
-	dh_compress -p$(p_g95d)
-	dh_fixperms -p$(p_g95d)
-	dh_installdeb -p$(p_g95d)
-	dh_gencontrol -p$(p_g95d) -- -v$(DEB_VERSION) $(common_substvars)
-	dh_md5sums -p$(p_g95d)
-	dh_builddeb -p$(p_g95d)
+	echo $(p_g95d) >> debian/indep_binaries
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 
