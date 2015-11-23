@@ -319,7 +319,7 @@ define __do_libgcc
 			> $(d_l)/usr/share/lintian/overrides/$(p_l)
 	)
 
-	echo $(p_l) $(p_d) >> debian/$(lib_binaries)
+	echo $(p_l) $(p_d) >> debian/$(lib_binaries).epoch
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 endef

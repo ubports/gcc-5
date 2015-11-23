@@ -77,7 +77,7 @@ Package: libgcc2-dbg
 Architecture: m68k
 Section: debug
 Priority: extra
-Depends: gcc-5-base (= ${gcc:Version}), libgcc2 (= ${gcc:Version}), ${misc:Depends}
+Depends: gcc-5-base (= ${gcc:Version}), libgcc2 (= ${gcc:EpochVersion}), ${misc:Depends}
 Multi-Arch: same
 Description: GCC support library (debug symbols)
  Debug symbols for the GCC support library.
@@ -116,7 +116,7 @@ Architecture: hppa
 Multi-Arch: same
 Section: debug
 Priority: extra
-Depends: gcc-5-base (= ${gcc:Version}), libgcc4 (= ${gcc:Version}), ${misc:Depends}
+Depends: gcc-5-base (= ${gcc:Version}), libgcc4 (= ${gcc:EpochVersion}), ${misc:Depends}
 Description: GCC support library (debug symbols)
  Debug symbols for the GCC support library.
 

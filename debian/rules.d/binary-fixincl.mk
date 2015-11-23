@@ -37,6 +37,6 @@ $(binary_stamp)-fixincl: $(install_stamp)
 	debian/dh_doclink -p$(p_fix) $(p_xbase)
 	dh_strip -p$(p_fix)
 	dh_shlibdeps -p$(p_fix)
-	echo $(p_fix) >> debian/arch_binaries
+	echo $(p_fix) >> debian/arch_binaries.epoch
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)

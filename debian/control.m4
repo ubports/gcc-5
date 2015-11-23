@@ -123,8 +123,8 @@ define(`BASEDEP', `gcc`'PV`'TS-base (= ${gcc:Version})')
 define(`SOFTBASEDEP', `gcc`'PV`'TS-base (>= ${gcc:SoftVersion})')
 
 ifdef(`TARGET',`
-define(`BASELDEP', `gcc`'PV-cross-base (= ${gcc:Version})')
-define(`SOFTBASELDEP', `gcc`'PV-cross-base (>= ${gcc:SoftVersion})')
+define(`BASELDEP', `gcc`'PV-cross-base`'GCC_PORTS_BUILD (= ${gcc:Version})')
+define(`SOFTBASELDEP', `gcc`'PV-cross-base`'GCC_PORTS_BUILD (>= ${gcc:SoftVersion})')
 ',`dnl
 define(`BASELDEP', `BASEDEP')
 define(`SOFTBASELDEP', `SOFTBASEDEP')
@@ -163,7 +163,7 @@ ifdef(`BASE_ONLY', `dnl
 ')`'dnl gccbase
 
 ifenabled(`gcclbase',`
-Package: gcc`'PV-cross-base
+Package: gcc`'PV-cross-base`'GCC_PORTS_BUILD
 Architecture: all
 Section: ifdef(`TARGET',`devel',`libs')
 Priority: ifdef(`TARGET',`extra',`PRI(required)')
@@ -296,7 +296,7 @@ Package: libgcc2-dbg`'LS
 Architecture: ifdef(`TARGET',`CROSS_ARCH',`m68k')
 Section: debug
 Priority: extra
-Depends: BASELDEP, libdep(gcc2,,=,${gcc:Version}), ${misc:Depends}
+Depends: BASELDEP, libdep(gcc2,,=,${gcc:EpochVersion}), ${misc:Depends}
 ifdef(`MULTIARCH', `Multi-Arch: same
 ')`'dnl
 BUILT_USING`'dnl
@@ -337,7 +337,7 @@ Breaks: ${multiarch:breaks}
 ')`'dnl
 Section: ifdef(`TARGET',`devel',`libs')
 Priority: ifdef(`TARGET',`extra',required)
-Depends: ifdef(`STANDALONEJAVA',`gcj`'PV-base (>= ${gcj:Version})',`BASEDEP'), ${shlibs:Depends}, ${misc:Depends}
+Depends: ifdef(`STANDALONEJAVA',`gcj`'PV-base (>= ${gcj:Version})',`BASELDEP'), ${shlibs:Depends}, ${misc:Depends}
 BUILT_USING`'dnl
 Description: GCC support library`'ifdef(`TARGET)',` (TARGET)', `')
  Shared version of the support library, a library of internal subroutines
@@ -355,7 +355,7 @@ ifdef(`MULTIARCH', `Multi-Arch: same
 ')`'dnl
 Section: debug
 Priority: extra
-Depends: BASELDEP, libdep(gcc4,,=,${gcc:Version}), ${misc:Depends}
+Depends: BASELDEP, libdep(gcc4,,=,${gcc:EpochVersion}), ${misc:Depends}
 BUILT_USING`'dnl
 Description: GCC support library (debug symbols)`'ifdef(`TARGET)',` (TARGET)', `')
  Debug symbols for the GCC support library.
