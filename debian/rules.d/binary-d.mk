@@ -5,7 +5,7 @@ ifneq ($(DEB_STAGE),rtlibs)
   arch_binaries := $(arch_binaries) gdc
 
   ifeq ($(with_libphobos),yes)
-    arch_binaries += libphobos-dev
+    $(lib_binaries) += libphobos-dev
   endif
 
   ifeq ($(with_lib64phobosdev),yes)

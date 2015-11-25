@@ -65,43 +65,6 @@ endif
 		$(d_cxx)/$(docdir)/$(p_xbase)/C++/changelog
 	debian/dh_rmemptydirs -p$(p_cxx)
 
-	mkdir -p $(d_cxx)/$(docdir)/$(p_xbase)/test-summaries
-	echo "TEST COMPARE BEGIN"
-ifeq ($(with_check),yes)
-# more than one libgo.sum, avoid it 
-	cp -p $$(find $(builddir)/gcc/testsuite -maxdepth 2 \( -name '*.sum' -o -name '*.log' \)) \
-	      $$(find $(buildlibdir)/*/testsuite -maxdepth 1 \( -name '*.sum'  -o -name '*.log' \) ! -name 'libgo.*') \
-		$(d_cxx)/$(docdir)/$(p_xbase)/test-summaries/
-  ifeq ($(with_go),yes)
-	cp -p $(buildlibdir)/libgo/libgo.sum \
-		$(d_cxx)/$(docdir)/$(p_xbase)/test-summaries/
-  endif
-  ifeq (0,1)
-	cd $(builddir); \
-	for i in $(CURDIR)/$(d_cxx)/$(docdir)/$(p_xbase)/test-summaries/*.sum; do \
-	  b=$$(basename $$i); \
-	  if [ -f /usr/share/doc/$(p_xbase)/test-summaries/$$b.gz ]; then \
-	    zcat /usr/share/doc/$(p_xbase)/test-summaries/$$b.gz > /tmp/$$b; \
-	    if sh $(srcdir)/contrib/test_summary /tmp/$$b $$i; then \
-	      echo "$$b: OK"; \
-	    else \
-	      echo "$$b: FAILURES"; \
-	    fi; \
-	    rm -f /tmp/$$b; \
-	  else \
-	    echo "Test summary for $$b is not available"; \
-	  fi; \
-	done
-  endif
-	if which xz 2>&1 >/dev/null; then \
-	  echo -n $(d_cxx)/$(docdir)/$(p_xbase)/test-summaries/* \
-	    | xargs -d ' ' -L 1 -P $(USE_CPUS)	xz -7v; \
-	fi
-else
-	echo "Nothing to compare (testsuite not run)"
-endif	
-	echo "TEST COMPARE END"
-
 	dh_shlibdeps -p$(p_cxx)
 	dh_strip -p$(p_cxx)
 	echo $(p_cxx) >> debian/arch_binaries

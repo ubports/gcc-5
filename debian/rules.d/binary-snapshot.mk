@@ -163,7 +163,8 @@ ifeq ($(with_check),yes)
 		$(d_snap)/$(docdir)/$(p_snap)/test-summaries/
   endif
 	if which xz 2>&1 >/dev/null; then \
-		xz -7v $(d_snap)/$(docdir)/$(p_snap)/test-summaries/*; \
+	  echo -n $(d_snap)/$(docdir)/$(p_snap)/test-summaries/* \
+	    | xargs -d ' ' -L 1 -P $(USE_CPUS)	xz -7v; \
 	fi
 else
 	dh_installdocs -p$(p_snap)

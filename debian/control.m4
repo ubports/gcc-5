@@ -76,7 +76,7 @@ Build-Depends: debhelper (>= 5.0.62), DPKG_BUILD_DEP
   libunwind7-dev (>= 0.98.5-6) [ia64], libatomic-ops-dev [ia64],
   autogen, gawk, lzma, xz-utils, patchutils,
   zlib1g-dev, SDT_BUILD_DEP
-  BINUTILS_BUILD_DEP, binutils-hppa64-linux-gnu (>= BINUTILSBDV) [hppa],
+  BINUTILS_BUILD_DEP, binutils-hppa64-linux-gnu (>= BINUTILSBDV) [hppa amd64 i386 x32],
   gperf (>= 3.0.1), bison (>= 1:2.3), flex, gettext,
   gdb,
   texinfo (>= 4.3), locales, sharutils,
@@ -800,6 +800,18 @@ Description: GNU C compiler (multilib support)`'ifdef(`TARGET)',` (cross compile
  for the non-default multilib architecture(s).
 ')`'dnl multilib
 
+ifenabled(`testresults',`
+Package: gcc`'PV-test-results
+Architecture: any
+Section: devel
+Priority: extra
+Depends: BASEDEP, ${misc:Depends}
+BUILT_USING`'dnl
+Description: Test results for the GCC test suite
+ This package contains the test results for running the GCC test suite
+ for a post build analysis.
+')`'dnl testresults
+
 ifenabled(`plugindev',`
 Package: gcc`'PV-plugin-dev`'TS
 Architecture: any
@@ -816,7 +828,7 @@ Description: Files for GNU GCC plugin development.
 
 ifenabled(`cdev',`
 Package: gcc`'PV-hppa64-linux-gnu
-Architecture: ifdef(`TARGET',`any',hppa)
+Architecture: ifdef(`TARGET',`any',hppa amd64 i386 x32)
 Section: devel
 Priority: PRI(optional)
 Depends: BASEDEP, ${shlibs:Depends}, ${misc:Depends}, binutils-hppa64-linux-gnu | binutils-hppa64

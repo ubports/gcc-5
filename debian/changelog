@@ -1,3 +1,16 @@
+gcc-5 (5.2.1-26) unstable; urgency=medium
+
+  * Update to SVN 20151125 (r230897, 5.2.1) from the gcc-5-branch.
+  * Fix the rtlibs stage build. Closes: #806186.
+  * Fix packaging the cross libphobos package.
+  * Build the hppa64 cross compiler on x86 architectures.
+  * gcc-5-hppa64-linux-gnu: Stop providing unversioned tools using
+    alternatives. Build a gcc-hppa64-linux-gnu package instead.
+  * Split out a gcc-5-test-results package from g++-5, allowing a post
+    build analysis, and reducing the size of the g++-5 package.
+
+ -- Matthias Klose <doko@debian.org>  Wed, 25 Nov 2015 20:33:08 +0100
+
 gcc-5 (5.2.1-25) unstable; urgency=medium
 
   * Update to SVN 20151123 (r230734, 5.2.1) from the gcc-5-branch.

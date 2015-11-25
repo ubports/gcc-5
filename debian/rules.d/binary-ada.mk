@@ -367,6 +367,7 @@ endif
 
 $(build_gnatdoc_stamp): $(build_stamp)
 	mkdir -p html
+	rm -f html/*.info
 	echo -n gnat_ugn gnat_rm gnat-style | xargs -d ' ' -L 1 -P $(USE_CPUS) -I{} \
 	  sh -c 'cd html && \
 	    echo "generating {}-$(GNAT_VERSION).info"; \

@@ -1141,7 +1141,7 @@ ifeq ($(locale_data)-$(with_cxx),generate-yes)
 	: # build locales needed by libstdc++ testsuite
 	rm -rf locales
 	mkdir locales
-	- USE_CPUS=$USE_CPUS sh debian/locale-gen
+	-USE_CPUS=$(USE_CPUS) sh debian/locale-gen
 endif
 	touch $(build_locale_stamp)
 
@@ -1454,8 +1454,8 @@ $(build_html_stamp): $(stampdir)/05-build-html-nosplit
 
 html-makeinfo-split: $(stampdir)/05-build-html-split
 $(stampdir)/05-build-html-split: $(build_stamp)
-	rm -rf html
 	mkdir -p html
+	rm -f html/*.html
 	cd $(builddir)/gcc; \
 	echo -n $(MANUALS) | xargs -d ' ' -L 1 -P $(USE_CPUS) -I{} \
 	  sh -c 'outname=`basename {} .texi`.html; \
@@ -1468,13 +1468,13 @@ $(stampdir)/05-build-html-split: $(build_stamp)
 		-I $(builddir)/gcc \
 		-I $(buildlibdir)/libquadmath \
 		-o $${outname} \
-		{}
+		{}'
 	touch $@
 
 html-makeinfo-nosplit: $(stampdir)/05-build-html-nosplit
 $(stampdir)/05-build-html-nosplit: $(build_stamp)
-	rm -rf html
 	mkdir -p html
+	rm -f html/*.html
 	cd $(builddir)/gcc; \
 	echo -n $(MANUALS) | xargs -d ' ' -L 1 -P $(USE_CPUS) -I{} \
 	  sh -c 'outname=`basename {} .texi`.html; \
@@ -2353,25 +2353,28 @@ $(install_hppa64_stamp): $(build_hppa64_stamp)
 		DESTDIR=$(PWD)/$(d_hppa64) \
 		    install
 
+	: # remove files not needed
+	rm -rf $(d_hppa64)/$(PF)/info $(d_hppa64)/$(PF)/share/info
+	rm -rf $(d_hppa64)/$(PF)/man $(d_hppa64)/$(PF)/share/man
+	rm -rf $(d_hppa64)/$(PF)/lib/gcc/hppa64-linux-gnu/$(BASE_VERSION)/plugin
+	rm -f $(d_hppa64)/$(PF)/lib/libiberty.a
+	rm -f $(d_hppa64)/$(PF)/lib/libcc1.*
+	rm -f $(d_hppa64)/$(PF)/bin/*{gcov,gccbug,gcc}
+
+	rm -rf $(d_hppa64)/$(PF)/hppa64-linux-gnu
+	rm -rf $(d_hppa64)/$(PF)/lib/gcc/hppa64-linux-gnu/$(BASE_VERSION)/install-tools
+
 ifeq ($(versioned_packages),yes)
-	for i in cpp gcc-ar gcc-nm gcc-ranlib; do \
+	for i in cpp gcc-ar gcc-nm gcc-ranlib gcov-tool; do \
 	  mv -f $(d_hppa64)/$(PF)/bin/hppa64-linux-gnu-$$i \
 		$(d_hppa64)/$(PF)/bin/hppa64-linux-gnu-$$i$(pkg_ver); \
 	done
 endif
-
-ifneq ($(single_package),yes)
-	: # remove files not needed
-	rm -rf $(d_hppa64)/$(PF)/info $(d_hppa64)/$(PF)/share/info
-	rm -rf $(d_hppa64)/$(PF)/man $(d_hppa64)/$(PF)/share/man
-	rm -rf $(d_hppa64)/$(PF)/$(libdir)/gcc/hppa64-linux-gnu/$(GCC_VERSION)/plugin
-	rm -f $(d_hppa64)/$(PF)/$(libdir)/libiberty.a
-	rm -f $(d_hppa64)/$(PF)/bin/*{gcov,gccbug,gcc}
-
-	rm -rf $(d_hppa64)/$(PF)/hppa64-linux-gnu/include
-	rm -rf $(d_hppa64)/$(PF)/hppa64-linux-gnu/lib
-	rm -rf $(d_hppa64)/$(hppa64libexecdir)/gcc/hppa64-linux-gnu/$(GCC_VERSION)/install-tools
-endif
+	mkdir -p $(d_hppa64)/$(PF)/share/man/man1
+	for i in cpp gcc-ar gcc-nm gcc-ranlib gcov-tool; do \
+	  ln -sf $$i$(pkg_ver).1.gz \
+	    $(d_hppa64)/$(PF)/share/man/man1/hppa64-linux-gnu-$$i$(pkg_ver).1.gz; \
+	done
 
 	touch $(install_hppa64_stamp)
 
@@ -2393,7 +2396,7 @@ $(install_neon_stamp): $(build_neon_stamp)
 # ----------------------------------------------------------------------
 # Build architecture-dependent files here.
 debian/arch_binaries.all: $(foreach i,$(arch_binaries),$(binary_stamp)-$(i))
-	cd debian; du -s `cat arch_binaries` | sort -nr | awk '{print $$2}' \
+	cd debian; xargs -r du -s < arch_binaries | sort -nr | awk '{print $$2}' \
 		> arch_binaries.tmp
 	mv debian/arch_binaries.tmp debian/arch_binaries
 	sed -i 's/ /\n/g' debian/arch_binaries.epoch || touch debian/arch_binaries.epoch
@@ -2431,7 +2434,7 @@ endif
 # ----------------------------------------------------------------------
 # Build architecture-independent files here.
 debian/indep_binaries.all: $(foreach i,$(indep_binaries),$(binary_stamp)-$(i))
-	cd debian; du -s `cat indep_binaries` | sort -nr | awk '{print $$2}' \
+	cd debian; xargs -r du -s < indep_binaries | sort -nr | awk '{print $$2}' \
 		> indep_binaries.tmp
 	mv debian/indep_binaries.tmp debian/indep_binaries
 	sed -i 's/ /\n/g' debian/indep_binaries.epoch || touch debian/indep_binaries.epoch

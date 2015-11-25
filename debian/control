@@ -12,7 +12,7 @@ Build-Depends: debhelper (>= 5.0.62), dpkg-dev (>= 1.17.11),
   libunwind7-dev (>= 0.98.5-6) [ia64], libatomic-ops-dev [ia64], 
   autogen, gawk, lzma, xz-utils, patchutils, 
   zlib1g-dev, systemtap-sdt-dev [linux-any kfreebsd-any hurd-any], 
-  binutils (>= 2.25-7~) | binutils-multiarch (>= 2.25-7~), binutils-hppa64-linux-gnu (>= 2.25-7~) [hppa], 
+  binutils (>= 2.25.90) | binutils-multiarch (>= 2.25.90), binutils-hppa64-linux-gnu (>= 2.25.90) [hppa amd64 i386 x32], 
   gperf (>= 3.0.1), bison (>= 1:2.3), flex, gettext, 
   gdb, 
   texinfo (>= 4.3), locales, sharutils, 
@@ -298,6 +298,15 @@ Description: GNU C compiler (multilib support)
  This is a dependency package, depending on development packages
  for the non-default multilib architecture(s).
 
+Package: gcc-5-test-results
+Architecture: any
+Section: devel
+Priority: extra
+Depends: gcc-5-base (= ${gcc:Version}), ${misc:Depends}
+Description: Test results for the GCC test suite
+ This package contains the test results for running the GCC test suite
+ for a post build analysis.
+
 Package: gcc-5-plugin-dev
 Architecture: any
 Section: devel
@@ -309,7 +318,7 @@ Description: Files for GNU GCC plugin development.
  plugins.
 
 Package: gcc-5-hppa64-linux-gnu
-Architecture: hppa
+Architecture: hppa amd64 i386 x32
 Section: devel
 Priority: optional
 Depends: gcc-5-base (= ${gcc:Version}), ${shlibs:Depends}, ${misc:Depends}, binutils-hppa64-linux-gnu | binutils-hppa64

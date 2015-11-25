@@ -1349,7 +1349,7 @@ else
 
   # hppa64 build ----------------
   hppa64_no_snap := no
-  ifeq ($(DEB_TARGET_ARCH),hppa)
+  ifneq (, $(filter $(DEB_TARGET_ARCH),hppa amd64 i386 x32))
     with_hppa64 := yes
   endif
   ifeq ($(hppa64_no_snap)-$(trunk_build),yes-yes)

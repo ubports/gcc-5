@@ -16,6 +16,10 @@ ifneq ($(DEB_STAGE),rtlibs)
       indep_binaries := $(indep_binaries) gcc-locales
     endif
   endif
+
+  ifeq ($(build_type),build-native)
+    arch_binaries  := $(arch_binaries) testresults
+  endif
 endif
 
 # gcc must be moved after g77 and g++
@@ -71,6 +75,9 @@ d_gcc_m	= debian/$(p_gcc_m)
 
 p_pld	= gcc$(pkg_ver)-plugin-dev$(cross_bin_arch)
 d_pld	= debian/$(p_pld)
+
+p_tst	= gcc$(pkg_ver)-test-results
+d_tst	= debian/$(p_tst)
 
 # ----------------------------------------------------------------------
 $(binary_stamp)-gcc: $(install_dependencies)
@@ -245,6 +252,63 @@ $(binary_stamp)-gcc-locales: $(install_dependencies)
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 
+
+# ----------------------------------------------------------------------
+
+$(binary_stamp)-testresults: $(install_dependencies)
+	dh_testdir
+	dh_testroot
+	mv $(install_stamp) $(install_stamp)-tmp
+
+	rm -rf $(d_tst)
+	dh_installdirs -p$(p_tst) $(docdir)
+
+	debian/dh_doclink -p$(p_tst) $(p_xbase)
+
+	mkdir -p $(d_tst)/$(docdir)/$(p_xbase)/test-summaries
+	echo "TEST COMPARE BEGIN"
+ifeq ($(with_check),yes)
+# more than one libgo.sum, avoid it 
+	cp -p $$(find $(builddir)/gcc/testsuite -maxdepth 2 \( -name '*.sum' -o -name '*.log' \)) \
+	      $$(find $(buildlibdir)/*/testsuite -maxdepth 1 \( -name '*.sum'  -o -name '*.log' \) ! -name 'libgo.*') \
+		$(d_tst)/$(docdir)/$(p_xbase)/test-summaries/
+  ifeq ($(with_go),yes)
+	cp -p $(buildlibdir)/libgo/libgo.sum \
+		$(d_tst)/$(docdir)/$(p_xbase)/test-summaries/
+  endif
+  ifeq (0,1)
+	cd $(builddir); \
+	for i in $(CURDIR)/$(d_tst)/$(docdir)/$(p_xbase)/test-summaries/*.sum; do \
+	  b=$$(basename $$i); \
+	  if [ -f /usr/share/doc/$(p_xbase)/test-summaries/$$b.gz ]; then \
+	    zcat /usr/share/doc/$(p_xbase)/test-summaries/$$b.gz > /tmp/$$b; \
+	    if sh $(srcdir)/contrib/test_summary /tmp/$$b $$i; then \
+	      echo "$$b: OK"; \
+	    else \
+	      echo "$$b: FAILURES"; \
+	    fi; \
+	    rm -f /tmp/$$b; \
+	  else \
+	    echo "Test summary for $$b is not available"; \
+	  fi; \
+	done
+  endif
+	if which xz 2>&1 >/dev/null; then \
+	  echo -n $(d_tst)/$(docdir)/$(p_xbase)/test-summaries/* \
+	    | xargs -d ' ' -L 1 -P $(USE_CPUS)	xz -7v; \
+	fi
+else
+	echo "Nothing to compare (testsuite not run)"
+	echo 'Test run disabled, reason: $(with_check)' \
+	  > $(d_tst)/$(docdir)/$(p_xbase)/test-summaries/test-run-disabled
+endif
+	echo "TEST COMPARE END"
+
+	debian/dh_rmemptydirs -p$(p_tst)
+
+	echo $(p_tst) >> debian/arch_binaries
+
+	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 
 # ----------------------------------------------------------------------
 $(binary_stamp)-gcc-doc: $(build_html_stamp) $(install_stamp)
