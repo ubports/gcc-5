@@ -29,6 +29,7 @@ ifneq ($(GFDL_INVARIANT_FREE),yes)
   debian_patches += \
 	$(if $(with_linaro_branch),gcc-linaro-doc) \
 	rename-info-files \
+	gcc-configure-pie-doc \
 
 #	svn-doc-updates \
 #	$(if $(with_linaro_branch),,svn-doc-updates) \
@@ -89,6 +90,10 @@ debian_patches += \
 	pr66368 \
 	pr67508 \
 	pr67590 \
+	gcc-configure-pie \
+	ada-gnattools-ldflags \
+	libjit-ldflags \
+	skip-bootstrap-multilib \
 
 # this is still needed on powerpc, e.g. firefox and insighttoolkit4 will ftbfs.
 ifneq (,$(filter $(DEB_TARGET_ARCH),powerpc))
@@ -110,7 +115,6 @@ endif
 #	$(if $(filter yes, $(DEB_CROSS)),,gcc-print-file-name) \
 #	libstdc++-nothumb-check \
 # TODO: update ...
-#	gcc-cloog-dl \
 #	libjava-rpath \
 
 hardening_patches =
@@ -227,11 +231,6 @@ else ifeq ($(DEB_TARGET_ARCH),armel)
   endif
 endif
 
-ifeq ($(DEB_TARGET_ARCH),m68k)
-  debian_patches += m68k-ada
-  debian_patches += m68k-revert-pr45144
-endif
-
 ifeq ($(DEB_TARGET_ARCH),powerpcspe)
   debian_patches += powerpc_remove_many
   debian_patches += powerpc_nofprs
@@ -325,9 +324,14 @@ debian_patches += go-testsuite
 # Ada patches needed for both the stable package and snapshot builds
 debian_patches += ada-749574
 debian_patches += ada-mips
-debian_patches += ada-ppc64
-debian_patches += ada-mips64
 debian_patches += ada-bootstrap-compare
+ifeq ($(DEB_TARGET_ARCH),m68k)
+  debian_patches += ada-m68k
+  ifeq ($(with_ada),yes)
+    debian_patches += m68k-revert-pr45144
+  endif
+endif
+
 
 # don't remove, this is regularly overwritten, see PR sanitizer/63958.
 #debian_patches += libasan-sparc
@@ -346,10 +350,14 @@ endif
 	sed -r 's/(.)$$/\1 -p1/' -i $(series_file)
 	touch $@
 
-autotools_files += $(addprefix ./,$(foreach file,$(shell lsdiff --no-filename \
-	$(foreach patch,$(debian_patches),$(patchdir)/$(patch).diff) \
-	| sed -r 's:[^/]+/src/:src/:' | sort | uniq),$(shell echo $(file) \
-	| egrep 'configure\.(ac|in)|Makefile\.(am|in)|acinclude.m4')))
+autoconf_files = $(filter-out src/libjava/classpath/m4/acinclude.m4, \
+	  $(shell lsdiff --no-filename $(foreach patch,$(debian_patches),$(patchdir)/$(patch).diff) \
+	    | sed -rn '/(configure\.ac|acinclude.m4)$$/s:[^/]+/src/:src/:p' | sort -u))
+autoconf_dirs = $(sort $(dir $(autoconf_files)))
+
+automake_files = $(addprefix ./, $(filter-out none, \
+	  $(shell lsdiff --no-filename $(foreach patch,$(debian_patches),$(patchdir)/$(patch).diff) \
+	    | sed -rn '/Makefile\.(am|in)$$/s:[^/]+/src/:src/:p' | sort -u)))
 
 autoconf_version = 2.64
 ifeq ($(trunk_build),yes)
@@ -364,6 +372,7 @@ endif
 # files (AUTO <dir> <auto-command with options>) and run them separately,
 # maybe only once per directory).
 $(patch_stamp): $(unpack_stamp) $(series_stamp)
+	sync
 	QUILT_PATCHES=$(patchdir) \
 	  quilt --quiltrc /dev/null push -a || test $$? = 2
 
@@ -372,29 +381,14 @@ ifneq (,$(filter svn-updates, $(debian_patches)))
 	  $(patchdir)/svn-updates.diff > src/LAST_UPDATED
 endif
 
-	if ! test -f stamps/autotools_files ; then touch stamps/autotools_files ; fi
-
 	: # only needed when we have changes, and currently fails with autogen 5.18
-	#cd $(srcdir)/fixincludes && ./genfixes
+	: #cd $(srcdir)/fixincludes && ./genfixes
 
-	for f in $(autotools_files) ; \
-	  do case $$f in \
-	    */classpath/m4/acinclude.m4) \
-	        : ;; \
-	    */configure.*|*/acinclude.m4) \
-		if grep ^"$$(md5sum $$f)"$$ stamps/autotools_files >/dev/null ; \
-		  then echo "Skipping already regenerated file $$f." ; \
-		else \
-		  echo "Running autoconf$(autoconf_version) in $$(dirname $$f)..." ; \
-		  dir="$(CURDIR)"; cd $(CURDIR)/$$(dirname $$f) \
-		    && AUTOM4TE=/usr/bin/autom4te$(autoconf_version) autoconf$(autoconf_version) \
-		    && cd $$dir \
-		    && echo "$$(md5sum $$f)" >> stamps/autotools_files ; \
-		fi ;; \
-	    */Makefile.*) ;; \
-	    *) echo "Unknown file: $$f"; false; \
-	  esac; \
-	done
+	sync
+	echo -n $(autoconf_dirs) | xargs -d ' ' -L 1 -P $(USE_CPUS) -I{} \
+	  sh -c 'echo "Running autoconf$(autoconf_version) in {}..." ; \
+	  cd $(CURDIR)/{} && \
+	  AUTOM4TE=/usr/bin/autom4te$(autoconf_version) autoconf$(autoconf_version)'
 
 	for i in $(debian_patches) $(hardening_patches); do \
 	  echo -e "\n$$i:" >> pxxx; \
@@ -407,9 +401,6 @@ unpatch:
 	QUILT_PATCHES=$(patchdir) \
 	  quilt --quiltrc /dev/null pop -a -R || test $$? = 2
 	rm -rf .pc
-	for f in $(autotools_files); do \
-	  rm -f $$(echo $$f | sed -r 's/\.(ac|am|in)$$//'); \
-	done
 
 update-patches: $(series_stamp)
 	export QUILT_PATCHES=$(patchdir); \

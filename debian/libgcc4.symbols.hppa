@@ -36,6 +36,8 @@ libgcc_s.so.4 libgcc4 #MINVER#
  __bswapdi2@GCC_4.3.0 4.3
  __bswapsi2@GCC_4.3.0 4.3
  __clear_cache@GCC_3.0 4.1.1
+ __clrsbdi2@GCC_4.7.0 4.7
+ __clrsbsi2@GCC_4.7.0 4.7
  __clzdi2@GCC_3.4 4.1.1
  __clzsi2@GCC_3.4 4.1.1
  __cmpdi2@GCC_3.0 4.1.1

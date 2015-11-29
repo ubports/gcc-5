@@ -66,7 +66,7 @@ endif
 	debian/dh_rmemptydirs -p$(p_cxx)
 
 	dh_shlibdeps -p$(p_cxx)
-	dh_strip -p$(p_cxx)
+	dh_strip -p$(p_cxx) $(if $(unstripped_exe),-X/cc1plus)
 	echo $(p_cxx) >> debian/arch_binaries
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)

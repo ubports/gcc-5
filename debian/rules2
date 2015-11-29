@@ -1,4 +1,4 @@
-	#! /usr/bin/make -f
+#! /usr/bin/make -f
 # -*- makefile -*-
 
 # Uncomment this to turn on verbose mode.
@@ -17,13 +17,6 @@ SHELL	= /bin/bash -e		# brace expansion in rules file
 IR	= install -m 644	# Install regular file
 IP	= install -m 755	# Install program
 IS	= install -m 755	# Install script
-
-NJOBS :=
-USE_CPUS := 1
-ifneq (,$(filter parallel=%,$(subst $(COMMA), ,$(DEB_BUILD_OPTIONS))))
-  USE_CPUS := $(subst parallel=,,$(filter parallel=%,$(subst $(COMMA), ,$(DEB_BUILD_OPTIONS))))
-  NJOBS := -j $(USE_CPUS)
-endif
 
 # kernel-specific ulimit hack
 ifeq ($(findstring linux,$(DEB_HOST_GNU_SYSTEM)),linux)
@@ -135,7 +128,7 @@ else
 endif
 LDFLAGS_FOR_TARGET = -Wl,-z,relro
 ifeq ($(DEB_TARGET_ARCH),alpha)
-  LDFLAGS += -Wl,--no-relax
+  LDFLAGS := $(filter-out -Wl$(COMMA)--no-relax, $(LDFLAGS)) -Wl,--no-relax
 endif
 
 ifneq (,$(findstring static,$(DEB_BUILD_OPTIONS)))
@@ -308,6 +301,11 @@ endif
 
 #CONFARGS += --with-plugin-ld=ld.gold
 #CONFARGS += --with-plugin-ld
+
+# enable pie-by-default on pie_archs
+ifeq ($(with_pie),yes)
+  CONFARGS += --enable-default-pie
+endif
 
 endif # !DEB_STAGE
 
@@ -883,11 +881,6 @@ d_d= debian/$(p_d)
 
 ifeq ($(DEB_CROSS),yes)
   usr_lib = $(PFL)/lib
-
-  # sh4 has multilib. base is sh4-linux-gnu. See #663028.
-  ifneq (,$(findstring sh4-linux,$(DEB_TARGET_GNU_TYPE)))
-    usr_lib = $(PFL)/lib/sh4-linux-gnu/
-  endif
 else
   usr_lib = $(PFL)/$(libdir)
 endif
@@ -1149,39 +1142,9 @@ endif
 $(build_stamp): $(configure_stamp) $(build_locale_stamp)
 	dh_testdir
 	rm -f bootstrap-protocol
-ifeq ($(DEB_CROSS),yes)
-	: # build cross compiler for $(TARGET_ALIAS)
-	( \
-	  set +e; \
-	  $(SET_PATH) \
-	  $(SET_LOCPATH) \
-	    $(MAKE) -C $(builddir) $(NJOBS) \
-		$(BOOT_CFLAGS_TO_PASS) \
-		$(BOOT_LDFLAGS_TO_PASS) \
-		$(CFLAGS_FOR_TARGET_TO_PASS) \
-		$(LDFLAGS_FOR_TARGET_TO_PASS) \
-		; \
-	  echo $$? > status; \
-	) 2>&1 | tee bootstrap-protocol
-	s=`cat status`; rm -f status; test $$s -eq 0
-else
-  ifneq (,$(findstring cross-build-,$(build_type)))
-	: # build cross compiler for $(TARGET_ALIAS)
-	( \
-	  set +e; \
-	  $(SET_PATH) \
-	  $(SET_LOCPATH) \
-	    $(MAKE) -C $(builddir) $(NJOBS) \
-		$(BOOT_CFLAGS_TO_PASS) \
-		$(BOOT_LDFLAGS_TO_PASS) \
-		$(CFLAGS_FOR_TARGET_TO_PASS) \
-		$(LDFLAGS_FOR_TARGET_TO_PASS) \
-		; \
-	  echo $$? > status; \
-	) 2>&1 | tee bootstrap-protocol
-	s=`cat status`; rm -f status; test $$s -eq 0
-else
-  # Native build
+	@echo TTTTT $$(date -R)
+ifeq ($(build_type),build-native)
+	: # native build
   ifeq ($(with_java),yes)
 	mkdir -p bin
 	ln -sf /usr/bin/fastjar bin/jar
@@ -1232,7 +1195,7 @@ else
 	  $(SET_PATH) \
 	  $(SET_SHELL) \
 	  $(SET_LOCPATH) \
-	    $(MAKE) -C $(builddir) $(NJOBS) $(bootstrap_target) \
+	    $(MAKE) -C $(builddir) $(bootstrap_target) \
 		CC="$(CC)" \
 		$(STAGE1_CFLAGS_TO_PASS) \
 		$(STAGE1_LDFLAGS_TO_PASS) \
@@ -1243,6 +1206,22 @@ else
 		; \
 	  echo $$? > status; \
 	) 2>&1 | tee bootstrap-protocol
+else ifneq (,$(filter $(build_type),build-cross cross-build-native cross-build-cross))
+	: # build cross compiler for $(TARGET_ALIAS)
+	( \
+	  set +e; \
+	  $(SET_PATH) \
+	  $(SET_LOCPATH) \
+	    $(MAKE) -C $(builddir) \
+		$(BOOT_CFLAGS_TO_PASS) \
+		$(BOOT_LDFLAGS_TO_PASS) \
+		$(CFLAGS_FOR_TARGET_TO_PASS) \
+		$(LDFLAGS_FOR_TARGET_TO_PASS) \
+		; \
+	  echo $$? > status; \
+	) 2>&1 | tee bootstrap-protocol
+endif
+	@echo TTTTT $$(date -R)
 	s=`cat status`; rm -f status; \
 	if [ $$s -ne 0 ] && [ -z "$$NO_CONFIG_LOG_DUMP$$NO_CONFIG_LOG_DUMPS" ]; then \
 	  for log in $$(find $(builddir) -name config.log); do \
@@ -1253,12 +1232,10 @@ else
 	  done; \
 	fi; \
 	test $$s -eq 0
-endif
-endif
-	-chmod 755 $(srcdir)/contrib/warn_summary
-	if [ -x $(srcdir)/contrib/warn_summary ]; then \
+
+	if [ -f $(srcdir)/contrib/warn_summary ]; then \
 	  rm -f bootstrap-summary; \
-	  $(srcdir)/contrib/warn_summary bootstrap-protocol \
+	  /bin/sh $(srcdir)/contrib/warn_summary bootstrap-protocol \
 	    > bootstrap-summary; \
 	fi
 
@@ -1296,7 +1273,7 @@ $(configure_jit_stamp): $(build_stamp)
 	rm -rf $(builddir_jit)
 	mkdir $(builddir_jit)
 
-	: # configure
+	: # configure jit
 	cd $(builddir_jit) && \
 	  $(SET_PATH) \
 	  $(SET_SHELL) \
@@ -1310,7 +1287,8 @@ $(build_jit_stamp): $(configure_jit_stamp)
 	  $(SET_SHELL) \
 	  $(SET_LOCPATH) \
 	  LD_LIBRARY_PATH=$${LD_LIBRARY_PATH:+$$LD_LIBRARY_PATH:}$(builddir)/gcc \
-	    $(MAKE) -C $(builddir_jit) $(NJOBS) \
+	  biarch_multidir_names=none \
+		$(MAKE) -C $(builddir_jit) \
 		$(BOOT_CFLAGS_TO_PASS) \
 		$(BOOT_LDFLAGS_TO_PASS) \
 		$(CFLAGS_FOR_TARGET_TO_PASS) \
@@ -1335,7 +1313,7 @@ $(configure_hppa64_stamp): $(build_stamp)
 	rm -f $(configure_hppa64_stamp) $(build_hppa64_stamp)
 	rm -rf $(builddir_hppa64)
 	mkdir $(builddir_hppa64)
-	: # configure
+	: # configure hppa64
 	cd $(builddir_hppa64) && \
 	  $(SET_PATH) \
 	  $(SET_SHELL) \
@@ -1370,9 +1348,10 @@ $(build_hppa64_stamp): $(configure_hppa64_stamp)
 	  $(SET_SHELL) \
 	  $(SET_LOCPATH) \
 	  LD_LIBRARY_PATH=$${LD_LIBRARY_PATH:+$$LD_LIBRARY_PATH:}$(builddir)/gcc \
-	    $(MAKE) -C $(builddir_hppa64) $(NJOBS) \
-		$(BOOT_CFLAGS_TO_PASS) \
-		$(BOOT_LDFLAGS_TO_PASS) \
+	    $(MAKE) -C $(builddir_hppa64) \
+		$(if $(CFLAGS_FOR_TARGET),CFLAGS="$(CFLAGS_FOR_TARGET)") \
+		$(if $(CXXFLAGS_FOR_TARGET),CXXFLAGS="$(CXXFLAGS_FOR_TARGET)") \
+		$(if $(LDFLAGS_FOR_TARGET),LDFLAGS="$(LDFLAGS_FOR_TARGET)") \
 		$(CFLAGS_FOR_TARGET_TO_PASS) \
 		$(LDFLAGS_FOR_TARGET_TO_PASS)
 	touch $(build_hppa64_stamp)
@@ -1382,7 +1361,7 @@ $(configure_neon_stamp): $(build_stamp)
 	rm -f $(configure_neon_stamp) $(build_neon_stamp)
 	rm -rf $(builddir_neon)
 	mkdir $(builddir_neon)
-	: # configure
+	: # configure neon
 	cd $(builddir_neon) && \
 	  $(SET_PATH) \
 	  $(SET_SHELL) \
@@ -1408,7 +1387,7 @@ $(build_neon_stamp): $(configure_neon_stamp)
 	  $(SET_PATH) \
 	  $(SET_SHELL) \
 	  $(SET_LOCPATH) \
-	    $(MAKE) -C $(builddir_neon) $(NJOBS) \
+	    $(MAKE) -C $(builddir_neon) \
 		$(BOOT_CFLAGS_TO_PASS) \
 		$(BOOT_LDFLAGS_TO_PASS) \
 		$(CFLAGS_FOR_TARGET_TO_PASS) \
@@ -1782,7 +1761,9 @@ clean: debian/control
 	rm -rf check-inst
 	rm -rf .pc
 	dh_clean
+ifneq (,$(filter $(build_type), build-cross cross-build-cross))
 	$(cross_clean) dh_clean
+endif
 
 # -----------------------------------------------------------------------------
 # some abbrevations for the package names and directories;
@@ -2010,7 +1991,7 @@ $(install_dummy_stamp): $(build_dummy_stamp)
 $(install_snap_stamp): $(build_dependencies)
 	dh_testdir
 	dh_testroot
-	dh_clean -k
+	dh_prep
 
 	: # Install directories
 	rm -rf $(d)
@@ -2042,7 +2023,7 @@ ifeq ($(with_hppa64),yes)
 	rm -rf $(d)/$(PF)/share/info
 	rm -rf $(d)/$(PF)/share/man
 	rm -f $(d)/$(PF)/$(libdir)/libiberty.a
-	rm -f $(d)/$(PF)/bin/*{gcov,gccbug,gcc}
+	rm -f $(d)/$(PF)/bin/*{gcov,gcov-tool,gccbug,gcc}
 
 	rm -rf $(d)/$(PF)/hppa64-linux-gnu/include
 	rm -rf $(d)/$(PF)/hppa64-linux-gnu/lib
@@ -2135,7 +2116,7 @@ endif
 $(install_stamp): $(build_stamp)
 	dh_testdir
 	dh_testroot
-	dh_clean -k -N$(p_hppa64)
+	dh_prep -N$(p_hppa64)
 
 	if [ -f $(binary_stamp)-hppa64 ]; then \
 	  mv $(binary_stamp)-hppa64 saved-stamp-hppa64; \
@@ -2321,6 +2302,7 @@ $(install_jit_stamp): $(build_jit_stamp) $(install_stamp)
 	mkdir -p $(d)-jit/$(PF)
 
 	$(SET_PATH) \
+	  biarch_multidir_names=none \
 	    $(MAKE) -C $(builddir_jit) \
 		CC="$(CC_FOR_JIT)" \
 		$(CFLAGS_TO_PASS) \
@@ -2359,19 +2341,19 @@ $(install_hppa64_stamp): $(build_hppa64_stamp)
 	rm -rf $(d_hppa64)/$(PF)/lib/gcc/hppa64-linux-gnu/$(BASE_VERSION)/plugin
 	rm -f $(d_hppa64)/$(PF)/lib/libiberty.a
 	rm -f $(d_hppa64)/$(PF)/lib/libcc1.*
-	rm -f $(d_hppa64)/$(PF)/bin/*{gcov,gccbug,gcc}
+	rm -f $(d_hppa64)/$(PF)/bin/*{gcov,gcov-tool,gccbug,gcc}
 
 	rm -rf $(d_hppa64)/$(PF)/hppa64-linux-gnu
 	rm -rf $(d_hppa64)/$(PF)/lib/gcc/hppa64-linux-gnu/$(BASE_VERSION)/install-tools
 
 ifeq ($(versioned_packages),yes)
-	for i in cpp gcc-ar gcc-nm gcc-ranlib gcov-tool; do \
+	for i in cpp gcc-ar gcc-nm gcc-ranlib; do \
 	  mv -f $(d_hppa64)/$(PF)/bin/hppa64-linux-gnu-$$i \
 		$(d_hppa64)/$(PF)/bin/hppa64-linux-gnu-$$i$(pkg_ver); \
 	done
 endif
 	mkdir -p $(d_hppa64)/$(PF)/share/man/man1
-	for i in cpp gcc-ar gcc-nm gcc-ranlib gcov-tool; do \
+	for i in cpp gcc-ar gcc-nm gcc-ranlib; do \
 	  ln -sf $$i$(pkg_ver).1.gz \
 	    $(d_hppa64)/$(PF)/share/man/man1/hppa64-linux-gnu-$$i$(pkg_ver).1.gz; \
 	done

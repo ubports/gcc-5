@@ -19,7 +19,7 @@ Index: b/src/config-ml.in
 +multidirs=""
 +for x in ${old_multidirs}; do
 +    case " $x " in
-+	" 32 "|" n32 "|" x32 "|" 64 "|" hf "|" sf ")
++	" 32 "|" n32 "|" x32 "|" 64 "|" hf "|" sf "|" m4-nofpu ")
 +	case "$biarch_multidir_names" in
 +	    *"$ml_srcbase"*) multidirs="${multidirs} ${x}" ;;
 +	esac

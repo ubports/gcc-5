@@ -1,6 +1,13 @@
 # -*- makefile -*-
 # definitions used in more than one Makefile / rules file
 
+NJOBS :=
+USE_CPUS := 1
+ifneq (,$(filter parallel=%,$(subst $(COMMA), ,$(DEB_BUILD_OPTIONS))))
+  USE_CPUS := $(subst parallel=,,$(filter parallel=%,$(subst $(COMMA), ,$(DEB_BUILD_OPTIONS))))
+  NJOBS := -j $(USE_CPUS)
+endif
+
 # common vars
 SHELL		= /bin/bash -e	# brace expansion used in rules file
 PWD		:= $(shell pwd)
@@ -553,12 +560,17 @@ endif
 
 ifeq (,$(filter $(DEB_STAGE),stage1 stage2))
 # Ada --------------------
-ada_no_cpus	:= m32r sh3 sh3eb sh4 sh4eb
+ada_no_cpus	:= m32r sh3 sh3eb sh4eb
 # no Debian builds ... some of these should exist
-ada_no_cpus += m68k powerpcspe sparc64
+ada_no_cpus += powerpcspe
+ada_no_cpus += mips64 # see https://gcc.gnu.org/PR65337
 ada_no_cpus += x32 # see https://gcc.gnu.org/PR61954
 ifneq (,$(filter $(distrelease),trusty))
   ada_no_cpus += arm64
+endif
+ada_no_cpus += m68k sh4 sparc64 # not yet built natively
+ifneq (,$(findstring cross,$(build_type)))
+  ada_no_cpus := $(filter-out m68k sh4 sparc64, $(ada_no_cpus))
 endif
 ada_no_systems	:= 
 ada_no_cross	:= no
@@ -828,7 +840,7 @@ ifneq (,$(findstring gccgo, $(PKGSOURCE)))
   with_standalone_go := yes
 endif
 
-go_no_cpus := avr arm hppa m68k sh4 sparc sparc64
+go_no_cpus := avr arm hppa m68k sh4
 ifeq (,$(filter $(distrelease),lenny etch squeeze dapper hardy jaunty karmic lucid maverick natty oneiric))
   go_no_cpus := $(filter-out arm, $(go_no_cpus))
 endif
@@ -1183,6 +1195,17 @@ ifneq (,$(filter $(DEB_TARGET_ARCH),$(mpx_archs)))
     ifneq (,$(findstring gcc-, $(PKGSOURCE)))
       with_libmpx := yes
     endif
+  endif
+endif
+
+# pie by default --------------------
+with_pie :=
+ifeq ($(distribution),Ubuntu)
+  ifeq (,$(filter $(distrelease),lucid precise trusty utopic vivid wily))
+    pie_archs = s390x
+  endif
+  ifneq (,$(filter $(DEB_TARGET_ARCH),$(pie_archs)))
+    with_pie := yes
   endif
 endif
 
@@ -1607,9 +1630,9 @@ ifeq ($(derivative),Debian)
 endif
 $(foreach x,32 64 n32 x32 hf sf,$(eval $(call gen_biarch,$(x))))
 
-#ifeq ($(DEB_TARGET_ARCH),ia64)
-#  biarch32 := yes
-#endif
+ifeq ($(DEB_TARGET_ARCH),sh4)
+  export biarch_multidir_names=none
+endif
 
 #ifeq ($(trunk_build),yes)
 #  no_biarch_libs := yes

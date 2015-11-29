@@ -20,13 +20,6 @@ include debian/rules.defs
 include debian/rules.unpack
 include debian/rules.patch
 
-NJOBS :=
-USE_CPUS := 1
-ifneq (,$(filter parallel=%,$(subst $(COMMA), ,$(DEB_BUILD_OPTIONS))))
-  USE_CPUS := $(subst parallel=,,$(filter parallel=%,$(subst $(COMMA), ,$(DEB_BUILD_OPTIONS))))
-  NJOBS := -j $(USE_CPUS)
-endif
-
 control: $(control_dependencies)
 	-mkdir -p $(stampdir)
 	$(MAKE) -f debian/rules.conf $@
@@ -61,7 +54,6 @@ clean:
 	-$(MAKE) -f debian/rules2 $@
 	rm -rf $(srcdir)* $(builddir)* debian/tmp* html
 	rm -f bootstrap-* first-move-stamp
-	rm -f autotools_files
 	rm -f debian/*.tmp
 	rm -f debian/soname-cache
 	find debian -name '.#*' | xargs -r rm -f

@@ -28,6 +28,7 @@ endif
 		-path './debian/tmp*' -prune -o \
 		-path './debian/files' -prune -o \
 		-path './debian/rules.d/*' -prune -o \
+		-path './debian/rules.parameters' -prune -o \
 		-path './debian/soname-cache' -prune -o \
 		-path './debian/*substvars*' -prune -o \
 		-path './debian/gcc-snapshot*' -prune -o \
@@ -37,6 +38,8 @@ endif
 	  | tar -x -C $(d_source)/usr/src/gcc$(pkg_ver)  -f -
 	# FIXME: Remove generated files
 	find $(d_source)/usr/src/gcc$(pkg_ver) -name '*.debhelper.log' -o -name .svn | xargs rm -rf
+
+	touch $(d_source)/usr/src/gcc$(pkg_ver)/debian/rules.parameters
 
 	dh_link -p$(p_source) \
 		/usr/src/gcc$(pkg_ver)/debian/patches /usr/src/gcc$(pkg_ver)/patches

@@ -4918,7 +4918,7 @@ Package: libgnatvsn`'GNAT_V-dev`'LS
 Section: libdevel
 Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
 Priority: extra
-Depends: BASELDEP, gnat`'PV`'TS (= ${gnat:Version}),
+Depends: BASELDEP, gnat`'PV`'TS (ifdef(`TARGET',`>= ${gnat:SoftVersion}',`= ${gnat:Version}')),
  libgnatvsn`'GNAT_V`'LS (= ${gnat:Version}), ${misc:Depends}
 Conflicts: libgnatvsn-dev (<< `'GNAT_V), libgnatvsn4.1-dev, libgnatvsn4.3-dev, libgnatvsn4.4-dev, libgnatvsn4.5-dev, libgnatvsn4.6-dev
 BUILT_USING`'dnl
@@ -4976,7 +4976,7 @@ Package: libgnatprj`'GNAT_V-dev`'LS
 Section: libdevel
 Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
 Priority: extra
-Depends: BASELDEP, gnat`'PV`'TS (= ${gnat:Version}),
+Depends: BASELDEP, gnat`'PV`'TS (ifdef(`TARGET',`>= ${gnat:SoftVersion}',`= ${gnat:Version}')),
  libgnatprj`'GNAT_V`'LS (= ${gnat:Version}),
  libgnatvsn`'GNAT_V-dev`'LS (= ${gnat:Version}), ${misc:Depends}
 Conflicts: libgnatprj-dev (<< `'GNAT_V), libgnatprj4.1-dev, libgnatprj4.3-dev, libgnatprj4.4-dev, libgnatprj4.5-dev, libgnatprj4.6-dev

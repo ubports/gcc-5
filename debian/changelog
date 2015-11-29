@@ -1,3 +1,26 @@
+gcc-5 (5.2.1-27) unstable; urgency=medium
+
+  * Update to SVN 20151129 (r231053, 5.2.1) from the gcc-5-branch.
+  * Don't strip cc1plus when shipping with unstripped frontends.
+  * Relax libgnatvsn5-dev-*-cross and libgnatprj5-dev-*-cross dependencies
+    on gnat-5-*-linux-gnu.
+  * Fix setting the explicit libc dependency for cross builds.
+  * Don't build m4-nofpu multilibs on sh4, install the default multilib
+    into the standard location.
+  * Stop building gnat on mips64, see https://gcc.gnu.org/PR65337 (#806370).
+  * Update the patch for PR go/67508 and re-enable Go on sparc and sparc64.
+  * Fix gnat sparc/sparc64 architecture detection.
+  * Update libgcc and libstdc++ symbols files.
+  * Don't ship the gcov tools in the gcc-hppa64-linux-gnu package.
+  * Run the autoconf generation in parallel.
+  * Add --enable-default-pie option to GCC configure, taken from the trunk.
+  * Enable gnat for m68k cross builds.
+  * Link gnat tools, gnat libs and libgccjit with the defaults LDFLAGS.
+  * Skip non-default multilib and libstdc++-v3 debug builds in bootstrap builds.
+  * Ship an empty debian/rules.parameters in the gcc-5-source package.
+
+ -- Matthias Klose <doko@debian.org>  Sun, 29 Nov 2015 23:48:58 +0100
+
 gcc-5 (5.2.1-26) unstable; urgency=medium
 
   * Update to SVN 20151125 (r230897, 5.2.1) from the gcc-5-branch.

@@ -107,7 +107,7 @@ Index: b/src/libgnatprj/Makefile.in
 +	$(GCC) -o $@ -shared -fPIC -Wl,--soname,$@ -Wl,--no-allow-shlib-undefined \
 +	   $^ $(addprefix ../libiberty/pic/,$(LIBIBERTY_OBJECTS)) \
 +	   -L../../gcc/ada/rts -lgnat-$(LIB_VERSION) \
-+	   -L../libgnatvsn -lgnatvsn
++	   -L../libgnatvsn -lgnatvsn $(LDFLAGS)
 +	$(LN_S) -f libgnatprj.so.$(LIB_VERSION) libgnatprj.so
 +	chmod a=r obj-shared/*.ali
 +# Make the .ali files, but not the .o files, visible to the gnat tools.

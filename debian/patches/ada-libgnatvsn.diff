@@ -129,7 +129,7 @@ Index: b/src/libgnatvsn/Makefile.in
 +libgnatvsn.so.$(LIB_VERSION): $(addprefix obj-shared/,$(OBJECTS))
 +	: # Make libgnatvsn.so
 +	$(GCC) -o $@ -shared -fPIC -Wl,--soname,$@ $^ \
-+	   -L../../gcc/ada/rts -lgnat-$(LIB_VERSION)
++	   -L../../gcc/ada/rts -lgnat-$(LIB_VERSION) $(LDFLAGS)
 +	ln -s libgnatvsn.so.$(LIB_VERSION) libgnatvsn.so
 +	chmod a=r obj-shared/*.ali
 +# Make the .ali files, but not the .o files, visible to the gnat tools.

@@ -22,6 +22,11 @@ $(binary_stamp)-hppa64: $(install_hppa64_stamp)
 
 	dh_strip -p$(p_hppa64) -X.o -Xlibgcc.a -Xlibgcov.a
 	dh_shlibdeps -p$(p_hppa64)
+
+	mkdir -p $(d_hppa64)/usr/share/lintian/overrides
+	cp -p debian/$(p_hppa64).overrides \
+		$(d_hppa64)/usr/share/lintian/overrides/$(p_hppa64)
+
 	echo $(p_hppa64) >> debian/arch_binaries
 
 	touch $@

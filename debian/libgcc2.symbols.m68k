@@ -8,7 +8,8 @@ libgcc_s.so.2 libgcc2 #MINVER#
  GCC_4.0.0@GCC_4.0.0 4.2.1
  GCC_4.2.0@GCC_4.2.0 4.2.1
  GCC_4.3.0@GCC_4.3.0 4.3.0
- GCC_4.7.0@GCC_4.7.0 1:4.7
+ GCC_4.5.0@GCC_4.5.0 4.5
+ GCC_4.7.0@GCC_4.7.0 4.7
  GLIBC_2.0@GLIBC_2.0 4.2.1
  _Unwind_Backtrace@GCC_3.3 4.2.1
  _Unwind_DeleteException@GCC_3.0 4.2.1
@@ -40,6 +41,8 @@ libgcc_s.so.2 libgcc2 #MINVER#
  __bswapdi2@GCC_4.3.0 4.3.0
  __bswapsi2@GCC_4.3.0 4.3.0
  __clear_cache@GCC_3.0 4.2.1
+  __clrsbdi2@GCC_4.7.0 4.7
+  __clrsbsi2@GCC_4.7.0 4.7
  __clzdi2@GCC_3.4 4.2.1
  __clzsi2@GCC_3.4 4.2.1
  __cmpdi2@GCC_3.0 4.2.1
@@ -156,3 +159,4 @@ libgcc_s.so.2 libgcc2 #MINVER#
  __umodsi3@GCC_3.0 4.4.5
  __unorddf2@GCC_3.3.4 4.4.5
  __unordsf2@GCC_3.3.4 4.4.5
+ __unordxf2@GCC_4.5.0 4.7

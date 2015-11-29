@@ -16,7 +16,7 @@ Build-Depends: debhelper (>= 5.0.62), dpkg-dev (>= 1.17.11),
   gperf (>= 3.0.1), bison (>= 1:2.3), flex, gettext, 
   gdb, 
   texinfo (>= 4.3), locales, sharutils, 
-  procps, zlib1g-dev, libantlr-java, python, libffi-dev, fastjar, libmagic-dev, libecj-java (>= 3.3.0-2), zip, libasound2-dev [ !hurd-any !kfreebsd-any], libxtst-dev, libxt-dev, libgtk2.0-dev (>= 2.4.4-2), libart-2.0-dev, libcairo2-dev, gnat-5 [!m32r !sh3 !sh3eb !sh4 !sh4eb !m68k !powerpcspe !sparc64 !x32], g++-5, netbase, 
+  procps, zlib1g-dev, libantlr-java, python, libffi-dev, fastjar, libmagic-dev, libecj-java (>= 3.3.0-2), zip, libasound2-dev [ !hurd-any !kfreebsd-any], libxtst-dev, libxt-dev, libgtk2.0-dev (>= 2.4.4-2), libart-2.0-dev, libcairo2-dev, gnat-5 [!m32r !sh3 !sh3eb !sh4eb !powerpcspe !mips64 !x32 !m68k !sh4 !sparc64], g++-5, netbase, 
   libisl-dev (>= 0.14), libmpc-dev (>= 1.0), libmpfr-dev (>= 3.0.0-9~), libgmp-dev (>= 2:5.0.1~), 
   dejagnu [!m68k], realpath (>= 1.9.12), chrpath, lsb-release, quilt
 Build-Depends-Indep: doxygen (>= 1.7.2), graphviz (>= 2.2), ghostscript, texlive-latex-base, xsltproc, libxml2-utils, docbook-xsl-ns, 
