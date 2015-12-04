@@ -295,6 +295,9 @@ define __do_libgcc
 	# just to include the symbols for dpkg versions older than 1.15.3 which
 	# didn't allow bypassing the symbol blacklist
 	$(if $(filter yes,$(with_shared_libgcc)),
+		$(if $(findstring gcc1,$(p_l)), \
+		ln -sf libgcc.symbols debian/$(p_l).symbols \
+		)
 		$(cross_makeshlibs) dh_makeshlibs -p$(p_l) -p$(p_d) \
 			-- -v$(DEB_LIBGCC_VERSION)
 		$(call cross_mangle_shlibs,$(p_l))

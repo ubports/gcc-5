@@ -56,7 +56,6 @@ cpp-@BV@, cpp-@BV@-doc            GNU C Preprocessor
 libssp0-dev, libssp0            GCC stack smashing protection library
 libquadmath0                    Math routines for the __float128 type
 fixincludes                     Fix non-ANSI header files
-protoize                        Create/remove ANSI prototypes from C code
 
 Java:
 gij                             The Java bytecode interpreter and VM

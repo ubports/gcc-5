@@ -809,7 +809,7 @@ Index: b/src/gcc/ada/gcc-interface/Makefile.in
 ===================================================================
 --- a/src/gcc/ada/gcc-interface/Makefile.in
 +++ b/src/gcc/ada/gcc-interface/Makefile.in
-@@ -1386,6 +1386,35 @@ ifeq ($(strip $(filter-out %86 kfreebsd%
+@@ -1390,6 +1390,35 @@ ifeq ($(strip $(filter-out %86 kfreebsd%
    MISCLIB = -lutil
  endif
  

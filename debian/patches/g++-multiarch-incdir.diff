@@ -31,7 +31,7 @@ Index: b/src/gcc/Makefile.in
 ===================================================================
 --- a/src/gcc/Makefile.in
 +++ b/src/gcc/Makefile.in
-@@ -1119,6 +1119,7 @@ FLAGS_TO_PASS = \
+@@ -1128,6 +1128,7 @@ FLAGS_TO_PASS = \
  	"prefix=$(prefix)" \
  	"local_prefix=$(local_prefix)" \
  	"gxx_include_dir=$(gcc_gxx_include_dir)" \
@@ -39,7 +39,7 @@ Index: b/src/gcc/Makefile.in
  	"build_tooldir=$(build_tooldir)" \
  	"gcc_tooldir=$(gcc_tooldir)" \
  	"bindir=$(bindir)" \
-@@ -1596,6 +1597,14 @@ ifneq ($(xmake_file),)
+@@ -1605,6 +1606,14 @@ ifneq ($(xmake_file),)
  include $(xmake_file)
  endif
  
@@ -54,7 +54,7 @@ Index: b/src/gcc/Makefile.in
  # all-tree.def includes all the tree.def files.
  all-tree.def: s-alltree; @true
  s-alltree: Makefile
-@@ -2595,7 +2604,7 @@ PREPROCESSOR_DEFINES = \
+@@ -2610,7 +2619,7 @@ PREPROCESSOR_DEFINES = \
    -DFIXED_INCLUDE_DIR=\"$(libsubdir)/include-fixed\" \
    -DGPLUSPLUS_INCLUDE_DIR=\"$(gcc_gxx_include_dir)\" \
    -DGPLUSPLUS_INCLUDE_DIR_ADD_SYSROOT=$(gcc_gxx_include_dir_add_sysroot) \

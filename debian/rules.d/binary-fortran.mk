@@ -98,6 +98,7 @@ define __do_fortran
 	fi
 
 	dh_strip -p$(p_l) --dbg-package=$(p_d)
+	ln -sf libgfortran.symbols debian/$(p_l).symbols
 	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)
 	$(call cross_mangle_shlibs,$(p_l))
 	$(ignshld)DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_l) \

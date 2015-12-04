@@ -64,8 +64,7 @@ ifneq ($(GFDL_INVARIANT_FREE),yes)
 endif
 
 usr_doc_files = debian/README.Bugs \
-	$(shell test -f $(srcdir)/FAQ && echo $(srcdir)/FAQ) \
-	$(shell test -f test-summary && echo test-summary)
+	$(shell test -f $(srcdir)/FAQ && echo $(srcdir)/FAQ)
 
 p_loc	= gcc$(pkg_ver)-locales
 d_loc	= debian/$(p_loc)
@@ -155,9 +154,6 @@ endif
 #	dh_installdebconf
 	debian/dh_doclink -p$(p_gcc) $(p_xbase)
 	cp -p $(usr_doc_files) $(d_gcc)/$(docdir)/$(p_xbase)/.
-	if [ -f testsuite-comparision ]; then \
-	  cp -p testsuite-comparision $(d_gcc)/$(docdir)/$(p_xbase)/. ; \
-	fi
 	cp -p debian/README.ssp $(d_gcc)/$(docdir)/$(p_xbase)/
 	cp -p debian/NEWS.gcc $(d_gcc)/$(docdir)/$(p_xbase)/NEWS
 	cp -p debian/NEWS.html $(d_gcc)/$(docdir)/$(p_xbase)/NEWS.html
@@ -265,23 +261,27 @@ $(binary_stamp)-testresults: $(install_dependencies)
 
 	debian/dh_doclink -p$(p_tst) $(p_xbase)
 
-	mkdir -p $(d_tst)/$(docdir)/$(p_xbase)/test-summaries
+	mkdir -p $(d_tst)/$(docdir)/$(p_xbase)/test
 	echo "TEST COMPARE BEGIN"
 ifeq ($(with_check),yes)
-# more than one libgo.sum, avoid it 
+	for i in test-summary testsuite-comparision; do \
+	  [ -f $$i ] || continue; \
+	  cp -p $$i $(d_tst)/$(docdir)/$(p_xbase)/$$i; \
+	done
+# more than one libgo.sum, avoid it
 	cp -p $$(find $(builddir)/gcc/testsuite -maxdepth 2 \( -name '*.sum' -o -name '*.log' \)) \
 	      $$(find $(buildlibdir)/*/testsuite -maxdepth 1 \( -name '*.sum'  -o -name '*.log' \) ! -name 'libgo.*') \
-		$(d_tst)/$(docdir)/$(p_xbase)/test-summaries/
+		$(d_tst)/$(docdir)/$(p_xbase)/test/
   ifeq ($(with_go),yes)
 	cp -p $(buildlibdir)/libgo/libgo.sum \
-		$(d_tst)/$(docdir)/$(p_xbase)/test-summaries/
+		$(d_tst)/$(docdir)/$(p_xbase)/test/
   endif
   ifeq (0,1)
 	cd $(builddir); \
-	for i in $(CURDIR)/$(d_tst)/$(docdir)/$(p_xbase)/test-summaries/*.sum; do \
+	for i in $(CURDIR)/$(d_tst)/$(docdir)/$(p_xbase)/test/*.sum; do \
 	  b=$$(basename $$i); \
-	  if [ -f /usr/share/doc/$(p_xbase)/test-summaries/$$b.gz ]; then \
-	    zcat /usr/share/doc/$(p_xbase)/test-summaries/$$b.gz > /tmp/$$b; \
+	  if [ -f /usr/share/doc/$(p_xbase)/test/$$b.gz ]; then \
+	    zcat /usr/share/doc/$(p_xbase)/test/$$b.gz > /tmp/$$b; \
 	    if sh $(srcdir)/contrib/test_summary /tmp/$$b $$i; then \
 	      echo "$$b: OK"; \
 	    else \
@@ -294,13 +294,13 @@ ifeq ($(with_check),yes)
 	done
   endif
 	if which xz 2>&1 >/dev/null; then \
-	  echo -n $(d_tst)/$(docdir)/$(p_xbase)/test-summaries/* \
+	  echo -n $(d_tst)/$(docdir)/$(p_xbase)/test/* \
 	    | xargs -d ' ' -L 1 -P $(USE_CPUS)	xz -7v; \
 	fi
 else
 	echo "Nothing to compare (testsuite not run)"
 	echo 'Test run disabled, reason: $(with_check)' \
-	  > $(d_tst)/$(docdir)/$(p_xbase)/test-summaries/test-run-disabled
+	  > $(d_tst)/$(docdir)/$(p_xbase)/test-run-disabled
 endif
 	echo "TEST COMPARE END"
 

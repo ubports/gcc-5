@@ -31,7 +31,7 @@ Index: b/src/config-ml.in
  # Remove extraneous blanks from multidirs.
  # Tests like `if [ -n "$multidirs" ]' require it.
  multidirs=`echo "$multidirs" | sed -e 's/^[ ][ ]*//' -e 's/[ ][ ]*$//' -e 's/[ ][ ]*/ /g'`
-@@ -880,9 +899,20 @@ if [ -n "${multidirs}" ] && [ -z "${ml_n
+@@ -891,9 +910,20 @@ if [ -n "${multidirs}" ] && [ -z "${ml_n
  	fi
      fi
  

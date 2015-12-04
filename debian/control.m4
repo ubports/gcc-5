@@ -76,7 +76,7 @@ Build-Depends: debhelper (>= 5.0.62), DPKG_BUILD_DEP
   libunwind7-dev (>= 0.98.5-6) [ia64], libatomic-ops-dev [ia64],
   autogen, gawk, lzma, xz-utils, patchutils,
   zlib1g-dev, SDT_BUILD_DEP
-  BINUTILS_BUILD_DEP, binutils-hppa64-linux-gnu (>= BINUTILSBDV) [hppa amd64 i386 x32],
+  BINUTILS_BUILD_DEP,
   gperf (>= 3.0.1), bison (>= 1:2.3), flex, gettext,
   gdb,
   texinfo (>= 4.3), locales, sharutils,
@@ -806,6 +806,7 @@ Architecture: any
 Section: devel
 Priority: extra
 Depends: BASEDEP, ${misc:Depends}
+Replaces: g++-5 (<< 5.2.1-28)
 BUILT_USING`'dnl
 Description: Test results for the GCC test suite
  This package contains the test results for running the GCC test suite

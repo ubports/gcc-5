@@ -32057,13 +32057,6 @@ LANG=C git diff 3e5774f831e9eca881babb16108038af1d444690 4c4566ae0c0962f52ccb427
  
  /* { dg-final { scan-tree-dump-not "Removing basic block" "pre"} } */
 -/* { dg-final { cleanup-tree-dump "pre" } } */
---- a/src/gcc/testsuite/gcc.dg/pr63568.c
-+++ b/src/gcc/testsuite/gcc.dg/pr63568.c
-@@ -51,4 +51,3 @@ fn8 (int a, int b, int m)
- }
- 
- /* { dg-final { scan-tree-dump-not " \\| " "original" } } */
--/* { dg-final { cleanup-tree-dump "original" } } */
 --- a/src/gcc/testsuite/gcc.dg/pr63743.c
 +++ b/src/gcc/testsuite/gcc.dg/pr63743.c
 @@ -8,4 +8,3 @@ libcall_dep (double x, double y)

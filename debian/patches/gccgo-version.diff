@@ -19,7 +19,7 @@ Index: b/src/libgo/Makefile.in
 ===================================================================
 --- a/src/libgo/Makefile.in
 +++ b/src/libgo/Makefile.in
-@@ -463,14 +463,15 @@ SUFFIXES = .c .go .gox .o .obj .lo .a
+@@ -491,14 +491,15 @@ SUFFIXES = .c .go .gox .o .obj .lo .a
  @LIBGO_IS_RTEMS_TRUE@subdirs = testsuite
  SUBDIRS = ${subdirs}
  gcc_version := $(shell $(GOC) -dumpversion)

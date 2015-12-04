@@ -471,7 +471,7 @@ Index: b/src/gcc/go/gofrontend/expressions.cc
 ===================================================================
 --- a/src/gcc/go/gofrontend/expressions.cc
 +++ b/src/gcc/go/gofrontend/expressions.cc
-@@ -11430,20 +11430,6 @@ Allocation_expression::do_copy()
+@@ -11440,20 +11440,6 @@ Allocation_expression::do_copy()
    return alloc;
  }
  
@@ -492,7 +492,7 @@ Index: b/src/gcc/go/gofrontend/expressions.cc
  // Return the backend representation for an allocation expression.
  
  Bexpression*
-@@ -11452,17 +11438,16 @@ Allocation_expression::do_get_backend(Tr
+@@ -11462,17 +11448,16 @@ Allocation_expression::do_get_backend(Tr
    Gogo* gogo = context->gogo();
    Location loc = this->location();
  

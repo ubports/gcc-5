@@ -4,7 +4,7 @@ Index: b/src/gcc/ada/gcc-interface/Makefile.in
 ===================================================================
 --- a/src/gcc/ada/gcc-interface/Makefile.in
 +++ b/src/gcc/ada/gcc-interface/Makefile.in
-@@ -1811,10 +1811,15 @@ ifeq ($(strip $(filter-out mips linux%,$
+@@ -1815,10 +1815,15 @@ ifeq ($(strip $(filter-out mips linux%,$
    s-taprop.adb<s-taprop-linux.adb \
    s-tasinf.ads<s-tasinf-linux.ads \
    s-tasinf.adb<s-tasinf-linux.adb \

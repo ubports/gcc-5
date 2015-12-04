@@ -4212,7 +4212,7 @@ Index: b/src/gcc/go/gofrontend/expressions.cc
  				this->is_varargs(),
  				this->location());
  
-@@ -9507,52 +9437,7 @@ Expression::make_call(Expression* fn, Ex
+@@ -9517,52 +9447,7 @@ Expression::make_call(Expression* fn, Ex
    return new Call_expression(fn, args, is_varargs, location);
  }
  
@@ -4266,7 +4266,7 @@ Index: b/src/gcc/go/gofrontend/expressions.cc
  
  // Traverse a call result.
  
-@@ -9815,85 +9700,7 @@ Expression::make_index(Expression* left,
+@@ -9825,85 +9710,7 @@ Expression::make_index(Expression* left,
    return new Index_expression(left, start, end, cap, location);
  }
  
@@ -4353,7 +4353,7 @@ Index: b/src/gcc/go/gofrontend/expressions.cc
  
  // Array index traversal.
  
-@@ -11189,13 +10996,15 @@ Interface_field_reference_expression::cr
+@@ -11199,13 +11006,15 @@ Interface_field_reference_expression::cr
  
    Function_type* new_fntype = orig_fntype->copy_with_names();
  
@@ -4371,7 +4371,7 @@ Index: b/src/gcc/go/gofrontend/expressions.cc
    new_no->func_value()->set_closure_var(cp);
  
    gogo->start_block(loc);
-@@ -11595,43 +11404,45 @@ Expression::make_selector(Expression* le
+@@ -11605,43 +11414,45 @@ Expression::make_selector(Expression* le
    return new Selector_expression(left, name, location);
  }
  
@@ -4448,7 +4448,7 @@ Index: b/src/gcc/go/gofrontend/expressions.cc
  
  // Return the backend representation for an allocation expression.
  
-@@ -11640,6 +11451,15 @@ Allocation_expression::do_get_backend(Tr
+@@ -11650,6 +11461,15 @@ Allocation_expression::do_get_backend(Tr
  {
    Gogo* gogo = context->gogo();
    Location loc = this->location();
@@ -4464,7 +4464,7 @@ Index: b/src/gcc/go/gofrontend/expressions.cc
    Bexpression* space = 
      gogo->allocate_memory(this->type_, loc)->get_backend(context);
    Btype* pbtype = gogo->backend()->pointer_type(this->type_->get_backend(gogo));
-@@ -11665,80 +11485,7 @@ Expression::make_allocation(Type* type,
+@@ -11675,80 +11495,7 @@ Expression::make_allocation(Type* type,
    return new Allocation_expression(type, location);
  }
  
@@ -4546,7 +4546,7 @@ Index: b/src/gcc/go/gofrontend/expressions.cc
  
  // Traversal.
  
-@@ -12005,80 +11752,7 @@ Expression::make_struct_composite_litera
+@@ -12015,80 +11762,7 @@ Expression::make_struct_composite_litera
    return new Struct_construction_expression(type, vals, location);
  }
  
@@ -4628,7 +4628,7 @@ Index: b/src/gcc/go/gofrontend/expressions.cc
  
  // Traversal.
  
-@@ -12334,34 +12008,14 @@ Array_construction_expression::do_dump_e
+@@ -12344,34 +12018,14 @@ Array_construction_expression::do_dump_e
  
  }
  
@@ -4670,7 +4670,7 @@ Index: b/src/gcc/go/gofrontend/expressions.cc
  
  // Return the backend representation for constructing a fixed array.
  
-@@ -12381,60 +12035,34 @@ Expression::make_array_composite_literal
+@@ -12391,60 +12045,34 @@ Expression::make_array_composite_literal
    return new Fixed_array_construction_expression(type, NULL, vals, location);
  }
  
@@ -4755,7 +4755,7 @@ Index: b/src/gcc/go/gofrontend/expressions.cc
  
  // Traversal.
  
-@@ -12516,63 +12144,7 @@ Expression::make_slice_composite_literal
+@@ -12526,63 +12154,7 @@ Expression::make_slice_composite_literal
    return new Slice_construction_expression(type, NULL, vals, location);
  }
  
@@ -4820,7 +4820,7 @@ Index: b/src/gcc/go/gofrontend/expressions.cc
  
  // Traversal.
  
-@@ -13682,53 +13254,11 @@ Expression::make_type_guard(Expression*
+@@ -13692,53 +13264,11 @@ Expression::make_type_guard(Expression*
  
  // Class Heap_expression.
  
@@ -4878,7 +4878,7 @@ Index: b/src/gcc/go/gofrontend/expressions.cc
  
  // Return the backend representation for allocating an expression on the heap.
  
-@@ -14966,48 +14496,7 @@ Expression::make_label_addr(Label* label
+@@ -14976,48 +14506,7 @@ Expression::make_label_addr(Label* label
    return new Label_addr_expression(label, location);
  }
  
@@ -4928,7 +4928,7 @@ Index: b/src/gcc/go/gofrontend/expressions.cc
  
  // Traversal.
  
-@@ -15086,44 +14575,7 @@ Expression::make_conditional(Expression*
+@@ -15096,44 +14585,7 @@ Expression::make_conditional(Expression*
    return new Conditional_expression(cond, then, else_expr, location);
  }
  

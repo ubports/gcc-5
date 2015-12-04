@@ -9,7 +9,7 @@ Index: b/src/config-ml.in
 ===================================================================
 --- a/src/config-ml.in
 +++ b/src/config-ml.in
-@@ -514,6 +514,7 @@ multi-do:
+@@ -525,6 +525,7 @@ multi-do:
  				GCJFLAGS="$(GCJFLAGS) $${flags}" \
  				GOCFLAGS="$(GOCFLAGS) $${flags}" \
  				CXXFLAGS="$(CXXFLAGS) $${flags}" \
@@ -17,7 +17,7 @@ Index: b/src/config-ml.in
  				LIBCFLAGS="$(LIBCFLAGS) $${flags}" \
  				LIBCXXFLAGS="$(LIBCXXFLAGS) $${flags}" \
  				LDFLAGS="$(LDFLAGS) $${flags}" \
-@@ -746,7 +747,7 @@ if [ -n "${multidirs}" ] && [ -z "${ml_n
+@@ -757,7 +758,7 @@ if [ -n "${multidirs}" ] && [ -z "${ml_n
          break
        fi
      done
@@ -26,7 +26,7 @@ Index: b/src/config-ml.in
  
      if [ "${with_target_subdir}" = "." ]; then
  	CC_=$CC' '
-@@ -755,6 +756,7 @@ if [ -n "${multidirs}" ] && [ -z "${ml_n
+@@ -766,6 +767,7 @@ if [ -n "${multidirs}" ] && [ -z "${ml_n
  	GCJ_=$GCJ' '
  	GFORTRAN_=$GFORTRAN' '
  	GOC_=$GOC' '
@@ -34,7 +34,7 @@ Index: b/src/config-ml.in
      else
  	# Create a regular expression that matches any string as long
  	# as ML_POPDIR.
-@@ -831,6 +833,18 @@ if [ -n "${multidirs}" ] && [ -z "${ml_n
+@@ -842,6 +844,18 @@ if [ -n "${multidirs}" ] && [ -z "${ml_n
  	  esac
  	done
  

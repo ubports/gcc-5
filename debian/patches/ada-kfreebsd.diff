@@ -179,7 +179,7 @@ Index: b/src/gcc/ada/gcc-interface/Makefile.in
 ===================================================================
 --- a/src/gcc/ada/gcc-interface/Makefile.in
 +++ b/src/gcc/ada/gcc-interface/Makefile.in
-@@ -1362,7 +1362,7 @@ ifeq ($(strip $(filter-out %86 kfreebsd%
+@@ -1366,7 +1366,7 @@ ifeq ($(strip $(filter-out %86 kfreebsd%
    a-intnam.ads<a-intnam-freebsd.ads \
    s-inmaop.adb<s-inmaop-posix.adb \
    s-intman.adb<s-intman-posix.adb \
@@ -188,7 +188,7 @@ Index: b/src/gcc/ada/gcc-interface/Makefile.in
    s-osinte.ads<s-osinte-kfreebsd-gnu.ads \
    s-osprim.adb<s-osprim-posix.adb \
    s-taprop.adb<s-taprop-posix.adb \
-@@ -1422,7 +1422,7 @@ ifeq ($(strip $(filter-out x86_64 kfreeb
+@@ -1426,7 +1426,7 @@ ifeq ($(strip $(filter-out x86_64 kfreeb
    a-numaux.ads<a-numaux-x86.ads \
    s-inmaop.adb<s-inmaop-posix.adb \
    s-intman.adb<s-intman-posix.adb \

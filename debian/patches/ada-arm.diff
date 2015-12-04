@@ -4,7 +4,7 @@ Index: b/src/gcc/ada/gcc-interface/Makefile.in
 ===================================================================
 --- a/src/gcc/ada/gcc-interface/Makefile.in
 +++ b/src/gcc/ada/gcc-interface/Makefile.in
-@@ -1926,7 +1926,10 @@ ifeq ($(strip $(filter-out arm% linux-gn
+@@ -1887,7 +1887,10 @@ ifeq ($(strip $(filter-out arm% linux-gn
      LIBGNAT_TARGET_PAIRS += \
      system.ads<system-linux-armeb.ads
    else

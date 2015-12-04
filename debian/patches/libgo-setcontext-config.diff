@@ -4,7 +4,7 @@ Index: b/src/libgo/configure.ac
 ===================================================================
 --- a/src/libgo/configure.ac
 +++ b/src/libgo/configure.ac
-@@ -791,6 +791,14 @@ main ()
+@@ -797,6 +797,14 @@ main ()
  CFLAGS="$CFLAGS_hold"
  LIBS="$LIBS_hold"
  ])

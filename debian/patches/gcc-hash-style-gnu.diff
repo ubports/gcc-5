@@ -82,7 +82,7 @@ Index: b/src/gcc/config/rs6000/sysv4.h
 ===================================================================
 --- a/src/gcc/config/rs6000/sysv4.h
 +++ b/src/gcc/config/rs6000/sysv4.h
-@@ -774,7 +774,7 @@ ENDIAN_SELECT(" -mbig", " -mlittle", DEF
+@@ -769,7 +769,7 @@ ENDIAN_SELECT(" -mbig", " -mlittle", DEF
  #define GNU_USER_DYNAMIC_LINKER \
    CHOOSE_DYNAMIC_LINKER (GLIBC_DYNAMIC_LINKER, UCLIBC_DYNAMIC_LINKER)
  

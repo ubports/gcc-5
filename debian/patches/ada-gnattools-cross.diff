@@ -155,7 +155,7 @@ Index: b/src/gcc/ada/gcc-interface/Makefile.in
  # HP/PA HP-UX 10
  ifeq ($(strip $(filter-out hppa% hp hpux10%,$(target_cpu) $(target_vendor) $(target_os))),)
    LIBGNAT_TARGET_PAIRS = \
-@@ -2473,153 +2511,6 @@ ADA_EXCLUDE_FILES=$(filter-out \
+@@ -2430,153 +2468,6 @@ ADA_EXCLUDE_FILES=$(filter-out \
    $(patsubst %$(objext),%.adb,$(GNATRTL_OBJS)), \
    $(ADA_EXCLUDE_SRCS))
  
@@ -309,7 +309,7 @@ Index: b/src/gcc/ada/gcc-interface/Makefile.in
  ../stamp-gnatlib-$(RTSDIR):
  	@if [ ! -f stamp-gnatlib-$(RTSDIR) ] ; \
  	then \
-@@ -2664,14 +2555,10 @@ install-gnatlib: ../stamp-gnatlib-$(RTSD
+@@ -2621,14 +2512,10 @@ install-gnatlib: ../stamp-gnatlib-$(RTSD
  #     Also install the .dSYM directories if they exist (these directories
  #     contain the debug information for the shared libraries on darwin)
  	for file in gnat gnarl; do \
@@ -326,7 +326,7 @@ Index: b/src/gcc/ada/gcc-interface/Makefile.in
  	   if [ -d $(RTSDIR)/lib$${file}$(hyphen)$(LIBRARY_VERSION)$(soext).dSYM ]; then \
  	      $(CP) -r $(RTSDIR)/lib$${file}$(hyphen)$(LIBRARY_VERSION)$(soext).dSYM \
  	        $(DESTDIR)$(ADA_RTL_OBJ_DIR); \
-@@ -2684,19 +2571,7 @@ install-gnatlib: ../stamp-gnatlib-$(RTSD
+@@ -2641,19 +2528,7 @@ install-gnatlib: ../stamp-gnatlib-$(RTSD
  	cd $(DESTDIR)$(ADA_INCLUDE_DIR); $(CHMOD) a-wx *.adb
  	cd $(DESTDIR)$(ADA_INCLUDE_DIR); $(CHMOD) a-wx *.ads
  
@@ -347,7 +347,7 @@ Index: b/src/gcc/ada/gcc-interface/Makefile.in
  	$(RMDIR) $(RTSDIR)
  	$(MKDIR) $(RTSDIR)
  	$(CHMOD) u+w $(RTSDIR)
-@@ -2761,7 +2636,7 @@ $(RTSDIR)/s-oscons.ads: ../stamp-gnatlib
+@@ -2718,7 +2593,7 @@ $(RTSDIR)/s-oscons.ads: ../stamp-gnatlib
  	    $(OSCONS_EXTRACT) ; \
  	    ../bldtools/oscons/xoscons s-oscons)
  
@@ -356,7 +356,7 @@ Index: b/src/gcc/ada/gcc-interface/Makefile.in
  	test -f $(RTSDIR)/s-oscons.ads || exit 1
  # C files
  	$(MAKE) -C $(RTSDIR) \
-@@ -2799,32 +2674,44 @@ gnatlib: ../stamp-gnatlib1-$(RTSDIR) ../
+@@ -2756,32 +2631,44 @@ gnatlib: ../stamp-gnatlib1-$(RTSDIR) ../
  
  # Warning: this target assumes that LIBRARY_VERSION has been set correctly.
  gnatlib-shared-default:
@@ -417,7 +417,7 @@ Index: b/src/gcc/ada/gcc-interface/Makefile.in
  
  gnatlib-shared-dual:
  	$(MAKE) $(FLAGS_TO_PASS) \
-@@ -2834,9 +2721,8 @@ gnatlib-shared-dual:
+@@ -2791,9 +2678,8 @@ gnatlib-shared-dual:
               GNATLIBLDFLAGS="$(GNATLIBLDFLAGS)" \
  	     MULTISUBDIR="$(MULTISUBDIR)" \
  	     THREAD_KIND="$(THREAD_KIND)" \
@@ -429,7 +429,7 @@ Index: b/src/gcc/ada/gcc-interface/Makefile.in
  	$(MAKE) $(FLAGS_TO_PASS) \
               GNATLIBFLAGS="$(GNATLIBFLAGS)" \
  	     GNATLIBCFLAGS="$(GNATLIBCFLAGS)" \
-@@ -2844,8 +2730,7 @@ gnatlib-shared-dual:
+@@ -2801,8 +2687,7 @@ gnatlib-shared-dual:
               GNATLIBLDFLAGS="$(GNATLIBLDFLAGS)" \
  	     MULTISUBDIR="$(MULTISUBDIR)" \
  	     THREAD_KIND="$(THREAD_KIND)" \
@@ -439,7 +439,7 @@ Index: b/src/gcc/ada/gcc-interface/Makefile.in
  
  gnatlib-shared-dual-win32:
  	$(MAKE) $(FLAGS_TO_PASS) \
-@@ -2855,17 +2740,15 @@ gnatlib-shared-dual-win32:
+@@ -2812,17 +2697,15 @@ gnatlib-shared-dual-win32:
  	     PICFLAG_FOR_TARGET="$(PICFLAG_FOR_TARGET)" \
  	     MULTISUBDIR="$(MULTISUBDIR)" \
  	     THREAD_KIND="$(THREAD_KIND)" \
@@ -460,7 +460,7 @@ Index: b/src/gcc/ada/gcc-interface/Makefile.in
  
  # ??? we need to add the option to support auto-import of arrays/records to
  # the GNATLIBFLAGS when this will be supported by GNAT. At this point we will
-@@ -3105,6 +2988,68 @@ targext.o : targext.c
+@@ -3062,6 +2945,68 @@ targext.o : targext.c
  		$(ALL_CPPFLAGS) $(INCLUDES_FOR_SUBDIR) \
  		$< $(OUTPUT_OPTION)
  
