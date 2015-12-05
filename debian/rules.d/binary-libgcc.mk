@@ -304,7 +304,7 @@ define __do_libgcc
 		$(if $(filter arm-linux-gnueabi%,$(DEB_TARGET_GNU_TYPE)),
 			if head -1 $(d_l)/DEBIAN/symbols 2>/dev/null | grep -q '^lib'; then \
 			  grep -q '^ __aeabi' $(d_l)/DEBIAN/symbols \
-			    || cat debian/libgcc1.symbols.aeabi \
+			    || cat debian/libgcc.symbols.aeabi \
 				>> $(d_l)/DEBIAN/symbols; \
 			fi
 		)

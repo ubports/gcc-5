@@ -358,10 +358,8 @@ endif
 
 # build using fsf or linaro
 ifeq ($(distribution),Ubuntu)
-  ifeq (,$(findstring gnat, $(PKGSOURCE)))
-  #ifneq (,$(findstring $(DEB_TARGET_ARCH),arm64 armel armhf))
-  #  with_linaro_branch = yes
-  #endif
+  ifneq (,$(findstring $(DEB_TARGET_ARCH),arm64 armel armhf))
+    with_linaro_branch = yes
   endif
 endif
 

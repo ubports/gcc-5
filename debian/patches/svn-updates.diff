@@ -1,10 +1,10 @@
-# DP: updates from the 5 branch upto 20151129 (r231053).
+# DP: updates from the 5 branch upto 20151205 (r231314).
 
 last_update()
 {
 	cat > ${dir}LAST_UPDATED <EOF
-Sun Nov 29 23:44:10 CET 2015
-Sun Nov 29 22:44:10 UTC 2015 (revision 231053)
+Sat Dec  5 02:50:14 CET 2015
+Sat Dec  5 01:50:14 UTC 2015 (revision 231314)
 EOF
 }
 
@@ -12,3 +12,538 @@ LANG=C svn diff svn://gcc.gnu.org/svn/gcc/tags/gcc_5_3_0_release svn://gcc.gnu.o
 	| sed -r 's,^--- (\S+)\t(\S+)(.*)$,--- a/src/\1\t\2,;s,^\+\+\+ (\S+)\t(\S+)(.*)$,+++ b/src/\1\t\2,' \
 	| awk '/^Index:.*\.(class|texi)/ {skip=1; next} /^Index:/ { skip=0 } skip==0'
 
+Index: Makefile.in
+===================================================================
+--- a/src/Makefile.in	(.../tags/gcc_5_3_0_release)
++++ b/src/Makefile.in	(.../branches/gcc-5-branch)
+@@ -50485,6 +50485,7 @@
+ 
+ 
+ configure-target-libffi: maybe-all-target-newlib maybe-all-target-libgloss
++configure-target-libffi: maybe-all-target-libstdc++-v3
+ 
+ configure-target-libjava: maybe-all-target-newlib maybe-all-target-libgloss
+ configure-target-libjava: maybe-all-target-libstdc++-v3
+Index: libstdc++-v3/include/experimental/fs_path.h
+===================================================================
+--- a/src/libstdc++-v3/include/experimental/fs_path.h	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/include/experimental/fs_path.h	(.../branches/gcc-5-branch)
+@@ -549,16 +549,6 @@
+     std::string _M_what = _M_gen_what();
+   };
+ 
+-  struct path::_Cmpt : path
+-  {
+-    _Cmpt(string_type __s, _Type __t, size_t __pos)
+-      : path(std::move(__s), __t), _M_pos(__pos) { }
+-
+-    _Cmpt() : _M_pos(-1) { }
+-
+-    size_t _M_pos;
+-  };
+-
+   template<>
+     struct path::__is_encoded_char<char> : std::true_type
+     { using value_type = char; };
+@@ -575,6 +565,16 @@
+     struct path::__is_encoded_char<char32_t> : std::true_type
+     { using value_type = char32_t; };
+ 
++  struct path::_Cmpt : path
++  {
++    _Cmpt(string_type __s, _Type __t, size_t __pos)
++      : path(std::move(__s), __t), _M_pos(__pos) { }
++
++    _Cmpt() : _M_pos(-1) { }
++
++    size_t _M_pos;
++  };
++
+   // specialize _Cvt for degenerate 'noconv' case
+   template<>
+     struct path::_Cvt<path::value_type>
+Index: libstdc++-v3/include/bits/shared_ptr.h
+===================================================================
+--- a/src/libstdc++-v3/include/bits/shared_ptr.h	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/include/bits/shared_ptr.h	(.../branches/gcc-5-branch)
+@@ -582,19 +582,25 @@
+ 	_M_weak_assign(_Tp1* __p, const __shared_count<>& __n) const noexcept
+ 	{ _M_weak_this._M_assign(__p, __n); }
+ 
+-      template<typename _Tp1>
++      template<typename _Tp1, typename _Tp2>
+ 	friend void
+-	__enable_shared_from_this_helper(const __shared_count<>& __pn,
+-					 const enable_shared_from_this* __pe,
+-					 const _Tp1* __px) noexcept
+-	{
+-	  if (__pe != 0)
+-	    __pe->_M_weak_assign(const_cast<_Tp1*>(__px), __pn);
+-	}
++	__enable_shared_from_this_helper(const __shared_count<>&,
++					 const enable_shared_from_this<_Tp1>*,
++					 const _Tp2*) noexcept;
+ 
+       mutable weak_ptr<_Tp>  _M_weak_this;
+     };
+ 
++  template<typename _Tp1, typename _Tp2>
++    inline void
++    __enable_shared_from_this_helper(const __shared_count<>& __pn,
++				     const enable_shared_from_this<_Tp1>*
++				     __pe, const _Tp2* __px) noexcept
++    {
++      if (__pe != nullptr)
++	__pe->_M_weak_assign(const_cast<_Tp2*>(__px), __pn);
++    }
++
+   /**
+    *  @brief  Create an object that is owned by a shared_ptr.
+    *  @param  __a     An allocator.
+Index: libstdc++-v3/include/bits/c++config
+===================================================================
+--- a/src/libstdc++-v3/include/bits/c++config	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/include/bits/c++config	(.../branches/gcc-5-branch)
+@@ -294,7 +294,7 @@
+ # endif
+ 
+ # if _GLIBCXX_USE_CXX11_ABI
+-  inline namespace __cxx11 __attribute__((__abi_tag__)) { }
++  inline namespace __cxx11 __attribute__((__abi_tag__ ("cxx11"))) { }
+ # endif
+   }
+ 
+Index: libstdc++-v3/include/bits/shared_ptr_base.h
+===================================================================
+--- a/src/libstdc++-v3/include/bits/shared_ptr_base.h	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/include/bits/shared_ptr_base.h	(.../branches/gcc-5-branch)
+@@ -1540,19 +1540,25 @@
+ 	_M_weak_assign(_Tp1* __p, const __shared_count<_Lp>& __n) const noexcept
+ 	{ _M_weak_this._M_assign(__p, __n); }
+ 
+-      template<typename _Tp1>
++      template<_Lock_policy _Lp1, typename _Tp1, typename _Tp2>
+ 	friend void
+-	__enable_shared_from_this_helper(const __shared_count<_Lp>& __pn,
+-					 const __enable_shared_from_this* __pe,
+-					 const _Tp1* __px) noexcept
+-	{
+-	  if (__pe != 0)
+-	    __pe->_M_weak_assign(const_cast<_Tp1*>(__px), __pn);
+-	}
++	__enable_shared_from_this_helper(const __shared_count<_Lp1>&,
++					 const __enable_shared_from_this<_Tp1,
++					 _Lp1>*, const _Tp2*) noexcept;
+ 
+       mutable __weak_ptr<_Tp, _Lp>  _M_weak_this;
+     };
+ 
++  template<_Lock_policy _Lp1, typename _Tp1, typename _Tp2>
++    inline void
++    __enable_shared_from_this_helper(const __shared_count<_Lp1>& __pn,
++				     const __enable_shared_from_this<_Tp1,
++				     _Lp1>* __pe,
++				     const _Tp2* __px) noexcept
++    {
++      if (__pe != nullptr)
++	__pe->_M_weak_assign(const_cast<_Tp2*>(__px), __pn);
++    }
+ 
+   template<typename _Tp, _Lock_policy _Lp, typename _Alloc, typename... _Args>
+     inline __shared_ptr<_Tp, _Lp>
+Index: libstdc++-v3/ChangeLog
+===================================================================
+--- a/src/libstdc++-v3/ChangeLog	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/ChangeLog	(.../branches/gcc-5-branch)
+@@ -1,3 +1,21 @@
++2015-12-04  Jonathan Wakely  <jwakely@redhat.com>
++
++	PR libstdc++/56383
++	* testsuite/20_util/enable_shared_from_this/56383.cc: New.
++	* include/bits/shared_ptr_base.h (__enable_shared_from_this): Make
++	friend declaration match previous declaration of
++	__enable_shared_from_this_helper.
++	* include/bits/shared_ptr.h (enable_shared_from_this): Likewise.
++
++2015-12-04  Jonathan Wakely  <jwakely@redhat.com>
++
++	* include/experimental/bits/fs_path.h (path::_Cmpt): Move definition
++	after __is_encoded_char explicit specializations.
++
++2015-12-04  Jason Merrill  <jason@redhat.com>
++
++	* include/bits/c++config: Fix abi_tag in special modes.
++
+ 2015-12-04  Release Manager
+ 
+ 	* GCC 5.3.0 released.
+Index: libstdc++-v3/testsuite/20_util/enable_shared_from_this/56383.cc
+===================================================================
+--- a/src/libstdc++-v3/testsuite/20_util/enable_shared_from_this/56383.cc	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/testsuite/20_util/enable_shared_from_this/56383.cc	(.../branches/gcc-5-branch)
+@@ -0,0 +1,56 @@
++// Copyright (C) 2015 Free Software Foundation, Inc.
++//
++// This file is part of the GNU ISO C++ Library.  This library is free
++// software; you can redistribute it and/or modify it under the
++// terms of the GNU General Public License as published by the
++// Free Software Foundation; either version 3, or (at your option)
++// any later version.
++
++// This library is distributed in the hope that it will be useful,
++// but WITHOUT ANY WARRANTY; without even the implied warranty of
++// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++// GNU General Public License for more details.
++
++// You should have received a copy of the GNU General Public License along
++// with this library; see the file COPYING3.  If not see
++// <http://www.gnu.org/licenses/>.
++
++// { dg-options "-std=gnu++11" }
++
++#include <memory>
++#include <testsuite_hooks.h>
++
++struct A : std::enable_shared_from_this<A>
++{
++    void* a() { return shared_from_this().get(); }
++};
++
++struct B : std::enable_shared_from_this<B>
++{
++};
++
++struct D : A, B
++{
++};
++
++void test01()
++{
++  bool test = false;
++
++  auto d = std::make_shared<D>();
++  try
++  {
++      d->a();
++  }
++  catch (const std::bad_weak_ptr&)
++  {
++    test = true;
++  }
++  VERIFY(test);
++}
++
++int
++main()
++{
++  test01();
++}
+Index: ChangeLog
+===================================================================
+--- a/src/ChangeLog	(.../tags/gcc_5_3_0_release)
++++ b/src/ChangeLog	(.../branches/gcc-5-branch)
+@@ -1,3 +1,13 @@
++2015-12-04  Andreas Tobler  <andreast@gcc.gnu.org>
++
++	Backport from mainline
++	2015-12-01  Andreas Tobler  <andreast@gcc.gnu.org>
++
++	PR libffi/65726
++	* Makefile.def (lang_env_dependencies): Make libffi depend
++	on cxx.
++	* Makefile.in: Regenerate.
++
+ 2015-12-04  Release Manager
+ 
+ 	* GCC 5.3.0 released.
+Index: gcc/DATESTAMP
+===================================================================
+--- a/src/gcc/DATESTAMP	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/DATESTAMP	(.../branches/gcc-5-branch)
+@@ -1 +1 @@
+-20151204
++20151205
+Index: gcc/ChangeLog
+===================================================================
+--- a/src/gcc/ChangeLog	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/ChangeLog	(.../branches/gcc-5-branch)
+@@ -1,3 +1,16 @@
++2015-12-04  Andreas Tobler  <andreast@gcc.gnu.org>
++
++	Backport from mainline
++	2015-12-01  Andreas Tobler  <andreast@gcc.gnu.org>
++
++	* config/rs6000/freebsd64.h (ELFv2_ABI_CHECK): Add new macro.
++	(SUBSUBTARGET_OVERRIDE_OPTIONS): Use it to decide whether to set
++	rs6000_current_abi to ABI_AIX or ABI_ELFv2.
++
++2015-12-04  Richard Biener  <rguenther@suse.de>
++
++	* BASE-VER: Set to 5.3.1.
++
+ 2015-12-04  Release Manager
+ 
+ 	* GCC 5.3.0 released.
+Index: gcc/testsuite/g++.dg/template/pr67337.C
+===================================================================
+--- a/src/gcc/testsuite/g++.dg/template/pr67337.C	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/g++.dg/template/pr67337.C	(.../branches/gcc-5-branch)
+@@ -0,0 +1,25 @@
++template <class> class A
++{
++  void m_fn1 (int *, int);
++};
++
++template <class> class B
++{
++public:
++  typedef int Type;
++};
++
++template <class> class C
++{
++public:
++  C (int);
++  template <template <class> class T> void m_fn2 (typename T<void>::Type);
++};
++
++template <>
++void
++A<int>::m_fn1 (int *, int)
++{
++  C<int> a (0);
++  a.m_fn2<B> (0);
++}
+Index: gcc/cp/ChangeLog
+===================================================================
+--- a/src/gcc/cp/ChangeLog	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/cp/ChangeLog	(.../branches/gcc-5-branch)
+@@ -1,3 +1,8 @@
++2015-12-04  Markus Trippelsdorf  <markus@trippelsdorf.de>
++
++	PR c++/67337
++	* mangle.c (write_template_prefix): Guard against context==NULL.
++
+ 2015-12-04  Release Manager
+ 
+ 	* GCC 5.3.0 released.
+Index: gcc/cp/mangle.c
+===================================================================
+--- a/src/gcc/cp/mangle.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/cp/mangle.c	(.../branches/gcc-5-branch)
+@@ -1160,7 +1160,7 @@
+      So, for the example above, `Outer<int>::Inner' is represented as a
+      substitution candidate by a TREE_LIST whose purpose is `Outer<int>'
+      and whose value is `Outer<T>::Inner<U>'.  */
+-  if (TYPE_P (context))
++  if (context && TYPE_P (context))
+     substitution = build_tree_list (context, templ);
+   else
+     substitution = templ;
+Index: gcc/ada/s-oscons-tmplt.c
+===================================================================
+--- a/src/gcc/ada/s-oscons-tmplt.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/ada/s-oscons-tmplt.c	(.../branches/gcc-5-branch)
+@@ -157,7 +157,7 @@
+ # include <_types.h>
+ #endif
+ 
+-#ifdef __linux__
++#if defined (__linux__) || defined (__rtems__)
+ # include <pthread.h>
+ # include <signal.h>
+ #endif
+@@ -1456,7 +1456,8 @@
+ CNS(CLOCK_RT_Ada, "")
+ #endif
+ 
+-#if defined (__APPLE__) || defined (__linux__) || defined (DUMMY)
++#if defined (__APPLE__) || defined (__linux__) || defined (__rtems__) || \
++  defined (DUMMY)
+ /*
+ 
+    --  Sizes of pthread data types
+@@ -1499,7 +1500,7 @@
+ CND(PTHREAD_RWLOCK_SIZE,     "pthread_rwlock_t")
+ CND(PTHREAD_ONCE_SIZE,       "pthread_once_t")
+ 
+-#endif /* __APPLE__ || __linux__ */
++#endif /* __APPLE__ || __linux__ || __rtems__*/
+ 
+ /*
+ 
+Index: gcc/ada/ChangeLog
+===================================================================
+--- a/src/gcc/ada/ChangeLog	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/ada/ChangeLog	(.../branches/gcc-5-branch)
+@@ -1,3 +1,9 @@
++2015-12-04  Jan Sommer <soja-lists@aries.uberspace.de>
++
++	PR ada/68169
++	* s-oscons-tmplt.c: Generate pthread constants for RTEMS
++	* s-osinte-rtems.ads: Declare pthread structs as opaque types in Ada
++
+ 2015-12-04  Release Manager
+ 
+ 	* GCC 5.3.0 released.
+Index: gcc/ada/s-osinte-rtems.ads
+===================================================================
+--- a/src/gcc/ada/s-osinte-rtems.ads	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/ada/s-osinte-rtems.ads	(.../branches/gcc-5-branch)
+@@ -51,6 +51,8 @@
+ --  It is designed to be a bottom-level (leaf) package.
+ 
+ with Interfaces.C;
++with System.OS_Constants;
++
+ package System.OS_Interface is
+    pragma Preelaborate;
+ 
+@@ -60,6 +62,7 @@
+    subtype rtems_id       is Interfaces.C.unsigned;
+ 
+    subtype int            is Interfaces.C.int;
++   subtype char           is Interfaces.C.char;
+    subtype short          is Interfaces.C.short;
+    subtype long           is Interfaces.C.long;
+    subtype unsigned       is Interfaces.C.unsigned;
+@@ -68,7 +71,6 @@
+    subtype unsigned_char  is Interfaces.C.unsigned_char;
+    subtype plain_char     is Interfaces.C.plain_char;
+    subtype size_t         is Interfaces.C.size_t;
+-
+    -----------
+    -- Errno --
+    -----------
+@@ -76,11 +78,11 @@
+    function errno return int;
+    pragma Import (C, errno, "__get_errno");
+ 
+-   EAGAIN    : constant := 11;
+-   EINTR     : constant := 4;
+-   EINVAL    : constant := 22;
+-   ENOMEM    : constant := 12;
+-   ETIMEDOUT : constant := 116;
++   EAGAIN    : constant := System.OS_Constants.EAGAIN;
++   EINTR     : constant := System.OS_Constants.EINTR;
++   EINVAL    : constant := System.OS_Constants.EINVAL;
++   ENOMEM    : constant := System.OS_Constants.ENOMEM;
++   ETIMEDOUT : constant := System.OS_Constants.ETIMEDOUT;
+ 
+    -------------
+    -- Signals --
+@@ -448,6 +450,7 @@
+       ss_low_priority     : int;
+       ss_replenish_period : timespec;
+       ss_initial_budget   : timespec;
++      sched_ss_max_repl   : int;
+    end record;
+    pragma Convention (C, struct_sched_param);
+ 
+@@ -621,43 +624,34 @@
+    end record;
+    pragma Convention (C, timespec);
+ 
+-   CLOCK_REALTIME :  constant clockid_t := 1;
+-   CLOCK_MONOTONIC : constant clockid_t := 4;
++   CLOCK_REALTIME :  constant clockid_t := System.OS_Constants.CLOCK_REALTIME;
++   CLOCK_MONOTONIC : constant clockid_t := System.OS_Constants.CLOCK_MONOTONIC;
+ 
++   subtype char_array is Interfaces.C.char_array;
++
+    type pthread_attr_t is record
+-      is_initialized  : int;
+-      stackaddr       : System.Address;
+-      stacksize       : int;
+-      contentionscope : int;
+-      inheritsched    : int;
+-      schedpolicy     : int;
+-      schedparam      : struct_sched_param;
+-      cputime_clocked_allowed : int;
+-      detatchstate    : int;
++      Data : char_array (1 .. OS_Constants.PTHREAD_ATTR_SIZE);
+    end record;
+    pragma Convention (C, pthread_attr_t);
++   for pthread_attr_t'Alignment use Interfaces.C.double'Alignment;
+ 
+    type pthread_condattr_t is record
+-      flags           : int;
+-      process_shared  : int;
++      Data : char_array (1 .. OS_Constants.PTHREAD_CONDATTR_SIZE);
+    end record;
+    pragma Convention (C, pthread_condattr_t);
++   for pthread_condattr_t'Alignment use Interfaces.C.double'Alignment;
+ 
+    type pthread_mutexattr_t is record
+-      is_initialized  : int;
+-      process_shared  : int;
+-      prio_ceiling    : int;
+-      protocol        : int;
+-      mutex_type      : int;
+-      recursive       : int;
+-   end record;
++      Data : char_array (1 .. OS_Constants.PTHREAD_MUTEXATTR_SIZE);
++   end  record;
+    pragma Convention (C, pthread_mutexattr_t);
++   for pthread_mutexattr_t'Alignment use Interfaces.C.double'Alignment;
+ 
+    type pthread_rwlockattr_t is record
+-      is_initialized  : int;
+-      process_shared  : int;
++      Data : char_array (1 .. OS_Constants.PTHREAD_RWLOCKATTR_SIZE);
+    end record;
+    pragma Convention (C, pthread_rwlockattr_t);
++   for pthread_rwlockattr_t'Alignment use Interfaces.C.double'Alignment;
+ 
+    type pthread_t is new rtems_id;
+ 
+Index: gcc/BASE-VER
+===================================================================
+--- a/src/gcc/BASE-VER	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/BASE-VER	(.../branches/gcc-5-branch)
+@@ -1 +1 @@
+-5.3.0
++5.3.1
+Index: gcc/config/rs6000/freebsd64.h
+===================================================================
+--- a/src/gcc/config/rs6000/freebsd64.h	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/config/rs6000/freebsd64.h	(.../branches/gcc-5-branch)
+@@ -65,6 +65,13 @@
+ #define INVALID_64BIT "-m%s not supported in this configuration"
+ #define INVALID_32BIT INVALID_64BIT
+ 
++/* Use LINUX64 instead of FREEBSD64 for compat with e.g. sysv4le.h */
++#ifdef LINUX64_DEFAULT_ABI_ELFv2
++#define ELFv2_ABI_CHECK (rs6000_elf_abi != 1)
++#else
++#define ELFv2_ABI_CHECK (rs6000_elf_abi == 2)
++#endif
++
+ #undef  SUBSUBTARGET_OVERRIDE_OPTIONS
+ #define SUBSUBTARGET_OVERRIDE_OPTIONS				\
+   do								\
+@@ -84,6 +91,12 @@
+ 	      rs6000_isa_flags &= ~OPTION_MASK_RELOCATABLE;	\
+ 	      error (INVALID_64BIT, "relocatable");		\
+ 	    }							\
++	  if (ELFv2_ABI_CHECK)					\
++	    {							\
++	      rs6000_current_abi = ABI_ELFv2;			\
++	      if (dot_symbols)					\
++		error ("-mcall-aixdesc incompatible with -mabi=elfv2"); \
++	    }							\
+ 	  if (rs6000_isa_flags & OPTION_MASK_EABI)		\
+ 	    {							\
+ 	      rs6000_isa_flags &= ~OPTION_MASK_EABI;		\
+Index: Makefile.def
+===================================================================
+--- a/src/Makefile.def	(.../tags/gcc_5_3_0_release)
++++ b/src/Makefile.def	(.../branches/gcc-5-branch)
+@@ -522,6 +522,7 @@
+ // on libgcc and newlib/libgloss.
+ lang_env_dependencies = { module=libjava; cxx=true; };
+ lang_env_dependencies = { module=libitm; cxx=true; };
++lang_env_dependencies = { module=libffi; cxx=true; };
+ lang_env_dependencies = { module=libcilkrts; cxx=true; };
+ lang_env_dependencies = { module=liboffloadmic; cxx=true; };
+ lang_env_dependencies = { module=newlib; no_c=true; };

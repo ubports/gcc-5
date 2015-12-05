@@ -701,14 +701,18 @@ else ifeq ($(with_bootstrap),)
     bootstrap_target = bootstrap
   endif
 
-  # disable profiled bootstrap on slow archs, get to testing first ...
   ifeq ($(derivative),Debian)
+    # disable profiled bootstrap for backports
+    ifneq (,$(filter $(distrelease),squeeze wheezy jessie))
+      bootstrap_target = bootstrap
+    endif
+    # disable profiled bootstrap on slow archs, get to testing first ...
     ifneq (,$(filter $(DEB_TARGET_ARCH), arm arm64 armel armhf mips mipsel sparc))
       bootstrap_target = bootstrap
     endif
   endif
   ifeq ($(derivative),Ubuntu)
-    ifneq (,$(filter $(DEB_TARGET_ARCH), sparc))
+    ifneq (,$(filter $(distrelease),lucid precise trusty utopic vivid wily))
       bootstrap_target = bootstrap
     endif
     ifeq ($(with_linaro_branch),yes)
