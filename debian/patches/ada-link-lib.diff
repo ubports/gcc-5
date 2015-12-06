@@ -1131,9 +1131,9 @@ Index: b/src/Makefile.in
  configure-target-libjava: maybe-all-target-libgcc
  configure-target-zlib: maybe-all-target-libgcc
  configure-target-boehm-gc: maybe-all-target-libgcc
-@@ -50486,6 +50736,7 @@ configure-target-winsup: maybe-all-targe
- 
+@@ -50487,6 +50737,7 @@ configure-target-winsup: maybe-all-targe
  configure-target-libffi: maybe-all-target-newlib maybe-all-target-libgloss
+ configure-target-libffi: maybe-all-target-libstdc++-v3
  
 +
  configure-target-libjava: maybe-all-target-newlib maybe-all-target-libgloss

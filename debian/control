@@ -2373,6 +2373,81 @@ Description: GNU Ada compiler Project Manager (debugging symbols)
  .
  This package contains the debugging symbols.
 
+Package: gdc-5
+Architecture: any
+Priority: optional
+Depends: gcc-5-base (>= ${gcc:SoftVersion}), g++-5 (>= ${gcc:SoftVersion}), ${dep:gdccross}, ${dep:phobosdev}, ${shlibs:Depends}, ${misc:Depends}
+Provides: gdc, d-compiler, d-v2-compiler
+Replaces: gdc (<< 4.4.6-5)
+Description: GNU D compiler (version 2)
+ This is the GNU D compiler, which compiles D on platforms supported by gcc.
+ It uses the gcc backend to generate optimised code.
+ .
+ This compiler supports D language version 2.
+
+Package: gdc-5-multilib
+Architecture: any
+Priority: optional
+Depends: gcc-5-base (>= ${gcc:SoftVersion}), gdc-5 (= ${gcc:Version}), gcc-5-multilib (= ${gcc:Version}), ${dep:libphobosbiarchdev}${shlibs:Depends}, ${misc:Depends}
+Description: GNU D compiler (version 2, multilib support)
+ This is the GNU D compiler, which compiles D on platforms supported by gcc.
+ It uses the gcc backend to generate optimised code.
+ .
+ This is a dependency package, depending on development packages
+ for the non-default multilib architecture(s).
+
+Package: libphobos-5-dev
+Architecture: amd64 armel armhf i386 x32 kfreebsd-amd64 kfreebsd-i386
+Section: libdevel
+Priority: optional
+Depends: gcc-5-base (= ${gcc:Version}), zlib1g-dev, ${shlibs:Depends}, ${misc:Depends}
+Description: Phobos D standard library
+ This is the Phobos standard library that comes with the D2 compiler.
+ .
+ For more information check http://www.dlang.org/phobos/
+
+#Package: libphobos`'PHOBOS_V`'PV`'TS-dbg
+#Section: debug
+#Architecture: ifdef(`TARGET',`CROSS_ARCH',`libphobos_archs')
+#Priority: extra
+#Depends: BASELDEP, libphobos`'PHOBOS_V`'PV-dev (= ${gdc:Version}), ${misc:Depends}
+#Provides: libphobos`'PHOBOS_V`'TS-dbg
+#BUILT_USING`'dnl
+#Description: The Phobos D standard library (debug symbols)
+# This is the Phobos standard library that comes with the D2 compiler.
+# .
+# For more information check http://www.dlang.org/phobos/
+
+Package: lib64phobos-5-dev
+Architecture: i386 powerpc sparc s390 mips mipsel mipsn32 mipsn32el x32
+Section: libdevel
+Priority: optional
+Depends: gcc-5-base (= ${gcc:Version}), lib64gcc-5-dev (= ${gcc:Version}), lib64z1-dev, ${shlibs:Depends}, ${misc:Depends}
+Description: Phobos D standard library (64bit development files)
+ This is the Phobos standard library that comes with the D2 compiler.
+ .
+ For more information check http://www.dlang.org/phobos/
+
+Package: lib32phobos-5-dev
+Architecture: amd64 ppc64 kfreebsd-amd64 s390x sparc64 x32 mipsn32 mipsn32el mips64 mips64el
+Section: libdevel
+Priority: optional
+Depends: gcc-5-base (= ${gcc:Version}), lib32gcc-5-dev (= ${gcc:Version}), lib32z1-dev, ${shlibs:Depends}, ${misc:Depends}
+Description: Phobos D standard library (64bit development files)
+ This is the Phobos standard library that comes with the D2 compiler.
+ .
+ For more information check http://www.dlang.org/phobos/
+
+Package: libx32phobos-5-dev
+Architecture: amd64 i386
+Section: libdevel
+Priority: optional
+Depends: gcc-5-base (= ${gcc:Version}), libx32gcc-5-dev (= ${gcc:Version}), ${dep:libx32z}, ${shlibs:Depends}, ${misc:Depends}
+Description: Phobos D standard library (x32 development files)
+ This is the Phobos standard library that comes with the D2 compiler.
+ .
+ For more information check http://www.dlang.org/phobos/
+
 #Package: gcc`'PV-soft-float
 #Architecture: arm armel armhf
 #Priority: PRI(optional)

@@ -4,7 +4,7 @@ Index: b/src/libphobos/configure.ac
 ===================================================================
 --- a/src/libphobos/configure.ac
 +++ b/src/libphobos/configure.ac
-@@ -125,7 +125,7 @@ fi
+@@ -138,7 +138,7 @@ fi
  AC_SUBST(GDC)
  
  AC_MSG_CHECKING([D GCC version])

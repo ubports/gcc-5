@@ -93,7 +93,7 @@ Index: b/src/gcc/Makefile.in
 ===================================================================
 --- a/src/gcc/Makefile.in
 +++ b/src/gcc/Makefile.in
-@@ -2873,8 +2873,32 @@ install-no-fixedincludes:
+@@ -2880,8 +2880,32 @@ install-no-fixedincludes:
  
  doc: $(BUILD_INFO) $(GENERATED_MANPAGES)
  
@@ -128,7 +128,7 @@ Index: b/src/gcc/Makefile.in
  
  info: $(INFOFILES) lang.info @GENINSRC@ srcinfo lang.srcinfo
  
-@@ -2921,7 +2945,19 @@ gcc-vers.texi: $(BASEVER) $(DEVPHASE)
+@@ -2928,7 +2952,19 @@ gcc-vers.texi: $(BASEVER) $(DEVPHASE)
  	if [ -n "$(PKGVERSION)" ]; then \
  	  echo "@set VERSION_PACKAGE $(PKGVERSION)" >> $@T; \
  	fi
@@ -149,7 +149,7 @@ Index: b/src/gcc/Makefile.in
  	mv -f $@T $@
  
  
-@@ -2929,21 +2965,41 @@ gcc-vers.texi: $(BASEVER) $(DEVPHASE)
+@@ -2936,21 +2972,41 @@ gcc-vers.texi: $(BASEVER) $(DEVPHASE)
  # patterns.  To use them, put each of the specific targets with its
  # specific dependencies but no build commands.
  
@@ -198,7 +198,7 @@ Index: b/src/gcc/Makefile.in
  			-I $(gcc_docdir)/include -o $@ $<; \
  	fi
  
-@@ -3339,11 +3395,11 @@ install-driver: installdirs xgcc$(exeext
+@@ -3346,11 +3402,11 @@ install-driver: installdirs xgcc$(exeext
  # $(INSTALL_DATA) might be a relative pathname, so we can't cd into srcdir
  # to do the install.
  install-info:: doc installdirs \
@@ -215,7 +215,7 @@ Index: b/src/gcc/Makefile.in
  	lang.install-info
  
  $(DESTDIR)$(infodir)/%.info: doc/%.info installdirs
-@@ -3397,6 +3453,7 @@ install-man: lang.install-man \
+@@ -3404,6 +3460,7 @@ install-man: lang.install-man \
  	$(DESTDIR)$(man1dir)/$(GCC_INSTALL_NAME)$(man1ext) \
  	$(DESTDIR)$(man1dir)/$(CPP_INSTALL_NAME)$(man1ext) \
  	$(DESTDIR)$(man1dir)/$(GCOV_INSTALL_NAME)$(man1ext) \
@@ -223,7 +223,7 @@ Index: b/src/gcc/Makefile.in
  	$(DESTDIR)$(man7dir)/fsf-funding$(man7ext) \
  	$(DESTDIR)$(man7dir)/gfdl$(man7ext) \
  	$(DESTDIR)$(man7dir)/gpl$(man7ext)
-@@ -3557,8 +3614,11 @@ uninstall: lang.uninstall
+@@ -3564,8 +3621,11 @@ uninstall: lang.uninstall
  	-rm -rf $(DESTDIR)$(bindir)/$(GCOV_INSTALL_NAME)$(exeext)
  	-rm -rf $(DESTDIR)$(man1dir)/$(GCC_INSTALL_NAME)$(man1ext)
  	-rm -rf $(DESTDIR)$(man1dir)/cpp$(man1ext)
@@ -355,7 +355,7 @@ Index: b/src/gcc/doc/invoke.texi
 ===================================================================
 --- a/src/gcc/doc/invoke.texi
 +++ b/src/gcc/doc/invoke.texi
-@@ -11002,7 +11002,7 @@ One of the standard libraries bypassed b
+@@ -11188,7 +11188,7 @@ One of the standard libraries bypassed b
  @option{-nodefaultlibs} is @file{libgcc.a}, a library of internal subroutines
  which GCC uses to overcome shortcomings of particular machines, or special
  needs for some languages.
@@ -364,7 +364,7 @@ Index: b/src/gcc/doc/invoke.texi
  Collection (GCC) Internals},
  for more discussion of @file{libgcc.a}.)
  In most cases, you need @file{libgcc.a} even when you want to avoid
-@@ -11011,7 +11011,7 @@ or @option{-nodefaultlibs} you should us
+@@ -11197,7 +11197,7 @@ or @option{-nodefaultlibs} you should us
  This ensures that you have no unresolved references to internal GCC
  library subroutines.
  (An example of such an internal subroutine is @code{__main}, used to ensure C++
@@ -373,7 +373,7 @@ Index: b/src/gcc/doc/invoke.texi
  GNU Compiler Collection (GCC) Internals}.)
  
  @item -pie
-@@ -23741,7 +23741,7 @@ Note that you can also specify places to
+@@ -23994,7 +23994,7 @@ Note that you can also specify places to
  @option{-B}, @option{-I} and @option{-L} (@pxref{Directory Options}).  These
  take precedence over places specified using environment variables, which
  in turn take precedence over those specified by the configuration of GCC@.
@@ -382,7 +382,7 @@ Index: b/src/gcc/doc/invoke.texi
  GNU Compiler Collection (GCC) Internals}.
  
  @table @env
-@@ -23901,7 +23901,7 @@ the headers it contains change.
+@@ -24154,7 +24154,7 @@ the headers it contains change.
  
  A precompiled header file is searched for when @code{#include} is
  seen in the compilation.  As it searches for the included file
@@ -395,7 +395,7 @@ Index: b/src/gcc/doc/extend.texi
 ===================================================================
 --- a/src/gcc/doc/extend.texi
 +++ b/src/gcc/doc/extend.texi
-@@ -18320,7 +18320,7 @@ want to write code that checks whether t
+@@ -18396,7 +18396,7 @@ want to write code that checks whether t
  test for the GNU compiler the same way as for C programs: check for a
  predefined macro @code{__GNUC__}.  You can also use @code{__GNUG__} to
  test specifically for GNU C++ (@pxref{Common Predefined Macros,,

@@ -77,7 +77,7 @@ Index: b/src/gcc/config/darwin.h
 ===================================================================
 --- a/src/gcc/config/darwin.h
 +++ b/src/gcc/config/darwin.h
-@@ -919,4 +919,10 @@ extern void darwin_driver_init (unsigned
+@@ -923,4 +923,10 @@ extern void darwin_driver_init (unsigned
     providing an osx-version-min of this unless overridden by the User.  */
  #define DEF_MIN_OSX_VERSION "10.4"
  
@@ -160,6 +160,21 @@ Index: b/src/gcc/config/i386/linux-common.h
  #undef CC1_SPEC
  #define CC1_SPEC \
    LINUX_OR_ANDROID_CC (GNU_USER_TARGET_CC1_SPEC, \
+Index: b/src/gcc/config/i386/mingw-w64.h
+===================================================================
+--- a/src/gcc/config/i386/mingw-w64.h
++++ b/src/gcc/config/i386/mingw-w64.h
+@@ -89,3 +89,10 @@ along with GCC; see the file COPYING3.
+   %{static:-Bstatic} %{!static:-Bdynamic} \
+   %{shared|mdll: " SUB_LINK_ENTRY " --enable-auto-image-base} \
+   %(shared_libgcc_undefs)"
++
++#undef TARGET_OS_D_BUILTINS
++#define TARGET_OS_D_BUILTINS()					\
++    do {							\
++      TARGET_GENERIC_MINGW_OS_D_BUILTINS();			\
++      builtin_define ("GNU_MinGW64");				\
++    } while (0)
 Index: b/src/gcc/config/i386/mingw32.h
 ===================================================================
 --- a/src/gcc/config/i386/mingw32.h
@@ -183,21 +198,6 @@ Index: b/src/gcc/config/i386/mingw32.h
  #ifndef TARGET_USE_PTHREAD_BY_DEFAULT
  #define SPEC_PTHREAD1 "pthread"
  #define SPEC_PTHREAD2 "!no-pthread"
-Index: b/src/gcc/config/i386/mingw-w64.h
-===================================================================
---- a/src/gcc/config/i386/mingw-w64.h
-+++ b/src/gcc/config/i386/mingw-w64.h
-@@ -89,3 +89,10 @@ along with GCC; see the file COPYING3.
-   %{static:-Bstatic} %{!static:-Bdynamic} \
-   %{shared|mdll: " SUB_LINK_ENTRY " --enable-auto-image-base} \
-   %(shared_libgcc_undefs)"
-+
-+#undef TARGET_OS_D_BUILTINS
-+#define TARGET_OS_D_BUILTINS()					\
-+    do {							\
-+      TARGET_GENERIC_MINGW_OS_D_BUILTINS();			\
-+      builtin_define ("GNU_MinGW64");				\
-+    } while (0)
 Index: b/src/gcc/config/kfreebsd-gnu.h
 ===================================================================
 --- a/src/gcc/config/kfreebsd-gnu.h
@@ -279,7 +279,7 @@ Index: b/src/gcc/config/linux.h
 ===================================================================
 --- a/src/gcc/config/linux.h
 +++ b/src/gcc/config/linux.h
-@@ -49,6 +49,20 @@ see the files COPYING3 and COPYING.RUNTI
+@@ -49,6 +49,28 @@ see the files COPYING3 and COPYING.RUNTI
  	builtin_assert ("system=posix");			\
      } while (0)
  
@@ -287,11 +287,19 @@ Index: b/src/gcc/config/linux.h
 +#define TARGET_GENERIC_LINUX_OS_D_BUILTINS()			\
 +    do {							\
 +	if (OPTION_GLIBC)					\
-+	  builtin_define ("GNU_GLibc");				\
++	  {							\
++	    builtin_define ("GNU_GLibc");			\
++	    builtin_define ("CRuntime_Glibc");			\
++	  }							\
 +	else if (OPTION_UCLIBC)					\
-+	  builtin_define ("GNU_UCLibc");			\
++	  {							\
++	    builtin_define ("GNU_UCLibc");			\
++	  }							\
 +	else if (OPTION_BIONIC)					\
-+	  builtin_define ("GNU_Bionic");			\
++	  {							\
++	    builtin_define ("GNU_Bionic");			\
++	    builtin_define ("CRuntime_Bionic");			\
++	  }							\
 +								\
 +	builtin_define ("linux");				\
 +	builtin_define ("Posix");				\
@@ -376,28 +384,6 @@ Index: b/src/gcc/config/rs6000/aix.h
  /* Define appropriate architecture macros for preprocessor depending on
     target switches.  */
  
-Index: b/src/gcc/config/rs6000/linux64.h
-===================================================================
---- a/src/gcc/config/rs6000/linux64.h
-+++ b/src/gcc/config/rs6000/linux64.h
-@@ -336,6 +336,17 @@ extern int dot_symbols;
-     }							\
-   while (0)
- 
-+#undef  TARGET_OS_D_BUILTINS
-+#define TARGET_OS_D_BUILTINS()				\
-+  do							\
-+    {							\
-+      builtin_define ("linux");				\
-+      builtin_define ("Posix");				\
-+      if (OPTION_GLIBC)					\
-+	builtin_define ("GNU_GLibc");			\
-+    }							\
-+  while (0)
-+
- #undef  CPP_OS_DEFAULT_SPEC
- #define CPP_OS_DEFAULT_SPEC "%(cpp_os_linux)"
- 
 Index: b/src/gcc/config/rs6000/linux.h
 ===================================================================
 --- a/src/gcc/config/rs6000/linux.h
@@ -418,5 +404,27 @@ Index: b/src/gcc/config/rs6000/linux.h
 +  while (0)
 +
  #undef	CPP_OS_DEFAULT_SPEC
+ #define CPP_OS_DEFAULT_SPEC "%(cpp_os_linux)"
+ 
+Index: b/src/gcc/config/rs6000/linux64.h
+===================================================================
+--- a/src/gcc/config/rs6000/linux64.h
++++ b/src/gcc/config/rs6000/linux64.h
+@@ -336,6 +336,17 @@ extern int dot_symbols;
+     }							\
+   while (0)
+ 
++#undef  TARGET_OS_D_BUILTINS
++#define TARGET_OS_D_BUILTINS()				\
++  do							\
++    {							\
++      builtin_define ("linux");				\
++      builtin_define ("Posix");				\
++      if (OPTION_GLIBC)					\
++	builtin_define ("GNU_GLibc");			\
++    }							\
++  while (0)
++
+ #undef  CPP_OS_DEFAULT_SPEC
  #define CPP_OS_DEFAULT_SPEC "%(cpp_os_linux)"
  

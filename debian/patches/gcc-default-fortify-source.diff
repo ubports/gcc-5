@@ -10,7 +10,7 @@ Index: b/src/gcc/doc/invoke.texi
 ===================================================================
 --- a/src/gcc/doc/invoke.texi
 +++ b/src/gcc/doc/invoke.texi
-@@ -6886,6 +6886,12 @@ also turns on the following optimization
+@@ -7533,6 +7533,12 @@ also turns on the following optimization
  Please note the warning under @option{-fgcse} about
  invoking @option{-O2} on programs that use computed gotos.
  
@@ -27,7 +27,7 @@ Index: b/src/gcc/c-family/c-cppbuiltin.c
 ===================================================================
 --- a/src/gcc/c-family/c-cppbuiltin.c
 +++ b/src/gcc/c-family/c-cppbuiltin.c
-@@ -951,6 +951,10 @@ c_cpp_builtins (cpp_reader *pfile)
+@@ -1171,6 +1171,10 @@ c_cpp_builtins (cpp_reader *pfile)
    builtin_define_with_value ("__REGISTER_PREFIX__", REGISTER_PREFIX, 0);
    builtin_define_with_value ("__USER_LABEL_PREFIX__", user_label_prefix, 0);
  

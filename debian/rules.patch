@@ -67,7 +67,6 @@ debian_patches += \
 	sparc-force-cpu \
 	gccgo-version \
 	pr47818 \
-	pr49944 \
 	gcc-base-version \
 	libgo-testsuite \
 	gcc-target-include-asm \
@@ -94,6 +93,11 @@ debian_patches += \
 	ada-gnattools-ldflags \
 	libjit-ldflags \
 	skip-bootstrap-multilib \
+
+# sigaction on sparc changed between glibc 2.19 and 2.21
+ifeq (,$(filter 2.1%, $(shell dpkg-query -l libc-bin | awk '/^.i/ {print $$3}')))
+  debian_patches += pr67899
+endif
 
 # this is still needed on powerpc, e.g. firefox and insighttoolkit4 will ftbfs.
 ifneq (,$(filter $(DEB_TARGET_ARCH),powerpc))
@@ -191,8 +195,8 @@ ifeq ($(with_d),yes)
 	gdc-versym-cpu \
 	gdc-versym-os \
 	gdc-frontend-posix \
-	gdc-config-ml \
-	gdc-base-version
+	gdc-base-version \
+	gdc-profiledbuild
 #	gdc-updates
 #	gdc-multiarch
   ifneq ($(GFDL_INVARIANT_FREE),yes)
@@ -299,7 +303,7 @@ endif
 ifneq (,$(filter $(build_type), build-cross cross-build-cross))
   debian_patches += cross-no-locale-include
   debian_patches += cross-biarch
-  ifeq ($(with_d),yes)
+  ifeq ($(with_libphobos),yes)
     debian_patches += gdc-cross-biarch
   endif
 endif

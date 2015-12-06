@@ -1,15 +1,16 @@
 # DP: Disable D tests, hang on many buildds
 
+Index: b/src/gcc/d/Make-lang.in
+===================================================================
 --- a/src/gcc/d/Make-lang.in
 +++ b/src/gcc/d/Make-lang.in
-@@ -358,8 +358,8 @@
+@@ -284,6 +284,6 @@ d.stagefeedback: stagefeedback-start
+ # check targets.  However, our DejaGNU framework requires 'check-gdc' as its
  # entry point.  We feed the former to the latter here.
  check-d: check-gdc
- # List of targets that can use the generic check- rule and its // variant.
 -lang_checks += check-gdc
 -lang_checks_parallelized += check-gdc
+-check_gdc_parallelize = 10
 +#lang_checks += check-gdc
 +#lang_checks_parallelized += check-gdc
- # For description see comment above check_gcc_parallelize in gcc/Makefile.in.
- check_gdc_parallelize = d_do_test.exp=runnable/*
- 
++#check_gdc_parallelize = 10

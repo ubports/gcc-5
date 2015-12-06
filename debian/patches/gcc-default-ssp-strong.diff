@@ -4,7 +4,7 @@ Index: b/src/gcc/gcc.c
 ===================================================================
 --- a/src/gcc/gcc.c
 +++ b/src/gcc/gcc.c
-@@ -670,7 +670,7 @@ proper position among the other output f
+@@ -732,7 +732,7 @@ proper position among the other output f
  
  #ifndef SSP_DEFAULT_SPEC
  #ifdef TARGET_LIBC_PROVIDES_SSP
@@ -17,7 +17,7 @@ Index: b/src/gcc/doc/invoke.texi
 ===================================================================
 --- a/src/gcc/doc/invoke.texi
 +++ b/src/gcc/doc/invoke.texi
-@@ -9245,10 +9245,6 @@ functions with buffers larger than 8 byt
+@@ -10034,10 +10034,6 @@ functions with buffers larger than 8 byt
  when a function is entered and then checked when the function exits.
  If a guard check fails, an error message is printed and the program exits.
  
@@ -28,9 +28,9 @@ Index: b/src/gcc/doc/invoke.texi
  @item -fstack-protector-all
  @opindex fstack-protector-all
  Like @option{-fstack-protector} except that all functions are protected.
-@@ -9259,6 +9255,11 @@ Like @option{-fstack-protector} but incl
- be protected --- those that have local array definitions, or have
- references to local frame addresses.
+@@ -10058,6 +10054,11 @@ have the @code{stack_protect} attribute
+ Optimize the prologue of variadic argument functions with respect to usage of
+ those arguments.
  
 +NOTE: In Ubuntu 14.10 and later versions,
 +@option{-fstack-protector-strong} is enabled by default for C,
@@ -40,7 +40,7 @@ Index: b/src/gcc/doc/invoke.texi
  @item -fsection-anchors
  @opindex fsection-anchors
  Try to reduce the number of symbolic address calculations by using
-@@ -9846,13 +9847,13 @@ value of a shared integer constant.  The
+@@ -10658,13 +10659,13 @@ value of a shared integer constant.  The
  The minimum size of buffers (i.e.@: arrays) that receive stack smashing
  protection when @option{-fstack-protection} is used.
  

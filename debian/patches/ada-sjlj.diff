@@ -908,7 +908,7 @@ Index: b/src/Makefile.in
  configure-target-libgnatvsn: maybe-all-target-libgcc
  configure-target-libgnatprj: maybe-all-target-libgcc
  configure-target-libgomp: maybe-all-target-libgcc
-@@ -51508,6 +51876,8 @@ configure-target-rda: maybe-all-target-n
+@@ -51509,6 +51877,8 @@ configure-target-rda: maybe-all-target-n
  
  configure-target-libada: maybe-all-target-newlib maybe-all-target-libgloss
  

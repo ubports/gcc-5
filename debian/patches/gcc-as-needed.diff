@@ -55,7 +55,7 @@ Index: b/src/gcc/config/rs6000/linux64.h
 ===================================================================
 --- a/src/gcc/config/rs6000/linux64.h
 +++ b/src/gcc/config/rs6000/linux64.h
-@@ -396,11 +396,11 @@ extern int dot_symbols;
+@@ -407,11 +407,11 @@ extern int dot_symbols;
  					   " -m elf64ppc")
  #endif
  
@@ -73,7 +73,7 @@ Index: b/src/gcc/config/rs6000/sysv4.h
 ===================================================================
 --- a/src/gcc/config/rs6000/sysv4.h
 +++ b/src/gcc/config/rs6000/sysv4.h
-@@ -774,7 +774,7 @@ ENDIAN_SELECT(" -mbig", " -mlittle", DEF
+@@ -769,7 +769,7 @@ ENDIAN_SELECT(" -mbig", " -mlittle", DEF
  #define GNU_USER_DYNAMIC_LINKER \
    CHOOSE_DYNAMIC_LINKER (GLIBC_DYNAMIC_LINKER, UCLIBC_DYNAMIC_LINKER)
  
@@ -125,7 +125,7 @@ Index: b/src/gcc/config/arm/linux-elf.h
 --- a/src/gcc/config/arm/linux-elf.h
 +++ b/src/gcc/config/arm/linux-elf.h
 @@ -73,6 +73,7 @@
-      -dynamic-linker " GNU_USER_DYNAMIC_LINKER "} \
+      %{!shared:-dynamic-linker " GNU_USER_DYNAMIC_LINKER "}} \
     -X \
     --hash-style=gnu \
 +   --as-needed \

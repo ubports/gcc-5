@@ -4,9 +4,9 @@ Index: b/src/gcc/doc/invoke.texi
 ===================================================================
 --- a/src/gcc/doc/invoke.texi
 +++ b/src/gcc/doc/invoke.texi
-@@ -3573,6 +3573,11 @@ currently a subset of what @option{-Wfor
- in future warnings may be added to @option{-Wformat-security} that are not
- included in @option{-Wformat-nonliteral}.)
+@@ -3685,6 +3685,11 @@ included in @option{-Wformat-nonliteral}
+ If @option{-Wformat} is specified, also warn if the format string
+ requires an unsigned argument and the argument is signed and vice versa.
  
 +NOTE: In Ubuntu 8.10 and later versions this option is enabled by default
 +for C, C++, ObjC, ObjC++.  To disable, use @option{-Wno-format-security},
@@ -20,7 +20,7 @@ Index: b/src/gcc/gcc.c
 ===================================================================
 --- a/src/gcc/gcc.c
 +++ b/src/gcc/gcc.c
-@@ -665,11 +665,14 @@ proper position among the other output f
+@@ -727,11 +727,14 @@ proper position among the other output f
  #define LINK_GCC_C_SEQUENCE_SPEC "%G %L %G"
  #endif
  

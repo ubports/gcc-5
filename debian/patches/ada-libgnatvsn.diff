@@ -825,7 +825,7 @@ Index: b/src/Makefile.in
  configure-target-libgomp: maybe-all-target-libgcc
  configure-target-libitm: maybe-all-target-libgcc
  configure-target-libatomic: maybe-all-target-libgcc
-@@ -50748,6 +51127,8 @@ configure-target-rda: maybe-all-target-n
+@@ -50749,6 +51128,8 @@ configure-target-rda: maybe-all-target-n
  
  configure-target-libada: maybe-all-target-newlib maybe-all-target-libgloss
  

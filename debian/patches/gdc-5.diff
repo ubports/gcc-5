@@ -1,18 +1,64 @@
 # DP: This implements D language support in the GCC back end, and adds
 # DP: relevant documentation about the GDC front end (code part).
 
+Index: b/src/gcc/config/darwin.h
+===================================================================
+--- a/src/gcc/config/darwin.h
++++ b/src/gcc/config/darwin.h
+@@ -49,6 +49,10 @@ see the files COPYING3 and COPYING.RUNTI
+ /* Suppress g++ attempt to link in the math library automatically. */
+ #define MATH_LIBRARY ""
+ 
++/* Suppress gdc attempt to link in the thread and time library automatically. */
++#define THREAD_LIBRARY ""
++#define TIME_LIBRARY ""
++
+ /* We have atexit.  */
+ 
+ #define HAVE_ATEXIT
+Index: b/src/gcc/config/i386/cygming.h
+===================================================================
+--- a/src/gcc/config/i386/cygming.h
++++ b/src/gcc/config/i386/cygming.h
+@@ -170,6 +170,10 @@ along with GCC; see the file COPYING3.
+ 
+ #undef MATH_LIBRARY
+ #define MATH_LIBRARY ""
++#undef THREAD_LIBRARY
++#define THREAD_LIBRARY ""
++#undef TIME_LIBRARY
++#define TIME_LIBRARY ""
+ 
+ #undef TARGET_LIBC_HAS_FUNCTION
+ #define TARGET_LIBC_HAS_FUNCTION no_c99_libc_has_function
+Index: b/src/gcc/config/linux-android.h
+===================================================================
+--- a/src/gcc/config/linux-android.h
++++ b/src/gcc/config/linux-android.h
+@@ -57,3 +57,9 @@
+ 
+ #define ANDROID_ENDFILE_SPEC \
+   "%{shared: crtend_so%O%s;: crtend_android%O%s}"
++
++/* Suppress gdc attempt to link in the thread and time library automatically. */
++#if ANDROID_DEFAULT
++# define THREAD_LIBRARY ""
++# define TIME_LIBRARY ""
++#endif
 Index: b/src/gcc/config/rs6000/rs6000.c
 ===================================================================
 --- a/src/gcc/config/rs6000/rs6000.c
 +++ b/src/gcc/config/rs6000/rs6000.c
-@@ -25733,6 +25733,7 @@ rs6000_output_function_epilogue (FILE *f
+@@ -25733,7 +25733,8 @@ rs6000_output_function_epilogue (FILE *f
        if (lang_GNU_C ()
  	  || ! strcmp (language_string, "GNU GIMPLE")
  	  || ! strcmp (language_string, "GNU Go")
-+	  || ! strcmp (language_string, "GNU D")
- 	  || ! strcmp (language_string, "libgccjit"))
+-	  || ! strcmp (language_string, "libgccjit"))
++	  || ! strcmp (language_string, "libgccjit")
++	  || ! strcmp (language_string, "GNU D"))
  	i = 0;
        else if (! strcmp (language_string, "GNU F77")
+ 	       || lang_GNU_Fortran ())
 Index: b/src/gcc/dwarf2out.c
 ===================================================================
 --- a/src/gcc/dwarf2out.c

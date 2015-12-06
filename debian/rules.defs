@@ -911,7 +911,6 @@ with_d := $(call envfilt, d, , , $(with_d))
 ifeq ($(with_base_only),yes)
   with_d := no
 endif
-  with_d := no
 
 ifeq ($(with_d)-$(with_separate_gdc),yes-yes)
   ifneq (,$(findstring gdc,$(PKGSOURCE)))
