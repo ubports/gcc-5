@@ -1,3 +1,10 @@
+gcc-5 (5.3.1-3) unstable; urgency=medium
+
+  * Update to SVN 20151207 (r231361, 5.3.1) from the gcc-5-branch.
+  * Remove upstreamed chunks from the ada-kfreebsd patch.
+
+ -- Matthias Klose <doko@debian.org>  Tue, 08 Dec 2015 02:10:51 +0100
+
 gcc-5 (5.3.1-2) unstable; urgency=medium
 
   * Update to SVN 20151206 (r231339, 5.3.1) from the gcc-5-branch.

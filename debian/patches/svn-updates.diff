@@ -1,10 +1,10 @@
-# DP: updates from the 5 branch upto 20151206 (r231339).
+# DP: updates from the 5 branch upto 20151207 (r231361).
 
 last_update()
 {
 	cat > ${dir}LAST_UPDATED <EOF
-Sun Dec  6 17:31:47 CET 2015
-Sun Dec  6 16:31:47 UTC 2015 (revision 231339)
+Mon Dec  7 13:54:48 CET 2015
+Mon Dec  7 12:54:48 UTC 2015 (revision 231361)
 EOF
 }
 
@@ -325,12 +325,27 @@ Index: gcc/DATESTAMP
 +++ b/src/gcc/DATESTAMP	(.../branches/gcc-5-branch)
 @@ -1 +1 @@
 -20151204
-+20151206
++20151207
 Index: gcc/ChangeLog
 ===================================================================
 --- a/src/gcc/ChangeLog	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/ChangeLog	(.../branches/gcc-5-branch)
-@@ -1,3 +1,16 @@
+@@ -1,3 +1,31 @@
++2015-12-07  Jakub Jelinek  <jakub@redhat.com>
++
++	Backport from mainline
++	2015-12-04  Jakub Jelinek  <jakub@redhat.com>
++
++	PR tree-optimization/68680
++	* calls.c (special_function_p): Return ECF_MAY_BE_ALLOCA for
++	BUILT_IN_ALLOCA{,_WITH_ALIGN}.  Don't check for __builtin_alloca
++	by name.
++
++	PR tree-optimization/68671
++	* tree-ssa-reassoc.c (maybe_optimize_range_tests): For basic
++	blocks starting with the successor of first bb we've modified
++	and ending with last_bb call reset_flow_sensitive_info_in_bb.
++
 +2015-12-04  Andreas Tobler  <andreast@gcc.gnu.org>
 +
 +	Backport from mainline
@@ -343,6 +358,73 @@ Index: gcc/ChangeLog
 +2015-12-04  Richard Biener  <rguenther@suse.de>
 +
 +	* BASE-VER: Set to 5.3.1.
++
+ 2015-12-04  Release Manager
+ 
+ 	* GCC 5.3.0 released.
+Index: gcc/testsuite/gcc.target/i386/pr68680.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/pr68680.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/pr68680.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,15 @@
++/* PR tree-optimization/68680 */
++/* { dg-do compile } */
++/* { dg-options "-O2 -fstack-protector-strong" } */
++
++int foo (char *);
++
++int
++bar (unsigned long x)
++{
++  char a[x];
++  return foo (a);
++}
++
++/* Verify that this function is stack protected.  */
++/* { dg-final { scan-assembler "stack_chk_fail" } } */
+Index: gcc/testsuite/gcc.dg/pr68671.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/pr68671.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.dg/pr68671.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,23 @@
++/* PR tree-optimization/68671 */
++/* { dg-do run } */
++/* { dg-options " -O2 -fno-tree-dce" } */
++
++volatile int a = -1;
++volatile int b;
++
++static inline int
++fn1 (signed char p1, int p2)
++{
++  return (p1 < 0) || (p1 > (1 >> p2)) ? 0 : (p1 << 1);
++}
++
++int
++main ()
++{
++  signed char c = a;
++  b = fn1 (c, 1);
++  c = ((128 | c) < 0 ? 1 : 0);
++  if (c != 1)
++    __builtin_abort ();
++  return 0;
++}
+Index: gcc/testsuite/ChangeLog
+===================================================================
+--- a/src/gcc/testsuite/ChangeLog	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/ChangeLog	(.../branches/gcc-5-branch)
+@@ -1,3 +1,14 @@
++2015-12-07  Jakub Jelinek  <jakub@redhat.com>
++
++	Backport from mainline
++	2015-12-04  Jakub Jelinek  <jakub@redhat.com>
++
++	PR tree-optimization/68680
++	* gcc.target/i386/pr68680.c: New test.
++
++	PR tree-optimization/68671
++	* gcc.dg/pr68671.c: New test.
 +
  2015-12-04  Release Manager
  
@@ -403,6 +485,19 @@ Index: gcc/cp/mangle.c
      substitution = build_tree_list (context, templ);
    else
      substitution = templ;
+Index: gcc/ada/doc/gnat_ugn/gnat_and_program_execution.rst
+===================================================================
+--- a/src/gcc/ada/doc/gnat_ugn/gnat_and_program_execution.rst	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/ada/doc/gnat_ugn/gnat_and_program_execution.rst	(.../branches/gcc-5-branch)
+@@ -3872,7 +3872,7 @@
+   it to obtain accurate dynamic memory usage history at a minimal cost to the
+   execution speed. Note however, that `gnatmem` is not supported on all
+   platforms (currently, it is supported on AIX, HP-UX, GNU/Linux, Solaris and
+-  Windows NT/2000/XP (x86).
++  Windows NT/2000/XP (x86)).
+ 
+   The `gnatmem` command has the form
+ 
 Index: gcc/ada/s-oscons-tmplt.c
 ===================================================================
 --- a/src/gcc/ada/s-oscons-tmplt.c	(.../tags/gcc_5_3_0_release)
@@ -631,7 +726,12 @@ Index: gcc/ada/ChangeLog
 ===================================================================
 --- a/src/gcc/ada/ChangeLog	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/ada/ChangeLog	(.../branches/gcc-5-branch)
-@@ -1,3 +1,35 @@
+@@ -1,3 +1,40 @@
++2015-12-06  Piotr Trojanek  <piotr.trojanek@gmail.com>
++
++	PR ada/60164
++	* doc/gnat_ugn/gnat_and_program_execution.rst (gnatmem): Fix typo.
++
 +2015-12-06  Eric Botcazou  <ebotcazou@adacore.com>
 +
 +	PR ada/56274
@@ -845,6 +945,94 @@ Index: gcc/BASE-VER
 @@ -1 +1 @@
 -5.3.0
 +5.3.1
+Index: gcc/calls.c
+===================================================================
+--- a/src/gcc/calls.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/calls.c	(.../branches/gcc-5-branch)
+@@ -576,12 +576,9 @@
+       /* We assume that alloca will always be called by name.  It
+ 	 makes no sense to pass it as a pointer-to-function to
+ 	 anything that does not understand its behavior.  */
+-      if (((IDENTIFIER_LENGTH (name_decl) == 6
+-	    && name[0] == 'a'
+-	    && ! strcmp (name, "alloca"))
+-	   || (IDENTIFIER_LENGTH (name_decl) == 16
+-	       && name[0] == '_'
+-	       && ! strcmp (name, "__builtin_alloca"))))
++      if (IDENTIFIER_LENGTH (name_decl) == 6
++	  && name[0] == 'a'
++	  && ! strcmp (name, "alloca"))
+ 	flags |= ECF_MAY_BE_ALLOCA;
+ 
+       /* Disregard prefix _, __, __x or __builtin_.  */
+@@ -627,6 +624,17 @@
+ 	flags |= ECF_NORETURN;
+     }
+ 
++  if (DECL_BUILT_IN_CLASS (fndecl) == BUILT_IN_NORMAL)
++    switch (DECL_FUNCTION_CODE (fndecl))
++      {
++      case BUILT_IN_ALLOCA:
++      case BUILT_IN_ALLOCA_WITH_ALIGN:
++	flags |= ECF_MAY_BE_ALLOCA;
++	break;
++      default:
++	break;
++      }
++
+   return flags;
+ }
+ 
+Index: gcc/tree-ssa-reassoc.c
+===================================================================
+--- a/src/gcc/tree-ssa-reassoc.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/tree-ssa-reassoc.c	(.../branches/gcc-5-branch)
+@@ -3286,7 +3286,7 @@
+     any_changes = optimize_range_tests (ERROR_MARK, &ops);
+   if (any_changes)
+     {
+-      unsigned int idx;
++      unsigned int idx, max_idx = 0;
+       /* update_ops relies on has_single_use predicates returning the
+ 	 same values as it did during get_ops earlier.  Additionally it
+ 	 never removes statements, only adds new ones and it should walk
+@@ -3302,6 +3302,7 @@
+ 	    {
+ 	      tree new_op;
+ 
++	      max_idx = idx;
+ 	      stmt = last_stmt (bb);
+ 	      new_op = update_ops (bbinfo[idx].op,
+ 				   (enum tree_code)
+@@ -3371,6 +3372,10 @@
+ 	      && ops[bbinfo[idx].first_idx]->op != NULL_TREE)
+ 	    {
+ 	      gcond *cond_stmt = as_a <gcond *> (last_stmt (bb));
++
++	      if (idx > max_idx)
++		max_idx = idx;
++
+ 	      if (integer_zerop (ops[bbinfo[idx].first_idx]->op))
+ 		gimple_cond_make_false (cond_stmt);
+ 	      else if (integer_onep (ops[bbinfo[idx].first_idx]->op))
+@@ -3387,6 +3392,17 @@
+ 	  if (bb == first_bb)
+ 	    break;
+ 	}
++
++      /* The above changes could result in basic blocks after the first
++	 modified one, up to and including last_bb, to be executed even if
++	 they would not be in the original program.  If the value ranges of
++	 assignment lhs' in those bbs were dependent on the conditions
++	 guarding those basic blocks which now can change, the VRs might
++	 be incorrect.  As no_side_effect_bb should ensure those SSA_NAMEs
++	 are only used within the same bb, it should be not a big deal if
++	 we just reset all the VRs in those bbs.  See PR68671.  */
++      for (bb = last_bb, idx = 0; idx < max_idx; bb = single_pred (bb), idx++)
++	reset_flow_sensitive_info_in_bb (bb);
+     }
+ }
+ 
 Index: gcc/config/rs6000/freebsd64.h
 ===================================================================
 --- a/src/gcc/config/rs6000/freebsd64.h	(.../tags/gcc_5_3_0_release)

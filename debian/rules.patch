@@ -92,7 +92,6 @@ debian_patches += \
 	gcc-configure-pie \
 	ada-gnattools-ldflags \
 	libjit-ldflags \
-	skip-bootstrap-multilib \
 
 # sigaction on sparc changed between glibc 2.19 and 2.21
 ifeq (,$(filter 2.1%, $(shell dpkg-query -l libc-bin | awk '/^.i/ {print $$3}')))
@@ -281,9 +280,8 @@ endif
 
 debian_patches += gcc-ice-dump
 debian_patches += gcc-ice-apport
-
+debian_patches += skip-bootstrap-multilib
 debian_patches += libjava-fixed-symlinks
-
 debian_patches += libffi-ro-eh_frame_sect
 
 debian_patches += gcc-multiarch

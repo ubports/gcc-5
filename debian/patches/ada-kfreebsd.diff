@@ -232,38 +232,6 @@ Index: b/src/gcc/ada/s-osinte-kfreebsd-gnu.ads
     function To_Duration (TS : timespec) return Duration;
     pragma Inline (To_Duration);
  
-@@ -262,6 +266,16 @@ package System.OS_Interface is
-    --  needed to share 7staprop.adb across POSIX-like targets.
-    pragma Import (C, lwp_self, "pthread_self");
- 
-+   ---------
-+   -- LWP --
-+   ---------
-+
-+   function lwp_self return System.Address;
-+   --  lwp_self does not exist on this thread library, revert to pthread_self
-+   --  which is the closest approximation (with getpid). This function is
-+   --  needed to share 7staprop.adb across POSIX-like targets.
-+   pragma Import (C, lwp_self, "pthread_self");
-+
-    -------------
-    -- Threads --
-    -------------
-@@ -300,6 +314,14 @@ package System.OS_Interface is
-    subtype pthread_rwlock_t     is pthread_mutex_t;
-    subtype pthread_rwlockattr_t is pthread_mutexattr_t;
- 
-+   --  Read/Write lock not supported on freebsd. To add support both types
-+   --  pthread_rwlock_t and pthread_rwlockattr_t must properly be defined
-+   --  with the associated routines pthread_rwlock_[init/destroy] and
-+   --  pthread_rwlock_[rdlock/wrlock/unlock].
-+
-+   subtype pthread_rwlock_t     is pthread_mutex_t;
-+   subtype pthread_rwlockattr_t is pthread_mutexattr_t;
-+
-    -----------
-    -- Stack --
-    -----------
 @@ -437,31 +459,25 @@ package System.OS_Interface is
     PTHREAD_PRIO_PROTECT : constant := 2;
     PTHREAD_PRIO_INHERIT : constant := 1;

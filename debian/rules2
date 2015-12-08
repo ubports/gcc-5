@@ -694,10 +694,7 @@ else ifeq ($(with_bootstrap),)
   ifeq (,$(filter $(DEB_TARGET_ARCH),$(no_profiled_bs_archs)))
     bootstrap_target = profiledbootstrap
   endif
-  ifeq ($(PKGSOURCE),gcj-$(BASE_VERSION))
-    bootstrap_target = bootstrap
-  endif
-  ifeq ($(PKGSOURCE),gnat-$(BASE_VERSION))
+  ifneq (, $(filter $(PKGSOURCE),gcj-$(BASE_VERSION) gnat-$(BASE_VERSION) gcc-snapshot))
     bootstrap_target = bootstrap
   endif
 
