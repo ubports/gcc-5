@@ -10,11 +10,10 @@ endif
 
 # common vars
 SHELL		= /bin/bash -e	# brace expansion used in rules file
-PWD		:= $(shell pwd)
-srcdir		= $(PWD)/src
-builddir	= $(PWD)/build
-builddir_jit	= $(PWD)/build-jit
-builddir_hppa64	= $(PWD)/build-hppa64
+srcdir		= $(CURDIR)/src
+builddir	= $(CURDIR)/build
+builddir_jit	= $(CURDIR)/build-jit
+builddir_hppa64	= $(CURDIR)/build-hppa64
 stampdir	= stamps
 
 distribution	:= $(shell lsb_release -is)
@@ -273,6 +272,12 @@ ifdef WITH_BOOTSTRAP
 endif
 ifneq ($(findstring nostrap, $(DEB_BUILD_OPTIONS)),)
   with_bootstrap := off
+endif
+
+ifneq ($(findstring gccdebug, $(DEB_BUILD_OPTIONS)),)
+  with_bootstrap := off
+  DEB_BUILD_OPTIONS := $(DEB_BUILD_OPTIONS) nostrip
+  export DEB_BUILD_OPTIONS
 endif
 
 # -------------------------------------------------------------------
@@ -563,9 +568,9 @@ ada_no_cpus	:= m32r sh3 sh3eb sh4eb
 ada_no_cpus += powerpcspe
 ada_no_cpus += mips64 # see https://gcc.gnu.org/PR65337
 ada_no_cpus += x32 # see https://gcc.gnu.org/PR61954
-ada_no_cpus += m68k sh4 sparc64 # not yet built natively
+ada_no_cpus += sh4 # not yet built natively
 ifneq (,$(findstring cross,$(build_type)))
-  ada_no_cpus := $(filter-out m68k sh4 sparc64, $(ada_no_cpus))
+  ada_no_cpus := $(filter-out sh4, $(ada_no_cpus))
 endif
 ada_no_systems	:= 
 ada_no_cross	:= no
@@ -691,14 +696,14 @@ ifeq ($(with_cxx),yes)
   # debugging versions of libstdc++
   ifneq (,$(findstring gcc-, $(PKGSOURCE)))
   ifeq ($(with_cxxdev),yes)
-    with_debug := yes
+    with_cxx_debug := yes
     debug_no_cpus :=
     ifneq (,$(findstring $(DEB_TARGET_ARCH_CPU),$(debug_no_cpus)))
-      with_debug := disabled for cpu $(DEB_TARGET_GNU_CPU)
+      with_cxx_debug := disabled for cpu $(DEB_TARGET_GNU_CPU)
     endif
   endif
   endif
-  with_debug := $(call envfilt, debug, , , $(with_debug))
+  with_cxx_debug := $(call envfilt, debug, , , $(with_cxx_debug))
 
   enabled_languages += c++
 endif
@@ -886,7 +891,7 @@ endif
 # D ---------------------------
 d_no_cross := yes
 d_no_snap := yes
-d_no_cpus := s390 sh4
+d_no_cpus := s390
 
 ifneq ($(single_package),yes)
   with_separate_gdc := yes
@@ -1448,7 +1453,7 @@ ifneq (,$(filter $(DEB_HOST_ARCH), hppa mips))
     with_check := disabled for $(DEB_HOST_ARCH), testsuite timeouts with expect
   endif
 endif
-with_check := disabled for this upload
+#with_check := disabled for this upload
 
 # not a dependency on all archs, but if available, use it for the testsuite
 ifneq (,$(wildcard /usr/bin/localedef))
@@ -2002,5 +2007,8 @@ _shlibdirs = \
 	$(with_build_sysroot)$(subst /usr,,/$(usr_lib$(2))) \
 	$(with_build_sysroot)/$(usr_lib$(2)) \
 	$(if $(filter yes,$(biarchsf) $(biarchhf)), \
-	  $(with_build_sysroot)/usr/$(call mlib_to_march,$(2))/lib)
+	  $(with_build_sysroot)/usr/$(call mlib_to_march,$(2))/lib) \
+	$(if $(filter yes, $(with_common_libs)),, \
+	  $(CURDIR)/$(d)/usr/$(DEB_TARGET_GNU_TYPE)/lib$(2) \
+	  $(CURDIR)/$(d)/usr/$(call mlib_to_march,$(2))/lib)
 shlibdirs_to_search = -l$(subst $(SPACE),:,$(foreach d,$(_shlibdirs),$(d)))

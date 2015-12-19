@@ -15,11 +15,11 @@ Index: b/src/gcc/ada/gcc-interface/Makefile.in
 ===================================================================
 --- a/src/gcc/ada/gcc-interface/Makefile.in
 +++ b/src/gcc/ada/gcc-interface/Makefile.in
-@@ -2062,6 +2062,35 @@ ifeq ($(strip $(filter-out aarch64% linu
+@@ -2084,6 +2084,35 @@ ifeq ($(strip $(filter-out hppa% linux%,
    LIBRARY_VERSION := $(LIB_VERSION)
  endif
  
-+# m68k Linux
++# M68K Linux
 +ifeq ($(strip $(filter-out m68k% linux%,$(arch) $(osys))),)
 +  LIBGNAT_TARGET_PAIRS = \
 +  a-intnam.ads<a-intnam-linux.ads \
@@ -32,7 +32,7 @@ Index: b/src/gcc/ada/gcc-interface/Makefile.in
 +  s-taprop.adb<s-taprop-linux.adb \
 +  s-tasinf.ads<s-tasinf-linux.ads \
 +  s-tasinf.adb<s-tasinf-linux.adb \
-+  s-taspri.ads<s-taspri-posix-noaltstack.ads \
++  s-taspri.ads<s-taspri-posix.ads \
 +  s-tpopsp.adb<s-tpopsp-posix-foreign.adb \
 +  system.ads<system-linux-m68k.ads
 +
@@ -48,9 +48,9 @@ Index: b/src/gcc/ada/gcc-interface/Makefile.in
 +  LIBRARY_VERSION := $(LIB_VERSION)
 +endif
 +
- # Sparc Linux
- ifeq ($(strip $(filter-out sparc% linux%,$(target_cpu) $(target_os))),)
-   LIBGNAT_TARGET_PAIRS_COMMON = \
+ # SH4 Linux
+ ifeq ($(strip $(filter-out sh4% linux%,$(target_cpu) $(target_os))),)
+   LIBGNAT_TARGET_PAIRS = \
 Index: b/src/gcc/ada/s-memory.adb
 ===================================================================
 --- a/src/gcc/ada/s-memory.adb
@@ -102,7 +102,7 @@ Index: b/src/gcc/ada/system-linux-m68k.ads
 ===================================================================
 --- /dev/null
 +++ b/src/gcc/ada/system-linux-m68k.ads
-@@ -0,0 +1,153 @@
+@@ -0,0 +1,154 @@
 +------------------------------------------------------------------------------
 +--                                                                          --
 +--                        GNAT RUN-TIME COMPONENTS                          --
@@ -110,9 +110,9 @@ Index: b/src/gcc/ada/system-linux-m68k.ads
 +--                               S Y S T E M                                --
 +--                                                                          --
 +--                                 S p e c                                  --
-+--                         (GNU-Linux/M68K Version)                         --
++--                         (GNU/Linux/m68k Version)                         --
 +--                                                                          --
-+--          Copyright (C) 1992-2009, Free Software Foundation, Inc.         --
++--          Copyright (C) 2014, Free Software Foundation, Inc.              --
 +--                                                                          --
 +-- This specification is derived from the Ada Reference Manual for use with --
 +-- GNAT. The copyright notice above, and the license provisions that follow --
@@ -196,6 +196,8 @@ Index: b/src/gcc/ada/system-linux-m68k.ads
 +
 +   --  Priority-related Declarations (RM D.1)
 +
++   --  Is the following actually true for GNU/Linux/m68k?
++   --
 +   --  0 .. 98 corresponds to the system priority range 1 .. 99.
 +   --
 +   --  If the scheduling policy is SCHED_FIFO or SCHED_RR the runtime makes use
@@ -229,7 +231,7 @@ Index: b/src/gcc/ada/system-linux-m68k.ads
 +   --  of the individual switch values.
 +
 +   Backend_Divide_Checks     : constant Boolean := False;
-+   Backend_Overflow_Checks   : constant Boolean := True;
++   Backend_Overflow_Checks   : constant Boolean := False;
 +   Command_Line_Args         : constant Boolean := True;
 +   Configurable_Run_Time     : constant Boolean := False;
 +   Denorm                    : constant Boolean := True;
@@ -240,19 +242,18 @@ Index: b/src/gcc/ada/system-linux-m68k.ads
 +   Machine_Overflows         : constant Boolean := False;
 +   Machine_Rounds            : constant Boolean := True;
 +   Preallocated_Stacks       : constant Boolean := False;
-+   Signed_Zeros              : constant Boolean := False;
++   Signed_Zeros              : constant Boolean := True;
 +   Stack_Check_Default       : constant Boolean := False;
 +   Stack_Check_Probes        : constant Boolean := False;
 +   Stack_Check_Limits        : constant Boolean := False;
-+   Support_64_Bit_Divides    : constant Boolean := True;
 +   Support_Aggregates        : constant Boolean := True;
++   Support_Atomic_Primitives : constant Boolean := True;
 +   Support_Composite_Assign  : constant Boolean := True;
 +   Support_Composite_Compare : constant Boolean := True;
 +   Support_Long_Shifts       : constant Boolean := True;
-+   Always_Compatible_Rep     : constant Boolean := True;
++   Always_Compatible_Rep     : constant Boolean := False;
 +   Suppress_Standard_Library : constant Boolean := False;
 +   Use_Ada_Main_Program_Name : constant Boolean := False;
 +   ZCX_By_Default            : constant Boolean := True;
-+   GCC_ZCX_Support           : constant Boolean := True;
 +
 +end System;

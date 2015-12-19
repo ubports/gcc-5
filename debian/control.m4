@@ -78,11 +78,12 @@ Build-Depends: debhelper (>= 5.0.62), DPKG_BUILD_DEP
   zlib1g-dev, SDT_BUILD_DEP
   BINUTILS_BUILD_DEP,
   gperf (>= 3.0.1), bison (>= 1:2.3), flex, gettext,
-  gdb,
+  gdb`'NT,
   texinfo (>= 4.3), locales, sharutils,
   procps, FORTRAN_BUILD_DEP JAVA_BUILD_DEP GNAT_BUILD_DEP GO_BUILD_DEP GDC_BUILD_DEP
   ISL_BUILD_DEP MPC_BUILD_DEP MPFR_BUILD_DEP GMP_BUILD_DEP
-  CHECK_BUILD_DEP realpath (>= 1.9.12), chrpath, lsb-release, quilt
+  CHECK_BUILD_DEP realpath (>= 1.9.12), chrpath, lsb-release, quilt,
+  TARGET_TOOL_BUILD_DEP
 Build-Depends-Indep: LIBSTDCXX_BUILD_INDEP JAVA_BUILD_INDEP
 ')dnl
 ifelse(regexp(SRCNAME, `gnat'),0,`dnl
@@ -711,40 +712,6 @@ Description: GCC support library (x32 development files)
  building C programs which use libgcc, libgomp, libquadmath, libssp or libitm.
 ')`'dnl x32dev
 ')`'dnl cdev
-
-ifdef(`TARGET', `', `
-ifenabled(`libgmath',`
-Package: libgccmath`'GCCMATH_SO`'LS
-Architecture: i386
-ifdef(`MULTIARCH', `Multi-Arch: same
-Pre-Depends: ${misc:Pre-Depends}
-')`'dnl
-Section: libs
-Priority: PRI(optional)
-Depends: BASELDEP, ${shlibs:Depends}, ${misc:Depends}
-BUILT_USING`'dnl
-Description: GCC math support library
- Support library for GCC.
-
-Package: lib32gccmath`'GCCMATH_SO`'LS
-Architecture: amd64
-Section: libs
-Priority: PRI(optional)
-Depends: BASELDEP, ${shlibs:Depends}, ${misc:Depends}
-BUILT_USING`'dnl
-Description: GCC math support library (32bit)
- Support library for GCC.
-
-Package: lib64gccmath`'GCCMATH_SO`'LS
-Architecture: i386
-Section: libs
-Priority: PRI(optional)
-Depends: BASELDEP, ${shlibs:Depends}, ${misc:Depends}
-BUILT_USING`'dnl
-Description: GCC math support library (64bit)
- Support library for GCC.
-')`'dnl
-')`'dnl native
 
 ifenabled(`cdev',`
 Package: gcc`'PV`'TS

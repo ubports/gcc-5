@@ -37,33 +37,11 @@ Index: b/src/libgnatprj/Makefile.in
 ===================================================================
 --- a/src/libgnatprj/Makefile.in
 +++ b/src/libgnatprj/Makefile.in
-@@ -92,12 +92,12 @@ obj-shared/%.o: %.ads
- 	$(GCC) -c -fPIC $(ADAFLAGS) $(LIBGNAT_JUST_BUILT) $(LIBGNATVSN) $< -o $@
+@@ -38,6 +38,7 @@ LN_S := @LN_S@
  
- obj-shared/%.o: %.c
--	$(GPP) -c -fPIC $(CFLAGS) -DHAVE_CONFIG_H -DIN_GCC -pedantic \
-+	$(GPP) -c -fPIC $(CFLAGS) -DHAVE_CONFIG_H -DIN_GCC -DLIBGNATPRJ_CROSS_HACK -pedantic \
- 	   -I@srcdir@/../gcc -I@srcdir@/../include -I@srcdir@/../libcpp/include -I../../gcc \
- 	   $< -o $@
+ ifneq (@build@,@host@)
+    CFLAGS += -b @host@
++   CFLAGS += -DLIBGNATPRJ_CROSS_HACK
+ endif
  
- obj-shared/prefix.o: @srcdir@/../gcc/prefix.c
--	$(GPP) -c -fPIC $(CFLAGS) -DPREFIX=\"@prefix@\" -DBASEVER=\"$(BASEVER)\" \
-+	$(GPP) -c -fPIC $(CFLAGS) -DPREFIX=\"@prefix@\" -DBASEVER=\"$(BASEVER)\" -DLIBGNATPRJ_CROSS_HACK \
- 	   -I@srcdir@/../gcc -I@srcdir@/../include -I../../gcc -I@srcdir@/../libcpp/include \
- 	   $< -o $@
- 
-@@ -118,12 +118,12 @@ obj-static/%.o: %.ads
- 	$(GCC) -c $(ADAFLAGS) $(LIBGNAT_JUST_BUILT) $(LIBGNATVSN) $< -o $@
- 
- obj-static/%.o: %.c
--	$(GPP) -c $(CFLAGS) -DHAVE_CONFIG_H -DIN_GCC -pedantic \
-+	$(GPP) -c $(CFLAGS) -DHAVE_CONFIG_H -DIN_GCC -DLIBGNATPRJ_CROSS_HACK -pedantic \
- 	   -I@srcdir@/../gcc -I@srcdir@/../include -I@srcdir@/../libcpp/include -I../../gcc \
- 	   $< -o $@
- 
- obj-static/prefix.o: @srcdir@/../gcc/prefix.c
--	$(GPP) -c $(CFLAGS) -DPREFIX=\"@prefix@\" -DBASEVER=\"$(BASEVER)\" \
-+	$(GPP) -c $(CFLAGS) -DPREFIX=\"@prefix@\" -DBASEVER=\"$(BASEVER)\" -DLIBGNATPRJ_CROSS_HACK \
- 	   -I@srcdir@/../gcc -I@srcdir@/../include -I../../gcc -I@srcdir@/../libcpp/include \
- 	   $< -o $@
- 
+ .PHONY: libgnatprj install

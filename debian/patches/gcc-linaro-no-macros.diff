@@ -88,13 +88,13 @@ Index: b/src/gcc/LINARO-VERSION
 ===================================================================
 --- a/src/gcc/LINARO-VERSION
 +++ /dev/null
-@@ -1,1 +0,0 @@
--5.2-2015.11~dev
+@@ -1 +0,0 @@
+-5.2-2015.12~dev
 Index: b/src/gcc/configure.ac
 ===================================================================
 --- a/src/gcc/configure.ac
 +++ b/src/gcc/configure.ac
-@@ -862,7 +862,7 @@ AC_ARG_WITH(specs,
+@@ -868,7 +868,7 @@ AC_ARG_WITH(specs,
  )
  AC_SUBST(CONFIGURE_SPECS)
  

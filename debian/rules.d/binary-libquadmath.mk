@@ -44,7 +44,7 @@ endef
 
 # ----------------------------------------------------------------------
 
-do_qmath = $(call __do_qmath,lib$(1)quadmath$(QMATH_SONAME),$(1))
+do_qmath = $(call __do_qmath,lib$(1)quadmath$(QUADMATH_SONAME),$(1))
 
 $(binary_stamp)-libqmath: $(install_stamp)
 	$(call do_qmath,)

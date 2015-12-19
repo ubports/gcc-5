@@ -14,8 +14,8 @@ series_file	?= $(patchdir)/series
 
 debian_patches = \
 	svn-updates \
-	$(if $(with_linaro_branch),gcc-linaro-revert-r230427) \
 	$(if $(with_linaro_branch),gcc-linaro) \
+	$(if $(with_linaro_branch),gcc-linaro-revert) \
 	$(if $(with_linaro_branch),gcc-linaro-no-macros) \
 
 #	svn-updates \
@@ -93,11 +93,6 @@ debian_patches += \
 	ada-gnattools-ldflags \
 	libjit-ldflags \
 
-# sigaction on sparc changed between glibc 2.19 and 2.21
-ifeq (,$(filter 2.1%, $(shell dpkg-query -l libc-bin | awk '/^.i/ {print $$3}')))
-  debian_patches += pr67899
-endif
-
 # this is still needed on powerpc, e.g. firefox and insighttoolkit4 will ftbfs.
 ifneq (,$(filter $(DEB_TARGET_ARCH),powerpc))
   debian_patches += pr65913-workaround
@@ -171,10 +166,8 @@ ifeq ($(with_ada),yes)
 	ada-libgnatvsn \
 	ada-libgnatprj \
 	ada-gnattools-cross \
-	ada-acats
-    #ifneq (,$(filter $(build_type), build-cross cross-build-cross))
-	debian_patches += libgnatprj-cross-hack
-    #endif
+	ada-acats \
+	libgnatprj-cross-hack
     ifneq (,$(filter $(distrelease),lucid precise))
       debian_patches += \
 	libgnatprj-link
@@ -283,6 +276,11 @@ debian_patches += gcc-ice-apport
 debian_patches += skip-bootstrap-multilib
 debian_patches += libjava-fixed-symlinks
 debian_patches += libffi-ro-eh_frame_sect
+
+# sigaction on sparc changed between glibc 2.19 and 2.21
+ifeq (,$(filter 2.1%, $(shell dpkg-query -l libc-bin | awk '/^.i/ {print $$3}')))
+  debian_patches += pr67899
+endif
 
 debian_patches += gcc-multiarch
 ifeq ($(with_multiarch_lib),yes)

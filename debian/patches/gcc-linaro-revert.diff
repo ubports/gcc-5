@@ -1,0 +1,3455 @@
+# DP: Revert Linaro commit 7f7da9776a2100eb6e64c142732c89ecc719d45d
+
+--- a/src/gcc/config/arm/arm-builtins.c
++++ b/src/gcc/config/arm/arm-builtins.c
+@@ -91,9 +91,7 @@ enum arm_type_qualifiers
+   /* Polynomial types.  */
+   qualifier_poly = 0x100,
+   /* Lane indices - must be within range of previous argument = a vector.  */
+-  qualifier_lane_index = 0x200,
+-  /* Lane indices for single lane structure loads and stores.  */
+-  qualifier_struct_load_store_lane_index = 0x400
++  qualifier_lane_index = 0x200
+ };
+ 
+ /*  The qualifier_internal allows generation of a unary builtin from
+@@ -176,7 +174,7 @@ arm_load1_qualifiers[SIMD_MAX_BUILTIN_ARGS]
+ static enum arm_type_qualifiers
+ arm_load1_lane_qualifiers[SIMD_MAX_BUILTIN_ARGS]
+   = { qualifier_none, qualifier_const_pointer_map_mode,
+-      qualifier_none, qualifier_struct_load_store_lane_index };
++      qualifier_none, qualifier_immediate };
+ #define LOAD1LANE_QUALIFIERS (arm_load1_lane_qualifiers)
+ 
+ /* The first argument (return type) of a store should be void type,
+@@ -195,7 +193,7 @@ arm_store1_qualifiers[SIMD_MAX_BUILTIN_ARGS]
+ static enum arm_type_qualifiers
+ arm_storestruct_lane_qualifiers[SIMD_MAX_BUILTIN_ARGS]
+   = { qualifier_void, qualifier_pointer_map_mode,
+-      qualifier_none, qualifier_struct_load_store_lane_index };
++      qualifier_none, qualifier_immediate };
+ #define STORE1LANE_QUALIFIERS (arm_storestruct_lane_qualifiers)
+ 
+ #define v8qi_UP  V8QImode
+@@ -1989,7 +1987,6 @@ typedef enum {
+   NEON_ARG_COPY_TO_REG,
+   NEON_ARG_CONSTANT,
+   NEON_ARG_LANE_INDEX,
+-  NEON_ARG_STRUCT_LOAD_STORE_LANE_INDEX,
+   NEON_ARG_MEMORY,
+   NEON_ARG_STOP
+ } builtin_arg;
+@@ -2047,9 +2044,9 @@ neon_dereference_pointer (tree exp, tree type, machine_mode mem_mode,
+ /* Expand a Neon builtin.  */
+ static rtx
+ arm_expand_neon_args (rtx target, machine_mode map_mode, int fcode,
+-		      int icode, int have_retval, tree exp,
+-		      builtin_arg *args)
++		      int icode, int have_retval, tree exp, ...)
+ {
++  va_list ap;
+   rtx pat;
+   tree arg[SIMD_MAX_BUILTIN_ARGS];
+   rtx op[SIMD_MAX_BUILTIN_ARGS];
+@@ -2064,11 +2061,13 @@ arm_expand_neon_args (rtx target, machine_mode map_mode, int fcode,
+ 	  || !(*insn_data[icode].operand[0].predicate) (target, tmode)))
+     target = gen_reg_rtx (tmode);
+ 
++  va_start (ap, exp);
++
+   formals = TYPE_ARG_TYPES (TREE_TYPE (arm_builtin_decls[fcode]));
+ 
+   for (;;)
+     {
+-      builtin_arg thisarg = args[argc];
++      builtin_arg thisarg = (builtin_arg) va_arg (ap, int);
+ 
+       if (thisarg == NEON_ARG_STOP)
+ 	break;
+@@ -2104,18 +2103,6 @@ arm_expand_neon_args (rtx target, machine_mode map_mode, int fcode,
+ 		op[argc] = copy_to_mode_reg (mode[argc], op[argc]);
+ 	      break;
+ 
+-	    case NEON_ARG_STRUCT_LOAD_STORE_LANE_INDEX:
+-	      gcc_assert (argc > 1);
+-	      if (CONST_INT_P (op[argc]))
+-		{
+-		  neon_lane_bounds (op[argc], 0,
+-				    GET_MODE_NUNITS (map_mode), exp);
+-		  /* Keep to GCC-vector-extension lane indices in the RTL.  */
+-		  op[argc] =
+-		    GEN_INT (NEON_ENDIAN_LANE_N (map_mode, INTVAL (op[argc])));
+-		}
+-	      goto constant_arg;
+-
+ 	    case NEON_ARG_LANE_INDEX:
+ 	      /* Previous argument must be a vector, which this indexes.  */
+ 	      gcc_assert (argc > 0);
+@@ -2126,22 +2113,19 @@ arm_expand_neon_args (rtx target, machine_mode map_mode, int fcode,
+ 		}
+ 	      /* Fall through - if the lane index isn't a constant then
+ 		 the next case will error.  */
+-
+ 	    case NEON_ARG_CONSTANT:
+-constant_arg:
+ 	      if (!(*insn_data[icode].operand[opno].predicate)
+ 		  (op[argc], mode[argc]))
+-		{
+-		  error ("%Kargument %d must be a constant immediate",
+-			 exp, argc + 1);
+-		  return const0_rtx;
+-		}
++		error_at (EXPR_LOCATION (exp), "incompatible type for argument %d, "
++		       "expected %<const int%>", argc + 1);
+ 	      break;
+-
+             case NEON_ARG_MEMORY:
+ 	      /* Check if expand failed.  */
+ 	      if (op[argc] == const0_rtx)
++	      {
++		va_end (ap);
+ 		return 0;
++	      }
+ 	      gcc_assert (MEM_P (op[argc]));
+ 	      PUT_MODE (op[argc], mode[argc]);
+ 	      /* ??? arm_neon.h uses the same built-in functions for signed
+@@ -2162,6 +2146,8 @@ constant_arg:
+ 	}
+     }
+ 
++  va_end (ap);
++
+   if (have_retval)
+     switch (argc)
+       {
+@@ -2273,8 +2259,6 @@ arm_expand_neon_builtin (int fcode, tree exp, rtx target)
+ 
+       if (d->qualifiers[qualifiers_k] & qualifier_lane_index)
+ 	args[k] = NEON_ARG_LANE_INDEX;
+-      else if (d->qualifiers[qualifiers_k] & qualifier_struct_load_store_lane_index)
+-	args[k] = NEON_ARG_STRUCT_LOAD_STORE_LANE_INDEX;
+       else if (d->qualifiers[qualifiers_k] & qualifier_immediate)
+ 	args[k] = NEON_ARG_CONSTANT;
+       else if (d->qualifiers[qualifiers_k] & qualifier_maybe_immediate)
+@@ -2300,7 +2284,11 @@ arm_expand_neon_builtin (int fcode, tree exp, rtx target)
+      the function is void, and a 1 if it is not.  */
+   return arm_expand_neon_args
+ 	  (target, d->mode, fcode, icode, !is_void, exp,
+-	   &args[1]);
++	   args[1],
++	   args[2],
++	   args[3],
++	   args[4],
++	   NEON_ARG_STOP);
+ }
+ 
+ /* Expand an expression EXP that calls a built-in function,
+--- a/src/gcc/config/arm/arm.c
++++ b/src/gcc/config/arm/arm.c
+@@ -29814,5 +29814,4 @@ arm_sched_fusion_priority (rtx_insn *insn, int max_pri,
+   *pri = tmp;
+   return;
+ }
+-
+ #include "gt-arm.h"
+--- a/src/gcc/config/arm/arm.h
++++ b/src/gcc/config/arm/arm.h
+@@ -285,12 +285,6 @@ extern void (*arm_lang_output_object_attributes_hook)(void);
+ #define TARGET_BPABI false
+ #endif
+ 
+-/* Transform lane numbers on big endian targets. This is used to allow for the
+-   endianness difference between NEON architectural lane numbers and those
+-   used in RTL */
+-#define NEON_ENDIAN_LANE_N(mode, n)  \
+-  (BYTES_BIG_ENDIAN ? GET_MODE_NUNITS (mode) - 1 - n : n)
+-
+ /* Support for a compile-time default CPU, et cetera.  The rules are:
+    --with-arch is ignored if -march or -mcpu are specified.
+    --with-cpu is ignored if -march or -mcpu are specified, and is overridden
+--- a/src/gcc/config/arm/neon.md
++++ b/src/gcc/config/arm/neon.md
+@@ -4253,9 +4253,6 @@ if (BYTES_BIG_ENDIAN)
+   [(set_attr "type" "neon_load1_1reg<q>")]
+ )
+ 
+-;; The lane numbers in the RTL are in GCC lane order, having been flipped
+-;; in arm_expand_neon_args. The lane numbers are restored to architectural
+-;; lane order here.
+ (define_insn "neon_vld1_lane<mode>"
+   [(set (match_operand:VDX 0 "s_register_operand" "=w")
+         (unspec:VDX [(match_operand:<V_elem> 1 "neon_struct_operand" "Um")
+@@ -4264,9 +4261,10 @@ if (BYTES_BIG_ENDIAN)
+                     UNSPEC_VLD1_LANE))]
+   "TARGET_NEON"
+ {
+-  HOST_WIDE_INT lane = NEON_ENDIAN_LANE_N(<MODE>mode, INTVAL (operands[3]));
++  HOST_WIDE_INT lane = INTVAL (operands[3]);
+   HOST_WIDE_INT max = GET_MODE_NUNITS (<MODE>mode);
+-  operands[3] = GEN_INT (lane);
++  if (lane < 0 || lane >= max)
++    error ("lane out of range");
+   if (max == 1)
+     return "vld1.<V_sz_elem>\t%P0, %A1";
+   else
+@@ -4275,8 +4273,6 @@ if (BYTES_BIG_ENDIAN)
+   [(set_attr "type" "neon_load1_one_lane<q>")]
+ )
+ 
+-;; see comment on neon_vld1_lane for reason why the lane numbers are reversed
+-;; here on big endian targets.
+ (define_insn "neon_vld1_lane<mode>"
+   [(set (match_operand:VQX 0 "s_register_operand" "=w")
+         (unspec:VQX [(match_operand:<V_elem> 1 "neon_struct_operand" "Um")
+@@ -4285,11 +4281,12 @@ if (BYTES_BIG_ENDIAN)
+                     UNSPEC_VLD1_LANE))]
+   "TARGET_NEON"
+ {
+-  HOST_WIDE_INT lane = NEON_ENDIAN_LANE_N(<MODE>mode, INTVAL (operands[3]));
++  HOST_WIDE_INT lane = INTVAL (operands[3]);
+   HOST_WIDE_INT max = GET_MODE_NUNITS (<MODE>mode);
+-  operands[3] = GEN_INT (lane);
+   int regno = REGNO (operands[0]);
+-  if (lane >= max / 2)
++  if (lane < 0 || lane >= max)
++    error ("lane out of range");
++  else if (lane >= max / 2)
+     {
+       lane -= max / 2;
+       regno += 2;
+@@ -4362,8 +4359,6 @@ if (BYTES_BIG_ENDIAN)
+   "vst1.<V_sz_elem>\t%h1, %A0"
+   [(set_attr "type" "neon_store1_1reg<q>")])
+ 
+-;; see comment on neon_vld1_lane for reason why the lane numbers are reversed
+-;; here on big endian targets.
+ (define_insn "neon_vst1_lane<mode>"
+   [(set (match_operand:<V_elem> 0 "neon_struct_operand" "=Um")
+ 	(unspec:<V_elem>
+@@ -4372,9 +4367,10 @@ if (BYTES_BIG_ENDIAN)
+ 	  UNSPEC_VST1_LANE))]
+   "TARGET_NEON"
+ {
+-  HOST_WIDE_INT lane = NEON_ENDIAN_LANE_N(<MODE>mode, INTVAL (operands[2]));
++  HOST_WIDE_INT lane = INTVAL (operands[2]);
+   HOST_WIDE_INT max = GET_MODE_NUNITS (<MODE>mode);
+-  operands[2] = GEN_INT (lane);
++  if (lane < 0 || lane >= max)
++    error ("lane out of range");
+   if (max == 1)
+     return "vst1.<V_sz_elem>\t{%P1}, %A0";
+   else
+@@ -4383,8 +4379,6 @@ if (BYTES_BIG_ENDIAN)
+   [(set_attr "type" "neon_store1_one_lane<q>")]
+ )
+ 
+-;; see comment on neon_vld1_lane for reason why the lane numbers are reversed
+-;; here on big endian targets.
+ (define_insn "neon_vst1_lane<mode>"
+   [(set (match_operand:<V_elem> 0 "neon_struct_operand" "=Um")
+ 	(unspec:<V_elem>
+@@ -4393,15 +4387,17 @@ if (BYTES_BIG_ENDIAN)
+ 	  UNSPEC_VST1_LANE))]
+   "TARGET_NEON"
+ {
+-  HOST_WIDE_INT lane = NEON_ENDIAN_LANE_N(<MODE>mode, INTVAL (operands[2]));
++  HOST_WIDE_INT lane = INTVAL (operands[2]);
+   HOST_WIDE_INT max = GET_MODE_NUNITS (<MODE>mode);
+   int regno = REGNO (operands[1]);
+-  if (lane >= max / 2)
++  if (lane < 0 || lane >= max)
++    error ("lane out of range");
++  else if (lane >= max / 2)
+     {
+       lane -= max / 2;
+       regno += 2;
++      operands[2] = GEN_INT (lane);
+     }
+-  operands[2] = GEN_INT (lane);
+   operands[1] = gen_rtx_REG (<V_HALF>mode, regno);
+   if (max == 2)
+     return "vst1.<V_sz_elem>\t{%P1}, %A0";
+@@ -4452,8 +4448,6 @@ if (BYTES_BIG_ENDIAN)
+   "vld2.<V_sz_elem>\t%h0, %A1"
+   [(set_attr "type" "neon_load2_2reg_q")])
+ 
+-;; see comment on neon_vld1_lane for reason why the lane numbers are reversed
+-;; here on big endian targets.
+ (define_insn "neon_vld2_lane<mode>"
+   [(set (match_operand:TI 0 "s_register_operand" "=w")
+         (unspec:TI [(match_operand:<V_two_elem> 1 "neon_struct_operand" "Um")
+@@ -4463,21 +4457,22 @@ if (BYTES_BIG_ENDIAN)
+                    UNSPEC_VLD2_LANE))]
+   "TARGET_NEON"
+ {
+-  HOST_WIDE_INT lane = NEON_ENDIAN_LANE_N(<MODE>mode, INTVAL (operands[3]));
++  HOST_WIDE_INT lane = INTVAL (operands[3]);
++  HOST_WIDE_INT max = GET_MODE_NUNITS (<MODE>mode);
+   int regno = REGNO (operands[0]);
+   rtx ops[4];
++  if (lane < 0 || lane >= max)
++    error ("lane out of range");
+   ops[0] = gen_rtx_REG (DImode, regno);
+   ops[1] = gen_rtx_REG (DImode, regno + 2);
+   ops[2] = operands[1];
+-  ops[3] = GEN_INT (lane);
++  ops[3] = operands[3];
+   output_asm_insn ("vld2.<V_sz_elem>\t{%P0[%c3], %P1[%c3]}, %A2", ops);
+   return "";
+ }
+   [(set_attr "type" "neon_load2_one_lane<q>")]
+ )
+ 
+-;; see comment on neon_vld1_lane for reason why the lane numbers are reversed
+-;; here on big endian targets.
+ (define_insn "neon_vld2_lane<mode>"
+   [(set (match_operand:OI 0 "s_register_operand" "=w")
+         (unspec:OI [(match_operand:<V_two_elem> 1 "neon_struct_operand" "Um")
+@@ -4487,11 +4482,13 @@ if (BYTES_BIG_ENDIAN)
+                    UNSPEC_VLD2_LANE))]
+   "TARGET_NEON"
+ {
+-  HOST_WIDE_INT lane = NEON_ENDIAN_LANE_N(<MODE>mode, INTVAL (operands[3]));
++  HOST_WIDE_INT lane = INTVAL (operands[3]);
+   HOST_WIDE_INT max = GET_MODE_NUNITS (<MODE>mode);
+   int regno = REGNO (operands[0]);
+   rtx ops[4];
+-  if (lane >= max / 2)
++  if (lane < 0 || lane >= max)
++    error ("lane out of range");
++  else if (lane >= max / 2)
+     {
+       lane -= max / 2;
+       regno += 2;
+@@ -4566,8 +4563,6 @@ if (BYTES_BIG_ENDIAN)
+   [(set_attr "type" "neon_store2_4reg<q>")]
+ )
+ 
+-;; see comment on neon_vld1_lane for reason why the lane numbers are reversed
+-;; here on big endian targets.
+ (define_insn "neon_vst2_lane<mode>"
+   [(set (match_operand:<V_two_elem> 0 "neon_struct_operand" "=Um")
+ 	(unspec:<V_two_elem>
+@@ -4577,21 +4572,22 @@ if (BYTES_BIG_ENDIAN)
+ 	  UNSPEC_VST2_LANE))]
+   "TARGET_NEON"
+ {
+-  HOST_WIDE_INT lane = NEON_ENDIAN_LANE_N(<MODE>mode, INTVAL (operands[2]));
++  HOST_WIDE_INT lane = INTVAL (operands[2]);
++  HOST_WIDE_INT max = GET_MODE_NUNITS (<MODE>mode);
+   int regno = REGNO (operands[1]);
+   rtx ops[4];
++  if (lane < 0 || lane >= max)
++    error ("lane out of range");
+   ops[0] = operands[0];
+   ops[1] = gen_rtx_REG (DImode, regno);
+   ops[2] = gen_rtx_REG (DImode, regno + 2);
+-  ops[3] = GEN_INT (lane);
++  ops[3] = operands[2];
+   output_asm_insn ("vst2.<V_sz_elem>\t{%P1[%c3], %P2[%c3]}, %A0", ops);
+   return "";
+ }
+   [(set_attr "type" "neon_store2_one_lane<q>")]
+ )
+ 
+-;; see comment on neon_vld1_lane for reason why the lane numbers are reversed
+-;; here on big endian targets.
+ (define_insn "neon_vst2_lane<mode>"
+   [(set (match_operand:<V_two_elem> 0 "neon_struct_operand" "=Um")
+         (unspec:<V_two_elem>
+@@ -4601,11 +4597,13 @@ if (BYTES_BIG_ENDIAN)
+            UNSPEC_VST2_LANE))]
+   "TARGET_NEON"
+ {
+-  HOST_WIDE_INT lane = NEON_ENDIAN_LANE_N(<MODE>mode, INTVAL (operands[2]));
++  HOST_WIDE_INT lane = INTVAL (operands[2]);
+   HOST_WIDE_INT max = GET_MODE_NUNITS (<MODE>mode);
+   int regno = REGNO (operands[1]);
+   rtx ops[4];
+-  if (lane >= max / 2)
++  if (lane < 0 || lane >= max)
++    error ("lane out of range");
++  else if (lane >= max / 2)
+     {
+       lane -= max / 2;
+       regno += 2;
+@@ -4709,8 +4707,6 @@ if (BYTES_BIG_ENDIAN)
+   [(set_attr "type" "neon_load3_3reg<q>")]
+ )
+ 
+-;; see comment on neon_vld1_lane for reason why the lane numbers are reversed
+-;; here on big endian targets.
+ (define_insn "neon_vld3_lane<mode>"
+   [(set (match_operand:EI 0 "s_register_operand" "=w")
+         (unspec:EI [(match_operand:<V_three_elem> 1 "neon_struct_operand" "Um")
+@@ -4720,14 +4716,17 @@ if (BYTES_BIG_ENDIAN)
+                    UNSPEC_VLD3_LANE))]
+   "TARGET_NEON"
+ {
+-  HOST_WIDE_INT lane = NEON_ENDIAN_LANE_N (<MODE>mode, INTVAL (operands[3]));
++  HOST_WIDE_INT lane = INTVAL (operands[3]);
++  HOST_WIDE_INT max = GET_MODE_NUNITS (<MODE>mode);
+   int regno = REGNO (operands[0]);
+   rtx ops[5];
++  if (lane < 0 || lane >= max)
++    error ("lane out of range");
+   ops[0] = gen_rtx_REG (DImode, regno);
+   ops[1] = gen_rtx_REG (DImode, regno + 2);
+   ops[2] = gen_rtx_REG (DImode, regno + 4);
+   ops[3] = operands[1];
+-  ops[4] = GEN_INT (lane);
++  ops[4] = operands[3];
+   output_asm_insn ("vld3.<V_sz_elem>\t{%P0[%c4], %P1[%c4], %P2[%c4]}, %3",
+                    ops);
+   return "";
+@@ -4735,8 +4734,6 @@ if (BYTES_BIG_ENDIAN)
+   [(set_attr "type" "neon_load3_one_lane<q>")]
+ )
+ 
+-;; see comment on neon_vld1_lane for reason why the lane numbers are reversed
+-;; here on big endian targets.
+ (define_insn "neon_vld3_lane<mode>"
+   [(set (match_operand:CI 0 "s_register_operand" "=w")
+         (unspec:CI [(match_operand:<V_three_elem> 1 "neon_struct_operand" "Um")
+@@ -4746,11 +4743,13 @@ if (BYTES_BIG_ENDIAN)
+                    UNSPEC_VLD3_LANE))]
+   "TARGET_NEON"
+ {
+-  HOST_WIDE_INT lane = NEON_ENDIAN_LANE_N(<MODE>mode, INTVAL (operands[3]));
++  HOST_WIDE_INT lane = INTVAL (operands[3]);
+   HOST_WIDE_INT max = GET_MODE_NUNITS (<MODE>mode);
+   int regno = REGNO (operands[0]);
+   rtx ops[5];
+-  if (lane >= max / 2)
++  if (lane < 0 || lane >= max)
++    error ("lane out of range");
++  else if (lane >= max / 2)
+     {
+       lane -= max / 2;
+       regno += 2;
+@@ -4880,8 +4879,6 @@ if (BYTES_BIG_ENDIAN)
+   [(set_attr "type" "neon_store3_3reg<q>")]
+ )
+ 
+-;; see comment on neon_vld1_lane for reason why the lane numbers are reversed
+-;; here on big endian targets.
+ (define_insn "neon_vst3_lane<mode>"
+   [(set (match_operand:<V_three_elem> 0 "neon_struct_operand" "=Um")
+         (unspec:<V_three_elem>
+@@ -4891,14 +4888,17 @@ if (BYTES_BIG_ENDIAN)
+            UNSPEC_VST3_LANE))]
+   "TARGET_NEON"
+ {
+-  HOST_WIDE_INT lane = NEON_ENDIAN_LANE_N(<MODE>mode, INTVAL (operands[2]));
++  HOST_WIDE_INT lane = INTVAL (operands[2]);
++  HOST_WIDE_INT max = GET_MODE_NUNITS (<MODE>mode);
+   int regno = REGNO (operands[1]);
+   rtx ops[5];
++  if (lane < 0 || lane >= max)
++    error ("lane out of range");
+   ops[0] = operands[0];
+   ops[1] = gen_rtx_REG (DImode, regno);
+   ops[2] = gen_rtx_REG (DImode, regno + 2);
+   ops[3] = gen_rtx_REG (DImode, regno + 4);
+-  ops[4] = GEN_INT (lane);
++  ops[4] = operands[2];
+   output_asm_insn ("vst3.<V_sz_elem>\t{%P1[%c4], %P2[%c4], %P3[%c4]}, %0",
+                    ops);
+   return "";
+@@ -4906,8 +4906,6 @@ if (BYTES_BIG_ENDIAN)
+   [(set_attr "type" "neon_store3_one_lane<q>")]
+ )
+ 
+-;; see comment on neon_vld1_lane for reason why the lane numbers are reversed
+-;; here on big endian targets.
+ (define_insn "neon_vst3_lane<mode>"
+   [(set (match_operand:<V_three_elem> 0 "neon_struct_operand" "=Um")
+         (unspec:<V_three_elem>
+@@ -4917,11 +4915,13 @@ if (BYTES_BIG_ENDIAN)
+            UNSPEC_VST3_LANE))]
+   "TARGET_NEON"
+ {
+-  HOST_WIDE_INT lane = NEON_ENDIAN_LANE_N(<MODE>mode, INTVAL (operands[2]));
++  HOST_WIDE_INT lane = INTVAL (operands[2]);
+   HOST_WIDE_INT max = GET_MODE_NUNITS (<MODE>mode);
+   int regno = REGNO (operands[1]);
+   rtx ops[5];
+-  if (lane >= max / 2)
++  if (lane < 0 || lane >= max)
++    error ("lane out of range");
++  else if (lane >= max / 2)
+     {
+       lane -= max / 2;
+       regno += 2;
+@@ -5029,8 +5029,6 @@ if (BYTES_BIG_ENDIAN)
+   [(set_attr "type" "neon_load4_4reg<q>")]
+ )
+ 
+-;; see comment on neon_vld1_lane for reason why the lane numbers are reversed
+-;; here on big endian targets.
+ (define_insn "neon_vld4_lane<mode>"
+   [(set (match_operand:OI 0 "s_register_operand" "=w")
+         (unspec:OI [(match_operand:<V_four_elem> 1 "neon_struct_operand" "Um")
+@@ -5040,15 +5038,18 @@ if (BYTES_BIG_ENDIAN)
+                    UNSPEC_VLD4_LANE))]
+   "TARGET_NEON"
+ {
+-  HOST_WIDE_INT lane = NEON_ENDIAN_LANE_N(<MODE>mode, INTVAL (operands[3]));
++  HOST_WIDE_INT lane = INTVAL (operands[3]);
++  HOST_WIDE_INT max = GET_MODE_NUNITS (<MODE>mode);
+   int regno = REGNO (operands[0]);
+   rtx ops[6];
++  if (lane < 0 || lane >= max)
++    error ("lane out of range");
+   ops[0] = gen_rtx_REG (DImode, regno);
+   ops[1] = gen_rtx_REG (DImode, regno + 2);
+   ops[2] = gen_rtx_REG (DImode, regno + 4);
+   ops[3] = gen_rtx_REG (DImode, regno + 6);
+   ops[4] = operands[1];
+-  ops[5] = GEN_INT (lane);
++  ops[5] = operands[3];
+   output_asm_insn ("vld4.<V_sz_elem>\t{%P0[%c5], %P1[%c5], %P2[%c5], %P3[%c5]}, %A4",
+                    ops);
+   return "";
+@@ -5056,8 +5057,6 @@ if (BYTES_BIG_ENDIAN)
+   [(set_attr "type" "neon_load4_one_lane<q>")]
+ )
+ 
+-;; see comment on neon_vld1_lane for reason why the lane numbers are reversed
+-;; here on big endian targets.
+ (define_insn "neon_vld4_lane<mode>"
+   [(set (match_operand:XI 0 "s_register_operand" "=w")
+         (unspec:XI [(match_operand:<V_four_elem> 1 "neon_struct_operand" "Um")
+@@ -5067,11 +5066,13 @@ if (BYTES_BIG_ENDIAN)
+                    UNSPEC_VLD4_LANE))]
+   "TARGET_NEON"
+ {
+-  HOST_WIDE_INT lane = NEON_ENDIAN_LANE_N(<MODE>mode, INTVAL (operands[3]));
++  HOST_WIDE_INT lane = INTVAL (operands[3]);
+   HOST_WIDE_INT max = GET_MODE_NUNITS (<MODE>mode);
+   int regno = REGNO (operands[0]);
+   rtx ops[6];
+-  if (lane >= max / 2)
++  if (lane < 0 || lane >= max)
++    error ("lane out of range");
++  else if (lane >= max / 2)
+     {
+       lane -= max / 2;
+       regno += 2;
+@@ -5208,8 +5209,6 @@ if (BYTES_BIG_ENDIAN)
+   [(set_attr "type" "neon_store4_4reg<q>")]
+ )
+ 
+-;; see comment on neon_vld1_lane for reason why the lane numbers are reversed
+-;; here on big endian targets.
+ (define_insn "neon_vst4_lane<mode>"
+   [(set (match_operand:<V_four_elem> 0 "neon_struct_operand" "=Um")
+         (unspec:<V_four_elem>
+@@ -5219,15 +5218,18 @@ if (BYTES_BIG_ENDIAN)
+            UNSPEC_VST4_LANE))]
+   "TARGET_NEON"
+ {
+-  HOST_WIDE_INT lane = NEON_ENDIAN_LANE_N(<MODE>mode, INTVAL (operands[2]));
++  HOST_WIDE_INT lane = INTVAL (operands[2]);
++  HOST_WIDE_INT max = GET_MODE_NUNITS (<MODE>mode);
+   int regno = REGNO (operands[1]);
+   rtx ops[6];
++  if (lane < 0 || lane >= max)
++    error ("lane out of range");
+   ops[0] = operands[0];
+   ops[1] = gen_rtx_REG (DImode, regno);
+   ops[2] = gen_rtx_REG (DImode, regno + 2);
+   ops[3] = gen_rtx_REG (DImode, regno + 4);
+   ops[4] = gen_rtx_REG (DImode, regno + 6);
+-  ops[5] = GEN_INT (lane);
++  ops[5] = operands[2];
+   output_asm_insn ("vst4.<V_sz_elem>\t{%P1[%c5], %P2[%c5], %P3[%c5], %P4[%c5]}, %A0",
+                    ops);
+   return "";
+@@ -5235,8 +5237,6 @@ if (BYTES_BIG_ENDIAN)
+   [(set_attr "type" "neon_store4_one_lane<q>")]
+ )
+ 
+-;; see comment on neon_vld1_lane for reason why the lane numbers are reversed
+-;; here on big endian targets.
+ (define_insn "neon_vst4_lane<mode>"
+   [(set (match_operand:<V_four_elem> 0 "neon_struct_operand" "=Um")
+         (unspec:<V_four_elem>
+@@ -5246,11 +5246,13 @@ if (BYTES_BIG_ENDIAN)
+            UNSPEC_VST4_LANE))]
+   "TARGET_NEON"
+ {
+-  HOST_WIDE_INT lane = NEON_ENDIAN_LANE_N(<MODE>mode, INTVAL (operands[2]));
++  HOST_WIDE_INT lane = INTVAL (operands[2]);
+   HOST_WIDE_INT max = GET_MODE_NUNITS (<MODE>mode);
+   int regno = REGNO (operands[1]);
+   rtx ops[6];
+-  if (lane >= max / 2)
++  if (lane < 0 || lane >= max)
++    error ("lane out of range");
++  else if (lane >= max / 2)
+     {
+       lane -= max / 2;
+       regno += 2;
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2_lane_f16_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2_lane_f16_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ float16x4x2_t
+ f_vld2_lane_f16 (float16_t * p, float16x4x2_t v)
+ {
+   float16x4x2_t res;
+-  /* { dg-error "lane 4 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 4 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   res = vld2_lane_f16 (p, v, 4);
+-  /* { dg-error "lane -1 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   res = vld2_lane_f16 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2_lane_f32_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2_lane_f32_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ float32x2x2_t
+ f_vld2_lane_f32 (float32_t * p, float32x2x2_t v)
+ {
+   float32x2x2_t res;
+-  /* { dg-error "lane 2 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 2 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   res = vld2_lane_f32 (p, v, 2);
+-  /* { dg-error "lane -1 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   res = vld2_lane_f32 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2_lane_f64_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2_lane_f64_indices_1.c
+@@ -2,15 +2,16 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ float64x1x2_t
+ f_vld2_lane_f64 (float64_t * p, float64x1x2_t v)
+ {
+   float64x1x2_t res;
+-  /* { dg-error "lane 1 out of range 0 - 0" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 1 out of range 0 - 0" "" { xfail arm*-*-* } 0 } */
+   res = vld2_lane_f64 (p, v, 1);
+-  /* { dg-error "lane -1 out of range 0 - 0" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 0" "" { xfail arm*-*-* } 0 } */
+   res = vld2_lane_f64 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2_lane_p8_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2_lane_p8_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ poly8x8x2_t
+ f_vld2_lane_p8 (poly8_t * p, poly8x8x2_t v)
+ {
+   poly8x8x2_t res;
+-  /* { dg-error "lane 8 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 8 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   res = vld2_lane_p8 (p, v, 8);
+-  /* { dg-error "lane -1 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   res = vld2_lane_p8 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2_lane_s16_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2_lane_s16_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ int16x4x2_t
+ f_vld2_lane_s16 (int16_t * p, int16x4x2_t v)
+ {
+   int16x4x2_t res;
+-  /* { dg-error "lane 4 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 4 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   res = vld2_lane_s16 (p, v, 4);
+-  /* { dg-error "lane -1 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   res = vld2_lane_s16 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2_lane_s32_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2_lane_s32_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ int32x2x2_t
+ f_vld2_lane_s32 (int32_t * p, int32x2x2_t v)
+ {
+   int32x2x2_t res;
+-  /* { dg-error "lane 2 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 2 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   res = vld2_lane_s32 (p, v, 2);
+-  /* { dg-error "lane -1 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   res = vld2_lane_s32 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2_lane_s64_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2_lane_s64_indices_1.c
+@@ -2,15 +2,16 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ int64x1x2_t
+ f_vld2_lane_s64 (int64_t * p, int64x1x2_t v)
+ {
+   int64x1x2_t res;
+-  /* { dg-error "lane 1 out of range 0 - 0" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 1 out of range 0 - 0" "" { xfail arm*-*-* } 0 } */
+   res = vld2_lane_s64 (p, v, 1);
+-  /* { dg-error "lane -1 out of range 0 - 0" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 0" "" { xfail arm*-*-* } 0 } */
+   res = vld2_lane_s64 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2_lane_s8_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2_lane_s8_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ int8x8x2_t
+ f_vld2_lane_s8 (int8_t * p, int8x8x2_t v)
+ {
+   int8x8x2_t res;
+-  /* { dg-error "lane 8 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 8 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   res = vld2_lane_s8 (p, v, 8);
+-  /* { dg-error "lane -1 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   res = vld2_lane_s8 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2_lane_u16_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2_lane_u16_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ uint16x4x2_t
+ f_vld2_lane_u16 (uint16_t * p, uint16x4x2_t v)
+ {
+   uint16x4x2_t res;
+-  /* { dg-error "lane 4 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 4 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   res = vld2_lane_u16 (p, v, 4);
+-  /* { dg-error "lane -1 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   res = vld2_lane_u16 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2_lane_u32_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2_lane_u32_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ uint32x2x2_t
+ f_vld2_lane_u32 (uint32_t * p, uint32x2x2_t v)
+ {
+   uint32x2x2_t res;
+-  /* { dg-error "lane 2 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 2 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   res = vld2_lane_u32 (p, v, 2);
+-  /* { dg-error "lane -1 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   res = vld2_lane_u32 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2_lane_u64_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2_lane_u64_indices_1.c
+@@ -2,15 +2,16 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ uint64x1x2_t
+ f_vld2_lane_u64 (uint64_t * p, uint64x1x2_t v)
+ {
+   uint64x1x2_t res;
+-  /* { dg-error "lane 1 out of range 0 - 0" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 1 out of range 0 - 0" "" { xfail arm*-*-* } 0 } */
+   res = vld2_lane_u64 (p, v, 1);
+-  /* { dg-error "lane -1 out of range 0 - 0" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 0" "" { xfail arm*-*-* } 0 } */
+   res = vld2_lane_u64 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2_lane_u8_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2_lane_u8_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ uint8x8x2_t
+ f_vld2_lane_u8 (uint8_t * p, uint8x8x2_t v)
+ {
+   uint8x8x2_t res;
+-  /* { dg-error "lane 8 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 8 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   res = vld2_lane_u8 (p, v, 8);
+-  /* { dg-error "lane -1 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   res = vld2_lane_u8 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2q_lane_f16_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2q_lane_f16_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ float16x8x2_t
+ f_vld2q_lane_f16 (float16_t * p, float16x8x2_t v)
+ {
+   float16x8x2_t res;
+-  /* { dg-error "lane 8 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 8 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   res = vld2q_lane_f16 (p, v, 8);
+-  /* { dg-error "lane -1 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   res = vld2q_lane_f16 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2q_lane_f32_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2q_lane_f32_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ float32x4x2_t
+ f_vld2q_lane_f32 (float32_t * p, float32x4x2_t v)
+ {
+   float32x4x2_t res;
+-  /* { dg-error "lane 4 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 4 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   res = vld2q_lane_f32 (p, v, 4);
+-  /* { dg-error "lane -1 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   res = vld2q_lane_f32 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2q_lane_f64_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2q_lane_f64_indices_1.c
+@@ -2,15 +2,16 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ float64x2x2_t
+ f_vld2q_lane_f64 (float64_t * p, float64x2x2_t v)
+ {
+   float64x2x2_t res;
+-  /* { dg-error "lane 2 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 2 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   res = vld2q_lane_f64 (p, v, 2);
+-  /* { dg-error "lane -1 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   res = vld2q_lane_f64 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2q_lane_p8_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2q_lane_p8_indices_1.c
+@@ -2,15 +2,16 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ poly8x16x2_t
+ f_vld2q_lane_p8 (poly8_t * p, poly8x16x2_t v)
+ {
+   poly8x16x2_t res;
+-  /* { dg-error "lane 16 out of range 0 - 15" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 16 out of range 0 - 15" "" { xfail arm*-*-* } 0 } */
+   res = vld2q_lane_p8 (p, v, 16);
+-  /* { dg-error "lane -1 out of range 0 - 15" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 15" "" { xfail arm*-*-* } 0 } */
+   res = vld2q_lane_p8 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2q_lane_s16_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2q_lane_s16_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ int16x8x2_t
+ f_vld2q_lane_s16 (int16_t * p, int16x8x2_t v)
+ {
+   int16x8x2_t res;
+-  /* { dg-error "lane 8 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 8 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   res = vld2q_lane_s16 (p, v, 8);
+-  /* { dg-error "lane -1 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   res = vld2q_lane_s16 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2q_lane_s32_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2q_lane_s32_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ int32x4x2_t
+ f_vld2q_lane_s32 (int32_t * p, int32x4x2_t v)
+ {
+   int32x4x2_t res;
+-  /* { dg-error "lane 4 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 4 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   res = vld2q_lane_s32 (p, v, 4);
+-  /* { dg-error "lane -1 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   res = vld2q_lane_s32 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2q_lane_s64_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2q_lane_s64_indices_1.c
+@@ -2,15 +2,16 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ int64x2x2_t
+ f_vld2q_lane_s64 (int64_t * p, int64x2x2_t v)
+ {
+   int64x2x2_t res;
+-  /* { dg-error "lane 2 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 2 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   res = vld2q_lane_s64 (p, v, 2);
+-  /* { dg-error "lane -1 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   res = vld2q_lane_s64 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2q_lane_s8_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2q_lane_s8_indices_1.c
+@@ -2,15 +2,16 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ int8x16x2_t
+ f_vld2q_lane_s8 (int8_t * p, int8x16x2_t v)
+ {
+   int8x16x2_t res;
+-  /* { dg-error "lane 16 out of range 0 - 15" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 16 out of range 0 - 15" "" { xfail arm*-*-* } 0 } */
+   res = vld2q_lane_s8 (p, v, 16);
+-  /* { dg-error "lane -1 out of range 0 - 15" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 15" "" { xfail arm*-*-* } 0 } */
+   res = vld2q_lane_s8 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2q_lane_u16_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2q_lane_u16_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ uint16x8x2_t
+ f_vld2q_lane_u16 (uint16_t * p, uint16x8x2_t v)
+ {
+   uint16x8x2_t res;
+-  /* { dg-error "lane 8 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 8 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   res = vld2q_lane_u16 (p, v, 8);
+-  /* { dg-error "lane -1 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   res = vld2q_lane_u16 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2q_lane_u32_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2q_lane_u32_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ uint32x4x2_t
+ f_vld2q_lane_u32 (uint32_t * p, uint32x4x2_t v)
+ {
+   uint32x4x2_t res;
+-  /* { dg-error "lane 4 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 4 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   res = vld2q_lane_u32 (p, v, 4);
+-  /* { dg-error "lane -1 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   res = vld2q_lane_u32 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2q_lane_u64_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2q_lane_u64_indices_1.c
+@@ -2,15 +2,16 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ uint64x2x2_t
+ f_vld2q_lane_u64 (uint64_t * p, uint64x2x2_t v)
+ {
+   uint64x2x2_t res;
+-  /* { dg-error "lane 2 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 2 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   res = vld2q_lane_u64 (p, v, 2);
+-  /* { dg-error "lane -1 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   res = vld2q_lane_u64 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2q_lane_u8_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld2q_lane_u8_indices_1.c
+@@ -2,15 +2,16 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ uint8x16x2_t
+ f_vld2q_lane_u8 (uint8_t * p, uint8x16x2_t v)
+ {
+   uint8x16x2_t res;
+-  /* { dg-error "lane 16 out of range 0 - 15" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 16 out of range 0 - 15" "" { xfail arm*-*-* } 0 } */
+   res = vld2q_lane_u8 (p, v, 16);
+-  /* { dg-error "lane -1 out of range 0 - 15" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 15" "" { xfail arm*-*-* } 0 } */
+   res = vld2q_lane_u8 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3_lane_f16_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3_lane_f16_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ float16x4x3_t
+ f_vld3_lane_f16 (float16_t * p, float16x4x3_t v)
+ {
+   float16x4x3_t res;
+-  /* { dg-error "lane 4 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 4 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   res = vld3_lane_f16 (p, v, 4);
+-  /* { dg-error "lane -1 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   res = vld3_lane_f16 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3_lane_f32_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3_lane_f32_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ float32x2x3_t
+ f_vld3_lane_f32 (float32_t * p, float32x2x3_t v)
+ {
+   float32x2x3_t res;
+-  /* { dg-error "lane 2 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 2 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   res = vld3_lane_f32 (p, v, 2);
+-  /* { dg-error "lane -1 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   res = vld3_lane_f32 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3_lane_f64_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3_lane_f64_indices_1.c
+@@ -2,15 +2,16 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ float64x1x3_t
+ f_vld3_lane_f64 (float64_t * p, float64x1x3_t v)
+ {
+   float64x1x3_t res;
+-  /* { dg-error "lane 1 out of range 0 - 0" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 1 out of range 0 - 0" "" { xfail arm*-*-* } 0 } */
+   res = vld3_lane_f64 (p, v, 1);
+-  /* { dg-error "lane -1 out of range 0 - 0" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 0" "" { xfail arm*-*-* } 0 } */
+   res = vld3_lane_f64 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3_lane_p8_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3_lane_p8_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ poly8x8x3_t
+ f_vld3_lane_p8 (poly8_t * p, poly8x8x3_t v)
+ {
+   poly8x8x3_t res;
+-  /* { dg-error "lane 8 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 8 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   res = vld3_lane_p8 (p, v, 8);
+-  /* { dg-error "lane -1 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   res = vld3_lane_p8 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3_lane_s16_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3_lane_s16_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ int16x4x3_t
+ f_vld3_lane_s16 (int16_t * p, int16x4x3_t v)
+ {
+   int16x4x3_t res;
+-  /* { dg-error "lane 4 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 4 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   res = vld3_lane_s16 (p, v, 4);
+-  /* { dg-error "lane -1 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   res = vld3_lane_s16 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3_lane_s32_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3_lane_s32_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ int32x2x3_t
+ f_vld3_lane_s32 (int32_t * p, int32x2x3_t v)
+ {
+   int32x2x3_t res;
+-  /* { dg-error "lane 2 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 2 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   res = vld3_lane_s32 (p, v, 2);
+-  /* { dg-error "lane -1 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   res = vld3_lane_s32 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3_lane_s64_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3_lane_s64_indices_1.c
+@@ -2,15 +2,16 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ int64x1x3_t
+ f_vld3_lane_s64 (int64_t * p, int64x1x3_t v)
+ {
+   int64x1x3_t res;
+-  /* { dg-error "lane 1 out of range 0 - 0" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 1 out of range 0 - 0" "" { xfail arm*-*-* } 0 } */
+   res = vld3_lane_s64 (p, v, 1);
+-  /* { dg-error "lane -1 out of range 0 - 0" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 0" "" { xfail arm*-*-* } 0 } */
+   res = vld3_lane_s64 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3_lane_s8_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3_lane_s8_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ int8x8x3_t
+ f_vld3_lane_s8 (int8_t * p, int8x8x3_t v)
+ {
+   int8x8x3_t res;
+-  /* { dg-error "lane 8 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 8 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   res = vld3_lane_s8 (p, v, 8);
+-  /* { dg-error "lane -1 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   res = vld3_lane_s8 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3_lane_u16_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3_lane_u16_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ uint16x4x3_t
+ f_vld3_lane_u16 (uint16_t * p, uint16x4x3_t v)
+ {
+   uint16x4x3_t res;
+-  /* { dg-error "lane 4 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 4 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   res = vld3_lane_u16 (p, v, 4);
+-  /* { dg-error "lane -1 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   res = vld3_lane_u16 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3_lane_u32_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3_lane_u32_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ uint32x2x3_t
+ f_vld3_lane_u32 (uint32_t * p, uint32x2x3_t v)
+ {
+   uint32x2x3_t res;
+-  /* { dg-error "lane 2 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 2 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   res = vld3_lane_u32 (p, v, 2);
+-  /* { dg-error "lane -1 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   res = vld3_lane_u32 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3_lane_u64_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3_lane_u64_indices_1.c
+@@ -2,15 +2,16 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ uint64x1x3_t
+ f_vld3_lane_u64 (uint64_t * p, uint64x1x3_t v)
+ {
+   uint64x1x3_t res;
+-  /* { dg-error "lane 1 out of range 0 - 0" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 1 out of range 0 - 0" "" { xfail arm*-*-* } 0 } */
+   res = vld3_lane_u64 (p, v, 1);
+-  /* { dg-error "lane -1 out of range 0 - 0" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 0" "" { xfail arm*-*-* } 0 } */
+   res = vld3_lane_u64 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3_lane_u8_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3_lane_u8_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ uint8x8x3_t
+ f_vld3_lane_u8 (uint8_t * p, uint8x8x3_t v)
+ {
+   uint8x8x3_t res;
+-  /* { dg-error "lane 8 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 8 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   res = vld3_lane_u8 (p, v, 8);
+-  /* { dg-error "lane -1 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   res = vld3_lane_u8 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3q_lane_f16_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3q_lane_f16_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ float16x8x3_t
+ f_vld3q_lane_f16 (float16_t * p, float16x8x3_t v)
+ {
+   float16x8x3_t res;
+-  /* { dg-error "lane 8 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 8 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   res = vld3q_lane_f16 (p, v, 8);
+-  /* { dg-error "lane -1 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   res = vld3q_lane_f16 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3q_lane_f32_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3q_lane_f32_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ float32x4x3_t
+ f_vld3q_lane_f32 (float32_t * p, float32x4x3_t v)
+ {
+   float32x4x3_t res;
+-  /* { dg-error "lane 4 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 4 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   res = vld3q_lane_f32 (p, v, 4);
+-  /* { dg-error "lane -1 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   res = vld3q_lane_f32 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3q_lane_f64_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3q_lane_f64_indices_1.c
+@@ -2,15 +2,16 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ float64x2x3_t
+ f_vld3q_lane_f64 (float64_t * p, float64x2x3_t v)
+ {
+   float64x2x3_t res;
+-  /* { dg-error "lane 2 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 2 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   res = vld3q_lane_f64 (p, v, 2);
+-  /* { dg-error "lane -1 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   res = vld3q_lane_f64 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3q_lane_p8_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3q_lane_p8_indices_1.c
+@@ -2,15 +2,16 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ poly8x16x3_t
+ f_vld3q_lane_p8 (poly8_t * p, poly8x16x3_t v)
+ {
+   poly8x16x3_t res;
+-  /* { dg-error "lane 16 out of range 0 - 15" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 16 out of range 0 - 15" "" { xfail arm*-*-* } 0 } */
+   res = vld3q_lane_p8 (p, v, 16);
+-  /* { dg-error "lane -1 out of range 0 - 15" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 15" "" { xfail arm*-*-* } 0 } */
+   res = vld3q_lane_p8 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3q_lane_s16_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3q_lane_s16_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ int16x8x3_t
+ f_vld3q_lane_s16 (int16_t * p, int16x8x3_t v)
+ {
+   int16x8x3_t res;
+-  /* { dg-error "lane 8 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 8 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   res = vld3q_lane_s16 (p, v, 8);
+-  /* { dg-error "lane -1 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   res = vld3q_lane_s16 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3q_lane_s32_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3q_lane_s32_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ int32x4x3_t
+ f_vld3q_lane_s32 (int32_t * p, int32x4x3_t v)
+ {
+   int32x4x3_t res;
+-  /* { dg-error "lane 4 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 4 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   res = vld3q_lane_s32 (p, v, 4);
+-  /* { dg-error "lane -1 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   res = vld3q_lane_s32 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3q_lane_s64_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3q_lane_s64_indices_1.c
+@@ -2,15 +2,16 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ int64x2x3_t
+ f_vld3q_lane_s64 (int64_t * p, int64x2x3_t v)
+ {
+   int64x2x3_t res;
+-  /* { dg-error "lane 2 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 2 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   res = vld3q_lane_s64 (p, v, 2);
+-  /* { dg-error "lane -1 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   res = vld3q_lane_s64 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3q_lane_s8_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3q_lane_s8_indices_1.c
+@@ -2,15 +2,16 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ int8x16x3_t
+ f_vld3q_lane_s8 (int8_t * p, int8x16x3_t v)
+ {
+   int8x16x3_t res;
+-  /* { dg-error "lane 16 out of range 0 - 15" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 16 out of range 0 - 15" "" { xfail arm*-*-* } 0 } */
+   res = vld3q_lane_s8 (p, v, 16);
+-  /* { dg-error "lane -1 out of range 0 - 15" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 15" "" { xfail arm*-*-* } 0 } */
+   res = vld3q_lane_s8 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3q_lane_u16_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3q_lane_u16_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ uint16x8x3_t
+ f_vld3q_lane_u16 (uint16_t * p, uint16x8x3_t v)
+ {
+   uint16x8x3_t res;
+-  /* { dg-error "lane 8 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 8 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   res = vld3q_lane_u16 (p, v, 8);
+-  /* { dg-error "lane -1 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   res = vld3q_lane_u16 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3q_lane_u32_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3q_lane_u32_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ uint32x4x3_t
+ f_vld3q_lane_u32 (uint32_t * p, uint32x4x3_t v)
+ {
+   uint32x4x3_t res;
+-  /* { dg-error "lane 4 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 4 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   res = vld3q_lane_u32 (p, v, 4);
+-  /* { dg-error "lane -1 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   res = vld3q_lane_u32 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3q_lane_u64_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3q_lane_u64_indices_1.c
+@@ -2,15 +2,16 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ uint64x2x3_t
+ f_vld3q_lane_u64 (uint64_t * p, uint64x2x3_t v)
+ {
+   uint64x2x3_t res;
+-  /* { dg-error "lane 2 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 2 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   res = vld3q_lane_u64 (p, v, 2);
+-  /* { dg-error "lane -1 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   res = vld3q_lane_u64 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3q_lane_u8_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld3q_lane_u8_indices_1.c
+@@ -2,15 +2,16 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ uint8x16x3_t
+ f_vld3q_lane_u8 (uint8_t * p, uint8x16x3_t v)
+ {
+   uint8x16x3_t res;
+-  /* { dg-error "lane 16 out of range 0 - 15" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 16 out of range 0 - 15" "" { xfail arm*-*-* } 0 } */
+   res = vld3q_lane_u8 (p, v, 16);
+-  /* { dg-error "lane -1 out of range 0 - 15" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 15" "" { xfail arm*-*-* } 0 } */
+   res = vld3q_lane_u8 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4_lane_f16_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4_lane_f16_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ float16x4x4_t
+ f_vld4_lane_f16 (float16_t * p, float16x4x4_t v)
+ {
+   float16x4x4_t res;
+-  /* { dg-error "lane 4 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 4 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   res = vld4_lane_f16 (p, v, 4);
+-  /* { dg-error "lane -1 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   res = vld4_lane_f16 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4_lane_f32_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4_lane_f32_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ float32x2x4_t
+ f_vld4_lane_f32 (float32_t * p, float32x2x4_t v)
+ {
+   float32x2x4_t res;
+-  /* { dg-error "lane 2 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 2 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   res = vld4_lane_f32 (p, v, 2);
+-  /* { dg-error "lane -1 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   res = vld4_lane_f32 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4_lane_f64_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4_lane_f64_indices_1.c
+@@ -2,15 +2,16 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ float64x1x4_t
+ f_vld4_lane_f64 (float64_t * p, float64x1x4_t v)
+ {
+   float64x1x4_t res;
+-  /* { dg-error "lane 1 out of range 0 - 0" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 1 out of range 0 - 0" "" { xfail arm*-*-* } 0 } */
+   res = vld4_lane_f64 (p, v, 1);
+-  /* { dg-error "lane -1 out of range 0 - 0" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 0" "" { xfail arm*-*-* } 0 } */
+   res = vld4_lane_f64 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4_lane_p8_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4_lane_p8_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ poly8x8x4_t
+ f_vld4_lane_p8 (poly8_t * p, poly8x8x4_t v)
+ {
+   poly8x8x4_t res;
+-  /* { dg-error "lane 8 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 8 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   res = vld4_lane_p8 (p, v, 8);
+-  /* { dg-error "lane -1 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   res = vld4_lane_p8 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4_lane_s16_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4_lane_s16_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ int16x4x4_t
+ f_vld4_lane_s16 (int16_t * p, int16x4x4_t v)
+ {
+   int16x4x4_t res;
+-  /* { dg-error "lane 4 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 4 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   res = vld4_lane_s16 (p, v, 4);
+-  /* { dg-error "lane -1 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   res = vld4_lane_s16 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4_lane_s32_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4_lane_s32_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ int32x2x4_t
+ f_vld4_lane_s32 (int32_t * p, int32x2x4_t v)
+ {
+   int32x2x4_t res;
+-  /* { dg-error "lane 2 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 2 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   res = vld4_lane_s32 (p, v, 2);
+-  /* { dg-error "lane -1 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   res = vld4_lane_s32 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4_lane_s64_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4_lane_s64_indices_1.c
+@@ -2,15 +2,16 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ int64x1x4_t
+ f_vld4_lane_s64 (int64_t * p, int64x1x4_t v)
+ {
+   int64x1x4_t res;
+-  /* { dg-error "lane 1 out of range 0 - 0" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 1 out of range 0 - 0" "" { xfail arm*-*-* } 0 } */
+   res = vld4_lane_s64 (p, v, 1);
+-  /* { dg-error "lane -1 out of range 0 - 0" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 0" "" { xfail arm*-*-* } 0 } */
+   res = vld4_lane_s64 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4_lane_s8_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4_lane_s8_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ int8x8x4_t
+ f_vld4_lane_s8 (int8_t * p, int8x8x4_t v)
+ {
+   int8x8x4_t res;
+-  /* { dg-error "lane 8 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 8 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   res = vld4_lane_s8 (p, v, 8);
+-  /* { dg-error "lane -1 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   res = vld4_lane_s8 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4_lane_u16_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4_lane_u16_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ uint16x4x4_t
+ f_vld4_lane_u16 (uint16_t * p, uint16x4x4_t v)
+ {
+   uint16x4x4_t res;
+-  /* { dg-error "lane 4 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 4 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   res = vld4_lane_u16 (p, v, 4);
+-  /* { dg-error "lane -1 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   res = vld4_lane_u16 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4_lane_u32_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4_lane_u32_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ uint32x2x4_t
+ f_vld4_lane_u32 (uint32_t * p, uint32x2x4_t v)
+ {
+   uint32x2x4_t res;
+-  /* { dg-error "lane 2 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 2 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   res = vld4_lane_u32 (p, v, 2);
+-  /* { dg-error "lane -1 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   res = vld4_lane_u32 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4_lane_u64_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4_lane_u64_indices_1.c
+@@ -2,15 +2,16 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ uint64x1x4_t
+ f_vld4_lane_u64 (uint64_t * p, uint64x1x4_t v)
+ {
+   uint64x1x4_t res;
+-  /* { dg-error "lane 1 out of range 0 - 0" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 1 out of range 0 - 0" "" { xfail arm*-*-* } 0 } */
+   res = vld4_lane_u64 (p, v, 1);
+-  /* { dg-error "lane -1 out of range 0 - 0" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 0" "" { xfail arm*-*-* } 0 } */
+   res = vld4_lane_u64 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4_lane_u8_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4_lane_u8_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ uint8x8x4_t
+ f_vld4_lane_u8 (uint8_t * p, uint8x8x4_t v)
+ {
+   uint8x8x4_t res;
+-  /* { dg-error "lane 8 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 8 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   res = vld4_lane_u8 (p, v, 8);
+-  /* { dg-error "lane -1 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   res = vld4_lane_u8 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4q_lane_f16_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4q_lane_f16_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ float16x8x4_t
+ f_vld4q_lane_f16 (float16_t * p, float16x8x4_t v)
+ {
+   float16x8x4_t res;
+-  /* { dg-error "lane 8 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 8 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   res = vld4q_lane_f16 (p, v, 8);
+-  /* { dg-error "lane -1 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   res = vld4q_lane_f16 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4q_lane_f32_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4q_lane_f32_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ float32x4x4_t
+ f_vld4q_lane_f32 (float32_t * p, float32x4x4_t v)
+ {
+   float32x4x4_t res;
+-  /* { dg-error "lane 4 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 4 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   res = vld4q_lane_f32 (p, v, 4);
+-  /* { dg-error "lane -1 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   res = vld4q_lane_f32 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4q_lane_f64_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4q_lane_f64_indices_1.c
+@@ -2,15 +2,16 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ float64x2x4_t
+ f_vld4q_lane_f64 (float64_t * p, float64x2x4_t v)
+ {
+   float64x2x4_t res;
+-  /* { dg-error "lane 2 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 2 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   res = vld4q_lane_f64 (p, v, 2);
+-  /* { dg-error "lane -1 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   res = vld4q_lane_f64 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4q_lane_p8_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4q_lane_p8_indices_1.c
+@@ -2,15 +2,16 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ poly8x16x4_t
+ f_vld4q_lane_p8 (poly8_t * p, poly8x16x4_t v)
+ {
+   poly8x16x4_t res;
+-  /* { dg-error "lane 16 out of range 0 - 15" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 16 out of range 0 - 15" "" { xfail arm*-*-* } 0 } */
+   res = vld4q_lane_p8 (p, v, 16);
+-  /* { dg-error "lane -1 out of range 0 - 15" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 15" "" { xfail arm*-*-* } 0 } */
+   res = vld4q_lane_p8 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4q_lane_s16_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4q_lane_s16_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ int16x8x4_t
+ f_vld4q_lane_s16 (int16_t * p, int16x8x4_t v)
+ {
+   int16x8x4_t res;
+-  /* { dg-error "lane 8 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 8 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   res = vld4q_lane_s16 (p, v, 8);
+-  /* { dg-error "lane -1 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   res = vld4q_lane_s16 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4q_lane_s32_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4q_lane_s32_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ int32x4x4_t
+ f_vld4q_lane_s32 (int32_t * p, int32x4x4_t v)
+ {
+   int32x4x4_t res;
+-  /* { dg-error "lane 4 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 4 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   res = vld4q_lane_s32 (p, v, 4);
+-  /* { dg-error "lane -1 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   res = vld4q_lane_s32 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4q_lane_s64_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4q_lane_s64_indices_1.c
+@@ -2,15 +2,16 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ int64x2x4_t
+ f_vld4q_lane_s64 (int64_t * p, int64x2x4_t v)
+ {
+   int64x2x4_t res;
+-  /* { dg-error "lane 2 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 2 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   res = vld4q_lane_s64 (p, v, 2);
+-  /* { dg-error "lane -1 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   res = vld4q_lane_s64 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4q_lane_s8_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4q_lane_s8_indices_1.c
+@@ -2,15 +2,16 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ int8x16x4_t
+ f_vld4q_lane_s8 (int8_t * p, int8x16x4_t v)
+ {
+   int8x16x4_t res;
+-  /* { dg-error "lane 16 out of range 0 - 15" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 16 out of range 0 - 15" "" { xfail arm*-*-* } 0 } */
+   res = vld4q_lane_s8 (p, v, 16);
+-  /* { dg-error "lane -1 out of range 0 - 15" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 15" "" { xfail arm*-*-* } 0 } */
+   res = vld4q_lane_s8 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4q_lane_u16_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4q_lane_u16_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ uint16x8x4_t
+ f_vld4q_lane_u16 (uint16_t * p, uint16x8x4_t v)
+ {
+   uint16x8x4_t res;
+-  /* { dg-error "lane 8 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 8 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   res = vld4q_lane_u16 (p, v, 8);
+-  /* { dg-error "lane -1 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   res = vld4q_lane_u16 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4q_lane_u32_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4q_lane_u32_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ uint32x4x4_t
+ f_vld4q_lane_u32 (uint32_t * p, uint32x4x4_t v)
+ {
+   uint32x4x4_t res;
+-  /* { dg-error "lane 4 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 4 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   res = vld4q_lane_u32 (p, v, 4);
+-  /* { dg-error "lane -1 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   res = vld4q_lane_u32 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4q_lane_u64_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4q_lane_u64_indices_1.c
+@@ -2,15 +2,16 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ uint64x2x4_t
+ f_vld4q_lane_u64 (uint64_t * p, uint64x2x4_t v)
+ {
+   uint64x2x4_t res;
+-  /* { dg-error "lane 2 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 2 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   res = vld4q_lane_u64 (p, v, 2);
+-  /* { dg-error "lane -1 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   res = vld4q_lane_u64 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4q_lane_u8_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vld4q_lane_u8_indices_1.c
+@@ -2,15 +2,16 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ uint8x16x4_t
+ f_vld4q_lane_u8 (uint8_t * p, uint8x16x4_t v)
+ {
+   uint8x16x4_t res;
+-  /* { dg-error "lane 16 out of range 0 - 15" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 16 out of range 0 - 15" "" { xfail arm*-*-* } 0 } */
+   res = vld4q_lane_u8 (p, v, 16);
+-  /* { dg-error "lane -1 out of range 0 - 15" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 15" "" { xfail arm*-*-* } 0 } */
+   res = vld4q_lane_u8 (p, v, -1);
+   return res;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2_lane_f16_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2_lane_f16_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst2_lane_f16 (float16_t * p, float16x4x2_t v)
+ {
+-  /* { dg-error "lane 4 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 4 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   vst2_lane_f16 (p, v, 4);
+-  /* { dg-error "lane -1 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   vst2_lane_f16 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2_lane_f32_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2_lane_f32_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst2_lane_f32 (float32_t * p, float32x2x2_t v)
+ {
+-  /* { dg-error "lane 2 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 2 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   vst2_lane_f32 (p, v, 2);
+-  /* { dg-error "lane -1 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   vst2_lane_f32 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2_lane_f64_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2_lane_f64_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ void
+ f_vst2_lane_f64 (float64_t * p, float64x1x2_t v)
+ {
+-  /* { dg-error "lane 1 out of range 0 - 0" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 1 out of range 0 - 0" "" { xfail arm*-*-* } 0 } */
+   vst2_lane_f64 (p, v, 1);
+-  /* { dg-error "lane -1 out of range 0 - 0" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 0" "" { xfail arm*-*-* } 0 } */
+   vst2_lane_f64 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2_lane_p8_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2_lane_p8_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst2_lane_p8 (poly8_t * p, poly8x8x2_t v)
+ {
+-  /* { dg-error "lane 8 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 8 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   vst2_lane_p8 (p, v, 8);
+-  /* { dg-error "lane -1 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   vst2_lane_p8 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2_lane_s16_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2_lane_s16_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst2_lane_s16 (int16_t * p, int16x4x2_t v)
+ {
+-  /* { dg-error "lane 4 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 4 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   vst2_lane_s16 (p, v, 4);
+-  /* { dg-error "lane -1 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   vst2_lane_s16 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2_lane_s32_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2_lane_s32_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst2_lane_s32 (int32_t * p, int32x2x2_t v)
+ {
+-  /* { dg-error "lane 2 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 2 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   vst2_lane_s32 (p, v, 2);
+-  /* { dg-error "lane -1 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   vst2_lane_s32 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2_lane_s64_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2_lane_s64_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ void
+ f_vst2_lane_s64 (int64_t * p, int64x1x2_t v)
+ {
+-  /* { dg-error "lane 1 out of range 0 - 0" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 1 out of range 0 - 0" "" { xfail arm*-*-* } 0 } */
+   vst2_lane_s64 (p, v, 1);
+-  /* { dg-error "lane -1 out of range 0 - 0" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 0" "" { xfail arm*-*-* } 0 } */
+   vst2_lane_s64 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2_lane_s8_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2_lane_s8_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst2_lane_s8 (int8_t * p, int8x8x2_t v)
+ {
+-  /* { dg-error "lane 8 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 8 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   vst2_lane_s8 (p, v, 8);
+-  /* { dg-error "lane -1 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   vst2_lane_s8 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2_lane_u16_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2_lane_u16_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst2_lane_u16 (uint16_t * p, uint16x4x2_t v)
+ {
+-  /* { dg-error "lane 4 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 4 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   vst2_lane_u16 (p, v, 4);
+-  /* { dg-error "lane -1 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   vst2_lane_u16 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2_lane_u32_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2_lane_u32_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst2_lane_u32 (uint32_t * p, uint32x2x2_t v)
+ {
+-  /* { dg-error "lane 2 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 2 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   vst2_lane_u32 (p, v, 2);
+-  /* { dg-error "lane -1 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   vst2_lane_u32 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2_lane_u64_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2_lane_u64_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ void
+ f_vst2_lane_u64 (uint64_t * p, uint64x1x2_t v)
+ {
+-  /* { dg-error "lane 1 out of range 0 - 0" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 1 out of range 0 - 0" "" { xfail arm*-*-* } 0 } */
+   vst2_lane_u64 (p, v, 1);
+-  /* { dg-error "lane -1 out of range 0 - 0" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 0" "" { xfail arm*-*-* } 0 } */
+   vst2_lane_u64 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2_lane_u8_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2_lane_u8_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst2_lane_u8 (uint8_t * p, uint8x8x2_t v)
+ {
+-  /* { dg-error "lane 8 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 8 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   vst2_lane_u8 (p, v, 8);
+-  /* { dg-error "lane -1 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   vst2_lane_u8 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2q_lane_f16_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2q_lane_f16_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst2q_lane_f16 (float16_t * p, float16x8x2_t v)
+ {
+-  /* { dg-error "lane 8 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 8 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   vst2q_lane_f16 (p, v, 8);
+-  /* { dg-error "lane -1 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   vst2q_lane_f16 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2q_lane_f32_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2q_lane_f32_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst2q_lane_f32 (float32_t * p, float32x4x2_t v)
+ {
+-  /* { dg-error "lane 4 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 4 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   vst2q_lane_f32 (p, v, 4);
+-  /* { dg-error "lane -1 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   vst2q_lane_f32 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2q_lane_f64_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2q_lane_f64_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ void
+ f_vst2q_lane_f64 (float64_t * p, float64x2x2_t v)
+ {
+-  /* { dg-error "lane 2 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 2 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   vst2q_lane_f64 (p, v, 2);
+-  /* { dg-error "lane -1 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   vst2q_lane_f64 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2q_lane_p8_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2q_lane_p8_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ void
+ f_vst2q_lane_p8 (poly8_t * p, poly8x16x2_t v)
+ {
+-  /* { dg-error "lane 16 out of range 0 - 15" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 16 out of range 0 - 15" "" { xfail arm*-*-* } 0 } */
+   vst2q_lane_p8 (p, v, 16);
+-  /* { dg-error "lane -1 out of range 0 - 15" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 15" "" { xfail arm*-*-* } 0 } */
+   vst2q_lane_p8 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2q_lane_s16_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2q_lane_s16_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst2q_lane_s16 (int16_t * p, int16x8x2_t v)
+ {
+-  /* { dg-error "lane 8 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 8 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   vst2q_lane_s16 (p, v, 8);
+-  /* { dg-error "lane -1 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   vst2q_lane_s16 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2q_lane_s32_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2q_lane_s32_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst2q_lane_s32 (int32_t * p, int32x4x2_t v)
+ {
+-  /* { dg-error "lane 4 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 4 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   vst2q_lane_s32 (p, v, 4);
+-  /* { dg-error "lane -1 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   vst2q_lane_s32 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2q_lane_s64_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2q_lane_s64_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ void
+ f_vst2q_lane_s64 (int64_t * p, int64x2x2_t v)
+ {
+-  /* { dg-error "lane 2 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 2 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   vst2q_lane_s64 (p, v, 2);
+-  /* { dg-error "lane -1 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   vst2q_lane_s64 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2q_lane_s8_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2q_lane_s8_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ void
+ f_vst2q_lane_s8 (int8_t * p, int8x16x2_t v)
+ {
+-  /* { dg-error "lane 16 out of range 0 - 15" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 16 out of range 0 - 15" "" { xfail arm*-*-* } 0 } */
+   vst2q_lane_s8 (p, v, 16);
+-  /* { dg-error "lane -1 out of range 0 - 15" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 15" "" { xfail arm*-*-* } 0 } */
+   vst2q_lane_s8 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2q_lane_u16_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2q_lane_u16_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst2q_lane_u16 (uint16_t * p, uint16x8x2_t v)
+ {
+-  /* { dg-error "lane 8 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 8 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   vst2q_lane_u16 (p, v, 8);
+-  /* { dg-error "lane -1 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   vst2q_lane_u16 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2q_lane_u32_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2q_lane_u32_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst2q_lane_u32 (uint32_t * p, uint32x4x2_t v)
+ {
+-  /* { dg-error "lane 4 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 4 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   vst2q_lane_u32 (p, v, 4);
+-  /* { dg-error "lane -1 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   vst2q_lane_u32 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2q_lane_u64_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2q_lane_u64_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ void
+ f_vst2q_lane_u64 (uint64_t * p, uint64x2x2_t v)
+ {
+-  /* { dg-error "lane 2 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 2 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   vst2q_lane_u64 (p, v, 2);
+-  /* { dg-error "lane -1 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   vst2q_lane_u64 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2q_lane_u8_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst2q_lane_u8_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ void
+ f_vst2q_lane_u8 (uint8_t * p, uint8x16x2_t v)
+ {
+-  /* { dg-error "lane 16 out of range 0 - 15" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 16 out of range 0 - 15" "" { xfail arm*-*-* } 0 } */
+   vst2q_lane_u8 (p, v, 16);
+-  /* { dg-error "lane -1 out of range 0 - 15" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 15" "" { xfail arm*-*-* } 0 } */
+   vst2q_lane_u8 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3_lane_f16_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3_lane_f16_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst3_lane_f16 (float16_t * p, float16x4x3_t v)
+ {
+-  /* { dg-error "lane 4 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 4 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   vst3_lane_f16 (p, v, 4);
+-  /* { dg-error "lane -1 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   vst3_lane_f16 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3_lane_f32_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3_lane_f32_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst3_lane_f32 (float32_t * p, float32x2x3_t v)
+ {
+-  /* { dg-error "lane 2 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 2 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   vst3_lane_f32 (p, v, 2);
+-  /* { dg-error "lane -1 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   vst3_lane_f32 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3_lane_f64_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3_lane_f64_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ void
+ f_vst3_lane_f64 (float64_t * p, float64x1x3_t v)
+ {
+-  /* { dg-error "lane 1 out of range 0 - 0" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 1 out of range 0 - 0" "" { xfail arm*-*-* } 0 } */
+   vst3_lane_f64 (p, v, 1);
+-  /* { dg-error "lane -1 out of range 0 - 0" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 0" "" { xfail arm*-*-* } 0 } */
+   vst3_lane_f64 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3_lane_p8_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3_lane_p8_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst3_lane_p8 (poly8_t * p, poly8x8x3_t v)
+ {
+-  /* { dg-error "lane 8 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 8 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   vst3_lane_p8 (p, v, 8);
+-  /* { dg-error "lane -1 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   vst3_lane_p8 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3_lane_s16_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3_lane_s16_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst3_lane_s16 (int16_t * p, int16x4x3_t v)
+ {
+-  /* { dg-error "lane 4 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 4 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   vst3_lane_s16 (p, v, 4);
+-  /* { dg-error "lane -1 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   vst3_lane_s16 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3_lane_s32_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3_lane_s32_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst3_lane_s32 (int32_t * p, int32x2x3_t v)
+ {
+-  /* { dg-error "lane 2 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 2 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   vst3_lane_s32 (p, v, 2);
+-  /* { dg-error "lane -1 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   vst3_lane_s32 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3_lane_s64_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3_lane_s64_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ void
+ f_vst3_lane_s64 (int64_t * p, int64x1x3_t v)
+ {
+-  /* { dg-error "lane 1 out of range 0 - 0" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 1 out of range 0 - 0" "" { xfail arm*-*-* } 0 } */
+   vst3_lane_s64 (p, v, 1);
+-  /* { dg-error "lane -1 out of range 0 - 0" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 0" "" { xfail arm*-*-* } 0 } */
+   vst3_lane_s64 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3_lane_s8_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3_lane_s8_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst3_lane_s8 (int8_t * p, int8x8x3_t v)
+ {
+-  /* { dg-error "lane 8 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 8 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   vst3_lane_s8 (p, v, 8);
+-  /* { dg-error "lane -1 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   vst3_lane_s8 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3_lane_u16_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3_lane_u16_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst3_lane_u16 (uint16_t * p, uint16x4x3_t v)
+ {
+-  /* { dg-error "lane 4 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 4 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   vst3_lane_u16 (p, v, 4);
+-  /* { dg-error "lane -1 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   vst3_lane_u16 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3_lane_u32_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3_lane_u32_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst3_lane_u32 (uint32_t * p, uint32x2x3_t v)
+ {
+-  /* { dg-error "lane 2 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 2 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   vst3_lane_u32 (p, v, 2);
+-  /* { dg-error "lane -1 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   vst3_lane_u32 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3_lane_u64_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3_lane_u64_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ void
+ f_vst3_lane_u64 (uint64_t * p, uint64x1x3_t v)
+ {
+-  /* { dg-error "lane 1 out of range 0 - 0" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 1 out of range 0 - 0" "" { xfail arm*-*-* } 0 } */
+   vst3_lane_u64 (p, v, 1);
+-  /* { dg-error "lane -1 out of range 0 - 0" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 0" "" { xfail arm*-*-* } 0 } */
+   vst3_lane_u64 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3_lane_u8_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3_lane_u8_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst3_lane_u8 (uint8_t * p, uint8x8x3_t v)
+ {
+-  /* { dg-error "lane 8 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 8 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   vst3_lane_u8 (p, v, 8);
+-  /* { dg-error "lane -1 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   vst3_lane_u8 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3q_lane_f16_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3q_lane_f16_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst3q_lane_f16 (float16_t * p, float16x8x3_t v)
+ {
+-  /* { dg-error "lane 8 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 8 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   vst3q_lane_f16 (p, v, 8);
+-  /* { dg-error "lane -1 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   vst3q_lane_f16 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3q_lane_f32_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3q_lane_f32_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst3q_lane_f32 (float32_t * p, float32x4x3_t v)
+ {
+-  /* { dg-error "lane 4 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 4 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   vst3q_lane_f32 (p, v, 4);
+-  /* { dg-error "lane -1 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   vst3q_lane_f32 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3q_lane_f64_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3q_lane_f64_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ void
+ f_vst3q_lane_f64 (float64_t * p, float64x2x3_t v)
+ {
+-  /* { dg-error "lane 2 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 2 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   vst3q_lane_f64 (p, v, 2);
+-  /* { dg-error "lane -1 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   vst3q_lane_f64 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3q_lane_p8_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3q_lane_p8_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ void
+ f_vst3q_lane_p8 (poly8_t * p, poly8x16x3_t v)
+ {
+-  /* { dg-error "lane 16 out of range 0 - 15" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 16 out of range 0 - 15" "" { xfail arm*-*-* } 0 } */
+   vst3q_lane_p8 (p, v, 16);
+-  /* { dg-error "lane -1 out of range 0 - 15" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 15" "" { xfail arm*-*-* } 0 } */
+   vst3q_lane_p8 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3q_lane_s16_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3q_lane_s16_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst3q_lane_s16 (int16_t * p, int16x8x3_t v)
+ {
+-  /* { dg-error "lane 8 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 8 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   vst3q_lane_s16 (p, v, 8);
+-  /* { dg-error "lane -1 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   vst3q_lane_s16 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3q_lane_s32_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3q_lane_s32_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst3q_lane_s32 (int32_t * p, int32x4x3_t v)
+ {
+-  /* { dg-error "lane 4 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 4 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   vst3q_lane_s32 (p, v, 4);
+-  /* { dg-error "lane -1 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   vst3q_lane_s32 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3q_lane_s64_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3q_lane_s64_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ void
+ f_vst3q_lane_s64 (int64_t * p, int64x2x3_t v)
+ {
+-  /* { dg-error "lane 2 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 2 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   vst3q_lane_s64 (p, v, 2);
+-  /* { dg-error "lane -1 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   vst3q_lane_s64 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3q_lane_s8_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3q_lane_s8_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ void
+ f_vst3q_lane_s8 (int8_t * p, int8x16x3_t v)
+ {
+-  /* { dg-error "lane 16 out of range 0 - 15" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 16 out of range 0 - 15" "" { xfail arm*-*-* } 0 } */
+   vst3q_lane_s8 (p, v, 16);
+-  /* { dg-error "lane -1 out of range 0 - 15" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 15" "" { xfail arm*-*-* } 0 } */
+   vst3q_lane_s8 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3q_lane_u16_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3q_lane_u16_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst3q_lane_u16 (uint16_t * p, uint16x8x3_t v)
+ {
+-  /* { dg-error "lane 8 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 8 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   vst3q_lane_u16 (p, v, 8);
+-  /* { dg-error "lane -1 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   vst3q_lane_u16 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3q_lane_u32_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3q_lane_u32_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst3q_lane_u32 (uint32_t * p, uint32x4x3_t v)
+ {
+-  /* { dg-error "lane 4 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 4 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   vst3q_lane_u32 (p, v, 4);
+-  /* { dg-error "lane -1 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   vst3q_lane_u32 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3q_lane_u64_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3q_lane_u64_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ void
+ f_vst3q_lane_u64 (uint64_t * p, uint64x2x3_t v)
+ {
+-  /* { dg-error "lane 2 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 2 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   vst3q_lane_u64 (p, v, 2);
+-  /* { dg-error "lane -1 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   vst3q_lane_u64 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3q_lane_u8_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst3q_lane_u8_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ void
+ f_vst3q_lane_u8 (uint8_t * p, uint8x16x3_t v)
+ {
+-  /* { dg-error "lane 16 out of range 0 - 15" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 16 out of range 0 - 15" "" { xfail arm*-*-* } 0 } */
+   vst3q_lane_u8 (p, v, 16);
+-  /* { dg-error "lane -1 out of range 0 - 15" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 15" "" { xfail arm*-*-* } 0 } */
+   vst3q_lane_u8 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4_lane_f16_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4_lane_f16_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst4_lane_f16 (float16_t * p, float16x4x4_t v)
+ {
+-  /* { dg-error "lane 4 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 4 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   vst4_lane_f16 (p, v, 4);
+-  /* { dg-error "lane -1 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   vst4_lane_f16 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4_lane_f32_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4_lane_f32_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst4_lane_f32 (float32_t * p, float32x2x4_t v)
+ {
+-  /* { dg-error "lane 2 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 2 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   vst4_lane_f32 (p, v, 2);
+-  /* { dg-error "lane -1 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   vst4_lane_f32 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4_lane_f64_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4_lane_f64_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ void
+ f_vst4_lane_f64 (float64_t * p, float64x1x4_t v)
+ {
+-  /* { dg-error "lane 1 out of range 0 - 0" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 1 out of range 0 - 0" "" { xfail arm*-*-* } 0 } */
+   vst4_lane_f64 (p, v, 1);
+-  /* { dg-error "lane -1 out of range 0 - 0" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 0" "" { xfail arm*-*-* } 0 } */
+   vst4_lane_f64 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4_lane_p8_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4_lane_p8_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst4_lane_p8 (poly8_t * p, poly8x8x4_t v)
+ {
+-  /* { dg-error "lane 8 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 8 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   vst4_lane_p8 (p, v, 8);
+-  /* { dg-error "lane -1 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   vst4_lane_p8 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4_lane_s16_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4_lane_s16_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst4_lane_s16 (int16_t * p, int16x4x4_t v)
+ {
+-  /* { dg-error "lane 4 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 4 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   vst4_lane_s16 (p, v, 4);
+-  /* { dg-error "lane -1 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   vst4_lane_s16 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4_lane_s32_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4_lane_s32_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst4_lane_s32 (int32_t * p, int32x2x4_t v)
+ {
+-  /* { dg-error "lane 2 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 2 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   vst4_lane_s32 (p, v, 2);
+-  /* { dg-error "lane -1 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   vst4_lane_s32 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4_lane_s64_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4_lane_s64_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ void
+ f_vst4_lane_s64 (int64_t * p, int64x1x4_t v)
+ {
+-  /* { dg-error "lane 1 out of range 0 - 0" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 1 out of range 0 - 0" "" { xfail arm*-*-* } 0 } */
+   vst4_lane_s64 (p, v, 1);
+-  /* { dg-error "lane -1 out of range 0 - 0" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 0" "" { xfail arm*-*-* } 0 } */
+   vst4_lane_s64 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4_lane_s8_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4_lane_s8_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst4_lane_s8 (int8_t * p, int8x8x4_t v)
+ {
+-  /* { dg-error "lane 8 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 8 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   vst4_lane_s8 (p, v, 8);
+-  /* { dg-error "lane -1 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   vst4_lane_s8 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4_lane_u16_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4_lane_u16_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst4_lane_u16 (uint16_t * p, uint16x4x4_t v)
+ {
+-  /* { dg-error "lane 4 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 4 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   vst4_lane_u16 (p, v, 4);
+-  /* { dg-error "lane -1 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   vst4_lane_u16 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4_lane_u32_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4_lane_u32_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst4_lane_u32 (uint32_t * p, uint32x2x4_t v)
+ {
+-  /* { dg-error "lane 2 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 2 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   vst4_lane_u32 (p, v, 2);
+-  /* { dg-error "lane -1 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   vst4_lane_u32 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4_lane_u64_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4_lane_u64_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ void
+ f_vst4_lane_u64 (uint64_t * p, uint64x1x4_t v)
+ {
+-  /* { dg-error "lane 1 out of range 0 - 0" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 1 out of range 0 - 0" "" { xfail arm*-*-* } 0 } */
+   vst4_lane_u64 (p, v, 1);
+-  /* { dg-error "lane -1 out of range 0 - 0" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 0" "" { xfail arm*-*-* } 0 } */
+   vst4_lane_u64 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4_lane_u8_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4_lane_u8_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst4_lane_u8 (uint8_t * p, uint8x8x4_t v)
+ {
+-  /* { dg-error "lane 8 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 8 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   vst4_lane_u8 (p, v, 8);
+-  /* { dg-error "lane -1 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   vst4_lane_u8 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4q_lane_f16_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4q_lane_f16_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst4q_lane_f16 (float16_t * p, float16x8x4_t v)
+ {
+-  /* { dg-error "lane 8 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 8 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   vst4q_lane_f16 (p, v, 8);
+-  /* { dg-error "lane -1 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   vst4q_lane_f16 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4q_lane_f32_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4q_lane_f32_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst4q_lane_f32 (float32_t * p, float32x4x4_t v)
+ {
+-  /* { dg-error "lane 4 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 4 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   vst4q_lane_f32 (p, v, 4);
+-  /* { dg-error "lane -1 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   vst4q_lane_f32 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4q_lane_f64_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4q_lane_f64_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ void
+ f_vst4q_lane_f64 (float64_t * p, float64x2x4_t v)
+ {
+-  /* { dg-error "lane 2 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 2 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   vst4q_lane_f64 (p, v, 2);
+-  /* { dg-error "lane -1 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   vst4q_lane_f64 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4q_lane_p8_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4q_lane_p8_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ void
+ f_vst4q_lane_p8 (poly8_t * p, poly8x16x4_t v)
+ {
+-  /* { dg-error "lane 16 out of range 0 - 15" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 16 out of range 0 - 15" "" { xfail arm*-*-* } 0 } */
+   vst4q_lane_p8 (p, v, 16);
+-  /* { dg-error "lane -1 out of range 0 - 15" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 15" "" { xfail arm*-*-* } 0 } */
+   vst4q_lane_p8 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4q_lane_s16_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4q_lane_s16_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst4q_lane_s16 (int16_t * p, int16x8x4_t v)
+ {
+-  /* { dg-error "lane 8 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 8 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   vst4q_lane_s16 (p, v, 8);
+-  /* { dg-error "lane -1 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   vst4q_lane_s16 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4q_lane_s32_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4q_lane_s32_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst4q_lane_s32 (int32_t * p, int32x4x4_t v)
+ {
+-  /* { dg-error "lane 4 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 4 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   vst4q_lane_s32 (p, v, 4);
+-  /* { dg-error "lane -1 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   vst4q_lane_s32 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4q_lane_s64_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4q_lane_s64_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ void
+ f_vst4q_lane_s64 (int64_t * p, int64x2x4_t v)
+ {
+-  /* { dg-error "lane 2 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 2 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   vst4q_lane_s64 (p, v, 2);
+-  /* { dg-error "lane -1 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   vst4q_lane_s64 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4q_lane_s8_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4q_lane_s8_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ void
+ f_vst4q_lane_s8 (int8_t * p, int8x16x4_t v)
+ {
+-  /* { dg-error "lane 16 out of range 0 - 15" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 16 out of range 0 - 15" "" { xfail arm*-*-* } 0 } */
+   vst4q_lane_s8 (p, v, 16);
+-  /* { dg-error "lane -1 out of range 0 - 15" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 15" "" { xfail arm*-*-* } 0 } */
+   vst4q_lane_s8 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4q_lane_u16_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4q_lane_u16_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst4q_lane_u16 (uint16_t * p, uint16x8x4_t v)
+ {
+-  /* { dg-error "lane 8 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 8 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   vst4q_lane_u16 (p, v, 8);
+-  /* { dg-error "lane -1 out of range 0 - 7" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 7" "" { xfail arm*-*-* } 0 } */
+   vst4q_lane_u16 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4q_lane_u32_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4q_lane_u32_indices_1.c
+@@ -2,13 +2,14 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ 
+ void
+ f_vst4q_lane_u32 (uint32_t * p, uint32x4x4_t v)
+ {
+-  /* { dg-error "lane 4 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 4 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   vst4q_lane_u32 (p, v, 4);
+-  /* { dg-error "lane -1 out of range 0 - 3" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 3" "" { xfail arm*-*-* } 0 } */
+   vst4q_lane_u32 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4q_lane_u64_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4q_lane_u64_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ void
+ f_vst4q_lane_u64 (uint64_t * p, uint64x2x4_t v)
+ {
+-  /* { dg-error "lane 2 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 2 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   vst4q_lane_u64 (p, v, 2);
+-  /* { dg-error "lane -1 out of range 0 - 1" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 1" "" { xfail arm*-*-* } 0 } */
+   vst4q_lane_u64 (p, v, -1);
+   return;
+ }
+--- a/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4q_lane_u8_indices_1.c
++++ b/src/gcc/testsuite/gcc.target/aarch64/advsimd-intrinsics/vst4q_lane_u8_indices_1.c
+@@ -2,14 +2,15 @@
+ 
+ /* { dg-do compile } */
+ /* { dg-skip-if "" { *-*-* } { "-fno-fat-lto-objects" } } */
++/* { dg-excess-errors "" { xfail arm*-*-* } } */
+ /* { dg-skip-if "" { arm*-*-* } } */
+ 
+ void
+ f_vst4q_lane_u8 (uint8_t * p, uint8x16x4_t v)
+ {
+-  /* { dg-error "lane 16 out of range 0 - 15" "" { target *-*-* } 0 } */
++  /* { dg-error "lane 16 out of range 0 - 15" "" { xfail arm*-*-* } 0 } */
+   vst4q_lane_u8 (p, v, 16);
+-  /* { dg-error "lane -1 out of range 0 - 15" "" { target *-*-* } 0 } */
++  /* { dg-error "lane -1 out of range 0 - 15" "" { xfail arm*-*-* } 0 } */
+   vst4q_lane_u8 (p, v, -1);
+   return;
+ }

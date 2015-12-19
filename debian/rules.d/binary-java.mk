@@ -336,7 +336,7 @@ $(binary_stamp)-libgcjjar: $(install_stamp)
 
 # ----------------------------------------------------------------------
 $(build_javasrc_stamp): $(build_stamp)
-	PATH=$(PWD)/bin:$$PATH \
+	PATH=$(CURDIR)/bin:$$PATH \
 	  $(MAKE) -C $(buildlibdir)/libjava src.zip
 	touch $@
 

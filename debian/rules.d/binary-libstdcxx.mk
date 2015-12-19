@@ -217,7 +217,8 @@ define __do_libstdcxx
 
 	$(call cross_mangle_shlibs,$(p_l))
 	$(ignshld)DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_l) \
-		$(call shlibdirs_to_search,$(subst stdc++$(CXX_SONAME),gcc$(GCC_SONAME),$(p_l)),$(2))
+		$(call shlibdirs_to_search,$(subst stdc++$(CXX_SONAME),gcc$(GCC_SONAME),$(p_l)),$(2)) \
+		$(if $(filter yes, $(with_common_libs)),,-- -Ldebian/shlibs.common$(2))
 	$(call cross_mangle_substvars,$(p_l))
 	echo $(p_l) >> debian/$(lib_binaries)
 
@@ -246,14 +247,15 @@ define __do_libstdcxx_dbg
 		rm -f $(d_d)/$(usr_lib$(2))/libstdc++.so.*[0-9]
 	)
 
-	$(if $(filter yes,$(with_debug)),
+	$(if $(filter yes,$(with_cxx_debug)),
 		mkdir -p $(d_d)/$(usr_lib$(2))/debug;
 		mv $(d)/$(usr_lib$(2))/debug/libstdc++* $(d_d)/$(usr_lib$(2))/debug;
 		rm -f $(d_d)/$(usr_lib$(2))/debug/libstdc++_pic.a
 	)
 
 	$(ignshld)DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_d) \
-		$(call shlibdirs_to_search,$(subst $(pkg_ver),,$(subst stdc++$(CXX_SONAME),gcc$(GCC_SONAME),$(p_l))),$(2))
+		$(call shlibdirs_to_search,$(subst $(pkg_ver),,$(subst stdc++$(CXX_SONAME),gcc$(GCC_SONAME),$(p_l))),$(2)) \
+		$(if $(filter yes, $(with_common_libs)),,-- -Ldebian/shlibs.common$(2))
 	$(call cross_mangle_substvars,$(p_d))
 
 	debian/dh_doclink -p$(p_d) $(p_lbase)
@@ -391,7 +393,7 @@ $(binary_stamp)-libstdcxx-dev: $(libcxxdev_deps)
 
 	$(dh_compat2) dh_movefiles -p$(p_dev) $(files_dev)
 	$(dh_compat2) dh_movefiles -p$(p_pic) $(files_pic)
-ifeq ($(with_debug),yes)
+ifeq ($(with_cxx_debug),yes)
 	$(dh_compat2) dh_movefiles -p$(p_dbg) $(files_dbg)
 endif
 
@@ -448,7 +450,8 @@ ifeq ($(with_cxxdev),yes)
 endif
 
 	$(ignshld)DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_dev) -p$(p_pic) -p$(p_dbg) \
-		$(call shlibdirs_to_search,,)
+		$(call shlibdirs_to_search,,) \
+		$(if $(filter yes, $(with_common_libs)),,-- -Ldebian/shlibs.common$(2))
 	$(call cross_mangle_substvars,$(p_dbg))
 	echo $(p_dev) $(p_pic) $(p_dbg) >> debian/$(lib_binaries)
 

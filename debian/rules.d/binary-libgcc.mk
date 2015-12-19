@@ -259,7 +259,7 @@ define __do_gcc_devels2
 	    )
 	)
 	$(if $(filter yes, $(with_qmath)),
-		$(call install_gcc_lib,libquadmath,$(QMATH_SONAME),$(1),$(2))
+		$(call install_gcc_lib,libquadmath,$(QUADMATH_SONAME),$(1),$(2))
 	)
 endef
 

@@ -4,7 +4,7 @@ Index: b/src/gcc/Makefile.in
 ===================================================================
 --- a/src/gcc/Makefile.in
 +++ b/src/gcc/Makefile.in
-@@ -2249,30 +2249,8 @@ s-tm-texi: $(srcdir)/doc/../doc/tm.texi
+@@ -2245,30 +2245,8 @@ s-tm-texi: $(srcdir)/doc/../doc/tm.texi
  # \r is not portable to Solaris tr, therefore we have a special
  # case for ASCII.  We use \r for other encodings like EBCDIC.
  s-tm-texi: build/genhooks$(build_exeext) $(srcdir)/doc/tm.texi.in

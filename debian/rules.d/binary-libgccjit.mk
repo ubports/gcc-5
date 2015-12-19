@@ -45,7 +45,8 @@ $(binary_stamp)-libgccjit: $(install_jit_stamp)
 	dh_strip -p$(p_jitlib) --dbg-package=$(p_jitdbg)
 	$(cross_makeshlibs) dh_makeshlibs -p$(p_jitlib)
 	$(call cross_mangle_shlibs,$(p_jitlib))
-	$(ignshld)$(cross_shlibdeps) dh_shlibdeps -p$(p_jitlib)
+	$(ignshld)$(cross_shlibdeps) dh_shlibdeps -p$(p_jitlib) \
+		$(if $(filter yes, $(with_common_libs)),,-- -Ldebian/shlibs.common$(2))
 	$(call cross_mangle_substvars,$(p_jitlib))
 	echo $(p_jitlib) $(p_jitdev) $(p_jitdbg) >> debian/arch_binaries
 

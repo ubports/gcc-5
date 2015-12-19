@@ -37,16 +37,16 @@ else
 endif
 
 ifeq ($(locale_data),generate)
-  SET_LOCPATH = LOCPATH=$(PWD)/locales
+  SET_LOCPATH = LOCPATH=$(CURDIR)/locales
 endif
 
-SET_PATH = PATH=$(PWD)/bin:/usr/$(libdir)/gcc/bin:$$PATH
+SET_PATH = PATH=$(CURDIR)/bin:/usr/$(libdir)/gcc/bin:$$PATH
 ifeq ($(trunk_build),yes)
   ifneq (,$(findstring sparc64-linux,$(DEB_TARGET_GNU_TYPE)))
-    SET_PATH = PATH=/usr/lib/gcc-snapshot/bin:$(PWD)/bin:/usr/$(libdir)/gcc/bin:$$PATH
+    SET_PATH = PATH=/usr/lib/gcc-snapshot/bin:$(CURDIR)/bin:/usr/$(libdir)/gcc/bin:$$PATH
   endif
   ifneq (,$(findstring ppc64-linux,$(DEB_TARGET_GNU_TYPE)))
-    SET_PATH = PATH=/usr/lib/gcc-snapshot/bin:$(PWD)/bin:/usr/$(libdir)/gcc/bin:$$PATH
+    SET_PATH = PATH=/usr/lib/gcc-snapshot/bin:$(CURDIR)/bin:/usr/$(libdir)/gcc/bin:$$PATH
   endif
 endif
 
@@ -79,6 +79,17 @@ ifeq ($(with_ada),yes)
     CC = gcc
   endif
   CXX = $(subst gcc,g++,$(CC))
+endif
+
+ifneq (,$(filter $(build_type),cross-build-native cross-build-cross))
+  SET_TARGET_TOOLS = \
+	CC_FOR_TARGET=$(DEB_TARGET_GNU_TYPE)-gcc-$(BASE_VERSION) \
+	CXX_FOR_TARGET=$(DEB_TARGET_GNU_TYPE)-g++-$(BASE_VERSION) \
+	GFORTRAN_FOR_TARGET=$(DEB_TARGET_GNU_TYPE)-gfortran-$(BASE_VERSION) \
+	GCJ_FOR_TARGET=$(DEB_TARGET_GNU_TYPE)-gcj-$(BASE_VERSION) \
+	GOC_FOR_TARGET=$(DEB_TARGET_GNU_TYPE)-gccgo-$(BASE_VERSION) \
+	GNAT_FOR_TARGET=$(DEB_TARGET_GNU_TYPE)-gnat-$(BASE_VERSION) \
+	GDC_FOR_TARGET=$(DEB_TARGET_GNU_TYPE)-gdc-$(BASE_VERSION)
 endif
 
 ifeq ($(DEB_BUILD_GNU_TYPE),$(DEB_TARGET_GNU_TYPE))
@@ -135,10 +146,24 @@ ifneq (,$(findstring static,$(DEB_BUILD_OPTIONS)))
   LDFLAGS	+= -static
 endif
 
+ifneq ($(findstring gccdebug, $(DEB_BUILD_OPTIONS)),)
+  CFLAGS		= -O0 -g3 -fno-inline
+  CXXFLAGS		= -O0 -g3 -fno-inline
+  CFLAGS_FOR_BUILD	= -O0 -g3 -fno-inline
+  CXXFLAGS_FOR_BUILD	= -O0 -g3 -fno-inline
+  CFLAGS_FOR_TARGET	= -O0 -g3 -fno-inline
+  CXXFLAGS_FOR_TARGET	= -O0 -g3 -fno-inline
+  BOOT_CFLAGS		=
+  BOOT_LDFLAGS		=
+  STAGE1_CFLAGS		=
+  STAGE1_LDFLAGS	=
+endif
+
 # set CFLAGS/LDFLAGS for the configure step only, maybe be modifed for some target
 # all other flags are passed to the make step.
 CFLAGS_TO_PASS = \
 	$(if $(CFLAGS),CFLAGS="$(CFLAGS)") \
+	$(if $(CXXFLAGS),CXXFLAGS="$(CXXFLAGS)") \
 	$(if $(LIBCFLAGS),LIBCFLAGS="$(LIBCFLAGS)") \
 	$(if $(LIBCXXFLAGS),LIBCXXFLAGS="$(LIBCXXFLAGS)")
 LDFLAGS_TO_PASS = \
@@ -154,8 +179,17 @@ BOOT_CFLAGS_TO_PASS = \
 BOOT_LDFLAGS_TO_PASS = \
 	$(if $(BOOT_LDFLAGS),BOOT_LDFLAGS="$(BOOT_LDFLAGS)")
 
+CFLAGS_FOR_BUILD_TO_PASS = \
+	$(if $(CFLAGS_FOR_BUILD),CFLAGS_FOR_BUILD="$(CFLAGS_FOR_BUILD)")
+CXXFLAGS_FOR_BUILD_TO_PASS = \
+	$(if $(CXXFLAGS_FOR_BUILD),CXXFLAGS_FOR_BUILD="$(CXXFLAGS_FOR_BUILD)")
+LDFLAGS_FOR_BUILD_TO_PASS = \
+	$(if $(LDFLAGS_FOR_BUILD),LDFLAGS_FOR_BUILD="$(LDFLAGS_FOR_BUILD)")
+
 CFLAGS_FOR_TARGET_TO_PASS = \
 	$(if $(CFLAGS_FOR_TARGET),CFLAGS_FOR_TARGET="$(CFLAGS_FOR_TARGET)")
+CXXFLAGS_FOR_TARGET_TO_PASS = \
+	$(if $(CXXFLAGS_FOR_TARGET),CXXFLAGS_FOR_TARGET="$(CXXFLAGS_FOR_TARGET)")
 LDFLAGS_FOR_TARGET_TO_PASS = \
 	$(if $(LDFLAGS_FOR_TARGET),LDFLAGS_FOR_TARGET="$(LDFLAGS_FOR_TARGET)")
 
@@ -243,7 +277,7 @@ ifeq ($(force_gnu_locales),yes)
   CONFARGS += --enable-clocale=gnu
 endif
 
-ifeq ($(with_cxx)-$(with_debug),yes-yes)
+ifeq ($(with_cxx)-$(with_cxx_debug),yes-yes)
   CONFARGS += --enable-libstdcxx-debug
 endif
 CONFARGS += --enable-libstdcxx-time=yes
@@ -697,6 +731,9 @@ else ifeq ($(with_bootstrap),)
   ifneq (, $(filter $(PKGSOURCE),gcj-$(BASE_VERSION) gnat-$(BASE_VERSION) gcc-snapshot))
     bootstrap_target = bootstrap
   endif
+  ifneq (,$(DEB_STAGE))
+    bootstrap_target = bootstrap
+  endif
 
   ifeq ($(derivative),Debian)
     # disable profiled bootstrap for backports
@@ -1113,8 +1150,15 @@ endif
 		CC="$(CC)" \
 		CXX="$(CXX)" \
 		$(CFLAGS_TO_PASS) \
+		$(CXXFLAGS_TO_PASS) \
 		$(LDFLAGS_TO_PASS) \
-		$(SET_SHELL) \
+		$(CFLAGS_FOR_BUILD_TO_PASS) \
+		$(CXXFLAGS_FOR_BUILD_TO_PASS) \
+		$(LDFLAGS_FOR_BUILD_TO_PASS) \
+		$(CFLAGS_FOR_TARGET_TO_PASS) \
+		$(CXXFLAGS_FOR_TARGET_TO_PASS) \
+		$(LDFLAGS_FOR_TARGET_TO_PASS) \
+		$(SET_SHELL) $(SET_TARGET_TOOLS) \
 	LD_LIBRARY_PATH=$${LD_LIBRARY_PATH:+$$LD_LIBRARY_PATH:}$(builddir)/gcc/ada/rts \
 		../src/configure $(subst ___, ,$(CONFARGS))
 
@@ -1183,13 +1227,13 @@ ifeq ($(build_type),build-native)
 	  cd ../..; \
 	  for i in `find gnu -name \*.java`; do gcj-5 -C $$i -I. -Iexternal/asm/; done; \
 	  gcj-5 -findirect-dispatch -O2 -fmain=gnu.classpath.tools.javah.Main \
-	    -I. -Iexternal/asm/ `find . -name \*.class` -o $(PWD)/bin/gjavah.real; \
+	    -I. -Iexternal/asm/ `find . -name \*.class` -o $(CURDIR)/bin/gjavah.real; \
 	  ( \
 	    echo '#!/bin/sh'; \
 	    echo 'export CLASSPATH='`pwd`'$${CLASSPATH:+:$$CLASSPATH}'; \
-	    echo 'exec $(PWD)/bin/gjavah.real "$$@"'; \
-	  ) > $(PWD)/bin/gjavah; \
-	  chmod +x $(PWD)/bin/gjavah; \
+	    echo 'exec $(CURDIR)/bin/gjavah.real "$$@"'; \
+	  ) > $(CURDIR)/bin/gjavah; \
+	  chmod +x $(CURDIR)/bin/gjavah; \
 	fi
     endif
   endif
@@ -1205,7 +1249,14 @@ ifeq ($(build_type),build-native)
 		$(STAGE1_LDFLAGS_TO_PASS) \
 		$(BOOT_CFLAGS_TO_PASS) \
 		$(BOOT_LDFLAGS_TO_PASS) \
+		$(CFLAGS_TO_PASS) \
+		$(CXXFLAGS_TO_PASS) \
+		$(LDFLAGS_TO_PASS) \
+		$(CFLAGS_FOR_BUILD_TO_PASS) \
+		$(CXXFLAGS_FOR_BUILD_TO_PASS) \
+		$(LDFLAGS_FOR_BUILD_TO_PASS) \
 		$(CFLAGS_FOR_TARGET_TO_PASS) \
+		$(CXXFLAGS_FOR_TARGET_TO_PASS) \
 		$(LDFLAGS_FOR_TARGET_TO_PASS) \
 		; \
 	  echo $$? > status; \
@@ -1229,7 +1280,7 @@ endif
 	s=`cat status`; rm -f status; \
 	if [ $$s -ne 0 ] && [ -z "$$NO_CONFIG_LOG_DUMP$$NO_CONFIG_LOG_DUMPS" ]; then \
 	  for log in $$(find $(builddir) -name config.log); do \
-	    case "$$log" in */prev-*) continue; esac; \
+	    case "$$log" in */build/build-*|*/stage1-*|*/prev-*) continue; esac; \
 	    echo LOGFILE START $$log; \
 	    cat $$log; \
 	    echo LOGFILE END $$log; \
@@ -1468,7 +1519,7 @@ $(stampdir)/05-build-html-nosplit: $(build_stamp)
 		-I $(srcdir)/gcc/p/doc/generated \
 		-I $(builddir)/gcc \
 		-I $(buildlibdir)/libquadmath \
-		-o $(PWD)/html/$${outname} \
+		-o $(CURDIR)/html/$${outname} \
 		{}'
 	touch $@
 
@@ -1754,10 +1805,10 @@ clean: debian/control
 	  rm -f $$f2; \
 	done
 	rm -f debian/lib*gcc1.symbols
-	rm -f debian/lib*{atomic$(ATOMIC_SONAME),cilkrts$(CILKRTS_SONAME),gfortran$(FORTRAN_SONAME),gomp$(GOMP_SONAME),itm$(ITM_SONAME),mpx$(MPX_SONAME),quadmath$(QMATH_SONAME)}.symbols
+	rm -f debian/lib*{atomic$(ATOMIC_SONAME),cilkrts$(CILKRTS_SONAME),gfortran$(FORTRAN_SONAME),gomp$(GOMP_SONAME),itm$(ITM_SONAME),mpx$(MPX_SONAME),quadmath$(QUADMATH_SONAME)}.symbols
 	find debian -maxdepth 1 -name '*-cross.symbols' -type l | xargs -r rm -f
 	rm -f debian/gcc-{XX,ar,nm,ranlib}-$(BASE_VERSION).1
-	rm -f debian/shlibs.local debian/substvars.local
+	rm -f debian/shlibs.local debian/shlibs.common* debian/substvars.local
 	rm -f debian/*.debhelper
 	-[ -d debian/bugs ] && $(MAKE) -C debian/bugs clean
 	rm -f debian/README.libstdc++-baseline debian/README.Bugs debian/README.Debian.$(DEB_TARGET_ARCH)
@@ -2010,7 +2061,7 @@ ifeq ($(with_hppa64),yes)
 		CC="$(CC)" \
 		$(CFLAGS_TO_PASS) \
 		$(LDFLAGS_TO_PASS) \
-		DESTDIR=$(PWD)/$(d) \
+		DESTDIR=$(CURDIR)/$(d) \
 		    install
 
 	ls -l $(d)/$(PF)/bin
@@ -2055,7 +2106,7 @@ endif
 	  $(MAKE) -C $(builddir) \
 	    $(CFLAGS_TO_PASS) \
 	    $(LDFLAGS_TO_PASS) \
-	    DESTDIR=$(PWD)/$(d) \
+	    DESTDIR=$(CURDIR)/$(d) \
 	    infodir=/$(PF)/share/info \
 	    mandir=/$(PF)/share/man \
 		install
@@ -2173,7 +2224,7 @@ endif
 	  $(MAKE) -C $(builddir) \
 	    $(CFLAGS_TO_PASS) \
 	    $(LDFLAGS_TO_PASS) \
-	    DESTDIR=$(PWD)/$(d) \
+	    DESTDIR=$(CURDIR)/$(d) \
 	    infodir=/$(PF)/share/info \
 	    mandir=/$(PF)/share/man \
 		install
@@ -2296,7 +2347,20 @@ endif
 
 	chmod 755 debian/dh_*
 
-#	tar cf tmp.tar debian/tmp
+ifneq ($(with_common_libs),yes)
+# for native builds, the default ml libs are always available; no need for a placeholder
+  ifneq (,$(filter $(build_type),build-native))
+	rm -f debian/shlibs.common
+	touch debian/shlibs.common
+  else
+	echo 'libgcc_s $(GCC_SONAME) $(p_lgcc)' > debian/shlibs.common
+	echo 'libstdc++ $(CXX_SONAME) libstdc++$(CXX_SONAME)' >> debian/shlibs.common
+  endif
+	$(foreach ml,32 64 n32 x32 hf sf, \
+	  echo 'libgcc_s $(GCC_SONAME) $(subst lib,lib$(ml),$(p_lgcc))' > debian/shlibs.common$(ml); \
+	  echo 'libstdc++ $(CXX_SONAME) lib$(ml)stdc++$(CXX_SONAME)' >> debian/shlibs.common$(ml); \
+	)
+endif
 
 	@echo XXXXX `date -R`
 	touch $(install_stamp)
@@ -2313,7 +2377,7 @@ $(install_jit_stamp): $(build_jit_stamp) $(install_stamp)
 		CC="$(CC_FOR_JIT)" \
 		$(CFLAGS_TO_PASS) \
 		$(LDFLAGS_TO_PASS) \
-		DESTDIR=$(PWD)/$(d)-jit \
+		DESTDIR=$(CURDIR)/$(d)-jit \
 		    install
 
 	: # copy files to the standard build
@@ -2338,7 +2402,7 @@ $(install_hppa64_stamp): $(build_hppa64_stamp)
 		CC="$(CC)" \
 		$(CFLAGS_TO_PASS) \
 		$(LDFLAGS_TO_PASS) \
-		DESTDIR=$(PWD)/$(d_hppa64) \
+		DESTDIR=$(CURDIR)/$(d_hppa64) \
 		    install
 
 	: # remove files not needed
@@ -2377,7 +2441,7 @@ $(install_neon_stamp): $(build_neon_stamp)
 		CC="$(CC)" \
 		$(CFLAGS_TO_PASS) \
 		$(LDFLAGS_TO_PASS) \
-		DESTDIR=$(PWD)/$(d_neon) \
+		DESTDIR=$(CURDIR)/$(d_neon) \
 		    install
 	touch $(install_neon_stamp)
 
