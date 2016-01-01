@@ -1805,7 +1805,7 @@ Package: gcj-5-jdk
 Section: java
 Architecture: any
 Priority: optional
-Depends: gcc-5-base (= ${gcc:Version}), ${dep:gcj}, ${dep:libcdev}, gcj-5 (= ${gcj:Version}), gcj-5-jre (= ${gcj:Version}), libgcj16-dev (= ${gcj:Version}), fastjar, libgcj-bc, java-common, libantlr-java, ${shlibs:Depends}, dpkg (>= 1.15.4) | install-info, ${misc:Depends}
+Depends: gcc-5-base (= ${gcc:Version}), ${dep:gcj}, ${dep:libcdev}, gcj-5 (= ${gcj:Version}), gcj-5-jre (= ${gcj:Version}), libgcj16-dev (>= ${gcj:Version}), fastjar, libgcj-bc, java-common, libantlr-java, ${shlibs:Depends}, dpkg (>= 1.15.4) | install-info, ${misc:Depends}
 Recommends: libecj-java-gcj
 Suggests: gcj-5-source (>= ${gcj:SoftVersion}), libgcj16-dbg (>= ${gcc:Version})
 Provides: java-compiler, java-sdk, java2-sdk, java5-sdk
@@ -1824,8 +1824,8 @@ Package: gcj-5-jre-headless
 Priority: optional
 Section: java
 Architecture: any
-Depends: gcc-5-base (= ${gcc:Version}), gcj-5-jre-lib (>= ${gcj:SoftVersion}), libgcj16 (= ${gcj:Version}), ${dep:prctl}, ${shlibs:Depends}, ${misc:Depends}
-Suggests: fastjar, gcj-5-jdk (= ${gcj:Version}), libgcj16-awt (= ${gcj:Version})
+Depends: gcc-5-base (= ${gcc:Version}), gcj-5-jre-lib (>= ${gcj:SoftVersion}), libgcj16 (>= ${gcj:Version}), ${dep:prctl}, ${shlibs:Depends}, ${misc:Depends}
+Suggests: fastjar, gcj-5-jdk (= ${gcj:Version}), libgcj16-awt (>= ${gcj:Version})
 Provides: java5-runtime-headless, java2-runtime-headless, java1-runtime-headless, java-runtime-headless
 Description: Java runtime environment using GIJ/Classpath (headless version)
  GIJ is a Java bytecode interpreter, not limited to interpreting bytecode.
@@ -1841,7 +1841,7 @@ Package: gcj-5-jre
 Section: java
 Architecture: any
 Priority: optional
-Depends: gcc-5-base (= ${gcc:Version}), gcj-5-jre-headless (= ${gcj:Version}), libgcj16-awt (= ${gcj:Version}), ${shlibs:Depends}, ${misc:Depends}
+Depends: gcc-5-base (= ${gcc:Version}), gcj-5-jre-headless (= ${gcj:Version}), libgcj16-awt (>= ${gcj:Version}), ${shlibs:Depends}, ${misc:Depends}
 Provides: java5-runtime, java2-runtime, java1-runtime, java-runtime
 Description: Java runtime environment using GIJ/Classpath
  GIJ is a Java bytecode interpreter, not limited to interpreting bytecode.

@@ -4062,7 +4062,7 @@ Package: gcj`'PV-jdk`'TS
 Section: java
 Architecture: any
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
-Depends: BASEDEP, ${dep:gcj}, ${dep:libcdev}, gcj`'PV`'TS (= ${gcj:Version}), gcj`'PV-jre`'TS (= ${gcj:Version}), libidevdep(gcj`'GCJ_SO-dev,,=,${gcj:Version}), fastjar, libgcj-bc`'LS, java-common, libantlr-java, ${shlibs:Depends}, dpkg (>= 1.15.4) | install-info, ${misc:Depends}
+Depends: BASEDEP, ${dep:gcj}, ${dep:libcdev}, gcj`'PV`'TS (= ${gcj:Version}), gcj`'PV-jre`'TS (= ${gcj:Version}), libidevdep(gcj`'GCJ_SO-dev,,>=,${gcj:Version}), fastjar, libgcj-bc`'LS, java-common, libantlr-java, ${shlibs:Depends}, dpkg (>= 1.15.4) | install-info, ${misc:Depends}
 Recommends: libecj-java-gcj
 Suggests: gcj`'PV-source (>= ${gcj:SoftVersion}), libdbgdep(gcj`'GCJ_SO-dbg,)
 Provides: java-compiler, java-sdk, java2-sdk, java5-sdk
@@ -4082,8 +4082,8 @@ Package: gcj`'PV-jre-headless`'TS
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Section: java
 Architecture: any
-Depends: BASEDEP, gcj`'PV-jre-lib`'TS (>= ${gcj:SoftVersion}), libdep(gcj`'LIBGCJ_EXT,,=,${gcj:Version}), ${dep:prctl}, ${shlibs:Depends}, ${misc:Depends}
-Suggests: fastjar, gcj`'PV-jdk`'TS (= ${gcj:Version}), libdep(gcj`'LIBGCJ_EXT-awt,,=,${gcj:Version})
+Depends: BASEDEP, gcj`'PV-jre-lib`'TS (>= ${gcj:SoftVersion}), libdep(gcj`'LIBGCJ_EXT,,>=,${gcj:Version}), ${dep:prctl}, ${shlibs:Depends}, ${misc:Depends}
+Suggests: fastjar, gcj`'PV-jdk`'TS (= ${gcj:Version}), libdep(gcj`'LIBGCJ_EXT-awt,,>=,${gcj:Version})
 Provides: java5-runtime-headless, java2-runtime-headless, java1-runtime-headless, java-runtime-headless
 BUILT_USING`'dnl
 Description: Java runtime environment using GIJ/Classpath (headless version)
@@ -4100,7 +4100,7 @@ Package: gcj`'PV-jre`'TS
 Section: java
 Architecture: any
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
-Depends: BASEDEP, gcj`'PV-jre-headless`'TS (= ${gcj:Version}), libdep(gcj`'LIBGCJ_EXT-awt,,=,${gcj:Version}), ${shlibs:Depends}, ${misc:Depends}
+Depends: BASEDEP, gcj`'PV-jre-headless`'TS (= ${gcj:Version}), libdep(gcj`'LIBGCJ_EXT-awt,,>=,${gcj:Version}), ${shlibs:Depends}, ${misc:Depends}
 Provides: java5-runtime, java2-runtime, java1-runtime, java-runtime
 BUILT_USING`'dnl
 Description: Java runtime environment using GIJ/Classpath
