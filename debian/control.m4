@@ -3200,7 +3200,7 @@ ifdef(`MULTIARCH', `Multi-Arch: same
 Pre-Depends: ${misc:Pre-Depends}
 ')`'dnl
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
-Depends: BASEDEP, libgccjit`'GCCJIT_SO (= ${gcc:Version}),
+Depends: BASEDEP, libgccjit`'GCCJIT_SO (>= ${gcc:Version}),
  ${shlibs:Depends}, ${misc:Depends}
 BUILT_USING`'dnl
 Suggests: libgccjit`'PV-dbg
@@ -4888,7 +4888,9 @@ Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
 Priority: extra
 Depends: BASELDEP, gnat`'PV`'TS (ifdef(`TARGET',`>= ${gnat:SoftVersion}',`= ${gnat:Version}')),
  libgnatvsn`'GNAT_V`'LS (= ${gnat:Version}), ${misc:Depends}
-Conflicts: libgnatvsn-dev (<< `'GNAT_V), libgnatvsn4.1-dev, libgnatvsn4.3-dev, libgnatvsn4.4-dev, libgnatvsn4.5-dev, libgnatvsn4.6-dev
+Conflicts: libgnatvsn-dev (<< `'GNAT_V),
+ libgnatvsn4.1-dev, libgnatvsn4.3-dev, libgnatvsn4.4-dev,
+ libgnatvsn4.5-dev, libgnatvsn4.6-dev, libgnatvsn4.9-dev,
 BUILT_USING`'dnl
 Description: GNU Ada compiler selected components (development files)
  GNAT is a compiler for the Ada programming language. It produces optimized
@@ -4947,7 +4949,9 @@ Priority: extra
 Depends: BASELDEP, gnat`'PV`'TS (ifdef(`TARGET',`>= ${gnat:SoftVersion}',`= ${gnat:Version}')),
  libgnatprj`'GNAT_V`'LS (= ${gnat:Version}),
  libgnatvsn`'GNAT_V-dev`'LS (= ${gnat:Version}), ${misc:Depends}
-Conflicts: libgnatprj-dev (<< `'GNAT_V), libgnatprj4.1-dev, libgnatprj4.3-dev, libgnatprj4.4-dev, libgnatprj4.5-dev, libgnatprj4.6-dev
+Conflicts: libgnatprj-dev (<< `'GNAT_V),
+ libgnatprj4.1-dev, libgnatprj4.3-dev, libgnatprj4.4-dev,
+ libgnatprj4.5-dev, libgnatprj4.6-dev, libgnatprj4.9-dev,
 BUILT_USING`'dnl
 Description: GNU Ada compiler Project Manager (development files)
  GNAT is a compiler for the Ada programming language. It produces optimized

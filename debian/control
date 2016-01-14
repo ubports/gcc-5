@@ -16,7 +16,7 @@ Build-Depends: debhelper (>= 5.0.62), dpkg-dev (>= 1.17.11),
   gperf (>= 3.0.1), bison (>= 1:2.3), flex, gettext, 
   gdb:native, 
   texinfo (>= 4.3), locales, sharutils, 
-  procps, zlib1g-dev, libantlr-java, python:native, libffi-dev, fastjar, libmagic-dev, libecj-java (>= 3.3.0-2), zip, libasound2-dev [ !hurd-any !kfreebsd-any], libxtst-dev, libxt-dev, libgtk2.0-dev (>= 2.4.4-2), libart-2.0-dev, libcairo2-dev, gnat-5:native [!m32r !sh3 !sh3eb !sh4eb !powerpcspe !mips64 !x32 !sh4], g++-5:native, netbase, 
+  procps, zlib1g-dev, libantlr-java, python:native, libffi-dev, fastjar, libmagic-dev, libecj-java (>= 3.3.0-2), zip, libasound2-dev [ !hurd-any !kfreebsd-any], libxtst-dev, libxt-dev, libgtk2.0-dev (>= 2.4.4-2), libart-2.0-dev, libcairo2-dev, gnat-5:native [!m32r !sh3 !sh3eb !sh4eb !powerpcspe !mips64 !x32], g++-5:native, netbase, 
   libisl-dev (>= 0.14), libmpc-dev (>= 1.0), libmpfr-dev (>= 3.0.0-9~), libgmp-dev (>= 2:5.0.1~), 
   dejagnu [!m68k], realpath (>= 1.9.12), chrpath, lsb-release, quilt, 
    g++-5-alpha-linux-gnu [alpha] <cross>, gobjc-5-alpha-linux-gnu [alpha] <cross>, gfortran-5-alpha-linux-gnu [alpha] <cross>, gcj-5-alpha-linux-gnu [alpha] <cross>, gdc-5-alpha-linux-gnu [alpha] <cross>, gccgo-5-alpha-linux-gnu [alpha] <cross>, gnat-5-alpha-linux-gnu [alpha] <cross>, g++-5-x86-64-linux-gnu [amd64] <cross>, gobjc-5-x86-64-linux-gnu [amd64] <cross>, gfortran-5-x86-64-linux-gnu [amd64] <cross>, gcj-5-x86-64-linux-gnu [amd64] <cross>, gdc-5-x86-64-linux-gnu [amd64] <cross>, gccgo-5-x86-64-linux-gnu [amd64] <cross>, gnat-5-x86-64-linux-gnu [amd64] <cross>, g++-5-arm-linux-gnueabi [armel] <cross>, gobjc-5-arm-linux-gnueabi [armel] <cross>, gfortran-5-arm-linux-gnueabi [armel] <cross>, gcj-5-arm-linux-gnueabi [armel] <cross>, gdc-5-arm-linux-gnueabi [armel] <cross>, gccgo-5-arm-linux-gnueabi [armel] <cross>, gnat-5-arm-linux-gnueabi [armel] <cross>, g++-5-arm-linux-gnueabihf [armhf] <cross>, gobjc-5-arm-linux-gnueabihf [armhf] <cross>, gfortran-5-arm-linux-gnueabihf [armhf] <cross>, gcj-5-arm-linux-gnueabihf [armhf] <cross>, gdc-5-arm-linux-gnueabihf [armhf] <cross>, gccgo-5-arm-linux-gnueabihf [armhf] <cross>, gnat-5-arm-linux-gnueabihf [armhf] <cross>, g++-5-aarch64-linux-gnu [arm64] <cross>, gobjc-5-aarch64-linux-gnu [arm64] <cross>, gfortran-5-aarch64-linux-gnu [arm64] <cross>, gcj-5-aarch64-linux-gnu [arm64] <cross>, gdc-5-aarch64-linux-gnu [arm64] <cross>, gccgo-5-aarch64-linux-gnu [arm64] <cross>, gnat-5-aarch64-linux-gnu [arm64] <cross>, g++-5-i686-linux-gnu [i386] <cross>, gobjc-5-i686-linux-gnu [i386] <cross>, gfortran-5-i686-linux-gnu [i386] <cross>, gcj-5-i686-linux-gnu [i386] <cross>, gdc-5-i686-linux-gnu [i386] <cross>, gccgo-5-i686-linux-gnu [i386] <cross>, gnat-5-i686-linux-gnu [i386] <cross>, g++-5-mips-linux-gnu [mips] <cross>, gobjc-5-mips-linux-gnu [mips] <cross>, gfortran-5-mips-linux-gnu [mips] <cross>, gcj-5-mips-linux-gnu [mips] <cross>, gdc-5-mips-linux-gnu [mips] <cross>, gccgo-5-mips-linux-gnu [mips] <cross>, gnat-5-mips-linux-gnu [mips] <cross>, g++-5-mipsel-linux-gnu [mipsel] <cross>, gobjc-5-mipsel-linux-gnu [mipsel] <cross>, gfortran-5-mipsel-linux-gnu [mipsel] <cross>, gcj-5-mipsel-linux-gnu [mipsel] <cross>, gdc-5-mipsel-linux-gnu [mipsel] <cross>, gccgo-5-mipsel-linux-gnu [mipsel] <cross>, gnat-5-mipsel-linux-gnu [mipsel] <cross>, g++-5-mips64-linux-gnuabi64 [mips64] <cross>, gobjc-5-mips64-linux-gnuabi64 [mips64] <cross>, gfortran-5-mips64-linux-gnuabi64 [mips64] <cross>, gcj-5-mips64-linux-gnuabi64 [mips64] <cross>, gdc-5-mips64-linux-gnuabi64 [mips64] <cross>, gccgo-5-mips64-linux-gnuabi64 [mips64] <cross>, g++-5-mips64el-linux-gnuabi64 [mips64el] <cross>, gobjc-5-mips64el-linux-gnuabi64 [mips64el] <cross>, gfortran-5-mips64el-linux-gnuabi64 [mips64el] <cross>, gcj-5-mips64el-linux-gnuabi64 [mips64el] <cross>, gdc-5-mips64el-linux-gnuabi64 [mips64el] <cross>, gccgo-5-mips64el-linux-gnuabi64 [mips64el] <cross>, gnat-5-mips64el-linux-gnuabi64 [mips64el] <cross>, g++-5-powerpc-linux-gnu [powerpc] <cross>, gobjc-5-powerpc-linux-gnu [powerpc] <cross>, gfortran-5-powerpc-linux-gnu [powerpc] <cross>, gcj-5-powerpc-linux-gnu [powerpc] <cross>, gdc-5-powerpc-linux-gnu [powerpc] <cross>, gccgo-5-powerpc-linux-gnu [powerpc] <cross>, gnat-5-powerpc-linux-gnu [powerpc] <cross>, g++-5-powerpc64-linux-gnu [ppc64] <cross>, gobjc-5-powerpc64-linux-gnu [ppc64] <cross>, gfortran-5-powerpc64-linux-gnu [ppc64] <cross>, gcj-5-powerpc64-linux-gnu [ppc64] <cross>, gdc-5-powerpc64-linux-gnu [ppc64] <cross>, gccgo-5-powerpc64-linux-gnu [ppc64] <cross>, gnat-5-powerpc64-linux-gnu [ppc64] <cross>, g++-5-powerpc64le-linux-gnu [ppc64el] <cross>, gobjc-5-powerpc64le-linux-gnu [ppc64el] <cross>, gfortran-5-powerpc64le-linux-gnu [ppc64el] <cross>, gcj-5-powerpc64le-linux-gnu [ppc64el] <cross>, gdc-5-powerpc64le-linux-gnu [ppc64el] <cross>, gccgo-5-powerpc64le-linux-gnu [ppc64el] <cross>, gnat-5-powerpc64le-linux-gnu [ppc64el] <cross>, g++-5-m68k-linux-gnu [m68k] <cross>, gobjc-5-m68k-linux-gnu [m68k] <cross>, gfortran-5-m68k-linux-gnu [m68k] <cross>, gcj-5-m68k-linux-gnu [m68k] <cross>, gdc-5-m68k-linux-gnu [m68k] <cross>, g++-5-sh4-linux-gnu [sh4] <cross>, gobjc-5-sh4-linux-gnu [sh4] <cross>, gfortran-5-sh4-linux-gnu [sh4] <cross>, gcj-5-sh4-linux-gnu [sh4] <cross>, g++-5-sparc64-linux-gnu [sparc64] <cross>, gobjc-5-sparc64-linux-gnu [sparc64] <cross>, gfortran-5-sparc64-linux-gnu [sparc64] <cross>, gcj-5-sparc64-linux-gnu [sparc64] <cross>, gdc-5-sparc64-linux-gnu [sparc64] <cross>, gccgo-5-sparc64-linux-gnu [sparc64] <cross>, g++-5-s390x-linux-gnu [s390x] <cross>, gobjc-5-s390x-linux-gnu [s390x] <cross>, gfortran-5-s390x-linux-gnu [s390x] <cross>, gcj-5-s390x-linux-gnu [s390x] <cross>, gdc-5-s390x-linux-gnu [s390x] <cross>, gccgo-5-s390x-linux-gnu [s390x] <cross>, gnat-5-s390x-linux-gnu [s390x] <cross>, g++-5-x86-64-linux-gnux32 [x32] <cross>, gobjc-5-x86-64-linux-gnux32 [x32] <cross>, gfortran-5-x86-64-linux-gnux32 [x32] <cross>, gcj-5-x86-64-linux-gnux32 [x32] <cross>, gdc-5-x86-64-linux-gnux32 [x32] <cross>, gccgo-5-x86-64-linux-gnux32 [x32] <cross>, 
@@ -1284,7 +1284,7 @@ Architecture: any
 Multi-Arch: same
 Pre-Depends: ${misc:Pre-Depends}
 Priority: optional
-Depends: gcc-5-base (= ${gcc:Version}), libgccjit0 (= ${gcc:Version}),
+Depends: gcc-5-base (= ${gcc:Version}), libgccjit0 (>= ${gcc:Version}),
  ${shlibs:Depends}, ${misc:Depends}
 Suggests: libgccjit-5-dbg
 Description: GCC just-in-time compilation (development files)
@@ -2263,7 +2263,9 @@ Architecture: any
 Priority: extra
 Depends: gcc-5-base (= ${gcc:Version}), gnat-5 (= ${gnat:Version}),
  libgnatvsn5 (= ${gnat:Version}), ${misc:Depends}
-Conflicts: libgnatvsn-dev (<< 5), libgnatvsn4.1-dev, libgnatvsn4.3-dev, libgnatvsn4.4-dev, libgnatvsn4.5-dev, libgnatvsn4.6-dev
+Conflicts: libgnatvsn-dev (<< 5),
+ libgnatvsn4.1-dev, libgnatvsn4.3-dev, libgnatvsn4.4-dev,
+ libgnatvsn4.5-dev, libgnatvsn4.6-dev, libgnatvsn4.9-dev,
 Description: GNU Ada compiler selected components (development files)
  GNAT is a compiler for the Ada programming language. It produces optimized
  code on platforms supported by the GNU Compiler Collection (GCC).
@@ -2317,7 +2319,9 @@ Priority: extra
 Depends: gcc-5-base (= ${gcc:Version}), gnat-5 (= ${gnat:Version}),
  libgnatprj5 (= ${gnat:Version}),
  libgnatvsn5-dev (= ${gnat:Version}), ${misc:Depends}
-Conflicts: libgnatprj-dev (<< 5), libgnatprj4.1-dev, libgnatprj4.3-dev, libgnatprj4.4-dev, libgnatprj4.5-dev, libgnatprj4.6-dev
+Conflicts: libgnatprj-dev (<< 5),
+ libgnatprj4.1-dev, libgnatprj4.3-dev, libgnatprj4.4-dev,
+ libgnatprj4.5-dev, libgnatprj4.6-dev, libgnatprj4.9-dev,
 Description: GNU Ada compiler Project Manager (development files)
  GNAT is a compiler for the Ada programming language. It produces optimized
  code on platforms supported by the GNU Compiler Collection (GCC).

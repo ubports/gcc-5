@@ -15,7 +15,6 @@ series_file	?= $(patchdir)/series
 debian_patches = \
 	svn-updates \
 	$(if $(with_linaro_branch),gcc-linaro) \
-	$(if $(with_linaro_branch),gcc-linaro-revert) \
 	$(if $(with_linaro_branch),gcc-linaro-no-macros) \
 
 #	svn-updates \
@@ -92,6 +91,7 @@ debian_patches += \
 	gcc-configure-pie \
 	ada-gnattools-ldflags \
 	libjit-ldflags \
+	pr69187 \
 
 # this is still needed on powerpc, e.g. firefox and insighttoolkit4 will ftbfs.
 ifneq (,$(filter $(DEB_TARGET_ARCH),powerpc))
@@ -246,7 +246,12 @@ debian_patches += $(if $(with_linaro_branch),,gcc-sysroot)
 debian_patches += \
 	sys-auxv-header \
 	libcilkrts-targets \
-	go-use-gold \
+
+ifeq ($(distribution)-$(DEB_TARGET_ARCH),Ubuntu-ppc64el)
+  debian_patches += ibm-branch
+else
+  debian_patches += go-use-gold
+endif
 
 ifeq ($(with_softfloat),yes)
   debian_patches += arm-multilib-soft-float

@@ -1011,6 +1011,8 @@ $(configure_stamp):
 	dh_testdir
 	: # give information about the build process
 	@echo "------------------------ Build process variables ------------------------"
+	@echo "Memory on this machine:"
+	@egrep '^(Mem|Swap)' /proc/meminfo || true
 	@echo "Number of parallel processes used for the build: $(USE_CPUS)"
 	@echo "DEB_BUILD_OPTIONS: $$DEB_BUILD_OPTIONS"
 	@echo "Package source: $(PKGSOURCE)"

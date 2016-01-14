@@ -568,10 +568,6 @@ ada_no_cpus	:= m32r sh3 sh3eb sh4eb
 ada_no_cpus += powerpcspe
 ada_no_cpus += mips64 # see https://gcc.gnu.org/PR65337
 ada_no_cpus += x32 # see https://gcc.gnu.org/PR61954
-ada_no_cpus += sh4 # not yet built natively
-ifneq (,$(findstring cross,$(build_type)))
-  ada_no_cpus := $(filter-out sh4, $(ada_no_cpus))
-endif
 ada_no_systems	:= 
 ada_no_cross	:= no
 ada_no_snap	:= no
