@@ -1,10 +1,10 @@
-# DP: updates from the 5 branch upto 20160114 (r232387).
+# DP: updates from the 5 branch upto 20160121 (r232666).
 
 last_update()
 {
 	cat > ${dir}LAST_UPDATED <EOF
-Thu Jan 14 21:45:34 CET 2016
-Thu Jan 14 20:45:34 UTC 2016 (revision 232387)
+Thu Jan 21 10:10:23 CET 2016
+Thu Jan 21 09:10:23 UTC 2016 (revision 232666)
 EOF
 }
 
@@ -24,6 +24,108 @@ Index: Makefile.in
  
  configure-target-libjava: maybe-all-target-newlib maybe-all-target-libgloss
  configure-target-libjava: maybe-all-target-libstdc++-v3
+Index: libgomp/ChangeLog
+===================================================================
+--- a/src/libgomp/ChangeLog	(.../tags/gcc_5_3_0_release)
++++ b/src/libgomp/ChangeLog	(.../branches/gcc-5-branch)
+@@ -1,3 +1,8 @@
++2016-01-14  Dominique d'Humieres <dominiq@lps.ens.fr>
++
++	PR fortran/66680
++	* testsuite/libgomp.fortran/pr66680.f90: New test.
++
+ 2015-12-04  Release Manager
+ 
+ 	* GCC 5.3.0 released.
+Index: libgomp/testsuite/libgomp.fortran/pr66680.f90
+===================================================================
+--- a/src/libgomp/testsuite/libgomp.fortran/pr66680.f90	(.../tags/gcc_5_3_0_release)
++++ b/src/libgomp/testsuite/libgomp.fortran/pr66680.f90	(.../branches/gcc-5-branch)
+@@ -0,0 +1,46 @@
++! { dg-do run }
++! PR 66680: ICE with openmp, a loop and a type bound procedure
++! Contributed by Miha Polajnar <polajnar.miha@gmail.com>
++!
++module m1 
++  implicit none
++  integer :: n = 5
++  type :: t1
++  contains
++    procedure :: s => s1
++  end type t1
++contains
++  pure subroutine s1(self,p,esta)
++    class(t1), intent(in) :: self
++    integer, optional, intent(in) :: p
++    integer, intent(out) :: esta
++  end subroutine s1 
++end module m1
++module m2
++  use m1, only: t1, n
++  implicit none
++  type(t1), allocatable :: test(:)
++contains
++  pure subroutine s2(test1,esta)
++    type(t1), intent(in) :: test1
++    integer, intent(out) :: esta
++    integer :: p, i
++    do p = 1, n
++      i = p ! using i instead of p works
++      call test1%s(p=p,esta=esta)
++      if ( esta /= 0 ) return
++    end do
++  end subroutine s2
++  subroutine s3()
++    integer :: i, esta
++    !$omp parallel do  &
++    !$omp private(i)
++    do i = 1, n
++        call s2(test(i),esta)
++    end do
++    !$omp end parallel do
++  end subroutine s3
++end module m2
++program main
++  implicit none
++end program main
+Index: libmpx/ChangeLog
+===================================================================
+--- a/src/libmpx/ChangeLog	(.../tags/gcc_5_3_0_release)
++++ b/src/libmpx/ChangeLog	(.../branches/gcc-5-branch)
+@@ -1,3 +1,11 @@
++2016-01-20  Ilya Enkovich  <enkovich.gnu@gmail.com>
++
++	Backport from mainline r232619.
++	2016-01-20  Ilya Enkovich  <enkovich.gnu@gmail.com>
++
++	* mpxrt/mpxrt.c (handler): Fix verbosity for
++	error message.
++
+ 2015-12-04  Release Manager
+ 
+ 	* GCC 5.3.0 released.
+Index: libmpx/mpxrt/mpxrt.c
+===================================================================
+--- a/src/libmpx/mpxrt/mpxrt.c	(.../tags/gcc_5_3_0_release)
++++ b/src/libmpx/mpxrt/mpxrt.c	(.../branches/gcc-5-branch)
+@@ -296,7 +296,7 @@
+       __mpxrt_write_uint (VERB_ERROR, trapno, 10);
+       __mpxrt_write (VERB_ERROR, ", ip = 0x");
+       __mpxrt_write_uint (VERB_ERROR, ip, 16);
+-      __mpxrt_write (VERB_BR, "\n");
++      __mpxrt_write (VERB_ERROR, "\n");
+       exit (255);
+     }
+   else
+@@ -305,7 +305,7 @@
+       __mpxrt_write_uint (VERB_ERROR, trapno, 10);
+       __mpxrt_write (VERB_ERROR, "! at 0x");
+       __mpxrt_write_uint (VERB_ERROR, ip, 16);
+-      __mpxrt_write (VERB_BR, "\n");
++      __mpxrt_write (VERB_ERROR, "\n");
+       exit (255);
+     }
+ }
 Index: libsanitizer/sanitizer_common/sanitizer_mac.cc
 ===================================================================
 --- a/src/libsanitizer/sanitizer_common/sanitizer_mac.cc	(.../tags/gcc_5_3_0_release)
@@ -1417,6 +1519,23 @@ Index: libstdc++-v3/include/bits/locale_facets_nonio.h
         *  @param __err      Error flags to set.
         *  @param __tm       Pointer to struct tm to fill in.
         *  @param __format   Format specifier.
+Index: libstdc++-v3/include/c_global/cmath
+===================================================================
+--- a/src/libstdc++-v3/include/c_global/cmath	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/include/c_global/cmath	(.../branches/gcc-5-branch)
+@@ -880,7 +880,11 @@
+     signbit(_Tp __f)
+     {
+       typedef typename __gnu_cxx::__promote<_Tp>::__type __type;
+-      return __builtin_signbit(__type(__f));
++      return sizeof(__type) == sizeof(float)
++	? __builtin_signbitf(__type(__f))
++	: sizeof(__type) == sizeof(double)
++	? __builtin_signbit(__type(__f))
++	: __builtin_signbitl(__type(__f));
+     }
+ 
+   template<typename _Tp>
 Index: libstdc++-v3/include/tr2/dynamic_bitset
 ===================================================================
 --- a/src/libstdc++-v3/include/tr2/dynamic_bitset	(.../tags/gcc_5_3_0_release)
@@ -1451,7 +1570,20 @@ Index: libstdc++-v3/ChangeLog
 ===================================================================
 --- a/src/libstdc++-v3/ChangeLog	(.../tags/gcc_5_3_0_release)
 +++ b/src/libstdc++-v3/ChangeLog	(.../branches/gcc-5-branch)
-@@ -1,3 +1,104 @@
+@@ -1,3 +1,117 @@
++2016-01-18  Jonathan Wakely  <jwakely@redhat.com>
++
++	PR libstdc++/60637
++	* include/c_global/cmath (signbit) [__cplusplus < 201103L]: Use
++	__builtin_signbitf or __builtin_signbitl as appropriate.
++	* testsuite/26_numerics/headers/cmath/60637.cc: New.
++
++2016-01-16  H.J. Lu  <hongjiu.lu@intel.com>
++
++	Backport from mainline
++	* config/abi/post/x86_64-linux-gnu/x32/baseline_symbols.txt: Add
++	__int128 symbols.
++
 +2016-01-12  Jonathan Wakely  <jwakely@redhat.com>
 +
 +	PR libstdc++/69092
@@ -1667,6 +1799,46 @@ Index: libstdc++-v3/testsuite/21_strings/basic_string/cons/char/69092.cc
 +  catch(int) {
 +  }
 +}
+Index: libstdc++-v3/testsuite/26_numerics/headers/cmath/60637.cc
+===================================================================
+--- a/src/libstdc++-v3/testsuite/26_numerics/headers/cmath/60637.cc	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/testsuite/26_numerics/headers/cmath/60637.cc	(.../branches/gcc-5-branch)
+@@ -0,0 +1,35 @@
++// Copyright (C) 2016 Free Software Foundation, Inc.
++//
++// This file is part of the GNU ISO C++ Library.  This library is free
++// software; you can redistribute it and/or modify it under the
++// terms of the GNU General Public License as published by the
++// Free Software Foundation; either version 3, or (at your option)
++// any later version.
++
++// This library is distributed in the hope that it will be useful,
++// but WITHOUT ANY WARRANTY; without even the implied warranty of
++// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++// GNU General Public License for more details.
++
++// You should have received a copy of the GNU General Public License along
++// with this library; see the file COPYING3.  If not see
++// <http://www.gnu.org/licenses/>.
++
++// { dg-options "-std=gnu++98 -ffast-math" }
++// { dg-do run { target i?86-*-* x86_64-*-* } }
++
++#include <cmath>
++#include <testsuite_hooks.h>
++
++void
++test01()
++{
++  long double ld = -5.3165867831218916301793863361917824e-2467L;
++  VERIFY( std::signbit(ld) == 1 );
++}
++
++int
++main()
++{
++  test01();
++}
 Index: libstdc++-v3/testsuite/20_util/enable_shared_from_this/56383.cc
 ===================================================================
 --- a/src/libstdc++-v3/testsuite/20_util/enable_shared_from_this/56383.cc	(.../tags/gcc_5_3_0_release)
@@ -1858,6 +2030,37 @@ Index: libstdc++-v3/testsuite/20_util/bind/68912.cc
 +  volatile const auto bound_cv = bound;
 +  D res_cv = bound_cv(1.0);
 +}
+Index: libstdc++-v3/config/abi/post/x86_64-linux-gnu/x32/baseline_symbols.txt
+===================================================================
+--- a/src/libstdc++-v3/config/abi/post/x86_64-linux-gnu/x32/baseline_symbols.txt	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/config/abi/post/x86_64-linux-gnu/x32/baseline_symbols.txt	(.../branches/gcc-5-branch)
+@@ -4618,6 +4618,8 @@
+ OBJECT:2:_ZTSj@@CXXABI_1.3
+ OBJECT:2:_ZTSl@@CXXABI_1.3
+ OBJECT:2:_ZTSm@@CXXABI_1.3
++OBJECT:2:_ZTSn@@CXXABI_1.3.9
++OBJECT:2:_ZTSo@@CXXABI_1.3.9
+ OBJECT:2:_ZTSs@@CXXABI_1.3
+ OBJECT:2:_ZTSt@@CXXABI_1.3
+ OBJECT:2:_ZTSv@@CXXABI_1.3
+@@ -4711,6 +4713,8 @@
+ OBJECT:3:_ZTSPj@@CXXABI_1.3
+ OBJECT:3:_ZTSPl@@CXXABI_1.3
+ OBJECT:3:_ZTSPm@@CXXABI_1.3
++OBJECT:3:_ZTSPn@@CXXABI_1.3.9
++OBJECT:3:_ZTSPo@@CXXABI_1.3.9
+ OBJECT:3:_ZTSPs@@CXXABI_1.3
+ OBJECT:3:_ZTSPt@@CXXABI_1.3
+ OBJECT:3:_ZTSPv@@CXXABI_1.3
+@@ -5116,6 +5120,8 @@
+ OBJECT:4:_ZTSPKj@@CXXABI_1.3
+ OBJECT:4:_ZTSPKl@@CXXABI_1.3
+ OBJECT:4:_ZTSPKm@@CXXABI_1.3
++OBJECT:4:_ZTSPKn@@CXXABI_1.3.9
++OBJECT:4:_ZTSPKo@@CXXABI_1.3.9
+ OBJECT:4:_ZTSPKs@@CXXABI_1.3
+ OBJECT:4:_ZTSPKt@@CXXABI_1.3
+ OBJECT:4:_ZTSPKv@@CXXABI_1.3
 Index: ChangeLog
 ===================================================================
 --- a/src/ChangeLog	(.../tags/gcc_5_3_0_release)
@@ -2111,6 +2314,66 @@ Index: gcc/tree-ssa-uninit.c
              }
            else
              return false;
+Index: gcc/tree-ssa-threadupdate.c
+===================================================================
+--- a/src/gcc/tree-ssa-threadupdate.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/tree-ssa-threadupdate.c	(.../branches/gcc-5-branch)
+@@ -254,6 +254,11 @@
+ 
+   /* Blocks duplicated for the thread.  */
+   bitmap duplicate_blocks;
++
++  /* When we have multiple paths through a joiner which reach different
++     final destinations, then we may need to correct for potential
++     profile insanities.  */
++  bool need_profile_correction;
+ };
+ 
+ /* Passes which use the jump threading code register jump threading
+@@ -827,7 +832,8 @@
+      So ensure that this path's path_out_count is at least the
+      difference between elast->count and nonpath_count.  Otherwise the edge
+      counts after threading will not be sane.  */
+-  if (has_joiner && path_out_count < elast->count - nonpath_count)
++  if (local_info->need_profile_correction
++      && has_joiner && path_out_count < elast->count - nonpath_count)
+   {
+     path_out_count = elast->count - nonpath_count;
+     /* But neither can we go above the minimum count along the path
+@@ -1496,6 +1502,7 @@
+   ssa_local_info_t local_info;
+ 
+   local_info.duplicate_blocks = BITMAP_ALLOC (NULL);
++  local_info.need_profile_correction = false;
+ 
+   /* To avoid scanning a linear array for the element we need we instead
+      use a hash table.  For normal code there should be no noticeable
+@@ -1506,6 +1513,7 @@
+ 
+   /* Record each unique threaded destination into a hash table for
+      efficient lookups.  */
++  edge last = NULL;
+   FOR_EACH_EDGE (e, ei, bb->preds)
+     {
+       if (e->aux == NULL)
+@@ -1559,6 +1567,17 @@
+       /* Insert the outgoing edge into the hash table if it is not
+ 	 already in the hash table.  */
+       lookup_redirection_data (e, INSERT);
++
++      /* When we have thread paths through a common joiner with different
++	 final destinations, then we may need corrections to deal with
++	 profile insanities.  See the big comment before compute_path_counts.  */
++      if ((*path)[1]->type == EDGE_COPY_SRC_JOINER_BLOCK)
++	{
++	  if (!last)
++	    last = e2;
++	  else if (e2 != last)
++	    local_info.need_profile_correction = true;
++	}
+     }
+ 
+   /* We do not update dominance info.  */
 Index: gcc/c-family/ChangeLog
 ===================================================================
 --- a/src/gcc/c-family/ChangeLog	(.../tags/gcc_5_3_0_release)
@@ -2394,7 +2657,7 @@ Index: gcc/DATESTAMP
 +++ b/src/gcc/DATESTAMP	(.../branches/gcc-5-branch)
 @@ -1 +1 @@
 -20151204
-+20160114
++20160121
 Index: gcc/tree.c
 ===================================================================
 --- a/src/gcc/tree.c	(.../tags/gcc_5_3_0_release)
@@ -2512,7 +2775,131 @@ Index: gcc/ChangeLog
 ===================================================================
 --- a/src/gcc/ChangeLog	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/ChangeLog	(.../branches/gcc-5-branch)
-@@ -1,3 +1,395 @@
+@@ -1,3 +1,519 @@
++2016-01-21  Andreas Krebbel  <krebbel@linux.vnet.ibm.com>
++
++	Backported from mainline
++	2015-07-24  Andreas Krebbel  <krebbel@linux.vnet.ibm.com>
++
++	* config/s390/s390.c (s390_save_gprs_to_fprs): Add CFA_REGISTER
++	reg note to the GPR -> FPR save instructions.
++
++2016-01-21  Thomas Preud'homme  <thomas.preudhomme@arm.com>
++
++	Backport from mainline
++	2016-01-08  Thomas Preud'homme  <thomas.preudhomme@arm.com>
++
++	PR tree-optimization/67781
++	* tree-ssa-math-opts.c (find_bswap_or_nop): Zero out bytes in cmpxchg
++	and cmpnop in two steps: first the ones not accessed in original
++	gimple expression in a endian independent way and then the ones not
++	accessed in the final result in an endian-specific way.
++
++2016-01-20  Marek Polacek  <polacek@redhat.com>
++
++	PR c/68513
++	* match.pd ((x & ~m) | (y & m)): Only perform on GIMPLE.
++
++2016-01-19  Sergei Trofimovich <siarheit@google.com>
++
++	Backport from mainline
++	PR other/60465
++	* config/ia64/ia64.c (ia64_expand_load_address): Use gprel64
++	for local symbolic operands.
++	* config/ia64/predicates.md (local_symbolic_operand64): New
++	predicate.
++
++2016-01-19  Jeff Law  <law@redhat.com>
++
++	Backport from mainline
++	2016-01-12  Jeff Law  <law@redhat.com>
++
++	PR tree-optimization/pr67755
++	* tree-ssa-threadupdate.c (struct ssa_local_info_t): Add new field
++	"need_profile_correction".
++	(thread_block_1): Initialize new field to false by default.  If we
++	have multiple thread paths through a common joiner to different
++	final targets, then set new field to true.
++	(compute_path_counts): Only do count adjustment when it's really
++	needed.
++
++2016-01-19  Kyrylo Tkachov  <kyrylo.tkachov@arm.com>
++
++	Backport from mainline
++	2016-01-19  Kyrylo Tkachov  <kyrylo.tkachov@arm.com>
++
++	PR target/69135
++	* config/arm/vfp.md (l<vrint_pattern><su_optab><mode>si2): Set "conds"
++	attribute to unconditional.  Remove %? from output template.
++
++2016-01-18  Alexander Fomin  <alexander.fomin@intel.com>
++
++	Backport from mainline
++	2015-10-09  Alexander Fomin  <alexander.fomin@intel.com>
++
++	PR target/67895
++	* config/i386/sse.md (define_insn "sse_cvtsi2ss<round_name>"):
++	Adjust embedded rounding/SAE specifier position.
++	(define_insn "sse_cvtsi2ssq<round_name>"): Likewise.
++	(define_insn "cvtusi2<ssescalarmodesuffix>32<round_name>"): Likewise.
++	(define_insn "cvtusi2<ssescalarmodesuffix>64<round_name>"): Likewise.
++	(define_insn "sse2_cvtsi2sdq<round_name>"): Likewise.
++	(define_insn "avx512dq_rangep<mode><mask_name><round_saeonly_name>"):
++	Likewise.
++	(define_insn "avx512dq_ranges<mode><round_saeonly_name>"): Likewise.
++
++2016-01-18  Uros Bizjak  <ubizjak@gmail.com>
++
++	Backport from mainline
++	2016-01-07  Uros Bizjak  <ubizjak@gmail.com>
++
++	PR target/69140
++	* config/i386/i386.c (ix86_frame_pointer_required): Enable
++	frame pointer for TARGET_64BIT_MS_ABI when stack is misaligned.
++
++2016-01-17  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
++
++	Backport from mainline:
++	2016-01-17  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
++
++	PR tree-optimization/68799
++	* gimple-ssa-strength-reduction.c (create_phi_basis): Directly
++	look up phi candidates in the statement-candidate map.
++	(phi_add_costs): Likewise.
++	(record_phi_increments): Likewise.
++	(phi_incr_cost): Likewise.
++	(ncd_with_phi): Likewise.
++	(all_phi_incrs_profitable): Likewise.
++
++2016-01-17  Kugan Vivekanandarajah  <kuganv@linaro.org>
++
++	Backport from mainline
++	2016-01-12  Kugan Vivekanandarajah  <kuganv@linaro.org>
++		    Jim Wilson  <jim.wilson@linaro.org>
++
++	PR target/69194
++	* config/arm/arm-builtins.c (arm_expand_neon_args): Call
++	copy_to_mode_reg instead of force_reg.
++
++2016-01-15  Alexander Fomin  <alexander.fomin@intel.com>
++
++	Backport from mainline
++	2016-01-13  Alexander Fomin  <alexander.fomin@intel.com>
++
++	PR target/69228
++	* config/i386/sse.md (define_expand "avx512pf_gatherpf<mode>sf"):
++	Change first operand predicate from register_or_constm1_operand
++	to register_operand.
++	(define_expand "avx512pf_gatherpf<mode>df"): Likewise.
++	(define_expand "avx512pf_scatterpf<mode>sf"): Likewise.
++	(define_expand "avx512pf_scatterpf<mode>df"): Likewise.
++	(define_insn "*avx512pf_gatherpf<mode>sf"): Remove.
++	(define_insn "*avx512pf_gatherpf<mode>df"): Likewise.
++	(define_insn "*avx512pf_scatterpf<mode>sf"): Likewise.
++	(define_insn "*avx512pf_scatterpf<mode>df"): Likewise.
++	* config/i386/i386.c (ix86_expand_builtin): Remove first operand
++	comparison with constm1_rtx from vec_prefetch_gen part.
++
 +2016-01-13  Richard Biener  <rguenther@suse.de>
 +
 +	PR tree-optimization/69013
@@ -2927,6 +3314,73 @@ Index: gcc/testsuite/gcc.target/powerpc/pr68872.c
 +  asm volatile ("mfcr %0,8" : "=r" (ret) ::);
 +  return ret;
 +}
+Index: gcc/testsuite/gcc.target/arm/pr69194.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/arm/pr69194.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/arm/pr69194.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,13 @@
++/* PR target/69194 */
++/* { dg-do-compile } */
++/* { dg-require-effective-target arm_neon_ok } */
++/* { dg-options "-O2" } */
++/* { dg-add-options arm_neon } */
++
++typedef __simd128_float32_t float32x4_t;
++
++float32x4_t
++sub (float32x4_t a, float32x4_t b, float32x4_t c, float32x4_t d, float32x4_t e)
++{
++  return __builtin_neon_vld1v4sf((const float *)&e);
++}
+Index: gcc/testsuite/gcc.target/arm/pr69135_1.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/arm/pr69135_1.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/arm/pr69135_1.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,44 @@
++/* { dg-do assemble } */
++/* { dg-require-effective-target arm_v8_vfp_ok } */
++/* { dg-require-effective-target arm_arch_v8a_ok } */
++/* { dg-options "-O2 -ffast-math" } */
++/* { dg-add-options arm_v8_vfp } */
++/* { dg-add-options arm_arch_v8a } */
++
++int global;
++
++void
++lceil_float (float x, int b)
++{
++  if (b) global = __builtin_lceilf (x);
++}
++
++void
++lceil_double (double x, int b)
++{
++  if (b) global = __builtin_lceil (x);
++}
++
++void
++lfloor_float (float x, int b)
++{
++  if (b) global =  __builtin_lfloorf (x);
++}
++
++void
++lfloor_double (double x, int b)
++{
++  if (b) global = __builtin_lfloor (x);
++}
++
++void
++lround_float (float x, int b)
++{
++  if (b) global = __builtin_lroundf (x);
++}
++
++void
++lround_double (double x, int b)
++{
++  if (b) global = __builtin_lround (x);
++}
 Index: gcc/testsuite/gcc.target/aarch64/c-output-template-4.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.target/aarch64/c-output-template-4.c	(.../tags/gcc_5_3_0_release)
@@ -2942,6 +3396,70 @@ Index: gcc/testsuite/gcc.target/aarch64/c-output-template-4.c
 +}
 +
 +/* { dg-final { scan-assembler "@ test\\+4" } } */
+Index: gcc/testsuite/gcc.target/i386/pr69140.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/pr69140.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/pr69140.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,24 @@
++/* { dg-do compile { target lp64 } } */
++/* { dg-options "-O2 -mincoming-stack-boundary=3" } */
++
++typedef struct {
++  unsigned int buf[4];
++  unsigned char in[64];
++} MD4_CTX;
++
++static void
++MD4Transform (unsigned int buf[4], const unsigned int in[16])
++{
++  unsigned int a, b, c, d;
++  (b) += ((((c)) & ((d))) | ((~(c)) & ((a)))) + (in[7]);
++  (a) += ((((b)) & ((c))) | ((~(b)) & ((d)))) + (in[8]);
++  (d) += ((((a)) & ((b))) | ((~(a)) & ((c)))) + (in[9]);
++  buf[3] += d;
++}
++
++void __attribute__((ms_abi))
++MD4Update (MD4_CTX *ctx, const unsigned char *buf)
++{
++  MD4Transform( ctx->buf, (unsigned int *)ctx->in);
++  MD4Transform( ctx->buf, (unsigned int *)ctx->in);
++}
+Index: gcc/testsuite/gcc.target/i386/pr65184.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/pr65184.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/pr65184.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-options "-O2 -mabi=ms -fcheck-pointer-bounds -mmpx" } */
+ 
+ void
+Index: gcc/testsuite/gcc.target/i386/chkp-const-check-1.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/chkp-const-check-1.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/chkp-const-check-1.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-options "-fcheck-pointer-bounds -mmpx -O2 -fdump-tree-chkpopt" } */
+ /* { dg-final { scan-tree-dump-not "bndcl" "chkpopt" } } */
+ /* { dg-final { scan-tree-dump-not "bndcu" "chkpopt" } } */
+Index: gcc/testsuite/gcc.target/i386/avx512dq-vrangess-1.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/avx512dq-vrangess-1.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/avx512dq-vrangess-1.c	(.../branches/gcc-5-branch)
+@@ -1,7 +1,7 @@
+ /* { dg-do compile } */
+ /* { dg-options "-mavx512dq -O2" } */
+ /* { dg-final { scan-assembler-times "vrangess\[ \\t\]+\[^\{\n\]*%xmm\[0-9\]+(?:\n|\[ \\t\]+#)" 1 } } */
+-/* { dg-final { scan-assembler-times "vrangess\[ \\t\]+\[^\{\n\]*\{sae\}\[^\n\]*%xmm\[0-9\]+(?:\n|\[ \\t\]+#)" 1 } } */
++/* { dg-final { scan-assembler-times "vrangess\[ \\t\]+\[^\$\n\]*\\$\[^\{\n\]*\{sae\}\[^\n\]*%xmm\[0-9\]+(?:\n|\[ \\t\]+#)" 1 } } */
+ 
+ #include <immintrin.h>
+ 
 Index: gcc/testsuite/gcc.target/i386/sse4_1-roundps-1.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.target/i386/sse4_1-roundps-1.c	(.../tags/gcc_5_3_0_release)
@@ -2954,6 +3472,65 @@ Index: gcc/testsuite/gcc.target/i386/sse4_1-roundps-1.c
  
  #define ROUND_INTRIN(x, mode) _mm_ceil_ps(x)
  #define ROUND_MODE _MM_FROUND_CEIL
+Index: gcc/testsuite/gcc.target/i386/avx512pf-vscatterpf1qps-1.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/avx512pf-vscatterpf1qps-1.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/avx512pf-vscatterpf1qps-1.c	(.../branches/gcc-5-branch)
+@@ -1,7 +1,6 @@
+ /* { dg-do compile } */
+ /* { dg-options "-mavx512pf -O2" } */
+-/* { dg-final { scan-assembler-times "vscatterpf1qps\[ \\t\]+\[^\{\n\]*%zmm\[0-9\]+\[^\n\]*\\)(?:\n|\[ \\t\]+#)" 1 } } */
+-/* { dg-final { scan-assembler-times "vscatterpf1qps\[ \\t\]+\[^\{\n\]*%zmm\[0-9\]+\[^\n\]*\\)\{%k\[1-7\]\}(?:\n|\[ \\t\]+#)" 1 } } */
++/* { dg-final { scan-assembler-times "vscatterpf1qps\[ \\t\]+\[^\{\n\]*%zmm\[0-9\]+\[^\n\]*\\)\{%k\[1-7\]\}(?:\n|\[ \\t\]+#)" 2 } } */
+ 
+ #include <immintrin.h>
+ 
+Index: gcc/testsuite/gcc.target/i386/avx512f-vcvtusi2sd64-1.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/avx512f-vcvtusi2sd64-1.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/avx512f-vcvtusi2sd64-1.c	(.../branches/gcc-5-branch)
+@@ -1,7 +1,7 @@
+ /* { dg-do compile { target { ! { ia32 } } } } */
+ /* { dg-options "-mavx512f -O2" } */
+ /* { dg-final { scan-assembler-times "vcvtusi2sd\[ \\t\]+\[^\{\n\]*%xmm\[0-9\]+(?:\n|\[ \\t\]+#)" 1 } } */
+-/* { dg-final { scan-assembler-times "vcvtusi2sd\[ \\t\]+\[^\n\]*\{ru-sae\}\[^\{\n\]*%xmm\[0-9\]+(?:\n|\[ \\t\]+#)" 1 } } */
++/* { dg-final { scan-assembler-times "vcvtusi2sd\[ \\t\]+\[^%\n\]*%r\[^\{\n\]*\{ru-sae\}\[^\{\n\]*%xmm\[0-9\]+(?:\n|\[ \\t\]+#)" 1 } } */
+ 
+ #include <immintrin.h>
+ 
+Index: gcc/testsuite/gcc.target/i386/chkp-stropt-3.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/chkp-stropt-3.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/chkp-stropt-3.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-options "-fcheck-pointer-bounds -mmpx -O2 -fdump-tree-chkpopt -fchkp-use-nochk-string-functions" } */
+ /* { dg-final { scan-tree-dump "memmove_nochk" "chkpopt" } } */
+ /* { dg-final { cleanup-tree-dump "chkpopt" } } */
+Index: gcc/testsuite/gcc.target/i386/chkp-strlen-5.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/chkp-strlen-5.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/chkp-strlen-5.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-options "-fcheck-pointer-bounds -mmpx -O2 -fdump-tree-strlen" } */
+ /* { dg-final { scan-tree-dump-times "strlen" 2 "strlen" } } */
+ /* { dg-final { scan-tree-dump "memcpy" "strlen" } } */
+Index: gcc/testsuite/gcc.target/i386/chkp-stropt-14.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/chkp-stropt-14.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/chkp-stropt-14.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-options "-fcheck-pointer-bounds -mmpx -O2 -fdump-tree-chkpopt -fchkp-use-nochk-string-functions -fchkp-use-fast-string-functions" } */
+ /* { dg-final { scan-tree-dump "memset_nobnd_nochk" "chkpopt" } } */
+ /* { dg-final { cleanup-tree-dump "chkpopt" } } */
 Index: gcc/testsuite/gcc.target/i386/sse4_1-roundss-3.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.target/i386/sse4_1-roundss-3.c	(.../tags/gcc_5_3_0_release)
@@ -2986,6 +3563,28 @@ Index: gcc/testsuite/gcc.target/i386/pr68680.c
 +
 +/* Verify that this function is stack protected.  */
 +/* { dg-final { scan-assembler "stack_chk_fail" } } */
+Index: gcc/testsuite/gcc.target/i386/pr64805.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/pr64805.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/pr64805.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-options "-fcheck-pointer-bounds -mmpx" } */
+ 
+ #include <stdio.h>
+Index: gcc/testsuite/gcc.target/i386/chkp-const-check-2.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/chkp-const-check-2.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/chkp-const-check-2.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-options "-fcheck-pointer-bounds -mmpx -O2 -Wchkp" } */
+ 
+ int test (int *p)
 Index: gcc/testsuite/gcc.target/i386/sse4_1-roundps-2.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.target/i386/sse4_1-roundps-2.c	(.../tags/gcc_5_3_0_release)
@@ -3011,6 +3610,73 @@ Index: gcc/testsuite/gcc.target/i386/avx512dq-vextracti64x2-1.c
  /* { dg-final { scan-assembler-times "vextracti64x2\[ \\t\]+\[^\{\n\]*%ymm\[0-9\]+.{7}\{%k\[1-7\]\}\{z\}(?:\n|\[ \\t\]+#)"  1 } } */
  /* { dg-final { scan-assembler-times "vextracti64x2\[ \\t\]+\[^\{\n\]*%ymm\[0-9\]+.{7}\{%k\[1-7\]\}(?:\n|\[ \\t\]+#)"  1 } } */
  
+Index: gcc/testsuite/gcc.target/i386/chkp-remove-bndint-1.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/chkp-remove-bndint-1.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/chkp-remove-bndint-1.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-options "-fcheck-pointer-bounds -mmpx -O2 -fdump-tree-optimized" } */
+ /* { dg-final { scan-tree-dump-not "bndint" "optimized" } } */
+ /* { dg-final { cleanup-tree-dump "optimized" } } */
+Index: gcc/testsuite/gcc.target/i386/chkp-stropt-4.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/chkp-stropt-4.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/chkp-stropt-4.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-require-effective-target mempcpy } */
+ /* { dg-options "-fcheck-pointer-bounds -mmpx -O2 -fdump-tree-chkpopt -fchkp-use-nochk-string-functions -D_GNU_SOURCE" } */
+ /* { dg-final { scan-tree-dump "mempcpy_nochk" "chkpopt" } } */
+Index: gcc/testsuite/gcc.target/i386/avx512dq-vrangeps-1.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/avx512dq-vrangeps-1.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/avx512dq-vrangeps-1.c	(.../branches/gcc-5-branch)
+@@ -3,15 +3,15 @@
+ /* { dg-final { scan-assembler-times "vrangeps\[ \\t\]+\[^\{\n\]*%zmm\[0-9\]+(?:\n|\[ \\t\]+#)"  1 } } */
+ /* { dg-final { scan-assembler-times "vrangeps\[ \\t\]+\[^\{\n\]*%ymm\[0-9\]+(?:\n|\[ \\t\]+#)"  1 } } */
+ /* { dg-final { scan-assembler-times "vrangeps\[ \\t\]+\[^\{\n\]*%xmm\[0-9\]+(?:\n|\[ \\t\]+#)"  1 } } */
+-/* { dg-final { scan-assembler-times "vrangeps\[ \\t\]+\[^\{\n\]*\{sae\}\[^\n\]*%zmm\[0-9\]+(?:\n|\[ \\t\]+#)"  1 } } */
++/* { dg-final { scan-assembler-times "vrangeps\[ \\t\]+\[^\$\n\]*\\$\[^\{\n\]*\{sae\}\[^\n\]*%zmm\[0-9\]+(?:\n|\[ \\t\]+#)"  1 } } */
+ /* { dg-final { scan-assembler-times "vrangeps\[ \\t\]+\[^\{\n\]*%zmm\[0-9\]+\{%k\[1-7\]\}(?:\n|\[ \\t\]+#)"  1 } } */
+ /* { dg-final { scan-assembler-times "vrangeps\[ \\t\]+\[^\{\n\]*%ymm\[0-9\]+\{%k\[1-7\]\}(?:\n|\[ \\t\]+#)" 1 } } */
+ /* { dg-final { scan-assembler-times "vrangeps\[ \\t\]+\[^\{\n\]*%xmm\[0-9\]+\{%k\[1-7\]\}(?:\n|\[ \\t\]+#)" 1 } } */
+-/* { dg-final { scan-assembler-times "vrangeps\[ \\t\]+\[^\{\n\]*\{sae\}\[^\n\]*%zmm\[0-9\]+\{%k\[1-7\]\}(?:\n|\[ \\t\]+#)" 1 } } */
++/* { dg-final { scan-assembler-times "vrangeps\[ \\t\]+\[^\$\n\]*\\$\[^\{\n\]*\{sae\}\[^\n\]*%zmm\[0-9\]+\{%k\[1-7\]\}(?:\n|\[ \\t\]+#)" 1 } } */
+ /* { dg-final { scan-assembler-times "vrangeps\[ \\t\]+\[^\{\n\]*%zmm\[0-9\]+\{%k\[1-7\]\}\{z\}(?:\n|\[ \\t\]+#)"  1 } } */
+ /* { dg-final { scan-assembler-times "vrangeps\[ \\t\]+\[^\{\n\]*%ymm\[0-9\]+\{%k\[1-7\]\}\{z\}(?:\n|\[ \\t\]+#)" 1 } } */
+ /* { dg-final { scan-assembler-times "vrangeps\[ \\t\]+\[^\{\n\]*%xmm\[0-9\]+\{%k\[1-7\]\}\{z\}(?:\n|\[ \\t\]+#)" 1 } } */
+-/* { dg-final { scan-assembler-times "vrangeps\[ \\t\]+\[^\{\n\]*\{sae\}\[^\n\]*%zmm\[0-9\]+\{%k\[1-7\]\}\{z\}(?:\n|\[ \\t\]+#)" 1 } } */
++/* { dg-final { scan-assembler-times "vrangeps\[ \\t\]+\[^\$\n\]*\\$\[^\{\n\]*\{sae\}\[^\n\]*%zmm\[0-9\]+\{%k\[1-7\]\}\{z\}(?:\n|\[ \\t\]+#)" 1 } } */
+ 
+ #include <immintrin.h>
+ 
+Index: gcc/testsuite/gcc.target/i386/chkp-stropt-15.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/chkp-stropt-15.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/chkp-stropt-15.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-options "-fcheck-pointer-bounds -mmpx -O2 -fdump-tree-chkpopt -fchkp-use-nochk-string-functions -fchkp-use-fast-string-functions" } */
+ /* { dg-final { scan-tree-dump "memmove_nobnd_nochk" "chkpopt" } } */
+ /* { dg-final { cleanup-tree-dump "chkpopt" } } */
+Index: gcc/testsuite/gcc.target/i386/chkp-strchr.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/chkp-strchr.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/chkp-strchr.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-options "-fcheck-pointer-bounds -mmpx -O2" } */
+ 
+ #include "string.h"
 Index: gcc/testsuite/gcc.target/i386/avx512f-vbroadcastsd-3.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.target/i386/avx512f-vbroadcastsd-3.c	(.../tags/gcc_5_3_0_release)
@@ -3037,6 +3703,19 @@ Index: gcc/testsuite/gcc.target/i386/avx512f-vbroadcastsd-3.c
 +      a[i] += a[i-4];
 +    }
 +}
+Index: gcc/testsuite/gcc.target/i386/avx512pf-vscatterpf0dpd-1.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/avx512pf-vscatterpf0dpd-1.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/avx512pf-vscatterpf0dpd-1.c	(.../branches/gcc-5-branch)
+@@ -1,7 +1,6 @@
+ /* { dg-do compile } */
+ /* { dg-options "-mavx512pf -O2" } */
+-/* { dg-final { scan-assembler-times "vscatterpf0dpd\[ \\t\]+\[^\{\n\]*%ymm\[0-9\]+\[^\n\]*\\)(?:\n|\[ \\t\]+#)" 1 } } */
+-/* { dg-final { scan-assembler-times "vscatterpf0dpd\[ \\t\]+\[^\{\n\]*%ymm\[0-9\]+\[^\n\]*\\)\{%k\[1-7\]\}(?:\n|\[ \\t\]+#)" 1 } } */
++/* { dg-final { scan-assembler-times "vscatterpf0dpd\[ \\t\]+\[^\{\n\]*%ymm\[0-9\]+\[^\n\]*\\)\{%k\[1-7\]\}(?:\n|\[ \\t\]+#)" 2 } } */
+ #include <immintrin.h>
+ 
+ volatile __m256i idx;
 Index: gcc/testsuite/gcc.target/i386/sse4_1-roundss-4.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.target/i386/sse4_1-roundss-4.c	(.../tags/gcc_5_3_0_release)
@@ -3072,6 +3751,29 @@ Index: gcc/testsuite/gcc.target/i386/sse4_1-roundss-4.c
    return ret;
  }
  
+Index: gcc/testsuite/gcc.target/i386/chkp-always_inline.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/chkp-always_inline.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/chkp-always_inline.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-options "-fcheck-pointer-bounds -mmpx -O2 -Wno-attributes" } */
+ 
+ static __attribute__((always_inline)) int f1 (int *p)
+Index: gcc/testsuite/gcc.target/i386/avx512f-vcvtsi2sd64-1.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/avx512f-vcvtsi2sd64-1.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/avx512f-vcvtsi2sd64-1.c	(.../branches/gcc-5-branch)
+@@ -1,6 +1,6 @@
+ /* { dg-do compile { target { ! { ia32 } } } } */
+ /* { dg-options "-mavx512f -O2" } */
+-/* { dg-final { scan-assembler-times "vcvtsi2sdq\[ \\t\]+\[^\n\]*\{ru-sae\}\[^\{\n\]*%xmm\[0-9\]+(?:\n|\[ \\t\]+#)" 1 } } */
++/* { dg-final { scan-assembler-times "vcvtsi2sdq\[ \\t\]+\[^%\n\]*%r\[^\{\n\]*\{ru-sae\}\[^\{\n\]*%xmm\[0-9\]+(?:\n|\[ \\t\]+#)" 1 } } */
+ 
+ #include <immintrin.h>
+ 
 Index: gcc/testsuite/gcc.target/i386/sse4_1-roundps-3.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.target/i386/sse4_1-roundps-3.c	(.../tags/gcc_5_3_0_release)
@@ -3084,6 +3786,39 @@ Index: gcc/testsuite/gcc.target/i386/sse4_1-roundps-3.c
  
  #define ROUND_INTRIN(x, mode) _mm_floor_ps(x)
  #define ROUND_MODE _MM_FROUND_FLOOR
+Index: gcc/testsuite/gcc.target/i386/chkp-remove-bndint-2.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/chkp-remove-bndint-2.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/chkp-remove-bndint-2.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-options "-fcheck-pointer-bounds -mmpx -O2 -fdump-tree-optimized -Wchkp" } */
+ /* { dg-final { scan-tree-dump-not "bndint" "optimized" } } */
+ /* { dg-final { cleanup-tree-dump "optimized" } } */
+Index: gcc/testsuite/gcc.target/i386/chkp-stropt-5.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/chkp-stropt-5.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/chkp-stropt-5.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-options "-fcheck-pointer-bounds -mmpx -O2 -fdump-tree-chkpopt -fchkp-use-fast-string-functions" } */
+ /* { dg-final { scan-tree-dump "memcpy_nobnd" "chkpopt" } } */
+ /* { dg-final { cleanup-tree-dump "chkpopt" } } */
+Index: gcc/testsuite/gcc.target/i386/chkp-stropt-16.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/chkp-stropt-16.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/chkp-stropt-16.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-require-effective-target mempcpy } */
+ /* { dg-options "-fcheck-pointer-bounds -mmpx -O2 -fdump-tree-chkpopt -fchkp-use-nochk-string-functions -fchkp-use-fast-string-functions -D_GNU_SOURCE" } */
+ /* { dg-final { scan-tree-dump "mempcpy_nobnd_nochk" "chkpopt" } } */
 Index: gcc/testsuite/gcc.target/i386/sse4_1-roundsd-1.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.target/i386/sse4_1-roundsd-1.c	(.../tags/gcc_5_3_0_release)
@@ -3096,6 +3831,67 @@ Index: gcc/testsuite/gcc.target/i386/sse4_1-roundsd-1.c
  
  #define ROUND_INTRIN(x, mode) _mm_ceil_sd(x, x)
  #define ROUND_MODE _MM_FROUND_CEIL
+Index: gcc/testsuite/gcc.target/i386/avx512f-vcvtusi2ss-1.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/avx512f-vcvtusi2ss-1.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/avx512f-vcvtusi2ss-1.c	(.../branches/gcc-5-branch)
+@@ -1,7 +1,7 @@
+ /* { dg-do compile } */
+ /* { dg-options "-mavx512f -O2" } */
+ /* { dg-final { scan-assembler-times "vcvtusi2ss\[ \\t\]+\[^\{\n\]*%xmm\[0-9\]+(?:\n|\[ \\t\]+#)" 1 } } */
+-/* { dg-final { scan-assembler-times "vcvtusi2ss\[ \\t\]+\[^\n\]*\{rn-sae\}\[^\{\n\]*%xmm\[0-9\]+(?:\n|\[ \\t\]+#)" 1 } } */
++/* { dg-final { scan-assembler-times "vcvtusi2ss\[ \\t\]+\[^%\n\]*%e\[^\{\n\]*\{rn-sae\}\[^\{\n\]*%xmm\[0-9\]+(?:\n|\[ \\t\]+#)" 1 } } */
+ 
+ #include <immintrin.h>
+ 
+Index: gcc/testsuite/gcc.target/i386/avx512pf-vscatterpf1dps-1.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/avx512pf-vscatterpf1dps-1.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/avx512pf-vscatterpf1dps-1.c	(.../branches/gcc-5-branch)
+@@ -1,7 +1,6 @@
+ /* { dg-do compile } */
+ /* { dg-options "-mavx512pf -O2" } */
+-/* { dg-final { scan-assembler-times "vscatterpf1dps\[ \\t\]+\[^\{\n\]*%zmm\[0-9\]+\[^\n\]*\\)(?:\n|\[ \\t\]+#)" 1 } } */
+-/* { dg-final { scan-assembler-times "vscatterpf1dps\[ \\t\]+\[^\{\n\]*%zmm\[0-9\]+\[^\n\]*\\)\{%k\[1-7\]\}(?:\n|\[ \\t\]+#)" 1 } } */
++/* { dg-final { scan-assembler-times "vscatterpf1dps\[ \\t\]+\[^\{\n\]*%zmm\[0-9\]+\[^\n\]*\\)\{%k\[1-7\]\}(?:\n|\[ \\t\]+#)" 2 } } */
+ 
+ #include <immintrin.h>
+ 
+Index: gcc/testsuite/gcc.target/i386/avx512pf-vscatterpf0qps-1.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/avx512pf-vscatterpf0qps-1.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/avx512pf-vscatterpf0qps-1.c	(.../branches/gcc-5-branch)
+@@ -1,7 +1,6 @@
+ /* { dg-do compile } */
+ /* { dg-options "-mavx512pf -O2" } */
+-/* { dg-final { scan-assembler-times "vscatterpf0qps\[ \\t\]+\[^\{\n\]*%zmm\[0-9\]+\[^\n\]*\\)(?:\n|\[ \\t\]+#)" 1 } } */
+-/* { dg-final { scan-assembler-times "vscatterpf0qps\[ \\t\]+\[^\{\n\]*%zmm\[0-9\]+\[^\n\]*\\)\{%k\[1-7\]\}(?:\n|\[ \\t\]+#)" 1 } } */
++/* { dg-final { scan-assembler-times "vscatterpf0qps\[ \\t\]+\[^\{\n\]*%zmm\[0-9\]+\[^\n\]*\\)\{%k\[1-7\]\}(?:\n|\[ \\t\]+#)" 2 } } */
+ 
+ #include <immintrin.h>
+ 
+Index: gcc/testsuite/gcc.target/i386/chkp-lifetime-1.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/chkp-lifetime-1.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/chkp-lifetime-1.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-options "-fcheck-pointer-bounds -mmpx -O2 -fdump-tree-chkpopt-details" } */
+ /* { dg-final { scan-tree-dump "Moving creation of \[^ \]+ down to its use" "chkpopt" } } */
+ /* { dg-final { cleanup-tree-dump "chkpopt" } } */
+Index: gcc/testsuite/gcc.target/i386/chkp-stropt-6.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/chkp-stropt-6.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/chkp-stropt-6.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-options "-fcheck-pointer-bounds -mmpx -O2 -fdump-tree-chkpopt -fchkp-use-fast-string-functions" } */
+ /* { dg-final { scan-tree-dump "memset_nobnd" "chkpopt" } } */
+ /* { dg-final { cleanup-tree-dump "chkpopt" } } */
 Index: gcc/testsuite/gcc.target/i386/sse4_1-roundsd-2.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.target/i386/sse4_1-roundsd-2.c	(.../tags/gcc_5_3_0_release)
@@ -3108,6 +3904,100 @@ Index: gcc/testsuite/gcc.target/i386/sse4_1-roundsd-2.c
  
  #define ROUND_INTRIN(x, mode) _mm_round_sd(x, x, mode)
  #define ROUND_MODE _MM_FROUND_NINT
+Index: gcc/testsuite/gcc.target/i386/chkp-builtins-1.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/chkp-builtins-1.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/chkp-builtins-1.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-options "-fcheck-pointer-bounds -mmpx -fdump-tree-chkp" } */
+ /* { dg-final { scan-tree-dump-not "bnd_init_ptr_bounds" "chkp" } } */
+ /* { dg-final { cleanup-tree-dump "chkp" } } */
+Index: gcc/testsuite/gcc.target/i386/chkp-hidden-def.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/chkp-hidden-def.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/chkp-hidden-def.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-options "-fcheck-pointer-bounds -mmpx -O2" } */
+ /* { dg-final { scan-assembler-not "test.chkp" } } */
+ 
+Index: gcc/testsuite/gcc.target/i386/avx512dq-vrangesd-1.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/avx512dq-vrangesd-1.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/avx512dq-vrangesd-1.c	(.../branches/gcc-5-branch)
+@@ -1,7 +1,7 @@
+ /* { dg-do compile } */
+ /* { dg-options "-mavx512dq -O2" } */
+ /* { dg-final { scan-assembler-times "vrangesd\[ \\t\]+\[^\{\n\]*%xmm\[0-9\]+(?:\n|\[ \\t\]+#)" 1 } } */
+-/* { dg-final { scan-assembler-times "vrangesd\[ \\t\]+\[^\{\n\]*\{sae\}\[^\n\]*%xmm\[0-9\]+(?:\n|\[ \\t\]+#)" 1 } } */
++/* { dg-final { scan-assembler-times "vrangesd\[ \\t\]+\[^\$\n\]*\\$\[^\{\n\]*\{sae\}\[^\n\]*%xmm\[0-9\]+(?:\n|\[ \\t\]+#)" 1 } } */
+ 
+ #include <immintrin.h>
+ 
+Index: gcc/testsuite/gcc.target/i386/avx512f-vcvtusi2ss64-1.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/avx512f-vcvtusi2ss64-1.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/avx512f-vcvtusi2ss64-1.c	(.../branches/gcc-5-branch)
+@@ -1,7 +1,7 @@
+ /* { dg-do compile { target { ! { ia32 } } } } */
+ /* { dg-options "-mavx512f -O2" } */
+ /* { dg-final { scan-assembler-times "vcvtusi2ss\[ \\t\]+\[^\{\n\]*%xmm\[0-9\]+(?:\n|\[ \\t\]+#)" 1 } } */
+-/* { dg-final { scan-assembler-times "vcvtusi2ss\[ \\t\]+\[^\n\]*\{rz-sae\}\[^\{\n\]*%xmm\[0-9\]+(?:\n|\[ \\t\]+#)" 1 } } */
++/* { dg-final { scan-assembler-times "vcvtusi2ss\[ \\t\]+\[^%\n\]*%r\[^\{\n\]*\{rz-sae\}\[^\{\n\]*%xmm\[0-9\]+(?:\n|\[ \\t\]+#)" 1 } } */
+ 
+ #include <immintrin.h>
+ 
+Index: gcc/testsuite/gcc.target/i386/chkp-strlen-1.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/chkp-strlen-1.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/chkp-strlen-1.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-options "-fcheck-pointer-bounds -mmpx -O2 -fdump-tree-strlen" } */
+ /* { dg-final { scan-tree-dump "memcpy.chkp" "strlen" } } */
+ /* { dg-final { cleanup-tree-dump "strlen" } } */
+Index: gcc/testsuite/gcc.target/i386/chkp-stropt-10.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/chkp-stropt-10.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/chkp-stropt-10.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-options "-fcheck-pointer-bounds -mmpx -O2 -fdump-tree-chkpopt -fchkp-use-fast-string-functions" } */
+ /* { dg-final { scan-tree-dump-not "memset_nobnd" "chkpopt" } } */
+ /* { dg-final { cleanup-tree-dump "chkpopt" } } */
+Index: gcc/testsuite/gcc.target/i386/chkp-bndret.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/chkp-bndret.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/chkp-bndret.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-options "-fcheck-pointer-bounds -mmpx -O2 -fdump-tree-chkp" } */
+ /* { dg-final { scan-tree-dump-not "bndret" "chkp" } } */
+ /* { dg-final { cleanup-tree-dump "chkp" } } */
+Index: gcc/testsuite/gcc.target/i386/avx512pf-vscatterpf1qpd-1.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/avx512pf-vscatterpf1qpd-1.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/avx512pf-vscatterpf1qpd-1.c	(.../branches/gcc-5-branch)
+@@ -1,7 +1,6 @@
+ /* { dg-do compile } */
+ /* { dg-options "-mavx512pf -O2" } */
+-/* { dg-final { scan-assembler-times "vscatterpf1qpd\[ \\t\]+\[^\{\n\]*%zmm\[0-9\]+\[^\n\]*\\)(?:\n|\[ \\t\]+#)" 1 } } */
+-/* { dg-final { scan-assembler-times "vscatterpf1qpd\[ \\t\]+\[^\{\n\]*%zmm\[0-9\]+\[^\n\]*\\)\{%k\[1-7\]\}(?:\n|\[ \\t\]+#)" 1 } } */
++/* { dg-final { scan-assembler-times "vscatterpf1qpd\[ \\t\]+\[^\{\n\]*%zmm\[0-9\]+\[^\n\]*\\)\{%k\[1-7\]\}(?:\n|\[ \\t\]+#)" 2 } } */
+ 
+ #include <immintrin.h>
+ 
 Index: gcc/testsuite/gcc.target/i386/avx-vextractf128-256-5.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.target/i386/avx-vextractf128-256-5.c	(.../tags/gcc_5_3_0_release)
@@ -3125,6 +4015,17 @@ Index: gcc/testsuite/gcc.target/i386/avx-vextractf128-256-5.c
 +{
 +  return _mm256_extractf128_pd (_mm512_extractf64x4_pd(z, 0), 1);
 +}
+Index: gcc/testsuite/gcc.target/i386/chkp-stropt-7.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/chkp-stropt-7.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/chkp-stropt-7.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-options "-fcheck-pointer-bounds -mmpx -O2 -fdump-tree-chkpopt -fchkp-use-fast-string-functions" } */
+ /* { dg-final { scan-tree-dump "memmove_nobnd" "chkpopt" } } */
+ /* { dg-final { cleanup-tree-dump "chkpopt" } } */
 Index: gcc/testsuite/gcc.target/i386/avx512dq-vextractf64x2-1.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.target/i386/avx512dq-vextractf64x2-1.c	(.../tags/gcc_5_3_0_release)
@@ -3150,6 +4051,40 @@ Index: gcc/testsuite/gcc.target/i386/sse4_1-roundsd-3.c
  
  #define ROUND_INTRIN(x, mode) _mm_floor_sd(x, x)
  #define ROUND_MODE _MM_FROUND_FLOOR
+Index: gcc/testsuite/gcc.target/i386/avx512f-vcvtsi2ss-1.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/avx512f-vcvtsi2ss-1.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/avx512f-vcvtsi2ss-1.c	(.../branches/gcc-5-branch)
+@@ -1,6 +1,6 @@
+ /* { dg-do compile } */
+ /* { dg-options "-mavx512f -O2" } */
+-/* { dg-final { scan-assembler-times "vcvtsi2ss\[ \\t\]+\[^\n\]*\{rn-sae\}\[^\{\n\]*%xmm\[0-9\]+(?:\n|\[ \\t\]+#)" 1 } } */
++/* { dg-final { scan-assembler-times "vcvtsi2ss\[ \\t\]+\[^%\n\]*%e\[^\{\n\]*\{rn-sae\}\[^\{\n\]*%xmm\[0-9\]+(?:\n|\[ \\t\]+#)" 1 } } */
+ 
+ #include <immintrin.h>
+ 
+Index: gcc/testsuite/gcc.target/i386/pr65167.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/pr65167.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/pr65167.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-options "-O -fschedule-insns -fcheck-pointer-bounds -mmpx" } */
+ 
+ void bar(int *a, int *b, int *c, int *d, int *e, int *f);
+Index: gcc/testsuite/gcc.target/i386/chkp-builtins-2.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/chkp-builtins-2.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/chkp-builtins-2.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-options "-fcheck-pointer-bounds -mmpx -fdump-tree-chkp" } */
+ /* { dg-final { scan-tree-dump-not "bnd_copy_ptr_bounds" "chkp" } } */
+ /* { dg-final { cleanup-tree-dump "chkp" } } */
 Index: gcc/testsuite/gcc.target/i386/pr68701-1.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.target/i386/pr68701-1.c	(.../tags/gcc_5_3_0_release)
@@ -3168,6 +4103,109 @@ Index: gcc/testsuite/gcc.target/i386/pr68701-1.c
 +  foo ();
 +  return argc - 1;
 +}
+Index: gcc/testsuite/gcc.target/i386/chkp-narrow-bounds.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/chkp-narrow-bounds.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/chkp-narrow-bounds.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-options "-fcheck-pointer-bounds -mmpx -O2 -fdump-tree-chkp" } */
+ /* { dg-final { scan-tree-dump "bndcl" "chkp" } } */
+ /* { dg-final { scan-tree-dump "bndcu" "chkp" } } */
+Index: gcc/testsuite/gcc.target/i386/chkp-label-address.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/chkp-label-address.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/chkp-label-address.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-options "-fcheck-pointer-bounds -mmpx -O2 -Wchkp" } */
+ 
+ #include <stdio.h>
+Index: gcc/testsuite/gcc.target/i386/chkp-strlen-2.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/chkp-strlen-2.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/chkp-strlen-2.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-require-effective-target stpcpy } */
+ /* { dg-options "-fcheck-pointer-bounds -mmpx -O2 -fdump-tree-strlen" } */
+ /* { dg-final { scan-tree-dump-not "strlen" "strlen" } } */
+Index: gcc/testsuite/gcc.target/i386/chkp-stropt-11.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/chkp-stropt-11.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/chkp-stropt-11.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-options "-fcheck-pointer-bounds -mmpx -O2 -fdump-tree-chkpopt -fchkp-use-fast-string-functions" } */
+ /* { dg-final { scan-tree-dump-not "memmove_nobnd" "chkpopt" } } */
+ /* { dg-final { cleanup-tree-dump "chkpopt" } } */
+Index: gcc/testsuite/gcc.target/i386/pr65044.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/pr65044.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/pr65044.c	(.../branches/gcc-5-branch)
+@@ -1,6 +1,5 @@
+ /* { dg-error "-fcheck-pointer-bounds is not supported with Address Sanitizer" } */
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-options "-fcheck-pointer-bounds -mmpx -fsanitize=address" } */
+ 
+ extern int x[];
+Index: gcc/testsuite/gcc.target/i386/avx512pf-vscatterpf0dps-1.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/avx512pf-vscatterpf0dps-1.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/avx512pf-vscatterpf0dps-1.c	(.../branches/gcc-5-branch)
+@@ -1,7 +1,6 @@
+ /* { dg-do compile } */
+ /* { dg-options "-mavx512pf -O2" } */
+-/* { dg-final { scan-assembler-times "vscatterpf0dps\[ \\t\]+\[^\{\n\]*%zmm\[0-9\]+\[^\n\]*\\)(?:\n|\[ \\t\]+#)" 1 } } */
+-/* { dg-final { scan-assembler-times "vscatterpf0dps\[ \\t\]+\[^\{\n\]*%zmm\[0-9\]+\[^\n\]*\\)\{%k\[1-7\]\}(?:\n|\[ \\t\]+#)" 1 } } */
++/* { dg-final { scan-assembler-times "vscatterpf0dps\[ \\t\]+\[^\{\n\]*%zmm\[0-9\]+\[^\n\]*\\)\{%k\[1-7\]\}(?:\n|\[ \\t\]+#)" 2 } } */
+ 
+ #include <immintrin.h>
+ 
+Index: gcc/testsuite/gcc.target/i386/avx512dq-vrangepd-1.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/avx512dq-vrangepd-1.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/avx512dq-vrangepd-1.c	(.../branches/gcc-5-branch)
+@@ -1,15 +1,15 @@
+ /* { dg-do compile } */
+ /* { dg-options "-mavx512dq -mavx512vl -O2" } */
+-/* { dg-final { scan-assembler-times "vrangepd\[ \\t\]+\[^\{\n\]*\{sae\}\[^\n\]*%zmm\[0-9\]+(?:\n|\[ \\t\]+#)"  1 } } */
++/* { dg-final { scan-assembler-times "vrangepd\[ \\t\]+\[^\$\n\]*\\$\[^\{\n\]*\{sae\}\[^\n\]*%zmm\[0-9\]+(?:\n|\[ \\t\]+#)"  1 } } */
+ /* { dg-final { scan-assembler-times "vrangepd\[ \\t\]+\[^\{\n\]*%zmm\[0-9\]+(?:\n|\[ \\t\]+#)"  1 } } */
+ /* { dg-final { scan-assembler-times "vrangepd\[ \\t\]+\[^\{\n\]*%ymm\[0-9\]+(?:\n|\[ \\t\]+#)"  1 } } */
+ /* { dg-final { scan-assembler-times "vrangepd\[ \\t\]+\[^\{\n\]*%xmm\[0-9\]+(?:\n|\[ \\t\]+#)"  1 } } */
+-/* { dg-final { scan-assembler-times "vrangepd\[ \\t\]+\[^\{\n\]*\{sae\}\[^\n\]*%zmm\[0-9\]+\{%k\[1-7\]\}(?:\n|\[ \\t\]+#)" 1 } } */
++/* { dg-final { scan-assembler-times "vrangepd\[ \\t\]+\[^\$\n\]*\\$\[^\{\n\]*\{sae\}\[^\n\]*%zmm\[0-9\]+\{%k\[1-7\]\}(?:\n|\[ \\t\]+#)" 1 } } */
+ /* { dg-final { scan-assembler-times "vrangepd\[ \\t\]+\[^\{\n\]*%zmm\[0-9\]+\{%k\[1-7\]\}(?:\n|\[ \\t\]+#)"  1 } } */
+ /* { dg-final { scan-assembler-times "vrangepd\[ \\t\]+\[^\{\n\]*%ymm\[0-9\]+\{%k\[1-7\]\}(?:\n|\[ \\t\]+#)" 1 } } */
+ /* { dg-final { scan-assembler-times "vrangepd\[ \\t\]+\[^\{\n\]*%xmm\[0-9\]+\{%k\[1-7\]\}(?:\n|\[ \\t\]+#)" 1 } } */
+ /* { dg-final { scan-assembler-times "vrangepd\[ \\t\]+\[^\{\n\]*%zmm\[0-9\]+\{%k\[1-7\]\}\{z\}(?:\n|\[ \\t\]+#)"  1 } } */
+-/* { dg-final { scan-assembler-times "vrangepd\[ \\t\]+\[^\{\n\]*\{sae\}\[^\n\]*%zmm\[0-9\]+\{%k\[1-7\]\}\{z\}(?:\n|\[ \\t\]+#)" 1 } } */
++/* { dg-final { scan-assembler-times "vrangepd\[ \\t\]+\[^\$\n\]*\\$\[^\{\n\]*\{sae\}\[^\n\]*%zmm\[0-9\]+\{%k\[1-7\]\}\{z\}(?:\n|\[ \\t\]+#)" 1 } } */
+ /* { dg-final { scan-assembler-times "vrangepd\[ \\t\]+\[^\{\n\]*%ymm\[0-9\]+\{%k\[1-7\]\}\{z\}(?:\n|\[ \\t\]+#)" 1 } } */
+ /* { dg-final { scan-assembler-times "vrangepd\[ \\t\]+\[^\{\n\]*%xmm\[0-9\]+\{%k\[1-7\]\}\{z\}(?:\n|\[ \\t\]+#)" 1 } } */
+ 
+Index: gcc/testsuite/gcc.target/i386/chkp-stropt-8.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/chkp-stropt-8.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/chkp-stropt-8.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-require-effective-target mempcpy } */
+ /* { dg-options "-fcheck-pointer-bounds -mmpx -O2 -fdump-tree-chkpopt -fchkp-use-fast-string-functions -D_GNU_SOURCE" } */
+ /* { dg-final { scan-tree-dump "mempcpy_nobnd" "chkpopt" } } */
 Index: gcc/testsuite/gcc.target/i386/sse4_1-roundsd-4.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.target/i386/sse4_1-roundsd-4.c	(.../tags/gcc_5_3_0_release)
@@ -3202,6 +4240,18 @@ Index: gcc/testsuite/gcc.target/i386/sse4_1-roundsd-4.c
 +		      : "0" (f), "m" (new_cw), "m" (saved_cw));
    return ret;
  }
+ 
+Index: gcc/testsuite/gcc.target/i386/avx512f-vcvtsi2ss64-1.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/avx512f-vcvtsi2ss64-1.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/avx512f-vcvtsi2ss64-1.c	(.../branches/gcc-5-branch)
+@@ -1,6 +1,6 @@
+ /* { dg-do compile { target { ! { ia32 } } } } */
+ /* { dg-options "-mavx512f -O2" } */
+-/* { dg-final { scan-assembler-times "vcvtsi2ssq\[ \\t\]+\[^\n\]*\{rz-sae\}\[^\{\n\]*%xmm\[0-9\]+(?:\n|\[ \\t\]+#)" 1 } } */
++/* { dg-final { scan-assembler-times "vcvtsi2ssq\[ \\t\]+\[^%\n\]*%r\[^\{\n\]*\{rz-sae\}\[^\{\n\]*%xmm\[0-9\]+(?:\n|\[ \\t\]+#)" 1 } } */
+ 
+ #include <immintrin.h>
  
 Index: gcc/testsuite/gcc.target/i386/sse4_1-round.h
 ===================================================================
@@ -3238,6 +4288,17 @@ Index: gcc/testsuite/gcc.target/i386/sse4_1-round.h
    return ret;
  }
  
+Index: gcc/testsuite/gcc.target/i386/chkp-builtins-3.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/chkp-builtins-3.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/chkp-builtins-3.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-options "-fcheck-pointer-bounds -mmpx -fdump-tree-chkp" } */
+ /* { dg-final { scan-tree-dump-not "bnd_set_ptr_bounds" "chkp" } } */
+ /* { dg-final { cleanup-tree-dump "chkp" } } */
 Index: gcc/testsuite/gcc.target/i386/pr68701-2.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.target/i386/pr68701-2.c	(.../tags/gcc_5_3_0_release)
@@ -3254,6 +4315,50 @@ Index: gcc/testsuite/gcc.target/i386/pr68701-2.c
 +{
 +  volatile V b = a;
 +}
+Index: gcc/testsuite/gcc.target/i386/chkp-stropt-1.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/chkp-stropt-1.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/chkp-stropt-1.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-options "-fcheck-pointer-bounds -mmpx -O2 -fdump-tree-chkpopt -fchkp-use-nochk-string-functions" } */
+ /* { dg-final { scan-tree-dump "memcpy_nochk" "chkpopt" } } */
+ /* { dg-final { cleanup-tree-dump "chkpopt" } } */
+Index: gcc/testsuite/gcc.target/i386/pr63995-2.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/pr63995-2.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/pr63995-2.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-options "-O2 -g -fcheck-pointer-bounds -mmpx -fcompare-debug" } */
+ 
+ struct ts
+Index: gcc/testsuite/gcc.target/i386/chkp-strlen-3.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/chkp-strlen-3.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/chkp-strlen-3.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-options "-fcheck-pointer-bounds -mmpx -O2 -fdump-tree-strlen" } */
+ /* { dg-final { scan-tree-dump-times "strlen" 1 "strlen" } } */
+ /* { dg-final { cleanup-tree-dump "strlen" } } */
+Index: gcc/testsuite/gcc.target/i386/chkp-stropt-12.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/chkp-stropt-12.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/chkp-stropt-12.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-require-effective-target mempcpy } */
+ /* { dg-options "-fcheck-pointer-bounds -mmpx -O2 -fdump-tree-chkpopt -fchkp-use-fast-string-functions -D_GNU_SOURCE" } */
+ /* { dg-final { scan-tree-dump-not "mempcpy_nobnd" "chkpopt" } } */
 Index: gcc/testsuite/gcc.target/i386/sse4_1-roundss-1.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.target/i386/sse4_1-roundss-1.c	(.../tags/gcc_5_3_0_release)
@@ -3266,6 +4371,109 @@ Index: gcc/testsuite/gcc.target/i386/sse4_1-roundss-1.c
  
  #define ROUND_INTRIN(x, mode) _mm_ceil_ss(x, x)
  #define ROUND_MODE _MM_FROUND_CEIL
+Index: gcc/testsuite/gcc.target/i386/chkp-stropt-9.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/chkp-stropt-9.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/chkp-stropt-9.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-options "-fcheck-pointer-bounds -mmpx -O2 -fdump-tree-chkpopt -fchkp-use-fast-string-functions" } */
+ /* { dg-final { scan-tree-dump-not "memcpy_nobnd" "chkpopt" } } */
+ /* { dg-final { cleanup-tree-dump "chkpopt" } } */
+Index: gcc/testsuite/gcc.target/i386/pr65183.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/pr65183.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/pr65183.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-options "-O -fcheck-pointer-bounds -fchkp-use-nochk-string-functions -mmpx" } */
+ 
+ extern void bar(void *);
+Index: gcc/testsuite/gcc.target/i386/avx512pf-vscatterpf1dpd-1.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/avx512pf-vscatterpf1dpd-1.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/avx512pf-vscatterpf1dpd-1.c	(.../branches/gcc-5-branch)
+@@ -1,7 +1,6 @@
+ /* { dg-do compile } */
+ /* { dg-options "-mavx512pf -O2" } */
+-/* { dg-final { scan-assembler-times "vscatterpf1dpd\[ \\t\]+\[^\{\n\]*%ymm\[0-9\]+\[^\n\]*\\)(?:\n|\[ \\t\]+#)" 1 } } */
+-/* { dg-final { scan-assembler-times "vscatterpf1dpd\[ \\t\]+\[^\{\n\]*%ymm\[0-9\]+\[^\n\]*\\)\{%k\[1-7\]\}(?:\n|\[ \\t\]+#)" 1 } } */
++/* { dg-final { scan-assembler-times "vscatterpf1dpd\[ \\t\]+\[^\{\n\]*%ymm\[0-9\]+\[^\n\]*\\)\{%k\[1-7\]\}(?:\n|\[ \\t\]+#)" 2 } } */
+ 
+ #include <immintrin.h>
+ 
+Index: gcc/testsuite/gcc.target/i386/avx512pf-vscatterpf0qpd-1.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/avx512pf-vscatterpf0qpd-1.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/avx512pf-vscatterpf0qpd-1.c	(.../branches/gcc-5-branch)
+@@ -1,7 +1,6 @@
+ /* { dg-do compile } */
+ /* { dg-options "-mavx512pf -O2" } */
+-/* { dg-final { scan-assembler-times "vscatterpf0qpd\[ \\t\]+\[^\{\n\]*%zmm\[0-9\]+\[^\n\]*\\)(?:\n|\[ \\t\]+#)" 1 } } */
+-/* { dg-final { scan-assembler-times "vscatterpf0qpd\[ \\t\]+\[^\{\n\]*%zmm\[0-9\]+\[^\n\]*\\)\{%k\[1-7\]\}(?:\n|\[ \\t\]+#)" 1 } } */
++/* { dg-final { scan-assembler-times "vscatterpf0qpd\[ \\t\]+\[^\{\n\]*%zmm\[0-9\]+\[^\n\]*\\)\{%k\[1-7\]\}(?:\n|\[ \\t\]+#)" 2 } } */
+ 
+ #include <immintrin.h>
+ 
+Index: gcc/testsuite/gcc.target/i386/chkp-builtins-4.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/chkp-builtins-4.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/chkp-builtins-4.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-options "-fcheck-pointer-bounds -mmpx -fdump-tree-chkp" } */
+ /* { dg-final { scan-tree-dump-not "bnd_null_ptr_bounds" "chkp" } } */
+ /* { dg-final { cleanup-tree-dump "chkp" } } */
+Index: gcc/testsuite/gcc.target/i386/chkp-stropt-2.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/chkp-stropt-2.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/chkp-stropt-2.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-options "-fcheck-pointer-bounds -mmpx -O2 -fdump-tree-chkpopt -fchkp-use-nochk-string-functions" } */
+ /* { dg-final { scan-tree-dump "memset_nochk" "chkpopt" } } */
+ /* { dg-final { cleanup-tree-dump "chkpopt" } } */
+Index: gcc/testsuite/gcc.target/i386/chkp-strlen-4.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/chkp-strlen-4.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/chkp-strlen-4.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-require-effective-target mempcpy } */
+ /* { dg-options "-fcheck-pointer-bounds -mmpx -O2 -fdump-tree-strlen -D_GNU_SOURCE" } */
+ /* { dg-final { scan-tree-dump-times "strlen" 1 "strlen" } } */
+Index: gcc/testsuite/gcc.target/i386/chkp-stropt-13.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/chkp-stropt-13.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/chkp-stropt-13.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-options "-fcheck-pointer-bounds -mmpx -O2 -fdump-tree-chkpopt -fchkp-use-nochk-string-functions -fchkp-use-fast-string-functions" } */
+ /* { dg-final { scan-tree-dump "memcpy_nobnd_nochk" "chkpopt" } } */
+ /* { dg-final { cleanup-tree-dump "chkpopt" } } */
+Index: gcc/testsuite/gcc.target/i386/thunk-retbnd.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/thunk-retbnd.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/thunk-retbnd.c	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { ! x32 } } } */
+ /* { dg-options "-O2 -fcheck-pointer-bounds -mmpx -fdump-tree-optimized" } */
+ /* { dg-final { scan-tree-dump-times "return &glob," 2 "optimized" } } */
+ /* { dg-final { cleanup-tree-dump "optimized" } } */
 Index: gcc/testsuite/gcc.target/i386/sse4_1-roundss-2.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.target/i386/sse4_1-roundss-2.c	(.../tags/gcc_5_3_0_release)
@@ -3434,6 +4642,81 @@ Index: gcc/testsuite/gcc.target/s390/vector/vec-vrepi-1.c
 +    __builtin_abort ();
 +
 +  return 0;
++}
+Index: gcc/testsuite/gcc.target/s390/gpr2fprsavecfi.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/s390/gpr2fprsavecfi.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/s390/gpr2fprsavecfi.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,23 @@
++/* { dg-do compile } */
++/* { dg-options "-O3 -march=z10 -mzarch -fdwarf2-cfi-asm" } */
++
++char *gl[100];
++
++long
++foo ()
++{
++  long r = 0;
++  char bla[100];
++  int i;
++
++  __builtin_memcpy (bla, gl, 100);
++
++  for (i = 0; i < 100; i++)
++    r += bla[i];
++
++  return r;
++}
++
++/* { dg-final { scan-assembler-not "cfi_def_cfa_register" } } */
++/* { dg-final { scan-assembler "cfi_register" } } */
++/* { dg-final { scan-assembler "cfi_def_cfa_offset" } } */
+Index: gcc/testsuite/gcc.target/ia64/pr60465-gprel64-c37.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/ia64/pr60465-gprel64-c37.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/ia64/pr60465-gprel64-c37.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,10 @@
++/* { dg-do compile { target ia64-*-* } } */
++/* { dg-options "-O2 -fpic" } */
++/* { dg-final { scan-assembler-not "@ltoffx" } } */
++
++/* A bit of https://bugzilla.redhat.com/show_bug.cgi?id=33354
++   where many stores to static variables overflow .sdata */
++
++static const char *s90;
++void f() { s90 = "string 90"; }
++const char * g() { return s90; }
+Index: gcc/testsuite/gcc.target/ia64/pr60465-gprel64.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/ia64/pr60465-gprel64.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/ia64/pr60465-gprel64.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,27 @@
++/* { dg-do compile { target ia64-*-* } } */
++/* { dg-options "-O2 -fpic" } */
++/* { dg-final { scan-assembler-not "@ltoffx" } } */
++
++/* Test imitates early ld.so setup in glibc
++   where no dynamic relocations must be present. */
++
++struct rtld_global
++{
++    long *p[77];
++};
++
++struct rtld_global _rtld_local __attribute__ ((visibility ("hidden"), section (".sdata")));
++
++static void __attribute__ ((unused, noinline))
++elf_get_dynamic_info (struct rtld_global * g, long * dyn)
++{
++  long **info = g->p;
++
++  info[(0x6ffffeff - *dyn) + 66] = dyn;
++}
++
++void __attribute__ ((unused, noinline))
++_dl_start (long * dyn)
++{
++  elf_get_dynamic_info(&_rtld_local, dyn);
 +}
 Index: gcc/testsuite/gcc.target/sparc/20151219-1.c
 ===================================================================
@@ -3668,6 +4951,144 @@ Index: gcc/testsuite/gfortran.dg/deferred_character_2.f90
 +     end subroutine testdefchar
 +
 +END PROGRAM
+Index: gcc/testsuite/gfortran.dg/derived_constructor_comps_6.f90
+===================================================================
+--- a/src/gcc/testsuite/gfortran.dg/derived_constructor_comps_6.f90	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gfortran.dg/derived_constructor_comps_6.f90	(.../branches/gcc-5-branch)
+@@ -0,0 +1,133 @@
++! { dg-do run }
++! { dg-additional-options "-fdump-tree-original"
++!
++! PR fortran/61831
++! The deallocation of components of array constructor elements
++! used to have the side effect of also deallocating some other
++! variable's components from which they were copied.
++
++program main
++  implicit none
++
++  integer, parameter :: n = 2
++
++  type :: string_t
++     character(LEN=1), dimension(:), allocatable :: chars
++  end type string_t
++
++  type :: string_container_t
++     type(string_t) :: comp
++  end type string_container_t
++
++  type :: string_array_container_t
++     type(string_t) :: comp(n)
++  end type string_array_container_t
++
++  type(string_t) :: prt_in, tmp, tmpa(n)
++  type(string_container_t) :: tmpc, tmpca(n)
++  type(string_array_container_t) :: tmpac, tmpaca(n)
++  integer :: i, j, k
++
++  do i=1,16
++
++     ! Test without intermediary function
++     prt_in = string_t(["A"])
++     if (.not. allocated(prt_in%chars)) call abort
++     if (any(prt_in%chars .ne. "A")) call abort
++     deallocate (prt_in%chars)
++
++     ! scalar elemental function
++     prt_in = string_t(["B"])
++     if (.not. allocated(prt_in%chars)) call abort
++     if (any(prt_in%chars .ne. "B")) call abort
++     tmp = new_prt_spec (prt_in)
++     if (.not. allocated(prt_in%chars)) call abort
++     if (any(prt_in%chars .ne. "B")) call abort
++     deallocate (prt_in%chars)
++     deallocate (tmp%chars)
++
++     ! array elemental function with array constructor
++     prt_in = string_t(["C"])
++     if (.not. allocated(prt_in%chars)) call abort
++     if (any(prt_in%chars .ne. "C")) call abort
++     tmpa = new_prt_spec ([(prt_in, i=1,2)])
++     if (.not. allocated(prt_in%chars)) call abort
++     if (any(prt_in%chars .ne. "C")) call abort
++     deallocate (prt_in%chars)
++     do j=1,n
++        deallocate (tmpa(j)%chars)
++     end do
++
++     ! scalar elemental function with structure constructor
++     prt_in = string_t(["D"])
++     if (.not. allocated(prt_in%chars)) call abort
++     if (any(prt_in%chars .ne. "D")) call abort
++     tmpc = new_prt_spec2 (string_container_t(prt_in))
++     if (.not. allocated(prt_in%chars)) call abort
++     if (any(prt_in%chars .ne. "D")) call abort
++     deallocate (prt_in%chars)
++     deallocate(tmpc%comp%chars)
++
++     ! array elemental function of an array constructor of structure constructors
++     prt_in = string_t(["E"])
++     if (.not. allocated(prt_in%chars)) call abort
++     if (any(prt_in%chars .ne. "E")) call abort
++     tmpca = new_prt_spec2 ([ (string_container_t(prt_in), i=1,2) ])
++     if (.not. allocated(prt_in%chars)) call abort
++     if (any(prt_in%chars .ne. "E")) call abort
++     deallocate (prt_in%chars)
++     do j=1,n
++        deallocate (tmpca(j)%comp%chars)
++     end do
++
++     ! scalar elemental function with a structure constructor and a nested array constructor
++     prt_in = string_t(["F"])
++     if (.not. allocated(prt_in%chars)) call abort
++     if (any(prt_in%chars .ne. "F")) call abort
++     tmpac = new_prt_spec3 (string_array_container_t([ (prt_in, i=1,2) ]))
++     if (.not. allocated(prt_in%chars)) call abort
++     if (any(prt_in%chars .ne. "F")) call abort
++     deallocate (prt_in%chars)
++     do j=1,n
++        deallocate (tmpac%comp(j)%chars)
++     end do
++
++     ! array elemental function with an array constructor nested inside
++     ! a structure constructor nested inside  an array constructor
++     prt_in = string_t(["G"])
++     if (.not. allocated(prt_in%chars)) call abort
++     if (any(prt_in%chars .ne. "G")) call abort
++     tmpaca = new_prt_spec3 ([ (string_array_container_t([ (prt_in, i=1,2) ]), j=1,2) ])
++     if (.not. allocated(prt_in%chars)) call abort
++     if (any(prt_in%chars .ne. "G")) call abort
++     deallocate (prt_in%chars)
++     do j=1,n
++        do k=1,n
++           deallocate (tmpaca(j)%comp(k)%chars)
++        end do
++     end do
++
++  end do
++
++contains
++
++  elemental function new_prt_spec (name) result (prt_spec)
++    type(string_t), intent(in) :: name
++    type(string_t) :: prt_spec
++    prt_spec = name
++  end function new_prt_spec
++
++  elemental function new_prt_spec2 (name) result (prt_spec)
++    type(string_container_t), intent(in) :: name
++    type(string_container_t) :: prt_spec
++    prt_spec = name
++  end function new_prt_spec2
++
++  elemental function new_prt_spec3 (name) result (prt_spec)
++    type(string_array_container_t), intent(in) :: name
++    type(string_array_container_t) :: prt_spec
++    prt_spec = name
++  end function new_prt_spec3
++end program main
++! { dg-final { scan-tree-dump-times "__builtin_malloc" 15 "original" } }
++! { dg-final { scan-tree-dump-times "__builtin_free" 33 "original" } }
 Index: gcc/testsuite/gfortran.dg/coarray_40.f90
 ===================================================================
 --- a/src/gcc/testsuite/gfortran.dg/coarray_40.f90	(.../tags/gcc_5_3_0_release)
@@ -3758,6 +5179,41 @@ Index: gcc/testsuite/gfortran.dg/deferred_character_6.f90
 +    if (my_stuff%string .ne. str) call abort
 +
 +end program thistest
+Index: gcc/testsuite/gfortran.dg/alloc_comp_auto_array_3.f90
+===================================================================
+--- a/src/gcc/testsuite/gfortran.dg/alloc_comp_auto_array_3.f90	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gfortran.dg/alloc_comp_auto_array_3.f90	(.../branches/gcc-5-branch)
+@@ -0,0 +1,30 @@
++! { dg-do compile }
++! { dg-options "-fdump-tree-original" }
++!
++! Test the fix for PR66082. The original problem was with the first
++! call foo_1d.
++!
++! Reported by Damian Rouson  <damian@sourceryinstitute.org>
++!
++  type foo_t
++    real, allocatable :: bigarr
++  end type
++  block
++    type(foo_t) :: foo
++    allocate(foo%bigarr)
++    call foo_1d (1,[foo]) ! was lost
++    call foo_1d (1,bar_1d()) ! Check that this is OK
++  end block
++contains
++  subroutine foo_1d (n,foo)
++    integer n
++    type(foo_t) :: foo(n)
++  end subroutine
++  function bar_1d () result (array)
++    type(foo_t) :: array(1)
++    allocate (array(1)%bigarr)
++  end function
++end
++! { dg-final { scan-tree-dump-times "builtin_malloc" 4 "original" } }
++! { dg-final { scan-tree-dump-times "builtin_free" 4 "original" } }
++! { dg-final { scan-tree-dump-times "while \\(1\\)" 4 "original" } }
 Index: gcc/testsuite/gfortran.dg/error_format_2.f90
 ===================================================================
 --- a/src/gcc/testsuite/gfortran.dg/error_format_2.f90	(.../tags/gcc_5_3_0_release)
@@ -4068,6 +5524,17 @@ Index: gcc/testsuite/gfortran.dg/deferred_character_4.f90
 +    write (buffer, "(5a4)") strings
 +    if (buffer .ne. "A   C   ABCDV   zzzz") call abort
 +end program chk_alloc_string
+Index: gcc/testsuite/gfortran.dg/allocate_with_source_14.f03
+===================================================================
+--- a/src/gcc/testsuite/gfortran.dg/allocate_with_source_14.f03	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gfortran.dg/allocate_with_source_14.f03	(.../branches/gcc-5-branch)
+@@ -210,5 +210,5 @@
+   call v%free()
+   deallocate(av)
+ end program
+-! { dg-final { scan-tree-dump-times "__builtin_malloc" 21 "original" } }
++! { dg-final { scan-tree-dump-times "__builtin_malloc" 23 "original" } }
+ ! { dg-final { scan-tree-dump-times "__builtin_free" 29 "original" } }
 Index: gcc/testsuite/gfortran.dg/coarray_critical_1.f90
 ===================================================================
 --- a/src/gcc/testsuite/gfortran.dg/coarray_critical_1.f90	(.../tags/gcc_5_3_0_release)
@@ -4123,6 +5590,48 @@ Index: gcc/testsuite/gcc.c-torture/execute/pr68648.c
 +  if (bar () != 0x83fd4005)
 +    __builtin_abort ();
 +}
+Index: gcc/testsuite/gcc.c-torture/execute/builtins/strstr-asm.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.c-torture/execute/builtins/strstr-asm.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.c-torture/execute/builtins/strstr-asm.c	(.../branches/gcc-5-branch)
+@@ -2,7 +2,6 @@
+ 
+    Ensure all expected transformations of builtin strstr occur and
+    perform correctly in presence of redirect.  */
+-/* { dg-options "-ffat-lto-objects" } */
+ 
+ #define ASMNAME(cname)  ASMNAME2 (__USER_LABEL_PREFIX__, cname)
+ #define ASMNAME2(prefix, cname) STRING (prefix) cname
+Index: gcc/testsuite/gcc.c-torture/execute/builtins/memops-asm.x
+===================================================================
+--- a/src/gcc/testsuite/gcc.c-torture/execute/builtins/memops-asm.x	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.c-torture/execute/builtins/memops-asm.x	(.../branches/gcc-5-branch)
+@@ -0,0 +1,10 @@
++# Different translation units may have different user name overrides
++# and we do not preserve enough context to known which one we want.
++
++set torture_eval_before_compile {
++  if {[string match {*-flto*} "$option"]} {
++    continue
++  }
++}
++
++return 0
+Index: gcc/testsuite/gcc.c-torture/execute/builtins/strstr-asm.x
+===================================================================
+--- a/src/gcc/testsuite/gcc.c-torture/execute/builtins/strstr-asm.x	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.c-torture/execute/builtins/strstr-asm.x	(.../branches/gcc-5-branch)
+@@ -0,0 +1,10 @@
++# Different translation units may have different user name overrides
++# and we do not preserve enough context to known which one we want.
++
++set torture_eval_before_compile {
++  if {[string match {*-flto*} "$option"]} {
++    continue
++  }
++}
++
++return 0
 Index: gcc/testsuite/gcc.c-torture/execute/pr68376-2.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.c-torture/execute/pr68376-2.c	(.../tags/gcc_5_3_0_release)
@@ -4172,6 +5681,73 @@ Index: gcc/testsuite/gcc.c-torture/execute/pr68376-2.c
 +    abort ();
    return 0;
  }
+Index: gcc/testsuite/gcc.c-torture/execute/pr67781.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.c-torture/execute/pr67781.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.c-torture/execute/pr67781.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,34 @@
++#ifdef __UINT32_TYPE__
++typedef __UINT32_TYPE__ uint32_t;
++#else
++typedef unsigned uint32_t;
++#endif
++
++#ifdef __UINT8_TYPE__
++typedef __UINT8_TYPE__ uint8_t;
++#else
++typedef unsigned char uint8_t;
++#endif
++
++struct
++{
++  uint32_t a;
++  uint8_t b;
++} s = { 0x123456, 0x78 };
++
++int pr67781()
++{
++  uint32_t c = (s.a << 8) | s.b;
++  return c;
++}
++
++int
++main ()
++{
++  if (sizeof (uint32_t) * __CHAR_BIT__ != 32)
++    return 0;
++
++  if (pr67781 () != 0x12345678)
++    __builtin_abort ();
++  return 0;
++}
+Index: gcc/testsuite/gnat.dg/inline12.adb
+===================================================================
+--- a/src/gcc/testsuite/gnat.dg/inline12.adb	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gnat.dg/inline12.adb	(.../branches/gcc-5-branch)
+@@ -0,0 +1,23 @@
++-- PR ada/69219
++-- Testcae by yuta tomino <demoonlit@panathenaia.halfmoon.jp> */
++
++-- { dg-do compile }
++
++procedure Inline12 is
++
++   procedure NI;
++
++   procedure IA;
++   pragma Convention (Intrinsic, IA);
++   pragma Inline_Always (IA);
++
++   procedure IA is
++   begin
++      NI;
++   end;
++
++   procedure NI is null;
++
++begin
++  IA;
++end;
 Index: gcc/testsuite/gcc.dg/pr68670-2.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.dg/pr68670-2.c	(.../tags/gcc_5_3_0_release)
@@ -4182,6 +5758,136 @@ Index: gcc/testsuite/gcc.dg/pr68670-2.c
 +/* { dg-options "-O2 -ftracer" } */
 +
 +#include "../gcc.c-torture/execute/pr68376-2.c"
+Index: gcc/testsuite/gcc.dg/pr68513.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/pr68513.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.dg/pr68513.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,125 @@
++/* PR c/68513 */
++/* { dg-do compile } */
++/* { dg-options "-funsafe-math-optimizations -fno-math-errno -O -Wno-div-by-zero" } */
++
++int i;
++unsigned u;
++volatile int *e;
++
++#define E (i ? *e : 0)
++
++/* Can't trigger some of them because operand_equal_p will return false
++   for side-effects.  */
++
++/* (x & ~m) | (y & m) -> ((x ^ y) & m) ^ x */
++int
++fn1 (void)
++{
++  int r = 0;
++  r += (short) (E & ~u | i & u);
++  r += -(short) (E & ~u | i & u);
++  r += (short) -(E & ~u | i & u);
++  return r;
++}
++
++/* sqrt(x) < y is x >= 0 && x != +Inf, when y is large.  */
++double
++fn2 (void)
++{
++  double r;
++  r = __builtin_sqrt (E) < __builtin_inf ();
++  return r;
++}
++
++/* sqrt(x) < c is the same as x >= 0 && x < c*c.  */
++double
++fn3 (void)
++{
++  double r;
++  r = __builtin_sqrt (E) < 1.3;
++  return r;
++}
++
++/* copysign(x,y)*copysign(x,y) -> x*x.  */
++double
++fn4 (double y, double x)
++{
++  return __builtin_copysign (E, y) * __builtin_copysign (E, y);
++}
++
++/* x <= +Inf is the same as x == x, i.e. !isnan(x).  */
++int
++fn5 (void)
++{
++  return E <= __builtin_inf ();
++}
++
++/* Fold (A & ~B) - (A & B) into (A ^ B) - B.  */
++int
++fn6 (void)
++{
++  return (i & ~E) - (i & E);
++}
++
++/* Fold (A & B) - (A & ~B) into B - (A ^ B).  */
++int
++fn7 (void)
++{
++  return (i & E) - (i & ~E);
++}
++
++/* x + (x & 1) -> (x + 1) & ~1 */
++int
++fn8 (void)
++{
++  return E + (E & 1);
++}
++
++/* Simplify comparison of something with itself.  */
++int
++fn9 (void)
++{
++  return E <= E | E >= E;
++}
++
++/* Fold (A & ~B) - (A & B) into (A ^ B) - B.  */
++int
++fn10 (void)
++{
++  return (i & ~E) - (i & E);
++}
++
++/* abs(x)*abs(x) -> x*x.  Should be valid for all types.  */
++int
++fn11 (void)
++{
++  return __builtin_abs (E) * __builtin_abs (E);
++}
++
++/* (x | CST1) & CST2 -> (x & CST2) | (CST1 & CST2) */
++int
++fn12 (void)
++{
++  return (E | 11) & 12;
++}
++
++/* fold_range_test */
++int
++fn13 (const char *s)
++{
++  return s[E] != '\0' && s[E] != '/';
++}
++
++/* fold_comparison */
++int
++fn14 (void)
++{
++  return (!!i ? : (u *= E / 0)) >= (u = E);
++}
++
++/* fold_mult_zconjz */
++_Complex int
++fn15 (_Complex volatile int *z)
++{
++  return *z * ~*z;
++}
 Index: gcc/testsuite/gcc.dg/pr68835-2.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.dg/pr68835-2.c	(.../tags/gcc_5_3_0_release)
@@ -4288,6 +5994,36 @@ Index: gcc/testsuite/gcc.dg/torture/pr67609.c
 +    __builtin_abort ();
 +  return 0;
 +}
+Index: gcc/testsuite/gcc.dg/tree-ssa/pr67755.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/tree-ssa/pr67755.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.dg/tree-ssa/pr67755.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,25 @@
++/* { dg-do compile } */
++/* { dg-options "-O1 -fdump-tree-dom2-details-blocks" } */
++/* We want to verify no outgoing edge from a conditional
++   has a probability of 100%.  */
++/* { dg-final { scan-tree-dump-not "succ:\[ \]+. .100.0%.  .\(TRUE|FALSE\)_VALUE" "dom2"} } */
++
++
++void (*zend_block_interruptions) (void);
++
++int * _zend_mm_alloc_int (int * heap, long int size)
++{
++  int *best_fit;
++  long int true_size = (size < 15 ? 32 : size);
++
++  if (zend_block_interruptions)
++    zend_block_interruptions ();
++
++  if (__builtin_expect ((true_size < 543), 1))
++    best_fit = heap + 2;
++  else
++    best_fit = heap;
++
++  return best_fit;
++}
++
 Index: gcc/testsuite/gcc.dg/pr68670-1.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.dg/pr68670-1.c	(.../tags/gcc_5_3_0_release)
@@ -4423,7 +6159,186 @@ Index: gcc/testsuite/ChangeLog
 ===================================================================
 --- a/src/gcc/testsuite/ChangeLog	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/testsuite/ChangeLog	(.../branches/gcc-5-branch)
-@@ -1,3 +1,239 @@
+@@ -1,3 +1,418 @@
++2016-01-21  Andreas Krebbel  <krebbel@linux.vnet.ibm.com>
++
++	Backported from mainline
++	2015-07-24  Andreas Krebbel  <krebbel@linux.vnet.ibm.com>
++
++	* gcc.target/s390/gpr2fprsavecfi.c: New test.
++
++2016-01-21  Thomas Preud'homme  <thomas.preudhomme@arm.com>
++
++	Backport from mainline
++	2016-01-08  Thomas Preud'homme  <thomas.preudhomme@arm.com>
++
++	PR tree-optimization/67781
++	* gcc.c-torture/execute/pr67781.c: New file.
++
++2016-01-20  H.J. Lu  <hongjiu.lu@intel.com>
++
++	Backport from mainline
++	2016-01-20  H.J. Lu  <hongjiu.lu@intel.com>
++
++	PR testsuite/69366
++	* g++.dg/pr63995-1.C: Require non-x32 target, instead of,
++	the MPX run-time library, for compile-time MPX test.
++	* gcc.target/i386/chkp-always_inline.c: Likewise.
++	* gcc.target/i386/chkp-bndret.c: Likewise.
++	* gcc.target/i386/chkp-builtins-1.c: Likewise.
++	* gcc.target/i386/chkp-builtins-2.c: Likewise.
++	* gcc.target/i386/chkp-builtins-3.c: Likewise.
++	* gcc.target/i386/chkp-builtins-4.c: Likewise.
++	* gcc.target/i386/chkp-const-check-1.c: Likewise.
++	* gcc.target/i386/chkp-const-check-2.c: Likewise.
++	* gcc.target/i386/chkp-hidden-def.c: Likewise.
++	* gcc.target/i386/chkp-label-address.c: Likewise.
++	* gcc.target/i386/chkp-lifetime-1.c: Likewise.
++	* gcc.target/i386/chkp-narrow-bounds.c: Likewise.
++	* gcc.target/i386/chkp-remove-bndint-1.c: Likewise.
++	* gcc.target/i386/chkp-remove-bndint-2.c: Likewise.
++	* gcc.target/i386/chkp-strchr.c: Likewise.
++	* gcc.target/i386/chkp-strlen-1.c: Likewise.
++	* gcc.target/i386/chkp-strlen-2.c: Likewise.
++	* gcc.target/i386/chkp-strlen-3.c: Likewise.
++	* gcc.target/i386/chkp-strlen-4.c: Likewise.
++	* gcc.target/i386/chkp-strlen-5.c: Likewise.
++	* gcc.target/i386/chkp-stropt-1.c: Likewise.
++	* gcc.target/i386/chkp-stropt-10.c: Likewise.
++	* gcc.target/i386/chkp-stropt-11.c: Likewise.
++	* gcc.target/i386/chkp-stropt-12.c: Likewise.
++	* gcc.target/i386/chkp-stropt-13.c: Likewise.
++	* gcc.target/i386/chkp-stropt-14.c: Likewise.
++	* gcc.target/i386/chkp-stropt-15.c: Likewise.
++	* gcc.target/i386/chkp-stropt-16.c: Likewise.
++	* gcc.target/i386/chkp-stropt-2.c: Likewise.
++	* gcc.target/i386/chkp-stropt-3.c: Likewise.
++	* gcc.target/i386/chkp-stropt-4.c: Likewise.
++	* gcc.target/i386/chkp-stropt-5.c: Likewise.
++	* gcc.target/i386/chkp-stropt-6.c: Likewise.
++	* gcc.target/i386/chkp-stropt-7.c: Likewise.
++	* gcc.target/i386/chkp-stropt-8.c: Likewise.
++	* gcc.target/i386/chkp-stropt-9.c: Likewise.
++	* gcc.target/i386/pr63995-2.c: Likewise.
++	* gcc.target/i386/pr64805.c: Likewise.
++	* gcc.target/i386/pr65044.c: Likewise.
++	* gcc.target/i386/pr65167.c: Likewise.
++	* gcc.target/i386/pr65183.c: Likewise.
++	* gcc.target/i386/pr65184.c: Likewise.
++	* gcc.target/i386/thunk-retbnd.c: Likewise.
++
++2016-01-20  Marek Polacek  <polacek@redhat.com>
++
++	PR c/68513
++	* gcc.dg/pr68513.c: New test.
++
++2016-01-19  Sergei Trofimovich <siarheit@google.com>
++
++	Backport from mainline
++	PR other/60465
++	* gcc.target/ia64/pr60465-gprel64.c: New test.
++	* gcc.target/ia64/pr60465-gprel64-c37.c: New test.
++
++2016-01-19  Jeff Law  <law@redhat.com>
++
++        Backport from mainline
++        2016-01-12  Jeff Law  <law@redhat.com>
++
++	PR tree-optimization/67755
++	* gcc.dg/tree-ssa/pr67755.c: New test.
++
++2016-01-19  Uros Bizjak  <ubizjak@gmail.com>
++
++	PR testsuite/68820
++	* gcc.c-torture/execute/builtins/memops-asm.x: New file.
++	* gcc.c-torture/execute/builtins/strstr-asm.x: Ditto.
++	* gcc.c-torture/execute/builtins/strstr-asm.c: Remove dg-options.
++
++2016-01-19  Marek Polacek  <polacek@redhat.com>
++
++	Backported from mainline
++	2016-01-19  Marek Polacek  <polacek@redhat.com>
++
++	PR c++/68965
++	* g++.dg/cpp1y/parameter-pack-1.C: New test.
++	* g++.dg/cpp1y/parameter-pack-2.C: New test.
++
++2016-01-19  Kyrylo Tkachov  <kyrylo.tkachov@arm.com>
++
++	Backport from mainline
++	2016-01-19  Kyrylo Tkachov  <kyrylo.tkachov@arm.com>
++
++	PR target/69135
++	* gcc.target/arm/pr69135_1.c: New test.
++
++2016-01-18  Alexander Fomin  <alexander.fomin@intel.com>
++
++	Backport from mainline
++	2015-10-09  Alexander Fomin  <alexander.fomin@intel.com>
++
++	PR target/67895
++	* gcc.target/i386/avx512dq-vrangepd-1.c: Adjust.
++	* gcc.target/i386/avx512dq-vrangeps-1.c: Likewise.
++	* gcc.target/i386/avx512dq-vrangesd-1.c: Likewise.
++	* gcc.target/i386/avx512dq-vrangess-1.c: Likewise.
++	* gcc.target/i386/avx512f-vcvtsi2sd64-1.c: Likewise.
++	* gcc.target/i386/avx512f-vcvtsi2ss-1.c: Likewise.
++	* gcc.target/i386/avx512f-vcvtsi2ss64-1.c: Likewise.
++	* gcc.target/i386/avx512f-vcvtusi2sd64-1.c: Likewise.
++	* gcc.target/i386/avx512f-vcvtusi2ss-1.c: Likewise.
++	* gcc.target/i386/avx512f-vcvtusi2ss64-1.c: Likewise.
++
++2016-01-18  Uros Bizjak  <ubizjak@gmail.com>
++
++	Backport from mainline
++	2016-01-06  Uros Bizjak  <ubizjak@gmail.com>
++
++	PR target/69140
++	* gcc.target/i386/pr69140.c: New test
++
++2016-01-18  Eric Botcazou  <ebotcazou@adacore.com>
++
++	* gnat.dg/inline12.adb: New test.
++
++2016-01-17  Mikael Morin  <mikael@gcc.gnu.org>
++
++	Backport from trunk.
++	PR fortran/61831
++	* gfortran.dg/derived_constructor_components_6.f90: New file.
++	* gfortran.dg/allocate_with_source_14.f03: Change count of
++	__builtin_malloc from 21 to 23.
++
++2016-01-17  Paul Thomas  <pault@gcc.gnu.org>
++
++	Backport from trunk.
++	PR fortran/66082
++	* gfortran.dg/alloc_comp_auto_array_3.f90: New file. Count of
++	__builtin_malloc increased from 3 to 4, relative to trunk.
++
++2016-01-17  Kugan Vivekanandarajah  <kuganv@linaro.org>
++
++	Backport from mainline
++	2016-01-12  Kugan Vivekanandarajah  <kuganv@linaro.org>
++		    Jim Wilson  <jim.wilson@linaro.org>
++
++	PR target/69194
++	* gcc.target/arm/pr69194.c: New test.
++
++2016-01-15  Alexander Fomin  <alexander.fomin@intel.com>
++
++	Backport from mainline
++	2016-01-13  Alexander Fomin  <alexander.fomin@intel.com>
++
++	PR target/69228
++	* gcc.target/i386/avx512pf-vscatterpf0dpd-1.c: Adjust.
++	* gcc.target/i386/avx512pf-vscatterpf0dps-1.c: Likewise.
++	* gcc.target/i386/avx512pf-vscatterpf0qpd-1.c: Likewise.
++	* gcc.target/i386/avx512pf-vscatterpf0qps-1.c: Likewise.
++	* gcc.target/i386/avx512pf-vscatterpf1dpd-1.c: Likewise.
++	* gcc.target/i386/avx512pf-vscatterpf1dps-1.c: Likewise.
++	* gcc.target/i386/avx512pf-vscatterpf1qpd-1.c: Likewise.
++	* gcc.target/i386/avx512pf-vscatterpf1qps-1.c: Likewise.
++
 +2016-01-12  James Greenhalgh  <james.greenhalgh@arm.com>
 +
 +	Backport from mainline r222186.
@@ -4663,7 +6578,7 @@ Index: gcc/testsuite/ChangeLog
  2015-12-04  Release Manager
  
  	* GCC 5.3.0 released.
-@@ -1254,10 +1490,6 @@
+@@ -1254,10 +1669,6 @@
  	PR fortran/66725
  	* gfortran.dg/pr66725.f90: New test.
  
@@ -4709,6 +6624,17 @@ Index: gcc/testsuite/g++.dg/pr68449.C
 +{
 +  return __extension__ ({ int b; b; }) < 0;
 +}
+Index: gcc/testsuite/g++.dg/pr63995-1.C
+===================================================================
+--- a/src/gcc/testsuite/g++.dg/pr63995-1.C	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/g++.dg/pr63995-1.C	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile { target i?86-*-* x86_64-*-* } } */
+-/* { dg-require-effective-target mpx } */
++/* { dg-do compile { target { { i?86-*-* x86_64-*-* } && { ! x32 } } } } */
+ /* { dg-options "-O2 -g -fcheck-pointer-bounds -mmpx" } */
+ 
+ int test1 (int i)
 Index: gcc/testsuite/g++.dg/cpp0x/constexpr-array14.C
 ===================================================================
 --- a/src/gcc/testsuite/g++.dg/cpp0x/constexpr-array14.C	(.../tags/gcc_5_3_0_release)
@@ -4900,6 +6826,34 @@ Index: gcc/testsuite/g++.dg/ipa/pr66616.C
 +    }
 +  return 0;
 +}
+Index: gcc/testsuite/g++.dg/cpp1y/parameter-pack-1.C
+===================================================================
+--- a/src/gcc/testsuite/g++.dg/cpp1y/parameter-pack-1.C	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/g++.dg/cpp1y/parameter-pack-1.C	(.../branches/gcc-5-branch)
+@@ -0,0 +1,23 @@
++// PR c++/68965
++// { dg-do compile { target c++14 } }
++// { dg-options "-Wall -Wextra" }
++
++auto count = [](auto&&... xs)
++{
++    return sizeof...(xs);
++};
++
++struct count_struct
++{
++    template<typename... Ts>
++    auto operator()(Ts&&... xs)
++    {
++        return sizeof...(xs);
++    }
++};
++
++int main()
++{
++    count(1,2,3);
++    count_struct{}(1,2,3);
++}
 Index: gcc/testsuite/g++.dg/cpp1y/lambda-generic-const1.C
 ===================================================================
 --- a/src/gcc/testsuite/g++.dg/cpp1y/lambda-generic-const1.C	(.../tags/gcc_5_3_0_release)
@@ -4922,6 +6876,32 @@ Index: gcc/testsuite/g++.dg/cpp1y/lambda-generic-const1.C
 +int main()
 +{
 +  f<int>();
++}
+Index: gcc/testsuite/g++.dg/cpp1y/parameter-pack-2.C
+===================================================================
+--- a/src/gcc/testsuite/g++.dg/cpp1y/parameter-pack-2.C	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/g++.dg/cpp1y/parameter-pack-2.C	(.../branches/gcc-5-branch)
+@@ -0,0 +1,21 @@
++// PR c++/68965
++// { dg-do compile { target c++14 } }
++// { dg-options "-Wall -Wextra" }
++
++auto count = [](auto&&... xs) // { dg-warning "unused parameter" }
++{
++};
++
++struct count_struct
++{
++    template<typename... Ts>
++    auto operator()(Ts&&... xs) // { dg-warning "unused parameter" }
++    {
++    }
++};
++
++int main()
++{
++    count(1,2,3);
++    count_struct{}(1,2,3);
 +}
 Index: gcc/testsuite/g++.dg/cpp1y/lambda-generic-variadic3.C
 ===================================================================
@@ -5088,7 +7068,15 @@ Index: gcc/cp/ChangeLog
 ===================================================================
 --- a/src/gcc/cp/ChangeLog	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/cp/ChangeLog	(.../branches/gcc-5-branch)
-@@ -1,3 +1,58 @@
+@@ -1,3 +1,66 @@
++2016-01-19  Marek Polacek  <polacek@redhat.com>
++
++	Backported from mainline
++	2016-01-19  Marek Polacek  <polacek@redhat.com>
++
++	PR c++/68965
++	* pt.c (tsubst_copy): Mark elements in expanded vector as used.
++
 +2016-01-08  Marek Polacek  <polacek@redhat.com>
 +
 +	PR c++/68449
@@ -5181,6 +7169,20 @@ Index: gcc/cp/pt.c
  	    }
  	}
        else if (TREE_CODE (parm_pack) == FIELD_DECL)
+@@ -13245,7 +13248,12 @@
+ 	  --c_inhibit_evaluation_warnings;
+ 
+ 	  if (TREE_CODE (expanded) == TREE_VEC)
+-	    len = TREE_VEC_LENGTH (expanded);
++	    {
++	      len = TREE_VEC_LENGTH (expanded);
++	      /* Set TREE_USED for the benefit of -Wunused.  */
++	      for (int i = 0; i < len; i++)
++		TREE_USED (TREE_VEC_ELT (expanded, i)) = true;
++	    }
+ 
+ 	  if (expanded == error_mark_node)
+ 	    return error_mark_node;
 Index: gcc/cp/decl2.c
 ===================================================================
 --- a/src/gcc/cp/decl2.c	(.../tags/gcc_5_3_0_release)
@@ -5247,6 +7249,68 @@ Index: gcc/cgraphclones.c
    new_thunk->thunk = thunk->thunk;
    new_thunk->unique_name = in_lto_p;
    new_thunk->former_clone_of = thunk->decl;
+Index: gcc/tree-ssa-math-opts.c
+===================================================================
+--- a/src/gcc/tree-ssa-math-opts.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/tree-ssa-math-opts.c	(.../branches/gcc-5-branch)
+@@ -2141,6 +2141,8 @@
+ static gimple
+ find_bswap_or_nop (gimple stmt, struct symbolic_number *n, bool *bswap)
+ {
++  unsigned rsize;
++  uint64_t tmpn, mask;
+ /* The number which the find_bswap_or_nop_1 result should match in order
+    to have a full byte swap.  The number is shifted to the right
+    according to the size of the symbolic number before using it.  */
+@@ -2164,24 +2166,38 @@
+ 
+   /* Find real size of result (highest non-zero byte).  */
+   if (n->base_addr)
+-    {
+-      int rsize;
+-      uint64_t tmpn;
++    for (tmpn = n->n, rsize = 0; tmpn; tmpn >>= BITS_PER_MARKER, rsize++);
++  else
++    rsize = n->range;
+ 
+-      for (tmpn = n->n, rsize = 0; tmpn; tmpn >>= BITS_PER_MARKER, rsize++);
+-      n->range = rsize;
+-    }
+-
+-  /* Zero out the extra bits of N and CMP*.  */
++  /* Zero out the bits corresponding to untouched bytes in original gimple
++     expression.  */
+   if (n->range < (int) sizeof (int64_t))
+     {
+-      uint64_t mask;
+-
+       mask = ((uint64_t) 1 << (n->range * BITS_PER_MARKER)) - 1;
+       cmpxchg >>= (64 / BITS_PER_MARKER - n->range) * BITS_PER_MARKER;
+       cmpnop &= mask;
+     }
+ 
++  /* Zero out the bits corresponding to unused bytes in the result of the
++     gimple expression.  */
++  if (rsize < n->range)
++    {
++      if (BYTES_BIG_ENDIAN)
++	{
++	  mask = ((uint64_t) 1 << (rsize * BITS_PER_MARKER)) - 1;
++	  cmpxchg &= mask;
++	  cmpnop >>= (n->range - rsize) * BITS_PER_MARKER;
++	}
++      else
++	{
++	  mask = ((uint64_t) 1 << (rsize * BITS_PER_MARKER)) - 1;
++	  cmpxchg >>= (n->range - rsize) * BITS_PER_MARKER;
++	  cmpnop &= mask;
++	}
++      n->range = rsize;
++    }
++
+   /* A complete byte swap should make the symbolic number to start with
+      the largest digit in the highest order byte. Unchanged symbolic
+      number indicates a read with same endianness as target architecture.  */
 Index: gcc/ifcvt.c
 ===================================================================
 --- a/src/gcc/ifcvt.c	(.../tags/gcc_5_3_0_release)
@@ -5323,6 +7387,27 @@ Index: gcc/dwarf2out.c
      type = type_main_variant (type);
  
    /* If this is an array type with hidden descriptor, handle it first.  */
+Index: gcc/match.pd
+===================================================================
+--- a/src/gcc/match.pd	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/match.pd	(.../branches/gcc-5-branch)
+@@ -382,6 +382,8 @@
+   (bit_not (bit_not @0))
+   @0)
+ 
++/* Disable on GENERIC because of PR68513.  */
++#if GIMPLE
+ /* (x & ~m) | (y & m) -> ((x ^ y) & m) ^ x */
+ (simplify
+   (bit_ior:c (bit_and:c@3 @0 (bit_not @2)) (bit_and:c@4 @1 @2))
+@@ -388,6 +390,7 @@
+   (if ((TREE_CODE (@3) != SSA_NAME || has_single_use (@3))
+ 	&& (TREE_CODE (@4) != SSA_NAME || has_single_use (@4)))
+    (bit_xor (bit_and (bit_xor @0 @1) @2) @0)))
++#endif
+ 
+ 
+ /* Associate (p +p off1) +p off2 as (p +p (off1 + off2)).  */
 Index: gcc/ada/doc/gnat_ugn/gnat_and_program_execution.rst
 ===================================================================
 --- a/src/gcc/ada/doc/gnat_ugn/gnat_and_program_execution.rst	(.../tags/gcc_5_3_0_release)
@@ -5564,7 +7649,14 @@ Index: gcc/ada/ChangeLog
 ===================================================================
 --- a/src/gcc/ada/ChangeLog	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/ada/ChangeLog	(.../branches/gcc-5-branch)
-@@ -1,3 +1,40 @@
+@@ -1,3 +1,47 @@
++2016-01-18  Eric Botcazou  <ebotcazou@adacore.com>
++
++	PR ada/69219
++	* gcc-interface/trans.c (check_inlining_for_nested_subprog): Consider
++	the parent function instead of the current function in order to issue
++	the warning or the error.  Add guard for ignored functions.
++
 +2015-12-06  Piotr Trojanek  <piotr.trojanek@gmail.com>
 +
 +	PR ada/60164
@@ -5742,6 +7834,68 @@ Index: gcc/ada/gcc-interface/Makefile.in
    s-taspri.ads<s-taspri-posix.ads \
    s-tpopsp.adb<s-tpopsp-posix-foreign.adb \
    system.ads<system-freebsd-x86_64.ads
+Index: gcc/ada/gcc-interface/trans.c
+===================================================================
+--- a/src/gcc/ada/gcc-interface/trans.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/ada/gcc-interface/trans.c	(.../branches/gcc-5-branch)
+@@ -1502,7 +1502,7 @@
+ }
+ 
+ 
+-/* Check the inlining status of nested function FNDECL in the current context.
++/* Check the inline status of nested function FNDECL wrt its parent function.
+ 
+    If a non-inline nested function is referenced from an inline external
+    function, we cannot honor both requests at the same time without cloning
+@@ -1510,24 +1510,27 @@
+    We could inline it as well but it's probably better to err on the side
+    of too little inlining.
+ 
+-   This must be invoked only on nested functions present in the source code
++   This must be done only on nested functions present in the source code
+    and not on nested functions generated by the compiler, e.g. finalizers,
+-   because they are not marked inline and we don't want them to block the
+-   inlining of the parent function.  */
++   because they may be not marked inline and we don't want them to block
++   the inlining of the parent function.  */
+ 
+ static void
+ check_inlining_for_nested_subprog (tree fndecl)
+ {
+-  if (!DECL_DECLARED_INLINE_P (fndecl)
+-      && current_function_decl
+-      && DECL_EXTERNAL (current_function_decl)
+-      && DECL_DECLARED_INLINE_P (current_function_decl))
++  if (DECL_IGNORED_P (current_function_decl) || DECL_IGNORED_P (fndecl))
++    return;
++
++  if (DECL_DECLARED_INLINE_P (fndecl))
++    return;
++
++  tree parent_decl = decl_function_context (fndecl);
++  if (DECL_EXTERNAL (parent_decl) && DECL_DECLARED_INLINE_P (parent_decl))
+     {
+       const location_t loc1 = DECL_SOURCE_LOCATION (fndecl);
+-      const location_t loc2 = DECL_SOURCE_LOCATION (current_function_decl);
++      const location_t loc2 = DECL_SOURCE_LOCATION (parent_decl);
+ 
+-      if (lookup_attribute ("always_inline",
+-			    DECL_ATTRIBUTES (current_function_decl)))
++      if (lookup_attribute ("always_inline", DECL_ATTRIBUTES (parent_decl)))
+ 	{
+ 	  error_at (loc1, "subprogram %q+F not marked Inline_Always", fndecl);
+ 	  error_at (loc2, "parent subprogram cannot be inlined");
+@@ -1539,8 +1542,8 @@
+ 	  warning_at (loc2, OPT_Winline, "parent subprogram cannot be inlined");
+ 	}
+ 
+-      DECL_DECLARED_INLINE_P (current_function_decl) = 0;
+-      DECL_UNINLINABLE (current_function_decl) = 1;
++      DECL_DECLARED_INLINE_P (parent_decl) = 0;
++      DECL_UNINLINABLE (parent_decl) = 1;
+     }
+ }
+ 
 Index: gcc/ada/s-osinte-freebsd.ads
 ===================================================================
 --- a/src/gcc/ada/s-osinte-freebsd.ads	(.../tags/gcc_5_3_0_release)
@@ -5776,6 +7930,64 @@ Index: gcc/ada/s-osinte-freebsd.ads
  
     function Get_Stack_Base (thread : pthread_t) return Address;
     pragma Inline (Get_Stack_Base);
+Index: gcc/gimple-ssa-strength-reduction.c
+===================================================================
+--- a/src/gcc/gimple-ssa-strength-reduction.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/gimple-ssa-strength-reduction.c	(.../branches/gcc-5-branch)
+@@ -2267,7 +2267,7 @@
+   slsr_cand_t basis = lookup_cand (c->basis);
+   int nargs = gimple_phi_num_args (from_phi);
+   basic_block phi_bb = gimple_bb (from_phi);
+-  slsr_cand_t phi_cand = base_cand_from_table (gimple_phi_result (from_phi));
++  slsr_cand_t phi_cand = *stmt_cand_map->get (from_phi);
+   phi_args.create (nargs);
+ 
+   /* Process each argument of the existing phi that represents
+@@ -2376,7 +2376,7 @@
+ {
+   unsigned i;
+   int cost = 0;
+-  slsr_cand_t phi_cand = base_cand_from_table (gimple_phi_result (phi));
++  slsr_cand_t phi_cand = *stmt_cand_map->get (phi);
+ 
+   /* If we work our way back to a phi that isn't dominated by the hidden
+      basis, this isn't a candidate for replacement.  Indicate this by
+@@ -2587,7 +2587,7 @@
+ record_phi_increments (slsr_cand_t basis, gimple phi)
+ {
+   unsigned i;
+-  slsr_cand_t phi_cand = base_cand_from_table (gimple_phi_result (phi));
++  slsr_cand_t phi_cand = *stmt_cand_map->get (phi);
+   
+   for (i = 0; i < gimple_phi_num_args (phi); i++)
+     {
+@@ -2658,7 +2658,7 @@
+   unsigned i;
+   int cost = 0;
+   slsr_cand_t basis = lookup_cand (c->basis);
+-  slsr_cand_t phi_cand = base_cand_from_table (gimple_phi_result (phi));
++  slsr_cand_t phi_cand = *stmt_cand_map->get (phi);
+ 
+   for (i = 0; i < gimple_phi_num_args (phi); i++)
+     {
+@@ -3002,7 +3002,7 @@
+ {
+   unsigned i;
+   slsr_cand_t basis = lookup_cand (c->basis);
+-  slsr_cand_t phi_cand = base_cand_from_table (gimple_phi_result (phi));
++  slsr_cand_t phi_cand = *stmt_cand_map->get (phi);
+ 
+   for (i = 0; i < gimple_phi_num_args (phi); i++)
+     {
+@@ -3212,7 +3212,7 @@
+ {
+   unsigned i;
+   slsr_cand_t basis = lookup_cand (c->basis);
+-  slsr_cand_t phi_cand = base_cand_from_table (gimple_phi_result (phi));
++  slsr_cand_t phi_cand = *stmt_cand_map->get (phi);
+ 
+   for (i = 0; i < gimple_phi_num_args (phi); i++)
+     {
 Index: gcc/fortran/trans-expr.c
 ===================================================================
 --- a/src/gcc/fortran/trans-expr.c	(.../tags/gcc_5_3_0_release)
@@ -5787,7 +7999,199 @@ Index: gcc/fortran/trans-expr.c
     Contributed by Paul Brook <paul@nowt.org>
     and Steven Bosscher <s.bosscher@student.tudelft.nl>
  
-@@ -5343,7 +5343,8 @@
+@@ -4398,6 +4398,62 @@
+ }
+ 
+ 
++/* This function tells whether the middle-end representation of the expression
++   E given as input may point to data otherwise accessible through a variable
++   (sub-)reference.
++   It is assumed that the only expressions that may alias are variables,
++   and array constructors if ARRAY_MAY_ALIAS is true and some of its elements
++   may alias.
++   This function is used to decide whether freeing an expression's allocatable
++   components is safe or should be avoided.
++
++   If ARRAY_MAY_ALIAS is true, an array constructor may alias if some of
++   its elements are copied from a variable.  This ARRAY_MAY_ALIAS trick
++   is necessary because for array constructors, aliasing depends on how
++   the array is used:
++    - If E is an array constructor used as argument to an elemental procedure,
++      the array, which is generated through shallow copy by the scalarizer,
++      is used directly and can alias the expressions it was copied from.
++    - If E is an array constructor used as argument to a non-elemental
++      procedure,the scalarizer is used in gfc_conv_expr_descriptor to generate
++      the array as in the previous case, but then that array is used
++      to initialize a new descriptor through deep copy.  There is no alias
++      possible in that case.
++   Thus, the ARRAY_MAY_ALIAS flag is necessary to distinguish the two cases
++   above.  */
++
++static bool
++expr_may_alias_variables (gfc_expr *e, bool array_may_alias)
++{
++  gfc_constructor *c;
++
++  if (e->expr_type == EXPR_VARIABLE)
++    return true;
++  else if (e->expr_type == EXPR_FUNCTION)
++    {
++      gfc_symbol *proc_ifc = gfc_get_proc_ifc_for_expr (e);
++
++      if ((proc_ifc->result->ts.type == BT_CLASS
++	   && proc_ifc->result->ts.u.derived->attr.is_class
++	   && CLASS_DATA (proc_ifc->result)->attr.class_pointer)
++	  || proc_ifc->result->attr.pointer)
++	return true;
++      else
++	return false;
++    }
++  else if (e->expr_type != EXPR_ARRAY || !array_may_alias)
++    return false;
++
++  for (c = gfc_constructor_first (e->value.constructor);
++       c; c = gfc_constructor_next (c))
++    if (c->expr
++	&& expr_may_alias_variables (c->expr, array_may_alias))
++      return true;
++
++  return false;
++}
++
++
+ /* Generate code for a procedure call.  Note can return se->post != NULL.
+    If se->direct_byref is set then se->expr contains the return parameter.
+    Return nonzero, if the call has alternate specifiers.
+@@ -4448,9 +4504,15 @@
+ 
+   comp = gfc_get_proc_ptr_comp (expr);
+ 
++  bool elemental_proc = (comp
++			 && comp->ts.interface
++			 && comp->ts.interface->attr.elemental)
++			|| (comp && comp->attr.elemental)
++			|| sym->attr.elemental;
++
+   if (se->ss != NULL)
+     {
+-      if (!sym->attr.elemental && !(comp && comp->attr.elemental))
++      if (!elemental_proc)
+ 	{
+ 	  gcc_assert (se->ss->info->type == GFC_SS_FUNCTION);
+ 	  if (se->ss->info->useflags)
+@@ -4501,6 +4563,23 @@
+       fsym = formal ? formal->sym : NULL;
+       parm_kind = MISSING;
+ 
++      /* If the procedure requires an explicit interface, the actual
++	 argument is passed according to the corresponding formal
++	 argument.  If the corresponding formal argument is a POINTER,
++	 ALLOCATABLE or assumed shape, we do not use g77's calling
++	 convention, and pass the address of the array descriptor
++	 instead.  Otherwise we use g77's calling convention, in other words
++	 pass the array data pointer without descriptor.  */
++      bool nodesc_arg = fsym != NULL
++			&& !(fsym->attr.pointer || fsym->attr.allocatable)
++			&& fsym->as
++			&& fsym->as->type != AS_ASSUMED_SHAPE
++			&& fsym->as->type != AS_ASSUMED_RANK;
++      if (comp)
++	nodesc_arg = nodesc_arg || !comp->attr.always_explicit;
++      else
++	nodesc_arg = nodesc_arg || !sym->attr.always_explicit;
++
+       /* Class array expressions are sometimes coming completely unadorned
+ 	 with either arrayspec or _data component.  Correct that here.
+ 	 OOP-TODO: Move this to the frontend.  */
+@@ -5020,22 +5099,6 @@
+ 	    }
+ 	  else
+ 	    {
+-              /* If the procedure requires an explicit interface, the actual
+-                 argument is passed according to the corresponding formal
+-                 argument.  If the corresponding formal argument is a POINTER,
+-                 ALLOCATABLE or assumed shape, we do not use g77's calling
+-                 convention, and pass the address of the array descriptor
+-                 instead. Otherwise we use g77's calling convention.  */
+-	      bool f;
+-	      f = (fsym != NULL)
+-		  && !(fsym->attr.pointer || fsym->attr.allocatable)
+-		  && fsym->as && fsym->as->type != AS_ASSUMED_SHAPE
+-		  && fsym->as->type != AS_ASSUMED_RANK;
+-	      if (comp)
+-		f = f || !comp->attr.always_explicit;
+-	      else
+-		f = f || !sym->attr.always_explicit;
+-
+ 	      /* If the argument is a function call that may not create
+ 		 a temporary for the result, we have to check that we
+ 		 can do it, i.e. that there is no alias between this
+@@ -5080,7 +5143,7 @@
+ 		   array of derived types.  In this case, the argument
+ 		   is converted to a temporary, which is passed and then
+ 		   written back after the procedure call.  */
+-		gfc_conv_subref_array_arg (&parmse, e, f,
++		gfc_conv_subref_array_arg (&parmse, e, nodesc_arg,
+ 				fsym ? fsym->attr.intent : INTENT_INOUT,
+ 				fsym && fsym->attr.pointer);
+ 	      else if (gfc_is_class_array_ref (e, NULL)
+@@ -5092,7 +5155,7 @@
+ 		   OOP-TODO: Insert code so that if the dynamic type is
+ 		   the same as the declared type, copy-in/copy-out does
+ 		   not occur.  */
+-		gfc_conv_subref_array_arg (&parmse, e, f,
++		gfc_conv_subref_array_arg (&parmse, e, nodesc_arg,
+ 				fsym ? fsym->attr.intent : INTENT_INOUT,
+ 				fsym && fsym->attr.pointer);
+ 
+@@ -5103,12 +5166,13 @@
+ 		   intent in.  */
+ 		{
+ 		  e->must_finalize = 1;
+-		  gfc_conv_subref_array_arg (&parmse, e, f,
++		  gfc_conv_subref_array_arg (&parmse, e, nodesc_arg,
+ 					     INTENT_IN,
+ 					     fsym && fsym->attr.pointer);
+ 		}
+ 	      else
+-	        gfc_conv_array_parameter (&parmse, e, f, fsym, sym->name, NULL);
++		gfc_conv_array_parameter (&parmse, e, nodesc_arg, fsym,
++					  sym->name, NULL);
+ 
+ 	      /* If an ALLOCATABLE dummy argument has INTENT(OUT) and is
+ 		 allocated on entry, it must be deallocated.  */
+@@ -5150,7 +5214,7 @@
+ 	     but do not always set fsym.  */
+ 	  if (e->expr_type == EXPR_VARIABLE
+ 	      && e->symtree->n.sym->attr.optional
+-	      && ((e->rank != 0 && sym->attr.elemental)
++	      && ((e->rank != 0 && elemental_proc)
+ 		  || e->representation.length || e->ts.type == BT_CHARACTER
+ 		  || (e->rank != 0
+ 		      && (fsym == NULL
+@@ -5185,13 +5249,16 @@
+       gfc_add_block_to_block (&post, &parmse.post);
+ 
+       /* Allocated allocatable components of derived types must be
+-	 deallocated for non-variable scalars.  Non-variable arrays are
+-	 dealt with in trans-array.c(gfc_conv_array_parameter).  */
++	 deallocated for non-variable scalars, array arguments to elemental
++	 procedures, and array arguments with descriptor to non-elemental
++	 procedures.  As bounds information for descriptorless arrays is no
++	 longer available here, they are dealt with in trans-array.c
++	 (gfc_conv_array_parameter).  */
+       if (e && (e->ts.type == BT_DERIVED || e->ts.type == BT_CLASS)
+ 	    && e->ts.u.derived->attr.alloc_comp
+-	    && !(e->symtree && e->symtree->n.sym->attr.pointer)
+-	    && (e->expr_type != EXPR_VARIABLE && !e->rank))
+-        {
++	    && (e->rank == 0 || elemental_proc || !nodesc_arg)
++	    && !expr_may_alias_variables (e, elemental_proc))
++	{
+ 	  int parm_rank;
+ 	  tmp = build_fold_indirect_ref_loc (input_location,
+ 					 parmse.expr);
+@@ -5343,7 +5410,8 @@
  	  else
  	    {
  	      tmp = parmse.string_length;
@@ -5797,7 +8201,37 @@ Index: gcc/fortran/trans-expr.c
  		tmp = gfc_evaluate_now (parmse.string_length, &se->pre);
  	      parmse.string_length = gfc_build_addr_expr (NULL_TREE, tmp);
  	    }
-@@ -8998,8 +8999,10 @@
+@@ -6518,7 +6586,7 @@
+ 
+   gfc_conv_expr (&rse, expr);
+ 
+-  tmp = gfc_trans_scalar_assign (&lse, &rse, cm->ts, true, false, true);
++  tmp = gfc_trans_scalar_assign (&lse, &rse, cm->ts, true, true, true);
+   gfc_add_expr_to_block (&body, tmp);
+ 
+   gcc_assert (rse.ss == gfc_ss_terminator);
+@@ -7403,20 +7471,6 @@
+ 
+   /* Take the address of that value.  */
+   se->expr = gfc_build_addr_expr (NULL_TREE, var);
+-  if (expr->ts.type == BT_DERIVED && expr->rank
+-      && !gfc_is_finalizable (expr->ts.u.derived, NULL)
+-      && expr->ts.u.derived->attr.alloc_comp
+-      && expr->expr_type != EXPR_VARIABLE)
+-    {
+-      tree tmp;
+-
+-      tmp = build_fold_indirect_ref_loc (input_location, se->expr);
+-      tmp = gfc_deallocate_alloc_comp (expr->ts.u.derived, tmp, expr->rank);
+-
+-      /* The components shall be deallocated before
+-         their containing entity.  */
+-      gfc_prepend_expr_to_block (&se->post, tmp);
+-    }
+ }
+ 
+ 
+@@ -8998,8 +9052,10 @@
      }
  
    /* Stabilize a string length for temporaries.  */
@@ -5809,7 +8243,7 @@ Index: gcc/fortran/trans-expr.c
    else
      string_length = NULL_TREE;
  
-@@ -9033,8 +9036,14 @@
+@@ -9033,8 +9089,14 @@
       the function call must happen before the (re)allocation of the lhs -
       otherwise the character length of the result is not known.
       NOTE: This relies on having the exact dependence of the length type
@@ -5865,7 +8299,41 @@ Index: gcc/fortran/trans-array.c
  	      && ((info->ref && info->ref->u.ar.type != AR_FULL)
  		  || (expr->expr_type == EXPR_ARRAY && se->use_offset)))
  	    {
-@@ -8269,6 +8270,75 @@
+@@ -7191,6 +7192,17 @@
+   if (no_pack || array_constructor || good_allocatable || ultimate_alloc_comp)
+     {
+       gfc_conv_expr_descriptor (se, expr);
++      /* Deallocate the allocatable components of structures that are
++	 not variable.  */
++      if ((expr->ts.type == BT_DERIVED || expr->ts.type == BT_CLASS)
++	   && expr->ts.u.derived->attr.alloc_comp
++	   && expr->expr_type != EXPR_VARIABLE)
++	{
++	  tmp = gfc_deallocate_alloc_comp (expr->ts.u.derived, se->expr, expr->rank);
++
++	  /* The components shall be deallocated before their containing entity.  */
++	  gfc_prepend_expr_to_block (&se->post, tmp);
++	}
+       if (expr->ts.type == BT_CHARACTER)
+ 	se->string_length = expr->ts.u.cl->backend_decl;
+       if (size)
+@@ -7226,10 +7238,11 @@
+     }
+ 
+   /* Deallocate the allocatable components of structures that are
+-     not variable.  */
+-  if ((expr->ts.type == BT_DERIVED || expr->ts.type == BT_CLASS)
+-	&& expr->ts.u.derived->attr.alloc_comp
+-	&& expr->expr_type != EXPR_VARIABLE)
++     not variable, for descriptorless arguments.
++     Arguments with a descriptor are handled in gfc_conv_procedure_call.  */
++  if (g77 && (expr->ts.type == BT_DERIVED || expr->ts.type == BT_CLASS)
++	  && expr->ts.u.derived->attr.alloc_comp
++	  && expr->expr_type != EXPR_VARIABLE)
+     {
+       tmp = build_fold_indirect_ref_loc (input_location, se->expr);
+       tmp = gfc_deallocate_alloc_comp (expr->ts.u.derived, tmp, expr->rank);
+@@ -8269,6 +8282,75 @@
  }
  
  
@@ -5941,7 +8409,7 @@ Index: gcc/fortran/trans-array.c
  /* Allocate the lhs of an assignment to an allocatable array, otherwise
     reallocate it.  */
  
-@@ -8366,6 +8436,12 @@
+@@ -8366,6 +8448,12 @@
    /* Allocate if data is NULL.  */
    cond_null = fold_build2_loc (input_location, EQ_EXPR, boolean_type_node,
  			 array1, build_int_cst (TREE_TYPE (array1), 0));
@@ -5954,7 +8422,7 @@ Index: gcc/fortran/trans-array.c
    tmp = build3_v (COND_EXPR, cond_null,
  		  build1_v (GOTO_EXPR, jump_label1),
  		  build_empty_stmt (input_location));
-@@ -8454,8 +8530,14 @@
+@@ -8454,8 +8542,14 @@
  
    cond = fold_build2_loc (input_location, NE_EXPR, boolean_type_node,
  			  size1, size2);
@@ -5970,7 +8438,7 @@ Index: gcc/fortran/trans-array.c
    /* Deallocation of allocatable components will have to occur on
       reallocation.  Fix the old descriptor now.  */
    if ((expr1->ts.type == BT_DERIVED)
-@@ -8559,6 +8641,12 @@
+@@ -8559,6 +8653,12 @@
        else
  	{
  	  tmp = expr2->ts.u.cl->backend_decl;
@@ -5983,7 +8451,7 @@ Index: gcc/fortran/trans-array.c
  	  tmp = fold_convert (TREE_TYPE (expr1->ts.u.cl->backend_decl), tmp);
  	}
  
-@@ -8586,6 +8674,22 @@
+@@ -8586,6 +8686,22 @@
  			   size2, size_one_node);
    size2 = gfc_evaluate_now (size2, &fblock);
  
@@ -6006,7 +8474,7 @@ Index: gcc/fortran/trans-array.c
    /* Realloc expression.  Note that the scalarizer uses desc.data
       in the array reference - (*desc.data)[<element>].  */
    gfc_init_block (&realloc_block);
-@@ -8628,8 +8732,16 @@
+@@ -8628,8 +8744,16 @@
  			     1, size2);
    gfc_conv_descriptor_data_set (&alloc_block,
  				desc, tmp);
@@ -6029,14 +8497,59 @@ Index: gcc/fortran/ChangeLog
 ===================================================================
 --- a/src/gcc/fortran/ChangeLog	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/fortran/ChangeLog	(.../branches/gcc-5-branch)
-@@ -1,1463 +1,48 @@
+@@ -1,1463 +1,74 @@
 -2015-12-04  Release Manager
-+2016-01-10  Paul Thomas  <pault@gcc.gnu.org>
++2016-01-17  Mikael Morin  <mikael@gcc.gnu.org>
++	    Dominique d'Humieres  <dominiq@lps.ens.fr>
  
 -	* GCC 5.3.0 released.
-+	Update copyright years in updated files.
++	Backport from trunk.
++	PR fortran/61831
++	* trans-array.c (gfc_conv_array_parameter): Guard allocatable
++	component deallocation code generation with descriptorless
++	calling convention flag.
++	* trans-expr.c (gfc_conv_expr_reference): Remove allocatable
++	component deallocation code generation from revision 212329.
++	(expr_may_alias_variables): New function.
++	(gfc_conv_procedure_call): New boolean elemental_proc to factor
++	check for procedure elemental-ness.  Rename boolean f to nodesc_arg
++	and declare it in the outer scope.  Use expr_may_alias_variables,
++	elemental_proc and nodesc_arg to decide whether generate allocatable
++	component deallocation code.
++	(gfc_trans_subarray_assign): Set deep copy flag.
  
 -2015-11-27  Andre Vehreschild  <vehre@gcc.gnu.org>
++2016-01-17  Paul Thomas  <pault@gcc.gnu.org>
+ 
+-	PR fortran/68218
+-	* trans-array.c (gfc_array_init_size): Add gfc_evaluate_now() when
+-	array spec in allocate is a function call.
+-
+-2015-11-24  Paul Thomas  <pault@gcc.gnu.org>
+-
+ 	Backport from trunk.
+-	PR fortran/68196
+-	* class.c (has_finalizer_component): Prevent infinite recursion
+-	through this function if the derived type and that of its
+-	component are the same.
+-	* trans-types.c (gfc_get_derived_type): Do the same for proc
+-	pointers by ignoring the explicit interface for the component.
++	PR fortran/66082
++	* trans-array.c (gfc_conv_array_parameter): Ensure that all
++	non-variable arrays with allocatable components have the
++	components deallocated after the procedure call.
+ 
+-	PR fortran/66465
+-	* check.c (same_type_check): If either of the expressions is
+-	BT_PROCEDURE, use the typespec from the symbol, rather than the
+-	expression.
++2016-01-10  Paul Thomas  <pault@gcc.gnu.org>
+ 
+-2015-11-18  Dominique d'Humieres <dominiq@lps.ens.fr>
++	Update copyright years in updated files.
+ 
+-	PR fortran/65751
+-	* expr.c (gfc_check_pointer_assign): Fix error message.
 +	PR fortran/50221
 +	PR fortran/68216
 +	PR fortran/63932
@@ -6053,14 +8566,17 @@ Index: gcc/fortran/ChangeLog
 +	element.
 +	(trans_code): Set gfc_current_locus for diagnostic purposes.
  
--	PR fortran/68218
--	* trans-array.c (gfc_array_init_size): Add gfc_evaluate_now() when
--	array spec in allocate is a function call.
+-2015-11-16  Steven G. Kargl  <kargl@gcc.gnu.org>
 +	PR fortran/67674
 +	* trans-expr.c (gfc_conv_procedure_call): Do not fix deferred
 +	string lengths of components.
  
--2015-11-24  Paul Thomas  <pault@gcc.gnu.org>
+-	PR fortran/58027
+-	PR fortran/60993
+-	* expr.c (gfc_check_init_expr): Prevent a redundant check when a
+-	__convert_* function was inserted into an array constructor.
+-	(gfc_check_assign_symbol): Check for an initialization expression
+-	when a __convert_* was inserted.
 +	PR fortran/49954
 +	* resolve.c (deferred_op_assign): New function.
 +	(gfc_resolve_code): Call it.
@@ -6078,38 +8594,11 @@ Index: gcc/fortran/ChangeLog
 +	most loop so that the temporary pointer and the assignments
 +	are properly placed.
  
--	Backport from trunk.
--	PR fortran/68196
--	* class.c (has_finalizer_component): Prevent infinite recursion
--	through this function if the derived type and that of its
--	component are the same.
--	* trans-types.c (gfc_get_derived_type): Do the same for proc
--	pointers by ignoring the explicit interface for the component.
+-2015-11-14  Steven G. Kargl  <kargl@gcc.gnu.org>
 +	PR fortran/67779
 +	* trans_array.c (gfc_conv_scalarized_array_ref): Add missing
 +	se->use_offset from condition for calculation of 'base'.
  
--	PR fortran/66465
--	* check.c (same_type_check): If either of the expressions is
--	BT_PROCEDURE, use the typespec from the symbol, rather than the
--	expression.
--
--2015-11-18  Dominique d'Humieres <dominiq@lps.ens.fr>
--
--	PR fortran/65751
--	* expr.c (gfc_check_pointer_assign): Fix error message.
--
--2015-11-16  Steven G. Kargl  <kargl@gcc.gnu.org>
--
--	PR fortran/58027
--	PR fortran/60993
--	* expr.c (gfc_check_init_expr): Prevent a redundant check when a
--	__convert_* function was inserted into an array constructor.
--	(gfc_check_assign_symbol): Check for an initialization expression
--	when a __convert_* was inserted.
--
--2015-11-14  Steven G. Kargl  <kargl@gcc.gnu.org>
--
 -	PR fortran/67803
 -	* array.c (gfc_match_array_constructor): If array constructor included
 -	a CHARACTER typespec, check array elements for compatible type.
@@ -12694,6 +15183,17 @@ Index: gcc/config/s390/s390.c
  	case 'e':
  	case 's':
  	  {
+@@ -10127,6 +10149,10 @@
+ 	    emit_move_insn (gen_rtx_REG (DImode, cfun_gpr_save_slot (i)),
+ 			    gen_rtx_REG (DImode, i));
+ 	  RTX_FRAME_RELATED_P (insn) = 1;
++	  /* This prevents dwarf2cfi from interpreting the set.  Doing
++	     so it might emit def_cfa_register infos setting an FPR as
++	     new CFA.  */
++	  add_reg_note (insn, REG_CFA_REGISTER, PATTERN (insn));
+ 	}
+     }
+ }
 Index: gcc/config/s390/predicates.md
 ===================================================================
 --- a/src/gcc/config/s390/predicates.md	(.../tags/gcc_5_3_0_release)
@@ -14914,6 +17414,51 @@ Index: gcc/config/i386/sse.md
      align = "u";
    else
      align = "a";
+@@ -3855,7 +3855,7 @@
+   "@
+    cvtsi2ss\t{%2, %0|%0, %2}
+    cvtsi2ss\t{%2, %0|%0, %2}
+-   vcvtsi2ss\t{<round_op3>%2, %1, %0|%0, %1, %2<round_op3>}"
++   vcvtsi2ss\t{%2, <round_op3>%1, %0|%0, %1<round_op3>, %2}"
+   [(set_attr "isa" "noavx,noavx,avx")
+    (set_attr "type" "sseicvt")
+    (set_attr "athlon_decode" "vector,double,*")
+@@ -3876,7 +3876,7 @@
+   "@
+    cvtsi2ssq\t{%2, %0|%0, %2}
+    cvtsi2ssq\t{%2, %0|%0, %2}
+-   vcvtsi2ssq\t{<round_op3>%2, %1, %0|%0, %1, %2<round_op3>}"
++   vcvtsi2ssq\t{%2, <round_op3>%1, %0|%0, %1<round_op3>, %2}"
+   [(set_attr "isa" "noavx,noavx,avx")
+    (set_attr "type" "sseicvt")
+    (set_attr "athlon_decode" "vector,double,*")
+@@ -3989,7 +3989,7 @@
+ 	  (match_operand:VF_128 1 "register_operand" "v")
+ 	  (const_int 1)))]
+   "TARGET_AVX512F && <round_modev4sf_condition>"
+-  "vcvtusi2<ssescalarmodesuffix>\t{<round_op3>%2, %1, %0|%0, %1, %2<round_op3>}"
++  "vcvtusi2<ssescalarmodesuffix>\t{%2, <round_op3>%1, %0|%0, %1<round_op3>, %2}"
+   [(set_attr "type" "sseicvt")
+    (set_attr "prefix" "evex")
+    (set_attr "mode" "<ssescalarmode>")])
+@@ -4003,7 +4003,7 @@
+ 	  (match_operand:VF_128 1 "register_operand" "v")
+ 	  (const_int 1)))]
+   "TARGET_AVX512F && TARGET_64BIT"
+-  "vcvtusi2<ssescalarmodesuffix>\t{<round_op3>%2, %1, %0|%0, %1, %2<round_op3>}"
++  "vcvtusi2<ssescalarmodesuffix>\t{%2, <round_op3>%1, %0|%0, %1<round_op3>, %2}"
+   [(set_attr "type" "sseicvt")
+    (set_attr "prefix" "evex")
+    (set_attr "mode" "<ssescalarmode>")])
+@@ -4268,7 +4268,7 @@
+   "@
+    cvtsi2sdq\t{%2, %0|%0, %2}
+    cvtsi2sdq\t{%2, %0|%0, %2}
+-   vcvtsi2sdq\t{<round_op3>%2, %1, %0|%0, %1, %2<round_op3>}"
++   vcvtsi2sdq\t{%2, <round_op3>%1, %0|%0, %1<round_op3>, %2}"
+   [(set_attr "isa" "noavx,noavx,avx")
+    (set_attr "type" "sseicvt")
+    (set_attr "athlon_decode" "double,direct,*")
 @@ -7018,28 +7018,50 @@
    DONE;
  })
@@ -14984,7 +17529,171 @@ Index: gcc/config/i386/sse.md
     (set_attr "mode" "<sseinsnmode>")])
  
  (define_split
-@@ -16907,20 +16929,21 @@
+@@ -15188,7 +15210,7 @@
+ 
+ (define_expand "avx512pf_gatherpf<mode>sf"
+   [(unspec
+-     [(match_operand:<avx512fmaskmode> 0 "register_or_constm1_operand")
++     [(match_operand:<avx512fmaskmode> 0 "register_operand")
+       (mem:<GATHER_SCATTER_SF_MEM_MODE>
+ 	(match_par_dup 5
+ 	  [(match_operand 2 "vsib_address_operand")
+@@ -15230,37 +15252,10 @@
+    (set_attr "prefix" "evex")
+    (set_attr "mode" "XI")])
+ 
+-(define_insn "*avx512pf_gatherpf<mode>sf"
+-  [(unspec
+-     [(const_int -1)
+-      (match_operator:<GATHER_SCATTER_SF_MEM_MODE> 4 "vsib_mem_operator"
+-	[(unspec:P
+-	   [(match_operand:P 1 "vsib_address_operand" "Tv")
+-	    (match_operand:VI48_512 0 "register_operand" "v")
+-	    (match_operand:SI 2 "const1248_operand" "n")]
+-	   UNSPEC_VSIBADDR)])
+-      (match_operand:SI 3 "const_2_to_3_operand" "n")]
+-     UNSPEC_GATHER_PREFETCH)]
+-  "TARGET_AVX512PF"
+-{
+-  switch (INTVAL (operands[3]))
+-    {
+-    case 3:
+-      return "vgatherpf0<ssemodesuffix>ps\t{%4|%4}";
+-    case 2:
+-      return "vgatherpf1<ssemodesuffix>ps\t{%4|%4}";
+-    default:
+-      gcc_unreachable ();
+-    }
+-}
+-  [(set_attr "type" "sse")
+-   (set_attr "prefix" "evex")
+-   (set_attr "mode" "XI")])
+-
+ ;; Packed double variants
+ (define_expand "avx512pf_gatherpf<mode>df"
+   [(unspec
+-     [(match_operand:<avx512fmaskmode> 0 "register_or_constm1_operand")
++     [(match_operand:<avx512fmaskmode> 0 "register_operand")
+       (mem:V8DF
+ 	(match_par_dup 5
+ 	  [(match_operand 2 "vsib_address_operand")
+@@ -15302,37 +15297,10 @@
+    (set_attr "prefix" "evex")
+    (set_attr "mode" "XI")])
+ 
+-(define_insn "*avx512pf_gatherpf<mode>df"
+-  [(unspec
+-     [(const_int -1)
+-      (match_operator:V8DF 4 "vsib_mem_operator"
+-	[(unspec:P
+-	   [(match_operand:P 1 "vsib_address_operand" "Tv")
+-	    (match_operand:VI4_256_8_512 0 "register_operand" "v")
+-	    (match_operand:SI 2 "const1248_operand" "n")]
+-	   UNSPEC_VSIBADDR)])
+-      (match_operand:SI 3 "const_2_to_3_operand" "n")]
+-     UNSPEC_GATHER_PREFETCH)]
+-  "TARGET_AVX512PF"
+-{
+-  switch (INTVAL (operands[3]))
+-    {
+-    case 3:
+-      return "vgatherpf0<ssemodesuffix>pd\t{%4|%4}";
+-    case 2:
+-      return "vgatherpf1<ssemodesuffix>pd\t{%4|%4}";
+-    default:
+-      gcc_unreachable ();
+-    }
+-}
+-  [(set_attr "type" "sse")
+-   (set_attr "prefix" "evex")
+-   (set_attr "mode" "XI")])
+-
+ ;; Packed float variants
+ (define_expand "avx512pf_scatterpf<mode>sf"
+   [(unspec
+-     [(match_operand:<avx512fmaskmode> 0 "register_or_constm1_operand")
++     [(match_operand:<avx512fmaskmode> 0 "register_operand")
+       (mem:<GATHER_SCATTER_SF_MEM_MODE>
+ 	(match_par_dup 5
+ 	  [(match_operand 2 "vsib_address_operand")
+@@ -15376,39 +15344,10 @@
+    (set_attr "prefix" "evex")
+    (set_attr "mode" "XI")])
+ 
+-(define_insn "*avx512pf_scatterpf<mode>sf"
+-  [(unspec
+-     [(const_int -1)
+-      (match_operator:<GATHER_SCATTER_SF_MEM_MODE> 4 "vsib_mem_operator"
+-	[(unspec:P
+-	   [(match_operand:P 1 "vsib_address_operand" "Tv")
+-	    (match_operand:VI48_512 0 "register_operand" "v")
+-	    (match_operand:SI 2 "const1248_operand" "n")]
+-	   UNSPEC_VSIBADDR)])
+-      (match_operand:SI 3 "const2367_operand" "n")]
+-     UNSPEC_SCATTER_PREFETCH)]
+-  "TARGET_AVX512PF"
+-{
+-  switch (INTVAL (operands[3]))
+-    {
+-    case 3:
+-    case 7:
+-      return "vscatterpf0<ssemodesuffix>ps\t{%4|%4}";
+-    case 2:
+-    case 6:
+-      return "vscatterpf1<ssemodesuffix>ps\t{%4|%4}";
+-    default:
+-      gcc_unreachable ();
+-    }
+-}
+-  [(set_attr "type" "sse")
+-   (set_attr "prefix" "evex")
+-   (set_attr "mode" "XI")])
+-
+ ;; Packed double variants
+ (define_expand "avx512pf_scatterpf<mode>df"
+   [(unspec
+-     [(match_operand:<avx512fmaskmode> 0 "register_or_constm1_operand")
++     [(match_operand:<avx512fmaskmode> 0 "register_operand")
+       (mem:V8DF
+ 	(match_par_dup 5
+ 	  [(match_operand 2 "vsib_address_operand")
+@@ -15452,35 +15391,6 @@
+    (set_attr "prefix" "evex")
+    (set_attr "mode" "XI")])
+ 
+-(define_insn "*avx512pf_scatterpf<mode>df"
+-  [(unspec
+-     [(const_int -1)
+-      (match_operator:V8DF 4 "vsib_mem_operator"
+-	[(unspec:P
+-	   [(match_operand:P 1 "vsib_address_operand" "Tv")
+-	    (match_operand:VI4_256_8_512 0 "register_operand" "v")
+-	    (match_operand:SI 2 "const1248_operand" "n")]
+-	   UNSPEC_VSIBADDR)])
+-      (match_operand:SI 3 "const2367_operand" "n")]
+-     UNSPEC_SCATTER_PREFETCH)]
+-  "TARGET_AVX512PF"
+-{
+-  switch (INTVAL (operands[3]))
+-    {
+-    case 3:
+-    case 7:
+-      return "vscatterpf0<ssemodesuffix>pd\t{%4|%4}";
+-    case 2:
+-    case 6:
+-      return "vscatterpf1<ssemodesuffix>pd\t{%4|%4}";
+-    default:
+-      gcc_unreachable ();
+-    }
+-}
+-  [(set_attr "type" "sse")
+-   (set_attr "prefix" "evex")
+-   (set_attr "mode" "XI")])
+-
+ (define_insn "avx512er_exp2<mode><mask_name><round_saeonly_name>"
+   [(set (match_operand:VF_512 0 "register_operand" "=v")
+ 	(unspec:VF_512
+@@ -16907,20 +16817,21 @@
     (set_attr "mode" "<sseinsnmode>")])
  
  (define_insn "vec_dup<mode>"
@@ -15010,6 +17719,24 @@ Index: gcc/config/i386/sse.md
  
  (define_split
    [(set (match_operand:AVX2_VEC_DUP_MODE 0 "register_operand")
+@@ -18524,7 +18435,7 @@
+ 	   (match_operand:SI 3 "const_0_to_15_operand")]
+ 	  UNSPEC_RANGE))]
+   "TARGET_AVX512DQ && <round_saeonly_mode512bit_condition>"
+-  "vrange<ssemodesuffix>\t{<round_saeonly_mask_op4>%3, %2, %1, %0<mask_operand4>|%0<mask_operand4>, %1, %2, %3<round_saeonly_mask_op4>}"
++  "vrange<ssemodesuffix>\t{%3, <round_saeonly_mask_op4>%2, %1, %0<mask_operand4>|%0<mask_operand4>, %1, %2<round_saeonly_mask_op4>, %3}"
+   [(set_attr "type" "sse")
+    (set_attr "prefix" "evex")
+    (set_attr "mode" "<MODE>")])
+@@ -18540,7 +18451,7 @@
+ 	  (match_dup 1)
+ 	  (const_int 1)))]
+   "TARGET_AVX512DQ"
+-  "vrange<ssescalarmodesuffix>\t{<round_saeonly_op4>%3, %2, %1, %0|%0, %1, %2, %3<round_saeonly_op4>}"
++  "vrange<ssescalarmodesuffix>\t{%3, <round_saeonly_op4>%2, %1, %0|%0, %1, %2<round_saeonly_op4>, %3}"
+   [(set_attr "type" "sse")
+    (set_attr "prefix" "evex")
+    (set_attr "mode" "<MODE>")])
 Index: gcc/config/i386/i386.c
 ===================================================================
 --- a/src/gcc/config/i386/i386.c	(.../tags/gcc_5_3_0_release)
@@ -15049,7 +17776,18 @@ Index: gcc/config/i386/i386.c
        else if (orig_tune_defaulted)
  	opts->x_ix86_tune_string = NULL;
  
-@@ -38246,7 +38259,11 @@
+@@ -9677,6 +9690,10 @@
+   if (TARGET_64BIT_MS_ABI && get_frame_size () > SEH_MAX_FRAME_SIZE)
+     return true;
+ 
++  /* SSE saves require frame-pointer when stack is misaligned.  */
++  if (TARGET_64BIT_MS_ABI && ix86_incoming_stack_boundary < 128)
++    return true;
++  
+   /* In ix86_option_override_internal, TARGET_OMIT_LEAF_FRAME_POINTER
+      turns off the frame pointer by default.  Turn it back on now if
+      we've not got a leaf function.  */
+@@ -38246,7 +38263,11 @@
        memory = 0;
        break;
      case VOID_FTYPE_PV8DF_V8DF_QI:
@@ -15061,7 +17799,7 @@ Index: gcc/config/i386/i386.c
      case VOID_FTYPE_PV8DI_V8DI_QI:
      case VOID_FTYPE_PV4DI_V4DI_QI:
      case VOID_FTYPE_PV2DI_V2DI_QI:
-@@ -38306,10 +38323,6 @@
+@@ -38306,10 +38327,6 @@
      case VOID_FTYPE_PV16QI_V16QI_HI:
      case VOID_FTYPE_PV32QI_V32QI_SI:
      case VOID_FTYPE_PV64QI_V64QI_DI:
@@ -15072,6 +17810,79 @@ Index: gcc/config/i386/i386.c
        nargs = 2;
        klass = store;
        /* Reserve memory operand for target.  */
+@@ -40246,13 +40263,12 @@
+ 
+       op0 = fixup_modeless_constant (op0, mode0);
+ 
+-      if (GET_MODE (op0) == mode0
+-	  || (GET_MODE (op0) == VOIDmode && op0 != constm1_rtx))
++      if (GET_MODE (op0) == mode0 || GET_MODE (op0) == VOIDmode)
+ 	{
+ 	  if (!insn_data[icode].operand[0].predicate (op0, mode0))
+ 	    op0 = copy_to_mode_reg (mode0, op0);
+ 	}
+-      else if (op0 != constm1_rtx)
++      else
+ 	{
+ 	  op0 = copy_to_reg (op0);
+ 	  op0 = simplify_gen_subreg (mode0, op0, GET_MODE (op0), 0);
+Index: gcc/config/ia64/predicates.md
+===================================================================
+--- a/src/gcc/config/ia64/predicates.md	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/config/ia64/predicates.md	(.../branches/gcc-5-branch)
+@@ -97,6 +97,32 @@
+     }
+ })
+ 
++;; True if OP refers to a local symbol [+any offset].
++;; To be encoded as:
++;;   movl % = @gprel(symbol+offset)
++;;   add  % = %, gp
++(define_predicate "local_symbolic_operand64"
++  (match_code "symbol_ref,const")
++{
++  switch (GET_CODE (op))
++    {
++    case CONST:
++      op = XEXP (op, 0);
++      if (GET_CODE (op) != PLUS
++	  || GET_CODE (XEXP (op, 0)) != SYMBOL_REF
++	  || GET_CODE (XEXP (op, 1)) != CONST_INT)
++	return false;
++      op = XEXP (op, 0);
++      /* FALLTHRU */
++
++    case SYMBOL_REF:
++	return SYMBOL_REF_LOCAL_P (op);
++
++    default:
++      gcc_unreachable ();
++    }
++})
++
+ ;; True if OP refers to a symbol in the small address area.
+ (define_predicate "small_addr_symbolic_operand" 
+   (match_code "symbol_ref,const")
+Index: gcc/config/ia64/ia64.c
+===================================================================
+--- a/src/gcc/config/ia64/ia64.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/config/ia64/ia64.c	(.../branches/gcc-5-branch)
+@@ -1146,6 +1146,15 @@
+     emit_insn (gen_load_fptr (dest, src));
+   else if (sdata_symbolic_operand (src, VOIDmode))
+     emit_insn (gen_load_gprel (dest, src));
++  else if (local_symbolic_operand64 (src, VOIDmode))
++    {
++      /* We want to use @gprel rather than @ltoff relocations for local
++	 symbols:
++	  - @gprel does not require dynamic linker
++	  - and does not use .sdata section
++	 https://gcc.gnu.org/bugzilla/60465 */
++      emit_insn (gen_load_gprel64 (dest, src));
++    }
+   else
+     {
+       HOST_WIDE_INT addend = 0;
 Index: gcc/config/aarch64/aarch64.md
 ===================================================================
 --- a/src/gcc/config/aarch64/aarch64.md	(.../tags/gcc_5_3_0_release)
@@ -15248,6 +18059,35 @@ Index: gcc/config/rs6000/rs6000.h
  %{mcpu=rs64a: -mppc64} \
  %{mcpu=401: -mppc} \
  %{mcpu=403: -m403} \
+Index: gcc/config/arm/arm-builtins.c
+===================================================================
+--- a/src/gcc/config/arm/arm-builtins.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/config/arm/arm-builtins.c	(.../branches/gcc-5-branch)
+@@ -2077,7 +2077,8 @@
+ 	      if (!(*insn_data[icode].operand[opno].predicate)
+                    (op[argc], mode[argc]))
+ 		op[argc] = (replace_equiv_address
+-			    (op[argc], force_reg (Pmode, XEXP (op[argc], 0))));
++			    (op[argc],
++			     copy_to_mode_reg (Pmode, XEXP (op[argc], 0))));
+               break;
+ 
+ 	    case NEON_ARG_STOP:
+Index: gcc/config/arm/vfp.md
+===================================================================
+--- a/src/gcc/config/arm/vfp.md	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/config/arm/vfp.md	(.../branches/gcc-5-branch)
+@@ -1336,8 +1336,9 @@
+                         [(match_operand:SDF 1
+                            "register_operand" "<F_constraint>")] VCVT)))]
+   "TARGET_HARD_FLOAT && TARGET_FPU_ARMV8 <vfp_double_cond>"
+-  "vcvt<vrint_variant>%?.<su>32.<V_if_elem>\\t%0, %<V_reg>1"
++  "vcvt<vrint_variant>.<su>32.<V_if_elem>\\t%0, %<V_reg>1"
+   [(set_attr "predicable" "no")
++   (set_attr "conds" "unconditional")
+    (set_attr "type" "f_cvtf2i")]
+ )
+ 
 Index: gcc/config/arm/arm.md
 ===================================================================
 --- a/src/gcc/config/arm/arm.md	(.../tags/gcc_5_3_0_release)

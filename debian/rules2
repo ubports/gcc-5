@@ -457,10 +457,12 @@ ifeq ($(with_multiarch_lib),yes)
   CONFARGS += --enable-multiarch
 endif
 
-# FIXME: requires binutils trunk
-#ifneq (,$(findstring aarch64,$(DEB_TARGET_GNU_CPU)))
-#  CONFARGS += --enable-fix-cortex-a53-843419
-#endif
+ifneq (,$(findstring aarch64,$(DEB_TARGET_GNU_CPU)))
+  # requires binutils 2.25.90 or newer
+  ifeq (,$(filter $(distrelease),squeeze precise trusty utopic vivid wily))
+    CONFARGS += --enable-fix-cortex-a53-843419
+  endif
+endif
 
 ifeq ($(findstring powerpcspe,$(DEB_TARGET_ARCH)),powerpcspe)
   CONFARGS += --with-cpu=8548 --enable-e500_double
@@ -1842,7 +1844,6 @@ ifneq ($(DEB_CROSS),yes)
   p_cppd = cpp$(pkg_ver)-doc
   p_cxx  = g++$(pkg_ver)
   p_doc  = gcc$(pkg_ver)-doc
-  p_lgcc = libgcc$(GCC_SONAME)
 else
   # only triggered if DEB_CROSS set
   p_base = gcc$(pkg_ver)$(cross_bin_arch)-base
@@ -1853,6 +1854,14 @@ else
   p_cxx  = g++$(pkg_ver)$(cross_bin_arch)
 endif
 p_hppa64 = gcc$(pkg_ver)-hppa64-linux-gnu
+
+# needed for shlibs.common* generation
+ifeq (,$(p_lgcc))
+  p_lgcc = libgcc$(GCC_SONAME)$(cross_lib_arch)
+endif
+ifeq (,$(p_lib))
+  p_lib = libstdc++$(CXX_SONAME)$(cross_lib_arch)
+endif
 
 d	= debian/tmp
 d_base	= debian/$(p_base)
@@ -2356,11 +2365,11 @@ ifneq ($(with_common_libs),yes)
 	touch debian/shlibs.common
   else
 	echo 'libgcc_s $(GCC_SONAME) $(p_lgcc)' > debian/shlibs.common
-	echo 'libstdc++ $(CXX_SONAME) libstdc++$(CXX_SONAME)' >> debian/shlibs.common
+	echo 'libstdc++ $(CXX_SONAME) $(p_lib)' >> debian/shlibs.common
   endif
 	$(foreach ml,32 64 n32 x32 hf sf, \
 	  echo 'libgcc_s $(GCC_SONAME) $(subst lib,lib$(ml),$(p_lgcc))' > debian/shlibs.common$(ml); \
-	  echo 'libstdc++ $(CXX_SONAME) lib$(ml)stdc++$(CXX_SONAME)' >> debian/shlibs.common$(ml); \
+	  echo 'libstdc++ $(CXX_SONAME) $(subst lib,lib$(ml),$(p_lib))' >> debian/shlibs.common$(ml); \
 	)
 endif
 

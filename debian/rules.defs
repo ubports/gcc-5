@@ -1260,41 +1260,32 @@ else
 
   # libgomp -----------------
   ifeq ($(with_gomp)-$(with_common_libs),yes-yes)
-    #ifneq ($(DEB_CROSS),yes)
       with_libgomp := yes
-    #endif
   endif
 
   # libitm -----------------
   ifeq ($(with_itm)-$(with_common_libs),yes-yes)
-    #ifneq ($(DEB_CROSS),yes)
       with_libitm := yes
-    #endif
   endif
 
   # libatomic -----------------
   ifeq ($(with_atomic)-$(with_common_libs),yes-yes)
-    #ifneq ($(DEB_CROSS),yes)
       with_libatomic := yes
-    #endif
   endif
 
   # libbacktrace -----------------
   ifeq ($(with_backtrace)-$(with_common_libs),yes-yes)
-    #ifneq ($(DEB_CROSS),yes)
       # currently not a shared library
       #with_libbacktrace := yes
-    #endif
   endif
 
   # libasan -----------------
-  # asan changes soname in GCC 5
+  # asan changes soname in GCC 6
   #ifeq ($(with_asan)-$(with_common_libs),yes-yes)
-  ifeq ($(with_asan),yes)
-    #ifneq ($(DEB_CROSS),yes)
+    ifeq ($(with_asan),yes)
       with_libasan := yes
-    #endif
-  endif
+    endif
+  #endif
 
   # liblsan -----------------
   ifeq ($(with_lsan)-$(with_common_libs),yes-yes)
@@ -1305,37 +1296,27 @@ else
 
   # libtsan -----------------
   ifeq ($(with_tsan)-$(with_common_libs),yes-yes)
-    #ifneq ($(DEB_CROSS),yes)
       with_libtsan := yes
-    #endif
   endif
 
   # libubsan -----------------
   ifeq ($(with_ubsan)-$(with_common_libs),yes-yes)
-    #ifneq ($(DEB_CROSS),yes)
       with_libubsan := yes
-    #endif
   endif
 
   # libvtv -----------------
   ifeq ($(with_vtv)-$(with_common_libs),yes-yes)
-    #ifneq ($(DEB_CROSS),yes)
       with_libvtv := yes
-    #endif
   endif
 
   # libcilkrts -----------------
   ifeq ($(with_cilkrts)-$(with_common_libs),yes-yes)
-    #ifneq ($(DEB_CROSS),yes)
       with_libcilkrts := yes
-    #endif
   endif
 
   # libquadmath -----------------
   ifeq ($(with_qmath)-$(with_common_libs),yes-yes)
-    #ifneq ($(DEB_CROSS),yes)
       with_libqmath := yes
-    #endif
   endif
 
   # fixincludes -------
@@ -1965,12 +1946,12 @@ stamp-dir:
 ifeq ($(DEB_CROSS),yes)
   define cross_mangle_shlibs
 	if [ -f debian/$(1)/DEBIAN/shlibs ]; then \
-	  sed -i s/$(cross_lib_arch)//g debian/$(1)/DEBIAN/shlibs; \
+	  sed -i s/$(cross_lib_arch)/:$(DEB_TARGET_ARCH)/g debian/$(1)/DEBIAN/shlibs; \
 	fi
   endef
   define cross_mangle_substvars
 	if [ -f debian/$(1).substvars ]; then \
-	  sed -i 's/lib[^ ,(]*/&$(cross_lib_arch)/g' debian/$(1).substvars; \
+	  sed -i 's/:$(DEB_TARGET_ARCH)/$(cross_lib_arch)/g' debian/$(1).substvars; \
 	fi
   endef
 else

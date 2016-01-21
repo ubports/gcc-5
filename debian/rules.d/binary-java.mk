@@ -330,7 +330,7 @@ $(binary_stamp)-libgcjjar: $(install_stamp)
 		$(d_jar)/$(PF)/share/java/libgcj-tools-$(GCC_VERSION).jar
 	debian/dh_doclink -p$(p_jar) $(p_jbase)
 	debian/dh_rmemptydirs -p$(p_jar)
-	echo $(p_jar) >> debian/arch_binaries
+	echo $(p_jar) >> debian/indep_binaries
 
 	trap '' 1 2 3 15; touch $@; mv $(install_stamp)-tmp $(install_stamp)
 
