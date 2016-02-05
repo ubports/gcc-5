@@ -1,3 +1,14 @@
+gcc-5 (5.3.1-8) unstable; urgency=medium
+
+  * Update to SVN 20160205 (r233179, 5.3.1) from the gcc-5-branch.
+  * Apply proposed patch for PR go/66904, pass linker flags from
+    "#cgo pkg-config:" directives (Michael Hudson).
+  * Fix dependency generation for armel/armhf multilib cross targets.
+  * Fix libc dependency generation for multilib cross targets.
+  * Build libitm on alpha, s390x, sh4, sparc64.
+
+ -- Matthias Klose <doko@debian.org>  Fri, 05 Feb 2016 16:29:13 +0100
+
 gcc-5 (5.3.1-7) unstable; urgency=medium
 
   * Update to SVN 20160121 (r232666, 5.3.1) from the gcc-5-branch.

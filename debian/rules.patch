@@ -95,6 +95,7 @@ debian_patches += \
 	libjit-ldflags \
 	pr69187 \
 	pr69144 \
+	pr66904 \
 
 # this is still needed on powerpc, e.g. firefox and insighttoolkit4 will ftbfs.
 ifneq (,$(filter $(DEB_TARGET_ARCH),powerpc))
@@ -250,7 +251,7 @@ debian_patches += \
 	sys-auxv-header \
 	libcilkrts-targets \
 
-ifeq ($(distribution)-$(DEB_TARGET_ARCH),Ubuntu-ppc64el)
+ifeq ($(with_ibm_branch),yes)
   debian_patches += ibm-branch
 else
   debian_patches += go-use-gold

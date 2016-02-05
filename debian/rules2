@@ -196,7 +196,7 @@ LDFLAGS_FOR_TARGET_TO_PASS = \
 docdir		= usr/share/doc
 
 CONFARGS = -v \
-	--with-pkgversion='$(distribution)$(if $(with_linaro_branch),/Linaro)___$(DEB_VERSION)' \
+	--with-pkgversion='$(distribution)$(if $(with_linaro_branch),/Linaro)$(if $(with_ibm_branch),/IBM)___$(DEB_VERSION)' \
 	--with-bugurl='file:///usr/share/doc/$(subst gcj,gcc,$(PKGSOURCE))/README.Bugs'
 
 CONFARGS += \
