@@ -1339,6 +1339,12 @@ else
     ifeq ($(with_common_libs),yes)
       with_libgcc := yes
     endif
+    ifneq (,$(filter $(distrelease),xenial))
+      ifneq (,$(filter $(build_type), build-native cross-build-native))
+        # built from the gccgo-6 package, but not for cross builds
+        with_libgcc :=
+      endif
+    endif
   endif
 
   # libgcc-math --------------------

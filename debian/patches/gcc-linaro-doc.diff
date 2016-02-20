@@ -1,4 +1,4 @@
-# DP: Changes for the Linaro 5-2016.01 snapshot (documentation).
+# DP: Changes for the Linaro 5-2016.02 snapshot (documentation).
 
 --- a/src/gcc/doc/extend.texi
 +++ b/src/gcc/doc/extend.texi
@@ -7319,6 +7319,19 @@
  @item -fno-jump-tables
  @opindex fno-jump-tables
  Do not use jump tables for switch statements even where it would be
+--- a/src/gcc/doc/lto.texi
++++ b/src/gcc/doc/lto.texi
+@@ -538,10 +538,6 @@ plugin obtains the symbol resolution information which specifies
+ which symbols provided by the claimed objects are bound from the
+ rest of a binary being linked.
+ 
+-Currently, the linker plugin  works only in combination
+-with the Gold linker, but a GNU ld implementation is under
+-development.
+-
+ GCC is designed to be independent of the rest of the toolchain
+ and aims to support linkers without plugin support.  For this
+ reason it does not use the linker plugin by default.  Instead,
 --- a/src/gcc/doc/match-and-simplify.texi
 +++ b/src/gcc/doc/match-and-simplify.texi
 @@ -39,7 +39,7 @@ APIs are introduced.

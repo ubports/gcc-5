@@ -16,8 +16,6 @@ debian_patches = \
 	svn-updates \
 	$(if $(with_linaro_branch),gcc-linaro) \
 	$(if $(with_linaro_branch),gcc-linaro-no-macros) \
-	$(if $(with_linaro_branch),pr69176-2) \
-	$(if $(with_linaro_branch),pr69176) \
 
 #	svn-updates \
 
@@ -93,9 +91,9 @@ debian_patches += \
 	gcc-configure-pie \
 	ada-gnattools-ldflags \
 	libjit-ldflags \
-	pr69187 \
 	pr69144 \
 	pr66904 \
+	pr68273 \
 
 # this is still needed on powerpc, e.g. firefox and insighttoolkit4 will ftbfs.
 ifneq (,$(filter $(DEB_TARGET_ARCH),powerpc))
@@ -192,7 +190,8 @@ ifeq ($(with_d),yes)
 	gdc-versym-os \
 	gdc-frontend-posix \
 	gdc-base-version \
-	gdc-profiledbuild
+	gdc-profiledbuild \
+	gdc-backport
 #	gdc-updates
 #	gdc-multiarch
   ifneq ($(GFDL_INVARIANT_FREE),yes)
