@@ -221,6 +221,18 @@ $(binary_stamp)-gcc-plugindev: $(install_dependencies)
 		$(gcc_lib_dir)/plugin/gtype.state \
 		$(gcc_lexec_dir)/plugin/gengtype
 
+# files missing in upstream installation
+ifeq ($(DEB_TARGET_ARCH),m68k)
+	cp -p $(srcdir)/gcc/config/m69k/m68k-{devices,microarchs}.def \
+		$(d_pld)/$(gcc_lib_dir)/plugin/include/config/m68k/.
+endif
+ifeq ($(DEB_TARGET_ARCH),arm64)
+  ifeq ($(with_linaro_branch),yes)
+	cp -p $(srcdir)/gcc/config/aarch64/aarch64-arches.def \
+		$(d_pld)/$(gcc_lib_dir)/plugin/include/config/aarch64/.
+  endif
+endif
+
 	debian/dh_doclink -p$(p_pld) $(p_xbase)
 	debian/dh_rmemptydirs -p$(p_pld)
 	dh_strip -p$(p_pld)

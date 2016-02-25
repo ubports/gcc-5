@@ -1,3 +1,13 @@
+gcc-5 (5.3.1-10) unstable; urgency=medium
+
+  * Update to SVN 20160225 (r233687, 5.3.1) from the gcc-5-branch.
+    - Fix PR fortran/57365, PR fortran/52531, PR libstdc++/69939,
+      PR rtl-optimization/69609, PR tree-optimization/69719,
+      PR tree-optimization/69783, PR c++/69323.
+  * Install missing architecture specific plugin header files.
+
+ -- Matthias Klose <doko@debian.org>  Thu, 25 Feb 2016 01:08:03 +0100
+
 gcc-5 (5.3.1-9) unstable; urgency=medium
 
   * Update to SVN 20160220 (r233588, 5.3.1) from the gcc-5-branch.

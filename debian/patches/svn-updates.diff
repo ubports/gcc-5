@@ -1,10 +1,10 @@
-# DP: updates from the 5 branch upto 20160220 (r233588).
+# DP: updates from the 5 branch upto 20160225 (r233687).
 
 last_update()
 {
 	cat > ${dir}LAST_UPDATED <EOF
-Sat Feb 20 17:29:44 CET 2016
-Sat Feb 20 16:29:44 UTC 2016 (revision 233588)
+Thu Feb 25 01:07:43 CET 2016
+Thu Feb 25 00:07:43 UTC 2016 (revision 233687)
 EOF
 }
 
@@ -1319,6 +1319,21 @@ Index: libstdc++-v3/include/experimental/optional
   */
  
  #if __cplusplus <= 201103L
+Index: libstdc++-v3/include/experimental/tuple
+===================================================================
+--- a/src/libstdc++-v3/include/experimental/tuple	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/include/experimental/tuple	(.../branches/gcc-5-branch)
+@@ -54,7 +54,9 @@
+   template <typename _Fn, typename _Tuple, std::size_t... _Idx>
+     constexpr decltype(auto)
+     __apply_impl(_Fn&& f, _Tuple&& t, std::index_sequence<_Idx...>)
+-    { return std::forward<_Fn>(f)(get<_Idx>(forward<_Tuple>(t))...); }
++    {
++      return std::forward<_Fn>(f)(std::get<_Idx>(std::forward<_Tuple>(t))...);
++    }
+ 
+   template <typename _Fn, typename _Tuple>
+     constexpr decltype(auto)
 Index: libstdc++-v3/include/experimental/fs_fwd.h
 ===================================================================
 --- a/src/libstdc++-v3/include/experimental/fs_fwd.h	(.../tags/gcc_5_3_0_release)
@@ -1903,7 +1918,12 @@ Index: libstdc++-v3/ChangeLog
 ===================================================================
 --- a/src/libstdc++-v3/ChangeLog	(.../tags/gcc_5_3_0_release)
 +++ b/src/libstdc++-v3/ChangeLog	(.../branches/gcc-5-branch)
-@@ -1,3 +1,143 @@
+@@ -1,3 +1,148 @@
++2016-02-24  Jonathan Wakely  <jwakely@redhat.com>
++
++	PR libstdc++/69939
++	* include/experimental/tuple (__apply_impl): Qualify get and forward.
++
 +2016-02-16  Tim Shen  <timshen@google.com>
 +
 +	Backport from mainline
@@ -3784,7 +3804,7 @@ Index: gcc/DATESTAMP
 +++ b/src/gcc/DATESTAMP	(.../branches/gcc-5-branch)
 @@ -1 +1 @@
 -20151204
-+20160220
++20160224
 Index: gcc/tree.c
 ===================================================================
 --- a/src/gcc/tree.c	(.../tags/gcc_5_3_0_release)
@@ -4147,7 +4167,54 @@ Index: gcc/ChangeLog
 ===================================================================
 --- a/src/gcc/ChangeLog	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/ChangeLog	(.../branches/gcc-5-branch)
-@@ -1,3 +1,914 @@
+@@ -1,3 +1,961 @@
++2016-02-24  Martin Jambor  <mjambor@suse.cz>
++
++	revert:
++	2016-02-23  Martin Jambor  <mjambor@suse.cz>
++
++	PR tree-optimization/69666
++	* tree-sra.c (sra_modify_assign): Do not attempt to create
++	default_def replacements for unscalarizable regions.
++
++2016-02-24  Richard Biener  <rguenther@suse.de>
++
++	Backport from mainline
++	2016-02-17  Richard Biener  <rguenther@suse.de>
++
++	PR rtl-optimization/69609
++	* bb-reorder.c (struct bbro_basic_block_data): Add priority member.
++	(find_traces_1_round): When ending a trace update cached priority
++	of successors.
++	(bb_to_key): Use cached priority when available.
++	(copy_bb): Initialize cached priority.
++	(reorder_basic_blocks_software_trace_cache): Likewise.
++
++	2016-02-08  Richard Biener  <rguenther@suse.de>
++
++	PR tree-optimization/69719
++	* tree-vect-data-refs.c (vect_prune_runtime_alias_test_list):
++	Properly use absolute of the difference of the two offsets to
++	compare or adjust the segment length.
++
++	2016-02-10  Richard Biener  <rguenther@suse.de>
++
++	PR tree-optimization/69719
++	* tree-vect-data-refs.c (vect_prune_runtime_alias_test_list):
++	Adjust previous fix by ensuring that dr_a1 is left of dr_a2.
++
++	2016-02-15  Richard Biener  <rguenther@suse.de>
++
++	PR tree-optimization/69783
++	* tree-vect-data-refs.c (vect_prune_runtime_alias_test_list):
++	Add trivially correct cases.
++
++2016-02-23  Martin Jambor  <mjambor@suse.cz>
++
++	PR tree-optimization/69666
++	* tree-sra.c (sra_modify_assign): Do not attempt to create
++	default_def replacements for unscalarizable regions.
++
 +2016-02-18  Bernd Schmidt  <bschmidt@redhat.com>
 +
 +	Backport from mainline
@@ -5062,7 +5129,7 @@ Index: gcc/ChangeLog
  2015-12-04  Release Manager
  
  	* GCC 5.3.0 released.
-@@ -19,7 +930,7 @@
+@@ -19,7 +977,7 @@
  	Backport from mainline
  	2015-09-30  Bernd Edlinger  <bernd.edlinger@hotmail.de>
  
@@ -5071,7 +5138,7 @@ Index: gcc/ChangeLog
  	* lra-constraints.c (process_addr_reg): Use copy_rtx when necessary.
  
  2015-11-26  David Edelsohn  <dje.gcc@gmail.com>
-@@ -291,12 +1202,12 @@
+@@ -291,12 +1249,12 @@
  	(contains_type_p): Fix out of range check, clear dynamic flag.
  
  	2015-10-23  Jan Hubicka  <hubicka@ucw.cz>
@@ -5086,7 +5153,7 @@ Index: gcc/ChangeLog
  	2015-10-12  Richard Biener  <rguenther@suse.de>
  
  	PR ipa/67783
-@@ -305,7 +1216,7 @@
+@@ -305,7 +1263,7 @@
  	quadratic behavior.
  
  	2015-10-11  Jan Hubicka  <hubicka@ucw.cz>
@@ -7002,6 +7069,27 @@ Index: gcc/testsuite/gfortran.dg/read_bang4.f90
 +  if (str2.ne.str3) call abort
 +  close(15)
 +end program
+Index: gcc/testsuite/gfortran.dg/gomp/pr52531.f90
+===================================================================
+--- a/src/gcc/testsuite/gfortran.dg/gomp/pr52531.f90	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gfortran.dg/gomp/pr52531.f90	(.../branches/gcc-5-branch)
+@@ -0,0 +1,16 @@
++! { dg-do compile }
++! PR fortran/52531
++module test_mod
++  type, public :: test_type
++  end type
++contains
++  subroutine foo(bar)
++    type(test_type) :: bar
++!$omp parallel default(none) shared(bar) ! Compiles if one removes default(none)
++    call question(bar)
++!$omp end parallel
++  end subroutine
++  subroutine question(var)
++    class(test_type), intent(in) :: var ! Compiles if one replaces class by type
++  end subroutine
++end module
 Index: gcc/testsuite/gfortran.dg/gomp/pr69128.f90
 ===================================================================
 --- a/src/gcc/testsuite/gfortran.dg/gomp/pr69128.f90	(.../tags/gcc_5_3_0_release)
@@ -7087,6 +7175,24 @@ Index: gcc/testsuite/gfortran.dg/allocatable_scalar_13.f90
 +! { dg-final { scan-tree-dump-times "builtin_malloc" 16 "original" } }
 +! { dg-final { scan-tree-dump-times "builtin_free" 16 "original" } }
  ! { dg-final { cleanup-tree-dump "original" } }
+Index: gcc/testsuite/gfortran.dg/pr65996.f90
+===================================================================
+--- a/src/gcc/testsuite/gfortran.dg/pr65996.f90	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gfortran.dg/pr65996.f90	(.../branches/gcc-5-branch)
+@@ -0,0 +1,13 @@
++! { dg-do compile }
++! { dg-additional-options "-dH" }
++! PR 65996.f90. before patch compiler aborted on this program.
++program foo
++  implicit none
++  character(len=16) :: a,b,c
++  a="XXX"
++  b="&
++    &XXX"
++  c="XXX &
++    & XXX"
++  write(0,*) 'a=',a,' b=',b,' c=',c 
++endprogram foo
 Index: gcc/testsuite/gfortran.dg/deferred_character_2.f90
 ===================================================================
 --- a/src/gcc/testsuite/gfortran.dg/deferred_character_2.f90	(.../tags/gcc_5_3_0_release)
@@ -8200,6 +8306,42 @@ Index: gcc/testsuite/gfortran.dg/coarray/event_2.f90
 +call event_query(event=var(3), stat=stat, count=count)
 +if (count /= 0 .or. stat /= 0) call abort()
 +end
+Index: gcc/testsuite/gfortran.dg/allocate_with_source_18.f03
+===================================================================
+--- a/src/gcc/testsuite/gfortran.dg/allocate_with_source_18.f03	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gfortran.dg/allocate_with_source_18.f03	(.../branches/gcc-5-branch)
+@@ -0,0 +1,31 @@
++! { dg-do run }
++!
++! PR fortran/57365
++! [OOP] Sourced allocation fails with unlimited polymorphism
++! Contributed by <rxs@hotmail.de>
++!
++program bug
++
++    implicit none
++    character(len=:), allocatable :: test
++
++    test = "A test case"
++    call allocate_test(test)
++    deallocate(test)
++
++contains
++
++    subroutine allocate_test(var)
++        class(*) :: var
++        class(*), pointer :: copyofvar
++        allocate(copyofvar, source=var)
++        select type (copyofvar)
++            type is (character(len=*))
++!                print*, len(copyofvar), copyofvar
++                if (len(copyofvar) /= 11) call abort ()
++                if (copyofvar /= "A test case") call abort ()
++        end select
++        deallocate(copyofvar)
++    end subroutine
++
++end program bug
 Index: gcc/testsuite/gfortran.dg/coarray_critical_1.f90
 ===================================================================
 --- a/src/gcc/testsuite/gfortran.dg/coarray_critical_1.f90	(.../tags/gcc_5_3_0_release)
@@ -8984,6 +9126,35 @@ Index: gcc/testsuite/gcc.dg/torture/pr69574.c
 +    __builtin_memcpy(&x, e->pu, sizeof(unsigned));
 +  return x;
 +}
+Index: gcc/testsuite/gcc.dg/torture/pr69719.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/torture/pr69719.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.dg/torture/pr69719.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,24 @@
++/* { dg-do run } */
++
++int b, c = 1, e, f; 
++int a[6][5] = { {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 1, 0, 0, 0} };
++
++void  __attribute__((noinline))
++fn1 ()
++{
++  int d;
++  for (b = 0; b < 5; b++)
++    for (d = 4; d; d--)
++      a[c + 1][b] = a[d + 1][d];
++}
++
++int
++main ()
++{
++  fn1 ();
++
++  if (a[2][1] != 0) 
++    __builtin_abort (); 
++
++  return 0; 
++}
 Index: gcc/testsuite/gcc.dg/torture/pr69546-1.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.dg/torture/pr69546-1.c	(.../tags/gcc_5_3_0_release)
@@ -9497,6 +9668,27 @@ Index: gcc/testsuite/gcc.dg/tree-ssa/pr67755.c
 +  return best_fit;
 +}
 +
+Index: gcc/testsuite/gcc.dg/tree-ssa/pr69666.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/tree-ssa/pr69666.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.dg/tree-ssa/pr69666.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,16 @@
++/* { dg-do compile } */
++/* { dg-options "-O2 -w" } */
++
++int a, c, d;
++float b;
++void *memcpy();
++int fun1(int p1, unsigned char *p2) {
++  p2[p1] = b;
++  return a;
++}
++void fun2() {
++  unsigned char e[16];
++  fun1(16, e);
++  d = e[d];
++  memcpy(&c, e, sizeof(e));
++}
 Index: gcc/testsuite/gcc.dg/pr68670-1.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.dg/pr68670-1.c	(.../tags/gcc_5_3_0_release)
@@ -9687,11 +9879,76 @@ Index: gcc/testsuite/gcc.dg/vect/costmodel/ppc/costmodel-vect-31a.c
 +/* { dg-final { scan-tree-dump-times "not vectorized: unsupported unaligned store" 1 "vect" { target { ! vect_hw_misalign } } } } */
  /* { dg-final { scan-tree-dump-times "vectorized 1 loops" 0 "vect" { target { ! vect_hw_misalign } } } } */
  /* { dg-final { cleanup-tree-dump "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/pr69783.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/pr69783.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/pr69783.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,39 @@
++/* { dg-do compile } */
++/* { dg-require-effective-target vect_float } */
++/* { dg-additional-options "-Ofast -funroll-loops" } */
++
++#define NXX 516
++#define NYY 516
++#define IND(x,y) ((x) + (y)*NXX)
++float **In, **Out, **V;
++
++void foo(int I, int J, int K1, int K2, int L1, int L2 )
++{
++  for(int i=0; i < I; i++)
++    {
++      float *v = V[i];
++
++      for(int j=0; j < J; j++)
++	{
++	  float *in = In[j];
++	  float *out = Out[j];
++	  for(int l=L1; l<L2; l++)
++	    {
++	      for(int k=K1; k<K2; k++)
++		{
++		  float sum = 0;
++		  int offset = 0;
++		  for(int m=-2; m<=2; m++)
++		    {
++		      for(int n=-2; n<=2; n++, offset++)
++			sum += in[IND((k+n), (l+m))] * v[offset];
++		    }
++		  out[IND(k,l)] = sum;
++		}
++	    }
++
++	}
++    }
++}
++
++/* { dg-final { scan-tree-dump "improved number of alias checks from \[0-9\]* to 2" "vect" } } */
 Index: gcc/testsuite/ChangeLog
 ===================================================================
 --- a/src/gcc/testsuite/ChangeLog	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/testsuite/ChangeLog	(.../branches/gcc-5-branch)
-@@ -1,3 +1,736 @@
+@@ -1,3 +1,757 @@
++2016-02-23  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
++
++	Backported from mainline
++	PR fortran/65996
++	* gfortran.dg/pr65996.f90: New test.
++
++2016-02-23  Martin Jambor  <mjambor@suse.cz>
++
++	PR tree-optimization/69666
++	* gcc.dg/tree-ssa/pr69666.c: New test.
++
++2016-02-21  Dominique d'Humieres  <dominiq@lps.ens.fr>
++
++	PR fortran/57365
++	gfortran.dg/allocate_with_source_18.f03: New test.
++
++2016-02-21  Harald Anlauf  <anlauf@gmx.de>
++
++	PR fortran/52531
++	gfortran.dg/gomp/pr52531.f90: New test.
++
 +2016-02-20  Bernd Edlinger  <bernd.edlinger@hotmail.de>
 +
 +	Backport from mainline
@@ -10428,7 +10685,7 @@ Index: gcc/testsuite/ChangeLog
  2015-12-04  Release Manager
  
  	* GCC 5.3.0 released.
-@@ -328,7 +1061,7 @@
+@@ -328,7 +1082,7 @@
  2015-11-06  Vladimir Makarov  <vmakarov@redhat.com>
  
  	PR rtl-optimization/68106
@@ -10437,7 +10694,7 @@ Index: gcc/testsuite/ChangeLog
  
  2015-01-25  Paul Thomas  <pault@gcc.gnu.org>
  
-@@ -448,8 +1181,8 @@
+@@ -448,8 +1202,8 @@
  	Backport from mainline
  	2015-10-09  Martin Jambor  <mjambor@suse.cz>
  
@@ -10448,7 +10705,7 @@ Index: gcc/testsuite/ChangeLog
  
  2015-10-22  Paul Thomas  <pault@gcc.gnu.org>
  
-@@ -1254,10 +1987,6 @@
+@@ -1254,10 +2008,6 @@
  	PR fortran/66725
  	* gfortran.dg/pr66725.f90: New test.
  
@@ -10459,7 +10716,7 @@ Index: gcc/testsuite/ChangeLog
  2015-07-16  Marek Polacek  <polacek@redhat.com>
  
  	Backported from mainline
-@@ -3574,7 +4303,7 @@
+@@ -3574,7 +4324,7 @@
  
  2015-03-05  Martin Sebor  <msebor@redhat.com>
  
@@ -11165,6 +11422,23 @@ Index: gcc/testsuite/g++.dg/other/anon8.C
 +    unsigned operator[] (T i) const { return d[i]; }
 +  } c;
 +} A;
+Index: gcc/testsuite/g++.dg/template/friend61.C
+===================================================================
+--- a/src/gcc/testsuite/g++.dg/template/friend61.C	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/g++.dg/template/friend61.C	(.../branches/gcc-5-branch)
+@@ -0,0 +1,12 @@
++// PR c++/69323
++
++template<int VALUE>
++struct Outer
++{
++  struct StupidValueTrick
++  {
++    template<int VAL> friend struct Outer<VAL>::StupidValueTrick;
++  };
++};
++typedef Outer<42>::StupidValueTrick GoodValue;
++GoodValue good;
 Index: gcc/testsuite/g++.dg/template/pr67337.C
 ===================================================================
 --- a/src/gcc/testsuite/g++.dg/template/pr67337.C	(.../tags/gcc_5_3_0_release)
@@ -11626,7 +11900,13 @@ Index: gcc/cp/ChangeLog
 ===================================================================
 --- a/src/gcc/cp/ChangeLog	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/cp/ChangeLog	(.../branches/gcc-5-branch)
-@@ -1,3 +1,137 @@
+@@ -1,3 +1,143 @@
++2016-02-24  Jason Merrill  <jason@redhat.com>
++
++	PR c++/69323
++	* pt.c (instantiate_class_template_1): Set
++	processing_template_decl before substituting friend_type.
++
 +2016-02-19  Jason Merrill  <jason@redhat.com>
 +
 +	PR c++/69743
@@ -11768,6 +12048,21 @@ Index: gcc/cp/pt.c
 ===================================================================
 --- a/src/gcc/cp/pt.c	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/cp/pt.c	(.../branches/gcc-5-branch)
+@@ -9623,11 +9623,11 @@
+ 		       template <class U> friend class T::C;
+ 
+ 		     otherwise.  */
++		  /* Bump processing_template_decl in case this is something like
++		     template <class T> friend struct A<T>::B.  */
++		  ++processing_template_decl;
+ 		  friend_type = tsubst (friend_type, args,
+ 					tf_warning_or_error, NULL_TREE);
+-		  /* Bump processing_template_decl for correct
+-		     dependent_type_p calculation.  */
+-		  ++processing_template_decl;
+ 		  if (dependent_type_p (friend_type))
+ 		    adjust_processing_template_decl = true;
+ 		  --processing_template_decl;
 @@ -10095,12 +10095,16 @@
  	  if (PACK_EXPANSION_LOCAL_P (t))
  	    arg_pack = retrieve_local_specialization (parm_pack);
@@ -14256,21 +14551,70 @@ Index: gcc/fortran/gfortran.h
    EXEC_OACC_KERNELS_LOOP, EXEC_OACC_PARALLEL_LOOP,
    EXEC_OACC_PARALLEL, EXEC_OACC_KERNELS, EXEC_OACC_DATA, EXEC_OACC_HOST_DATA,
    EXEC_OACC_LOOP, EXEC_OACC_UPDATE, EXEC_OACC_WAIT, EXEC_OACC_CACHE,
+Index: gcc/fortran/error.c
+===================================================================
+--- a/src/gcc/fortran/error.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/fortran/error.c	(.../branches/gcc-5-branch)
+@@ -1391,6 +1391,7 @@
+ {
+   va_list argp;
+   va_copy (argp, ap);
++  bool saved_abort_on_error = false;
+ 
+   if (warnings_not_errors)
+     {
+@@ -1414,10 +1415,14 @@
+ 
+   if (buffered_p)
+     {
++      /* To prevent -dH from triggering an abort on a buffered error,
++	 save abort_on_error and restore it below.  */
++      saved_abort_on_error = global_dc->abort_on_error;
++      global_dc->abort_on_error = false;
+       pp->buffer = pp_error_buffer;
+       global_dc->fatal_errors = false;
+       /* To prevent -fmax-errors= triggering, we decrease it before
+-     report_diagnostic increases it.  */
++	 report_diagnostic increases it.  */
+       --errorcount;
+     }
+ 
+@@ -1428,6 +1433,8 @@
+     {
+       pp->buffer = tmp_buffer;
+       global_dc->fatal_errors = fatal_errors;
++      global_dc->abort_on_error = saved_abort_on_error;
++
+     }
+ 
+   va_end (argp);
 Index: gcc/fortran/ChangeLog
 ===================================================================
 --- a/src/gcc/fortran/ChangeLog	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/fortran/ChangeLog	(.../branches/gcc-5-branch)
-@@ -1,1463 +1,199 @@
+@@ -1,1463 +1,207 @@
 -2015-12-04  Release Manager
++2016-02-23  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+ 
+-	* GCC 5.3.0 released.
++	Backported from mainline
++	PR fortran/65996
++	* error.c (gfc_error): Save the state of abort_on_error and set
++	it to false for buffered errors to allow normal processing.
++	Restore the state before leaving.
+ 
+-2015-11-27  Andre Vehreschild  <vehre@gcc.gnu.org>
 +2016-02-12  Tobias Burnus  <burnus@net-b.de>
 +	    Alessandro Fanfarillo  <fanfarillo.gcc@gmail.com>
  
--	* GCC 5.3.0 released.
+-	PR fortran/68218
+-	* trans-array.c (gfc_array_init_size): Add gfc_evaluate_now() when
+-	array spec in allocate is a function call.
 +	Backported from mainline
 +	2015-12-02  Tobias Burnus  <burnus@net-b.de>
 +	Alessandro Fanfarillo  <fanfarillo.gcc@gmail.com>
  
--2015-11-27  Andre Vehreschild  <vehre@gcc.gnu.org>
+-2015-11-24  Paul Thomas  <pault@gcc.gnu.org>
 +	* check.c (gfc_check_event_query): New function.
 +	* dump-parse-tree.c (show_code_node): Handle EXEC_EVENT_POST,
 +	EXEC_EVENT_WAIT.
@@ -14327,13 +14671,6 @@ Index: gcc/fortran/ChangeLog
 +	(gfor_fndecl_caf_event_post,gfor_fndecl_caf_event_wait,
 +	gfor_fndecl_caf_event_query): Declare them.
  
--	PR fortran/68218
--	* trans-array.c (gfc_array_init_size): Add gfc_evaluate_now() when
--	array spec in allocate is a function call.
-+2016-02-10  Jakub Jelinek  <jakub@redhat.com>
- 
--2015-11-24  Paul Thomas  <pault@gcc.gnu.org>
--
 -	Backport from trunk.
 -	PR fortran/68196
 -	* class.c (has_finalizer_component): Prevent infinite recursion
@@ -14341,7 +14678,8 @@ Index: gcc/fortran/ChangeLog
 -	component are the same.
 -	* trans-types.c (gfc_get_derived_type): Do the same for proc
 -	pointers by ignoring the explicit interface for the component.
--
++2016-02-10  Jakub Jelinek  <jakub@redhat.com>
+ 
 -	PR fortran/66465
 -	* check.c (same_type_check): If either of the expressions is
 -	BT_PROCEDURE, use the typespec from the symbol, rather than the
@@ -19382,6 +19720,111 @@ Index: gcc/tree-data-ref.c
      {
        DDR_ARE_DEPENDENT (res) = chrec_dont_know;
        return res;
+Index: gcc/tree-vect-data-refs.c
+===================================================================
+--- a/src/gcc/tree-vect-data-refs.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/tree-vect-data-refs.c	(.../branches/gcc-5-branch)
+@@ -2905,10 +2905,38 @@
+ 	      || !tree_fits_shwi_p (dr_a2->offset))
+ 	    continue;
+ 
+-	  HOST_WIDE_INT diff = (tree_to_shwi (dr_a2->offset)
+-				- tree_to_shwi (dr_a1->offset));
++	  /* Make sure dr_a1 starts left of dr_a2.  */
++	  if (tree_int_cst_lt (dr_a2->offset, dr_a1->offset))
++	    std::swap (*dr_a1, *dr_a2);
+ 
++	  unsigned HOST_WIDE_INT diff
++	    = tree_to_shwi (dr_a2->offset) - tree_to_shwi (dr_a1->offset);
+ 
++
++	  bool do_remove = false;
++
++	  /* If the left segment does not extend beyond the start of the
++	     right segment the new segment length is that of the right
++	     plus the segment distance.  */
++	  if (tree_fits_uhwi_p (dr_a1->seg_len)
++	      && compare_tree_int (dr_a1->seg_len, diff) <= 0)
++	    {
++	      dr_a1->seg_len = size_binop (PLUS_EXPR, dr_a2->seg_len,
++					   size_int (diff));
++	      do_remove = true;
++	    }
++	  /* Generally the new segment length is the maximum of the
++	     left segment size and the right segment size plus the distance.
++	     ???  We can also build tree MAX_EXPR here but it's not clear this
++	     is profitable.  */
++	  else if (tree_fits_uhwi_p (dr_a1->seg_len)
++		   && tree_fits_uhwi_p (dr_a2->seg_len))
++	    {
++	      unsigned HOST_WIDE_INT seg_len_a1 = tree_to_uhwi (dr_a1->seg_len);
++	      unsigned HOST_WIDE_INT seg_len_a2 = tree_to_uhwi (dr_a2->seg_len);
++	      dr_a1->seg_len = size_int (MAX (seg_len_a1, diff + seg_len_a2));
++	      do_remove = true;
++	    }
+ 	  /* Now we check if the following condition is satisfied:
+ 
+ 	     DIFF - SEGMENT_LENGTH_A < SEGMENT_LENGTH_B
+@@ -2921,38 +2949,39 @@
+ 	     one above:
+ 
+ 	     1: DIFF <= MIN_SEG_LEN_B
+-	     2: DIFF - SEGMENT_LENGTH_A < MIN_SEG_LEN_B
++	     2: DIFF - SEGMENT_LENGTH_A < MIN_SEG_LEN_B  */
++	  else
++	    {
++	      unsigned HOST_WIDE_INT min_seg_len_b
++		= (tree_fits_uhwi_p (dr_b1->seg_len)
++		   ? tree_to_uhwi (dr_b1->seg_len)
++		   : vect_factor);
+ 
+-	     */
++	      if (diff <= min_seg_len_b
++		  || (tree_fits_uhwi_p (dr_a1->seg_len)
++		      && diff - tree_to_uhwi (dr_a1->seg_len) < min_seg_len_b))
++		{
++		  dr_a1->seg_len = size_binop (PLUS_EXPR,
++					       dr_a2->seg_len, size_int (diff));
++		  do_remove = true;
++		}
++	    }
+ 
+-	  HOST_WIDE_INT  min_seg_len_b = (tree_fits_shwi_p (dr_b1->seg_len)
+-					  ? tree_to_shwi (dr_b1->seg_len)
+-					  : vect_factor);
+-
+-	  if (diff <= min_seg_len_b
+-	      || (tree_fits_shwi_p (dr_a1->seg_len)
+-		  && diff - tree_to_shwi (dr_a1->seg_len) < min_seg_len_b))
++	  if (do_remove)
+ 	    {
+ 	      if (dump_enabled_p ())
+ 		{
+ 		  dump_printf_loc (MSG_NOTE, vect_location,
+ 				   "merging ranges for ");
+-		  dump_generic_expr (MSG_NOTE, TDF_SLIM,
+-				     DR_REF (dr_a1->dr));
++		  dump_generic_expr (MSG_NOTE, TDF_SLIM, DR_REF (dr_a1->dr));
+ 		  dump_printf (MSG_NOTE,  ", ");
+-		  dump_generic_expr (MSG_NOTE, TDF_SLIM,
+-				     DR_REF (dr_b1->dr));
++		  dump_generic_expr (MSG_NOTE, TDF_SLIM, DR_REF (dr_b1->dr));
+ 		  dump_printf (MSG_NOTE,  " and ");
+-		  dump_generic_expr (MSG_NOTE, TDF_SLIM,
+-				     DR_REF (dr_a2->dr));
++		  dump_generic_expr (MSG_NOTE, TDF_SLIM, DR_REF (dr_a2->dr));
+ 		  dump_printf (MSG_NOTE,  ", ");
+-		  dump_generic_expr (MSG_NOTE, TDF_SLIM,
+-				     DR_REF (dr_b2->dr));
++		  dump_generic_expr (MSG_NOTE, TDF_SLIM, DR_REF (dr_b2->dr));
+ 		  dump_printf (MSG_NOTE, "\n");
+ 		}
+-
+-	      dr_a1->seg_len = size_binop (PLUS_EXPR,
+-					   dr_a2->seg_len, size_int (diff));
+ 	      comp_alias_ddrs.ordered_remove (i--);
+ 	    }
+ 	}
 Index: gcc/gimplify.c
 ===================================================================
 --- a/src/gcc/gimplify.c	(.../tags/gcc_5_3_0_release)
@@ -22604,6 +23047,93 @@ Index: gcc/combine.c
  	    }
  
  	  if (place == 0)
+Index: gcc/bb-reorder.c
+===================================================================
+--- a/src/gcc/bb-reorder.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/bb-reorder.c	(.../branches/gcc-5-branch)
+@@ -187,6 +187,10 @@
+   /* Which trace was this bb visited in?  */
+   int visited;
+ 
++  /* Cached maximum frequency of interesting incoming edges.
++     Minus one means not yet computed.  */
++  int priority;
++
+   /* Which heap is BB in (if any)?  */
+   bb_heap_t *heap;
+ 
+@@ -805,7 +809,15 @@
+       while (best_edge);
+       trace->last = bb;
+       bbd[trace->first->index].start_of_trace = *n_traces - 1;
+-      bbd[trace->last->index].end_of_trace = *n_traces - 1;
++      if (bbd[trace->last->index].end_of_trace != *n_traces - 1)
++	{
++	  bbd[trace->last->index].end_of_trace = *n_traces - 1;
++	  /* Update the cached maximum frequency for interesting predecessor
++	     edges for successors of the new trace end.  */
++	  FOR_EACH_EDGE (e, ei, trace->last->succs)
++	    if (EDGE_FREQUENCY (e) > bbd[e->dest->index].priority)
++	      bbd[e->dest->index].priority = EDGE_FREQUENCY (e);
++	}
+ 
+       /* The trace is terminated so we have to recount the keys in heap
+ 	 (some block can have a lower key because now one of its predecessors
+@@ -875,6 +887,7 @@
+ 	  bbd[i].end_of_trace = -1;
+ 	  bbd[i].in_trace = -1;
+ 	  bbd[i].visited = 0;
++	  bbd[i].priority = -1;
+ 	  bbd[i].heap = NULL;
+ 	  bbd[i].node = NULL;
+ 	}
+@@ -905,7 +918,6 @@
+ {
+   edge e;
+   edge_iterator ei;
+-  int priority = 0;
+ 
+   /* Use index as key to align with its original order.  */
+   if (optimize_function_for_size_p (cfun))
+@@ -919,17 +931,23 @@
+ 
+   /* Prefer blocks whose predecessor is an end of some trace
+      or whose predecessor edge is EDGE_DFS_BACK.  */
+-  FOR_EACH_EDGE (e, ei, bb->preds)
++  int priority = bbd[bb->index].priority;
++  if (priority == -1)
+     {
+-      if ((e->src != ENTRY_BLOCK_PTR_FOR_FN (cfun)
+-	   && bbd[e->src->index].end_of_trace >= 0)
+-	  || (e->flags & EDGE_DFS_BACK))
++      priority = 0;
++      FOR_EACH_EDGE (e, ei, bb->preds)
+ 	{
+-	  int edge_freq = EDGE_FREQUENCY (e);
++	  if ((e->src != ENTRY_BLOCK_PTR_FOR_FN (cfun)
++	       && bbd[e->src->index].end_of_trace >= 0)
++	      || (e->flags & EDGE_DFS_BACK))
++	    {
++	      int edge_freq = EDGE_FREQUENCY (e);
+ 
+-	  if (edge_freq > priority)
+-	    priority = edge_freq;
++	      if (edge_freq > priority)
++		priority = edge_freq;
++	    }
+ 	}
++      bbd[bb->index].priority = priority;
+     }
+ 
+   if (priority)
+@@ -2283,6 +2301,7 @@
+       bbd[i].end_of_trace = -1;
+       bbd[i].in_trace = -1;
+       bbd[i].visited = 0;
++      bbd[i].priority = -1;
+       bbd[i].heap = NULL;
+       bbd[i].node = NULL;
+     }
 Index: gcc/var-tracking.c
 ===================================================================
 --- a/src/gcc/var-tracking.c	(.../tags/gcc_5_3_0_release)
