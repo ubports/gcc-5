@@ -233,8 +233,6 @@ endif
 ifeq ($(DEB_TARGET_ARCH),powerpcspe)
   debian_patches += powerpc_remove_many
   debian_patches += powerpc_nofprs
-  # fix-powerpcspe.diff only partially applied upstream
-  debian_patches += fix-powerpcspe
 endif
 
 #debian_patches += link-libs

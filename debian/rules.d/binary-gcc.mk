@@ -223,7 +223,7 @@ $(binary_stamp)-gcc-plugindev: $(install_dependencies)
 
 # files missing in upstream installation
 ifeq ($(DEB_TARGET_ARCH),m68k)
-	cp -p $(srcdir)/gcc/config/m69k/m68k-{devices,microarchs}.def \
+	cp -p $(srcdir)/gcc/config/m68k/m68k-{devices,microarchs}.def \
 		$(d_pld)/$(gcc_lib_dir)/plugin/include/config/m68k/.
 endif
 ifeq ($(DEB_TARGET_ARCH),arm64)

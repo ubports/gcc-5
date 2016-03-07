@@ -1,3 +1,22 @@
+gcc-5 (5.3.1-11) unstable; urgency=medium
+
+  [ Matthias Klose ]
+  * Update to SVN 20160307 (r234017, 5.3.1) from the gcc-5-branch.
+    - s390x backend backports.
+    - Fix PR target/69625 (s390x), PR other/69006, PR tree-optimization/69776,
+      PR c++/67364, PR c++/68049, PR target/65932 (ARM32),
+      PR target/67714 (ARM32), PR target/70059 (x86), PR rtl-optimization/70007,
+      PR tree-optimization/69740, PR tree-optimization/69740, PR c++/67364,
+      PR c++/51406, PR c++/67364, PR c++/69261, PR c++/68087, PR c++/67104,
+      PR c++/51489, PR c++/69995, PR c++/69995, PR c++/65985.
+  * Fix m68k packaging typo. Closes: #815895.
+  * Remove powerpcspe specific patch, integrated upstream. Closes: #816048.
+
+  [ Svante Signell ]
+  * patches/ada-hurd.diff: Update. Closes: #815967.
+
+ -- Matthias Klose <doko@debian.org>  Mon, 07 Mar 2016 10:37:00 +0100
+
 gcc-5 (5.3.1-10) unstable; urgency=medium
 
   * Update to SVN 20160225 (r233687, 5.3.1) from the gcc-5-branch.
