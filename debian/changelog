@@ -1,3 +1,20 @@
+gcc-5 (5.3.1-12) unstable; urgency=medium
+
+  * Update to SVN 20160315 (r234249, 5.3.1) from the gcc-5-branch.
+    - Fix PR tree-optimization/69666, PR middle-end/69920, PR c++/67364,
+      PR rtl-optimization/69195, PR rtl-optimization/47992,
+      PR rtl-optimization/69941, PR target/70131 (rs6000).
+  * When configured to link with --as-needed by default, always link the
+    sanitizer libraries with --no-as-needed.
+  * Fix PR c++/70209, taken from the trunk. LP: #1556217.
+  * Stop providing alternative for /usr/bin/go. (Michael Hudson-Doyle).
+    LP: #1555856.
+  * Disable gnat on powerpcspe. Closes: #816051.
+  * Apply proposed patch for PR c++/70218 (illegal access to private field
+    succeeds). Closes: #70218.
+
+ -- Matthias Klose <doko@debian.org>  Wed, 16 Mar 2016 10:19:20 +0100
+
 gcc-5 (5.3.1-11) unstable; urgency=medium
 
   [ Matthias Klose ]

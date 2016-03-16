@@ -596,7 +596,7 @@ endif
 ifneq (,$(filter $(DEB_TARGET_ARCH_CPU),$(ada_no_cpus)))
   with_ada := disabled for cpu $(DEB_TARGET_ARCH_CPU)
 endif
-ifneq (,$(filter $(DEB_TARGET_ARCH),x32))
+ifneq (,$(filter $(DEB_TARGET_ARCH),powerpcspe x32))
   with_ada := disabled for architecture $(DEB_TARGET_ARCH)
 endif
 ifneq (,$(findstring cross,$(build_type)))

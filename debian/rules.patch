@@ -94,6 +94,8 @@ debian_patches += \
 	pr69144 \
 	pr66904 \
 	pr68273 \
+	pr70209 \
+	pr70218 \
 
 # this is still needed on powerpc, e.g. firefox and insighttoolkit4 will ftbfs.
 ifneq (,$(filter $(DEB_TARGET_ARCH),powerpc))

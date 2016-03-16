@@ -1,10 +1,10 @@
-# DP: updates from the 5 branch upto 20160307 (r234017).
+# DP: updates from the 5 branch upto 20160316 (r234249).
 
 last_update()
 {
 	cat > ${dir}LAST_UPDATED <EOF
-Mon Mar  7 08:42:02 CET 2016
-Mon Mar  7 07:42:02 UTC 2016 (revision 234017)
+Wed Mar 16 10:11:26 CET 2016
+Wed Mar 16 09:11:26 UTC 2016 (revision 234249)
 EOF
 }
 
@@ -3823,7 +3823,51 @@ Index: gcc/DATESTAMP
 +++ b/src/gcc/DATESTAMP	(.../branches/gcc-5-branch)
 @@ -1 +1 @@
 -20151204
-+20160307
++20160316
+Index: gcc/postreload.c
+===================================================================
+--- a/src/gcc/postreload.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/postreload.c	(.../branches/gcc-5-branch)
+@@ -1103,7 +1103,6 @@
+ reload_combine_recognize_pattern (rtx_insn *insn)
+ {
+   rtx set, reg, src;
+-  unsigned int regno;
+ 
+   set = single_set (insn);
+   if (set == NULL_RTX)
+@@ -1115,8 +1114,21 @@
+       || hard_regno_nregs[REGNO (reg)][GET_MODE (reg)] != 1)
+     return false;
+ 
+-  regno = REGNO (reg);
++  unsigned int regno = REGNO (reg);
++  machine_mode mode = GET_MODE (reg);
+ 
++  if (reg_state[regno].use_index < 0
++      || reg_state[regno].use_index >= RELOAD_COMBINE_MAX_USES)
++    return false;
++
++  for (int i = reg_state[regno].use_index;
++       i < RELOAD_COMBINE_MAX_USES; i++)
++    {
++      struct reg_use *use = reg_state[regno].reg_use + i;
++      if (GET_MODE (*use->usep) != mode)
++	return false;
++    }
++
+   /* Look for (set (REGX) (CONST_INT))
+      (set (REGX) (PLUS (REGX) (REGY)))
+      ...
+@@ -1137,8 +1149,6 @@
+       && REG_P (XEXP (src, 1))
+       && rtx_equal_p (XEXP (src, 0), reg)
+       && !rtx_equal_p (XEXP (src, 1), reg)
+-      && reg_state[regno].use_index >= 0
+-      && reg_state[regno].use_index < RELOAD_COMBINE_MAX_USES
+       && last_label_ruid < reg_state[regno].use_ruid)
+     {
+       rtx base = XEXP (src, 1);
 Index: gcc/tree.c
 ===================================================================
 --- a/src/gcc/tree.c	(.../tags/gcc_5_3_0_release)
@@ -4263,7 +4307,65 @@ Index: gcc/ChangeLog
 ===================================================================
 --- a/src/gcc/ChangeLog	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/ChangeLog	(.../branches/gcc-5-branch)
-@@ -1,3 +1,1195 @@
+@@ -1,3 +1,1253 @@
++2016-03-16  Alan Modra  <amodra@gmail.com>
++
++	PR rtl-optimization/69195
++	PR rtl-optimization/47992
++	* ira.c (indirect_jump_optimize): Ignore artificial defs.
++	Add comments.
++
++2016-03-15  Bernd Schmidt  <bschmidt@redhat.com>
++
++	Backport from mainline
++	2016-03-04  Bernd Schmidt  <bschmidt@redhat.com>
++
++	PR rtl-optimization/69941
++	* postreload.c (reload_combine_recognize_pattern): Ensure all uses of
++	the reg share its mode.
++
++2016-03-14  Michael Meissner  <meissner@linux.vnet.ibm.com>
++
++	Backport from mainline
++	2016-03-11  Michael Meissner  <meissner@linux.vnet.ibm.com>
++
++	PR target/70131
++	* config/rs6000/rs6000.md (round32<mode>2_fprs): Do not do the
++	optimization if we have direct move.
++	(roundu32<mode>2_fprs): Likewise.
++
++2016-03-14  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
++
++	Backport from mainline
++	2016-03-07  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
++
++	PR target/62281
++	* config/i386/sol2.h (STACK_REALIGN_DEFAULT): Define.
++
++2016-03-10  Ulrich Weigand  <Ulrich.Weigand@de.ibm.com>
++
++	PR target/70168
++	* config/rs6000/rs6000.c (rs6000_expand_atomic_compare_and_swap):
++	Handle overlapping retval and newval.
++
++2016-03-10  Alan Modra  <amodra@gmail.com>
++
++	PR rtl-optimization/69195
++	PR rtl-optimization/47992
++	* ira.c (recorded_label_ref): Delete.
++	(update_equiv_regs): Return void.
++	(indirect_jump_optimize): New function.
++	(ira): Call indirect_jump_optimize and delete_trivially_dead_insns
++	before regstat_compute_ri.  Don't rebuild_jump_labels here.
++
++2016-03-07  Martin Jambor  <mjambor@suse.cz>
++
++	PR tree-optimization/69666
++	PR middle-end/69920
++	* tree-sra.c (sra_modify_assign): Do not attempt to create
++	default_def replacements for unscalarizable regions.  Do not
++	remove loads of uninitialized aggregates to SSA_NAMEs.
++
 +2016-03-07  Christophe Lyon  <christophe.lyon@linaro.org>
 +
 +	Backport from mainline
@@ -5459,7 +5561,7 @@ Index: gcc/ChangeLog
  2015-12-04  Release Manager
  
  	* GCC 5.3.0 released.
-@@ -19,7 +1211,7 @@
+@@ -19,7 +1269,7 @@
  	Backport from mainline
  	2015-09-30  Bernd Edlinger  <bernd.edlinger@hotmail.de>
  
@@ -5468,7 +5570,7 @@ Index: gcc/ChangeLog
  	* lra-constraints.c (process_addr_reg): Use copy_rtx when necessary.
  
  2015-11-26  David Edelsohn  <dje.gcc@gmail.com>
-@@ -291,12 +1483,12 @@
+@@ -291,12 +1541,12 @@
  	(contains_type_p): Fix out of range check, clear dynamic flag.
  
  	2015-10-23  Jan Hubicka  <hubicka@ucw.cz>
@@ -5483,7 +5585,7 @@ Index: gcc/ChangeLog
  	2015-10-12  Richard Biener  <rguenther@suse.de>
  
  	PR ipa/67783
-@@ -305,7 +1497,7 @@
+@@ -305,7 +1555,7 @@
  	quadratic behavior.
  
  	2015-10-11  Jan Hubicka  <hubicka@ucw.cz>
@@ -5526,6 +5628,53 @@ Index: gcc/testsuite/gcc.target/powerpc/pr68872.c
 +  asm volatile ("stbcx. %0,0,%1" :: "r" (val), "r" (ptr));
 +  asm volatile ("mfcr %0,8" : "=r" (ret) ::);
 +  return ret;
++}
+Index: gcc/testsuite/gcc.target/powerpc/ppc-round2.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/powerpc/ppc-round2.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/powerpc/ppc-round2.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,42 @@
++/* { dg-do compile { target { powerpc*-*-* && lp64 } } } */
++/* { dg-skip-if "" { powerpc*-*-darwin* } { "*" } { "" } } */
++/* { dg-require-effective-target powerpc_p8vector_ok } */
++/* { dg-skip-if "do not override -mcpu" { powerpc*-*-* } { "-mcpu=*" } { "-mcpu=power8" } } */
++/* { dg-options "-O2 -mcpu=power8" } */
++/* { dg-final { scan-assembler-times "fcfid "      2 } } */
++/* { dg-final { scan-assembler-times "fcfids "     2 } } */
++/* { dg-final { scan-assembler-times "fctiwuz "    2 } } */
++/* { dg-final { scan-assembler-times "fctiwz "     2 } } */
++/* { dg-final { scan-assembler-times "mfvsrd "     4 } } */
++/* { dg-final { scan-assembler-times "mtvsrwa "    2 } } */
++/* { dg-final { scan-assembler-times "mtvsrwz "    2 } } */
++/* { dg-final { scan-assembler-not   "lwz"           } } */
++/* { dg-final { scan-assembler-not   "lfiwax "       } } */
++/* { dg-final { scan-assembler-not   "lfiwzx "       } } */
++/* { dg-final { scan-assembler-not   "stw"           } } */
++/* { dg-final { scan-assembler-not   "stfiwx "       } } */
++
++/* Make sure we don't have loads/stores to the GPR unit.  */
++double
++round_double_int (double a)
++{
++  return (double)(int)a;
++}
++
++float
++round_float_int (float a)
++{
++  return (float)(int)a;
++}
++
++double
++round_double_uint (double a)
++{
++  return (double)(unsigned int)a;
++}
++
++float
++round_float_uint (float a)
++{
++  return (float)(unsigned int)a;
 +}
 Index: gcc/testsuite/gcc.target/powerpc/p8vector-ldst.c
 ===================================================================
@@ -8282,6 +8431,34 @@ Index: gcc/testsuite/gfortran.dg/allocatable_scalar_13.f90
 +! { dg-final { scan-tree-dump-times "builtin_malloc" 16 "original" } }
 +! { dg-final { scan-tree-dump-times "builtin_free" 16 "original" } }
  ! { dg-final { cleanup-tree-dump "original" } }
+Index: gcc/testsuite/gfortran.dg/allocate_error_5.f90
+===================================================================
+--- a/src/gcc/testsuite/gfortran.dg/allocate_error_5.f90	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gfortran.dg/allocate_error_5.f90	(.../branches/gcc-5-branch)
+@@ -0,0 +1,23 @@
++! { dg-do run }
++! { dg-additional-options "-fcheck=mem" }
++! { dg-shouldfail "Fortran runtime error: Assignment of scalar to unallocated array" }
++!
++! This omission was encountered in the course of fixing PR54070. Whilst this is a
++! very specific case, others such as allocatable components have been tested.
++!
++! Contributed by Tobias Burnus  <burnus@gcc.gnu.org>
++!
++function g(a) result (res)
++  character(len=*) :: a
++  character(len=:),allocatable :: res(:)
++  res = a  ! Since 'res' is not allocated, a runtime error should occur.
++end function
++
++  interface
++    function g(a) result(res)
++      character(len=*) :: a
++      character(len=:),allocatable :: res(:)
++    end function
++  end interface
++  print *, g("ABC")
++end
 Index: gcc/testsuite/gfortran.dg/pr65996.f90
 ===================================================================
 --- a/src/gcc/testsuite/gfortran.dg/pr65996.f90	(.../tags/gcc_5_3_0_release)
@@ -8300,6 +8477,50 @@ Index: gcc/testsuite/gfortran.dg/pr65996.f90
 +    & XXX"
 +  write(0,*) 'a=',a,' b=',b,' c=',c 
 +endprogram foo
+Index: gcc/testsuite/gfortran.dg/deferred_character_11.f90
+===================================================================
+--- a/src/gcc/testsuite/gfortran.dg/deferred_character_11.f90	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gfortran.dg/deferred_character_11.f90	(.../branches/gcc-5-branch)
+@@ -0,0 +1,39 @@
++! { dg-do run }
++!
++! Test the fix for PR61147.
++!
++! Contributed by Thomas Clune  <Thomas.L.Clune@nasa.gov>
++!
++module B_mod
++
++   type :: B
++      character(:), allocatable :: string
++   end type B
++
++contains
++
++   function toPointer(this) result(ptr)
++      character(:), pointer :: ptr
++      class (B), intent(in), target :: this
++
++         ptr => this%string
++
++   end function toPointer
++
++end module B_mod
++
++program main
++   use B_mod
++
++   type (B) :: obj
++   character(:), pointer :: p
++
++   obj%string = 'foo'
++   p => toPointer(obj)
++
++   If (len (p) .ne. 3) call abort
++   If (p .ne. "foo") call abort
++
++end program main
++
++
 Index: gcc/testsuite/gfortran.dg/deferred_character_2.f90
 ===================================================================
 --- a/src/gcc/testsuite/gfortran.dg/deferred_character_2.f90	(.../tags/gcc_5_3_0_release)
@@ -8654,6 +8875,55 @@ Index: gcc/testsuite/gfortran.dg/common_23.f90
 +   common a, a ! { dg-error "is already in a COMMON block" }
 +   common a
 +end
+Index: gcc/testsuite/gfortran.dg/deferred_character_15.f90
+===================================================================
+--- a/src/gcc/testsuite/gfortran.dg/deferred_character_15.f90	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gfortran.dg/deferred_character_15.f90	(.../branches/gcc-5-branch)
+@@ -0,0 +1,44 @@
++! { dg-do run }
++!
++! Test the fix for PR69423.
++!
++! Contributed by Antony Lewis  <antony@cosmologist.info>
++!
++program tester
++  character(LEN=:), allocatable :: S
++  S= test(2)
++  if (len(S) .ne. 4) call abort
++  if (S .ne. "test") call abort
++  if (allocated (S)) deallocate (S)
++
++  S= test2(2)
++  if (len(S) .ne. 4) call abort
++  if (S .ne. "test") call abort
++  if (allocated (S)) deallocate (S)
++contains
++  function test(alen)
++    character(LEN=:), allocatable :: test
++    integer alen, i
++    do i = alen, 1, -1
++      test = 'test'
++      exit
++    end do
++!       This line would print nothing when compiled with -O1 and higher.
++!       print *, len(test),test
++    if (len(test) .ne. 4) call abort
++    if (test .ne. "test") call abort
++  end function test
++
++  function test2(alen) result (test)
++    character(LEN=:), allocatable :: test
++    integer alen, i
++    do i = alen, 1, -1
++      test = 'test'
++      exit
++    end do
++!       This worked before the fix.
++!       print *, len(test),test
++    if (len(test) .ne. 4) call abort
++    if (test .ne. "test") call abort
++  end function test2
++end program tester
 Index: gcc/testsuite/gfortran.dg/deferred_character_6.f90
 ===================================================================
 --- a/src/gcc/testsuite/gfortran.dg/deferred_character_6.f90	(.../tags/gcc_5_3_0_release)
@@ -8850,6 +9120,63 @@ Index: gcc/testsuite/gfortran.dg/namelist_38.f90
 +  if (b .ne. " /") call abort
 +  close(10)
  end program main
+Index: gcc/testsuite/gfortran.dg/deferred_character_10.f90
+===================================================================
+--- a/src/gcc/testsuite/gfortran.dg/deferred_character_10.f90	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gfortran.dg/deferred_character_10.f90	(.../branches/gcc-5-branch)
+@@ -0,0 +1,52 @@
++! { dg-do run }
++!
++! Checks that PR60593 is fixed (Revision: 214757)
++!
++! Contributed by Steve Kargl  <kargl@gcc.gnu.org>
++!
++! Main program added for this test.
++!
++module stringhelper_m
++
++  implicit none
++
++  type :: string_t
++     character(:), allocatable :: string
++  end type
++
++  interface len
++     function strlen(s) bind(c,name='strlen')
++       use iso_c_binding
++       implicit none
++       type(c_ptr), intent(in), value :: s
++       integer(c_size_t) :: strlen
++     end function
++  end interface
++
++  contains
++
++    function C2FChar(c_charptr) result(res)
++      use iso_c_binding
++      type(c_ptr), intent(in) :: c_charptr
++      character(:), allocatable :: res
++      character(kind=c_char,len=1), pointer :: string_p(:)
++      integer i, c_str_len
++      c_str_len = int(len(c_charptr))
++      call c_f_pointer(c_charptr, string_p, [c_str_len])
++      allocate(character(c_str_len) :: res)
++      forall (i = 1:c_str_len) res(i:i) = string_p(i)
++    end function
++
++end module
++
++  use stringhelper_m
++  use iso_c_binding
++  implicit none
++  type(c_ptr) :: cptr
++  character(20), target :: str
++
++  str = "abcdefghij"//char(0)
++  cptr = c_loc (str)
++  if (len (C2FChar (cptr)) .ne. 10) call abort
++  if (C2FChar (cptr) .ne. "abcdefghij") call abort
++end
 Index: gcc/testsuite/gfortran.dg/include_6.f90
 ===================================================================
 --- a/src/gcc/testsuite/gfortran.dg/include_6.f90	(.../tags/gcc_5_3_0_release)
@@ -8967,6 +9294,41 @@ Index: gcc/testsuite/gfortran.dg/common_22.f90
 +     COMMON /CCFILE/ INTG,NT1,NT2,NT3,NVM,NVE,NFRLE,NRESF,NRESL !{ dg-error "Unexpected COMMON" }
 +     COMMON /CCFILE/ INTG,NT1,NT2,NT3,NVM,NVE,NFRLE,NRESF,NRESL !{ dg-error "Unexpected COMMON" }
 +     END
+Index: gcc/testsuite/gfortran.dg/deferred_character_14.f90
+===================================================================
+--- a/src/gcc/testsuite/gfortran.dg/deferred_character_14.f90	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gfortran.dg/deferred_character_14.f90	(.../branches/gcc-5-branch)
+@@ -0,0 +1,30 @@
++! { dg-do run }
++!
++! Test fix for PR60795 comments #1 and  #4
++!
++! Contributed by Kergonath  <kergonath@me.com>
++!
++module m
++contains
++    subroutine allocate_array(s_array)
++        character(:), dimension(:), allocatable, intent(out) :: s_array
++
++        allocate(character(2) :: s_array(2))
++        s_array = ["ab","cd"]
++    end subroutine
++end module
++
++program stringtest
++    use m
++    character(:), dimension(:), allocatable :: s4
++    character(:), dimension(:), allocatable :: s
++! Comment #1
++    allocate(character(1) :: s(10))
++    if (size (s) .ne. 10) call abort
++    if (len (s) .ne. 1) call abort
++! Comment #4
++    call allocate_array(s4)
++    if (size (s4) .ne. 2) call abort
++    if (len (s4) .ne. 2) call abort
++    if (any (s4 .ne. ["ab", "cd"])) call abort
++ end program
 Index: gcc/testsuite/gfortran.dg/deferred_character_5.f90
 ===================================================================
 --- a/src/gcc/testsuite/gfortran.dg/deferred_character_5.f90	(.../tags/gcc_5_3_0_release)
@@ -9004,6 +9366,39 @@ Index: gcc/testsuite/gfortran.dg/deferred_character_5.f90
 +  call a%get (a = b%c)
 +  if (b%c .ne. 'something') call abort
 +end program test
+Index: gcc/testsuite/gfortran.dg/deferred_character_9.f90
+===================================================================
+--- a/src/gcc/testsuite/gfortran.dg/deferred_character_9.f90	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gfortran.dg/deferred_character_9.f90	(.../branches/gcc-5-branch)
+@@ -0,0 +1,28 @@
++! { dg-do run }
++!
++! Test the fix for PR64324 in which deferred length user ops
++! were being mistaken as assumed length and so rejected.
++!
++! Contributed by Ian Harvey  <ian_harvey@bigpond.com>
++!
++MODULE m
++  IMPLICIT NONE
++  INTERFACE OPERATOR(.ToString.)
++    MODULE PROCEDURE tostring
++  END INTERFACE OPERATOR(.ToString.)
++CONTAINS
++  FUNCTION tostring(arg)
++    INTEGER, INTENT(IN) :: arg
++    CHARACTER(:), ALLOCATABLE :: tostring
++    allocate (character(5) :: tostring)
++    write (tostring, "(I5)") arg
++  END FUNCTION tostring
++END MODULE m
++
++  use m
++  character(:), allocatable :: str
++  integer :: i = 999
++  str = .ToString. i
++  if (str .ne. "  999") call abort
++end
++
 Index: gcc/testsuite/gfortran.dg/namelist_84.f90
 ===================================================================
 --- a/src/gcc/testsuite/gfortran.dg/namelist_84.f90	(.../tags/gcc_5_3_0_release)
@@ -9229,6 +9624,45 @@ Index: gcc/testsuite/gfortran.dg/actual_array_offset_1.f90
 +         check = all (arg(2 : s)%value .ge. arg(1 : s - 1)%value)
 +     end function check
 +end program test_quicksort
+Index: gcc/testsuite/gfortran.dg/deferred_character_13.f90
+===================================================================
+--- a/src/gcc/testsuite/gfortran.dg/deferred_character_13.f90	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gfortran.dg/deferred_character_13.f90	(.../branches/gcc-5-branch)
+@@ -0,0 +1,34 @@
++! { dg-do run }
++!
++! Tests the fix for PR49630 comment #3.
++!
++! Contributed by Janus Weil  <janus@gcc.gnu.org>
++!
++module abc
++  implicit none
++
++  type::abc_type
++   contains
++     procedure::abc_function
++  end type abc_type
++
++contains
++
++  function abc_function(this)
++    class(abc_type),intent(in)::this
++    character(:),allocatable::abc_function
++    allocate(abc_function,source="hello")
++  end function abc_function
++
++  subroutine do_something(this)
++    class(abc_type),intent(in)::this
++    if (this%abc_function() .ne. "hello") call abort
++  end subroutine do_something
++
++end module abc
++
++
++  use abc
++  type(abc_type) :: a
++  call do_something(a)
++end
 Index: gcc/testsuite/gfortran.dg/deferred_character_4.f90
 ===================================================================
 --- a/src/gcc/testsuite/gfortran.dg/deferred_character_4.f90	(.../tags/gcc_5_3_0_release)
@@ -9425,6 +9859,95 @@ Index: gcc/testsuite/gfortran.dg/coarray/event_2.f90
 +call event_query(event=var(3), stat=stat, count=count)
 +if (count /= 0 .or. stat /= 0) call abort()
 +end
+Index: gcc/testsuite/gfortran.dg/deferred_character_8.f90
+===================================================================
+--- a/src/gcc/testsuite/gfortran.dg/deferred_character_8.f90	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gfortran.dg/deferred_character_8.f90	(.../branches/gcc-5-branch)
+@@ -0,0 +1,84 @@
++! { dg-do run }
++!
++! Test the fix for all the remaining issues in PR54070. These were all
++! concerned with deferred length characters being returned as function results,
++! except for comment #23 where the descriptor dtype was not correctly set and
++! array IO failed in consequence.
++!
++! Contributed by Tobias Burnus  <burnus@gcc.gnu.org>
++!
++! The original comment #1 with an allocate statement.
++! Allocatable, deferred length scalar resul.
++function f()
++  character(len=:),allocatable :: f
++  allocate (f, source = "abc")
++  f ="ABC"
++end function
++!
++! Allocatable, deferred length, explicit, array result
++function g(a) result (res)
++  character(len=*) :: a(:)
++  character(len (a)) :: b(size (a))
++  character(len=:),allocatable :: res(:)
++  integer :: i
++  allocate (character(len(a)) :: res(2*size(a)))
++  do i = 1, len (a)
++    b(:)(i:i) = char (ichar (a(:)(i:i)) + 4)
++  end do
++  res = [a, b]
++end function
++!
++! Allocatable, deferred length, array result
++function h(a)
++  character(len=*) :: a(:)
++  character(len(a)) :: b (size(a))
++  character(len=:),allocatable :: h(:)
++  integer :: i
++  allocate (character(len(a)) :: h(size(a)))
++  do i = 1, len (a)
++    b(:)(i:i) = char (ichar (a(:)(i:i)) + 32)
++  end do
++  h = b
++end function
++
++module deferred_length_char_array
++contains
++  function return_string(argument)
++    character(*) :: argument
++    character(:), dimension(:), allocatable :: return_string
++    allocate (character (len(argument)) :: return_string(2))
++    return_string = argument
++  end function
++end module
++
++  use deferred_length_char_array
++  character(len=3) :: chr(3)
++  character(:), pointer :: s(:)
++  character(6) :: buffer
++  interface
++    function f()
++      character(len=:),allocatable :: f
++    end function
++    function g(a) result(res)
++      character(len=*) :: a(:)
++      character(len=:),allocatable :: res(:)
++    end function
++    function h(a)
++      character(len=*) :: a(:)
++      character(len=:),allocatable :: h(:)
++    end function
++  end interface
++
++  if (f () .ne. "ABC") call abort
++  if (any (g (["ab","cd"]) .ne. ["ab","cd","ef","gh"])) call abort
++  chr = h (["ABC","DEF","GHI"])
++  if (any (chr .ne. ["abc","def","ghi"])) call abort
++  if (any (return_string ("abcdefg") .ne. ["abcdefg","abcdefg"])) call abort
++
++! Comment #23
++  allocate(character(3)::s(2))
++  s(1) = 'foo'
++  s(2) = 'bar'
++  write (buffer, '(2A3)') s
++  if (buffer .ne. 'foobar') call abort
++end
 Index: gcc/testsuite/gfortran.dg/allocate_with_source_18.f03
 ===================================================================
 --- a/src/gcc/testsuite/gfortran.dg/allocate_with_source_18.f03	(.../tags/gcc_5_3_0_release)
@@ -9529,6 +10052,140 @@ Index: gcc/testsuite/gfortran.dg/coarray_lib_comm_1.f90
  !
  ! Some dependency-analysis check for coarray communication
  !
+Index: gcc/testsuite/gfortran.dg/prof/dynamic_dispatch_6.f03
+===================================================================
+--- a/src/gcc/testsuite/gfortran.dg/prof/dynamic_dispatch_6.f03	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gfortran.dg/prof/dynamic_dispatch_6.f03	(.../branches/gcc-5-branch)
+@@ -0,0 +1,68 @@
++! { dg-require-profiling "-fprofile-generate" }
++! { dg-options "-Ofast" }
++!
++! PR 45076: [OOP] gfortran.dg/dynamic_dispatch_6.f03 ICEs with -fprofile-use
++!
++! Contributed by Damian Rouson <damian@rouson.net>
++
++module field_module
++  implicit none
++  private
++  public :: field
++  type ,abstract :: field 
++  end type
++end module
++
++module periodic_5th_order_module
++  use field_module ,only : field
++  implicit none
++  type ,extends(field) :: periodic_5th_order
++  end type
++end module
++
++module field_factory_module
++  implicit none
++  private
++  public :: field_factory
++  type, abstract :: field_factory 
++  contains 
++    procedure(create_interface), deferred :: create 
++  end type 
++  abstract interface 
++    function create_interface(this) 
++      use field_module ,only : field
++      import :: field_factory
++      class(field_factory), intent(in) :: this 
++      class(field) ,pointer :: create_interface
++    end function
++  end interface 
++end module
++
++module periodic_5th_factory_module
++  use field_factory_module , only : field_factory
++  implicit none
++  private
++  public :: periodic_5th_factory
++  type, extends(field_factory) :: periodic_5th_factory 
++  contains 
++    procedure :: create=>new_periodic_5th_order
++  end type 
++contains
++  function new_periodic_5th_order(this) 
++    use field_module ,only : field
++    use periodic_5th_order_module ,only : periodic_5th_order
++    class(periodic_5th_factory), intent(in) :: this
++    class(field) ,pointer :: new_periodic_5th_order
++  end function
++end module
++
++program main 
++  use field_module ,only : field 
++  use field_factory_module ,only : field_factory
++  use periodic_5th_factory_module ,only : periodic_5th_factory
++  implicit none 
++  class(field) ,pointer :: u
++  class(field_factory), allocatable :: field_creator 
++  allocate (periodic_5th_factory ::  field_creator) 
++  u => field_creator%create() 
++end program
+Index: gcc/testsuite/gfortran.dg/prof/prof.exp
+===================================================================
+--- a/src/gcc/testsuite/gfortran.dg/prof/prof.exp	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gfortran.dg/prof/prof.exp	(.../branches/gcc-5-branch)
+@@ -0,0 +1,56 @@
++# Copyright (C) 2001-2016 Free Software Foundation, Inc.
++
++# This program is free software; you can redistribute it and/or modify
++# it under the terms of the GNU General Public License as published by
++# the Free Software Foundation; either version 3 of the License, or
++# (at your option) any later version.
++# 
++# This program is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++# GNU General Public License for more details.
++# 
++# You should have received a copy of the GNU General Public License
++# along with GCC; see the file COPYING3.  If not see
++# <http://www.gnu.org/licenses/>.
++
++# Test the functionality of programs compiled with profile-directed block
++# ordering using -fprofile-generate followed by -fprofile-use.
++
++load_lib target-supports.exp
++
++# Some targets don't support tree profiling.
++if { ![check_profiling_available "-fprofile-generate"] } {
++    return
++}
++
++# The procedures in profopt.exp need these parameters.
++set tool gfortran
++set prof_ext "gcda"
++
++if $tracelevel then {
++    strace $tracelevel
++}
++
++# Load support procs.
++load_lib profopt.exp
++
++# Save and override the default list defined in profopt.exp.
++set treeprof_save_profopt_options $PROFOPT_OPTIONS
++set PROFOPT_OPTIONS [list {}]
++
++# These are globals used by profopt-execute.  The first is options
++# needed to generate profile data, the second is options to use the
++# profile data.
++set profile_option "-fprofile-generate -D_PROFILE_GENERATE"
++set feedback_option "-fprofile-use -D_PROFILE_USE"
++
++foreach src [lsort [glob -nocomplain $srcdir/$subdir/*.f*]] {
++    # If we're only testing specific files and this isn't one of them, skip it.
++    if ![runtest_file_p $runtests $src] then {
++        continue
++    }
++    profopt-execute $src
++}
++
++set PROFOPT_OPTIONS $treeprof_save_profopt_options
 Index: gcc/testsuite/gfortran.dg/namelist_87.f90
 ===================================================================
 --- a/src/gcc/testsuite/gfortran.dg/namelist_87.f90	(.../tags/gcc_5_3_0_release)
@@ -9597,6 +10254,48 @@ Index: gcc/testsuite/gfortran.dg/namelist_87.f90
 +  if (c2 /= "bc") call abort ()
 +  if (c3 /= "ax") call abort ()
 +end
+Index: gcc/testsuite/gfortran.dg/deferred_character_12.f90
+===================================================================
+--- a/src/gcc/testsuite/gfortran.dg/deferred_character_12.f90	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gfortran.dg/deferred_character_12.f90	(.../branches/gcc-5-branch)
+@@ -0,0 +1,37 @@
++! { dg-do run }
++!
++! Tests the fix for PR63232
++!
++! Contributed by Balint Aradi  <baradi09@gmail.com>
++!
++module mymod
++  implicit none
++
++  type :: wrapper
++    character(:), allocatable :: string
++  end type wrapper
++
++contains
++
++
++  subroutine sub2(mystring)
++    character(:), allocatable, intent(out) :: mystring
++
++    mystring = "test"
++
++  end subroutine sub2
++
++end module mymod
++
++
++program test
++  use mymod
++  implicit none
++
++  type(wrapper) :: mywrapper
++
++  call sub2(mywrapper%string)
++  if (.not. allocated(mywrapper%string)) call abort
++  if (trim(mywrapper%string) .ne. "test") call abort
++
++end program test
 Index: gcc/testsuite/gcc.c-torture/execute/pr68648.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.c-torture/execute/pr68648.c	(.../tags/gcc_5_3_0_release)
@@ -10109,6 +10808,38 @@ Index: gcc/testsuite/gcc.dg/setjmp-6.c
 +    }
 +    return 1;
 +}
+Index: gcc/testsuite/gcc.dg/pr69195.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/pr69195.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.dg/pr69195.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,27 @@
++/* { dg-do run } */
++/* { dg-options "-O3 -fno-dce -fno-forward-propagate" } */
++
++void __attribute__ ((noinline, noclone))
++foo (int *a, int n)
++{
++  int *lasta = a + n;
++  for (; a != lasta; a++)
++    {
++      *a *= 2;
++      a[1] = a[-1] + a[-2];
++    }
++}
++
++int
++main ()
++{
++  int a[16] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
++  int r[16] = { 1, 2, 6, 6, 16, 24, 44, 80,
++		136, 248, 432, 768, 1360, 2400, 4256, 3760 };
++  unsigned i;
++  foo (&a[2], 13);
++  for (i = 0; i < 8; ++i)
++    if (a[i] != r[i])
++      __builtin_abort ();
++  return 0;
++}
 Index: gcc/testsuite/gcc.dg/pr68162-1.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.dg/pr68162-1.c	(.../tags/gcc_5_3_0_release)
@@ -10260,6 +10991,21 @@ Index: gcc/testsuite/gcc.dg/pragma-pop_options-1.c
 +#pragma pop_options
 +
 +int foo;
+Index: gcc/testsuite/gcc.dg/torture/pr69932.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/torture/pr69932.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.dg/torture/pr69932.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,10 @@
++/* { dg-do compile } */
++
++int a;
++void fn1() {
++  int b = 4;
++  short c[4];
++  c[b] = c[a];
++  if (c[2]) {}
++
++}
 Index: gcc/testsuite/gcc.dg/torture/pr69574.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.dg/torture/pr69574.c	(.../tags/gcc_5_3_0_release)
@@ -10308,6 +11054,41 @@ Index: gcc/testsuite/gcc.dg/torture/pr69719.c
 +    __builtin_abort (); 
 +
 +  return 0; 
++}
+Index: gcc/testsuite/gcc.dg/torture/pr69941.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/torture/pr69941.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.dg/torture/pr69941.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,30 @@
++/* { dg-do run } */
++ 
++int a = 0;
++int b = 0;
++int c = 0;
++int e = 0;
++int f = 0;
++int *g = &e;
++ 
++int fn1() { return b ? a : b; }
++ 
++int main() {
++  int h = fn1() <= 0x8000000000000000ULL; // h = 1;
++ 
++  int k = f; // k = 0;
++ 
++  long i = h ? k : k / h; // i = 0;
++ 
++  long l = (unsigned short)(i - 0x1800); // l = 0xe800
++ 
++  i = l ? l : c; // i = 0xe800;
++ 
++  *g = i; // *g = 0xe800; e = 0xe800;
++ 
++  unsigned char result = e >> 9; // result = 0x74;
++
++  if ((int)result != 0x74)
++    __builtin_abort ();
++  return 0;
 +}
 Index: gcc/testsuite/gcc.dg/torture/pr69776-2.c
 ===================================================================
@@ -10416,6 +11197,35 @@ Index: gcc/testsuite/gcc.dg/torture/pr68955.c
 +  __builtin_printf ("ONE%dONE\n", i[1][0][2]);
 +  return 0;
 +}
+Index: gcc/testsuite/gcc.dg/torture/pr69936.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/torture/pr69936.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.dg/torture/pr69936.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,24 @@
++/* { dg-do compile } */
++
++int a;
++char b;
++void fn1(int p1) {}
++
++int fn2() { return 5; }
++
++void fn3() {
++  if (fn2())
++    ;
++  else {
++    char c[5];
++    c[0] = 5;
++  lbl_608:
++    fn1(c[9]);
++    int d = c[9];
++    c[2] | a;
++    d = c[b];
++  }
++  goto lbl_608;
++}
++
++int main() { return 0; }
 Index: gcc/testsuite/gcc.dg/torture/pr69399.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.dg/torture/pr69399.c	(.../tags/gcc_5_3_0_release)
@@ -11112,6 +11922,39 @@ Index: gcc/testsuite/gcc.dg/ipa/pr68790.c
 +
 +/* { dg-final { scan-ipa-dump "Equal symbols: 0" "icf"  } } */
 +/* { dg-final { cleanup-ipa-dump "icf" } } */
+Index: gcc/testsuite/gcc.dg/pr69238.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/pr69238.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.dg/pr69238.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,28 @@
++/* { dg-do run } */
++/* { dg-options "-O2 -fno-dce -fno-forward-propagate -fno-rerun-cse-after-loop -funroll-loops" } */
++
++
++#define N 32
++
++short sa[N];
++short sb[N];
++int ia[N];
++int ib[N];
++
++int __attribute__ ((noinline, noclone))
++main1 (int n)
++{
++  int i;
++  for (i = 0; i < n; i++)
++    {
++      sa[i+7] = sb[i];
++      ia[i+3] = ib[i+1];
++    }
++  return 0;
++}
++
++int
++main (void)
++{ 
++  return main1 (N-7);
++}
 Index: gcc/testsuite/gcc.dg/vect/costmodel/ppc/costmodel-vect-31a.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.dg/vect/costmodel/ppc/costmodel-vect-31a.c	(.../tags/gcc_5_3_0_release)
@@ -11172,7 +12015,75 @@ Index: gcc/testsuite/ChangeLog
 ===================================================================
 --- a/src/gcc/testsuite/ChangeLog	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/testsuite/ChangeLog	(.../branches/gcc-5-branch)
-@@ -1,3 +1,942 @@
+@@ -1,3 +1,1010 @@
++2016-03-15  Bernd Schmidt  <bschmidt@redhat.com>
++
++	Backport from mainline
++	2016-03-04  Bernd Schmidt  <bschmidt@redhat.com>
++
++	PR rtl-optimization/69941
++	* gcc.dg/torture/pr69941.c: New test.
++
++2016-03-14  Michael Meissner  <meissner@linux.vnet.ibm.com>
++
++	Backport from mainline
++	2016-03-11  Michael Meissner  <meissner@linux.vnet.ibm.com>
++
++	PR target/70131
++	* gcc.target/powerpc/ppc-round2.c: New test.
++
++2016-03-14  Dominique d'Humieres  <dominiq@lps.ens.fr>
++
++	PR fortran/45076
++	gfortran.dg/prof/prof.exp: New script.
++	gfortran.dg/prof/dynamic_dispatch_6.f03: New test.
++
++2016-03-10  Alan Modra  <amodra@gmail.com>
++
++	* gcc.dg/pr69195.c: New.
++	* gcc.dg/pr69238.c: New.
++
++2016-03-09  Paul Thomas  <pault@gcc.gnu.org>
++
++	Backport from trunk.
++	PR fortran/69423
++	* gfortran.dg/deferred_character_15.f90 : New test.
++
++2016-03-09  Paul Thomas  <pault@gcc.gnu.org>
++
++	Backport from trunk.
++	PR fortran/49630
++	* gfortran.dg/deferred_character_13.f90: New test for the fix
++	of comment 3 of the PR.
++
++	Backport from trunk.
++	PR fortran/54070
++	* gfortran.dg/deferred_character_8.f90: New test
++	* gfortran.dg/allocate_error_5.f90: New test
++
++	Backport from trunk.
++	PR fortran/60593
++	* gfortran.dg/deferred_character_10.f90: New test
++
++	Backport from trunk.
++	PR fortran/60795
++	* gfortran.dg/deferred_character_14.f90: New test
++
++	Backport from trunk.
++	PR fortran/61147
++	* gfortran.dg/deferred_character_11.f90: New test
++
++	Backport from trunk.
++	PR fortran/64324
++	* gfortran.dg/deferred_character_9.f90: New test
++
++2016-03-07  Martin Jambor  <mjambor@suse.cz>
++
++	PR tree-optimization/69666
++	PR middle-end/69920
++	* gcc.dg/torture/pr69932.c: New test.
++	* gcc.dg/torture/pr69936.c: Likewise.
++
 +2016-03-04  H.J. Lu  <hongjiu.lu@intel.com>
 +
 +	Backport from mainline
@@ -12115,7 +13026,7 @@ Index: gcc/testsuite/ChangeLog
  2015-12-04  Release Manager
  
  	* GCC 5.3.0 released.
-@@ -328,7 +1267,7 @@
+@@ -328,7 +1335,7 @@
  2015-11-06  Vladimir Makarov  <vmakarov@redhat.com>
  
  	PR rtl-optimization/68106
@@ -12124,7 +13035,7 @@ Index: gcc/testsuite/ChangeLog
  
  2015-01-25  Paul Thomas  <pault@gcc.gnu.org>
  
-@@ -448,8 +1387,8 @@
+@@ -448,8 +1455,8 @@
  	Backport from mainline
  	2015-10-09  Martin Jambor  <mjambor@suse.cz>
  
@@ -12135,7 +13046,7 @@ Index: gcc/testsuite/ChangeLog
  
  2015-10-22  Paul Thomas  <pault@gcc.gnu.org>
  
-@@ -1254,10 +2193,6 @@
+@@ -1254,10 +2261,6 @@
  	PR fortran/66725
  	* gfortran.dg/pr66725.f90: New test.
  
@@ -12146,7 +13057,7 @@ Index: gcc/testsuite/ChangeLog
  2015-07-16  Marek Polacek  <polacek@redhat.com>
  
  	Backported from mainline
-@@ -3574,7 +4509,7 @@
+@@ -3574,7 +4577,7 @@
  
  2015-03-05  Martin Sebor  <msebor@redhat.com>
  
@@ -12407,6 +13318,41 @@ Index: gcc/testsuite/g++.dg/cpp0x/rv-cast5.C
 +{
 +  hold<bool&&>{42}();
 +}
+Index: gcc/testsuite/g++.dg/cpp0x/constexpr-aggr3.C
+===================================================================
+--- a/src/gcc/testsuite/g++.dg/cpp0x/constexpr-aggr3.C	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/g++.dg/cpp0x/constexpr-aggr3.C	(.../branches/gcc-5-branch)
+@@ -0,0 +1,30 @@
++// PR c++/67364
++// { dg-do compile { target c++11 } }
++
++template <typename Xn>
++struct tuple {
++  Xn storage_;
++
++  constexpr tuple(Xn const& xn)
++    : storage_(xn)
++  { }
++
++  template <typename ...dummy>
++  constexpr tuple(tuple const& other)
++    : storage_(other.storage_)
++  { }
++
++  template <typename ...dummy>
++  constexpr tuple(tuple& other)
++    : tuple(const_cast<tuple const&>(other))
++  { }
++};
++
++template <typename T>
++struct wrapper { T value; };
++
++template <typename T>
++constexpr wrapper<T> wrap(T t) { return {t}; }
++
++constexpr wrapper<tuple<int>> t = wrap(tuple<int>{2});
++static_assert(t.value.storage_ == 2, "");
 Index: gcc/testsuite/g++.dg/cpp0x/constexpr-array15.C
 ===================================================================
 --- a/src/gcc/testsuite/g++.dg/cpp0x/constexpr-array15.C	(.../tags/gcc_5_3_0_release)
@@ -14155,16 +15101,33 @@ Index: gcc/cp/constexpr.c
        valp = &cep->value;
      }
    release_tree_vector (refs);
-@@ -2762,6 +2898,8 @@
+@@ -2762,16 +2898,17 @@
  
    init = cxx_eval_constant_expression (&new_ctx, init, false,
  				       non_constant_p, overflow_p);
 +  /* Don't share a CONSTRUCTOR that might be changed later.  */
 +  init = unshare_expr (init);
    if (target == object)
++    /* The hash table might have moved since the get earlier.  */
++    valp = ctx->values->get (object);
++
++  if (TREE_CODE (init) == CONSTRUCTOR)
      {
-       /* The hash table might have moved since the get earlier.  */
-@@ -3114,7 +3252,8 @@
+-      /* The hash table might have moved since the get earlier.  */
+-      valp = ctx->values->get (object);
+-      if (TREE_CODE (init) == CONSTRUCTOR)
+-	/* An outer ctx->ctor might be pointing to *valp, so just replace
+-	   its contents.  */
+-	CONSTRUCTOR_ELTS (*valp) = CONSTRUCTOR_ELTS (init);
+-      else
+-	*valp = init;
++      /* An outer ctx->ctor might be pointing to *valp, so just replace
++	 its contents.  */
++      CONSTRUCTOR_ELTS (*valp) = CONSTRUCTOR_ELTS (init);
+     }
+   else
+     *valp = init;
+@@ -3114,7 +3251,8 @@
  	r = TARGET_EXPR_INITIAL (r);
        if (TREE_CODE (r) == VAR_DECL)
  	if (tree *p = ctx->values->get (r))
@@ -14174,7 +15137,7 @@ Index: gcc/cp/constexpr.c
        if (DECL_P (r))
  	{
  	  if (!ctx->quiet)
-@@ -3181,6 +3320,8 @@
+@@ -3181,6 +3319,8 @@
  	    init = cxx_eval_constant_expression (ctx, init,
  						 false,
  						 non_constant_p, overflow_p);
@@ -14183,7 +15146,7 @@ Index: gcc/cp/constexpr.c
  	    ctx->values->put (r, init);
  	  }
  	else if (ctx == &new_ctx)
-@@ -3225,6 +3366,7 @@
+@@ -3225,6 +3365,7 @@
        if (lval)
  	{
  	  tree slot = TARGET_EXPR_SLOT (t);
@@ -14250,7 +15213,13 @@ Index: gcc/cp/ChangeLog
 ===================================================================
 --- a/src/gcc/cp/ChangeLog	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/cp/ChangeLog	(.../branches/gcc-5-branch)
-@@ -1,3 +1,233 @@
+@@ -1,3 +1,239 @@
++2016-03-05  Jason Merrill  <jason@redhat.com>
++
++	PR c++/67364
++	* constexpr.c (cxx_eval_store_expression): Replace
++	CONSTRUCTOR_ELTS in nested CONSTRUCTORs, too.
++
 +2016-03-04  Jason Merrill  <jason@redhat.com>
 +
 +	PR c++/67364
@@ -16706,7 +17675,17 @@ Index: gcc/fortran/trans-expr.c
    if (byref)
      {
        if (se->direct_byref)
-@@ -6354,6 +6444,11 @@
+@@ -5684,6 +5774,9 @@
+ 	  tmp = len;
+ 	  if (TREE_CODE (tmp) != VAR_DECL)
+ 	    tmp = gfc_evaluate_now (len, &se->pre);
++	  TREE_STATIC (tmp) = 1;
++	  gfc_add_modify (&se->pre, tmp,
++			  build_int_cst (TREE_TYPE (tmp), 0));
+ 	  tmp = gfc_build_addr_expr (NULL_TREE, tmp);
+ 	  vec_safe_push (retargs, tmp);
+ 	}
+@@ -6354,6 +6447,11 @@
  {
    gfc_se se;
  
@@ -16718,7 +17697,7 @@ Index: gcc/fortran/trans-expr.c
    if (!(expr || pointer || procptr))
      return NULL_TREE;
  
-@@ -6518,7 +6613,7 @@
+@@ -6518,7 +6616,7 @@
  
    gfc_conv_expr (&rse, expr);
  
@@ -16727,7 +17706,7 @@ Index: gcc/fortran/trans-expr.c
    gfc_add_expr_to_block (&body, tmp);
  
    gcc_assert (rse.ss == gfc_ss_terminator);
-@@ -7403,20 +7498,6 @@
+@@ -7403,20 +7501,6 @@
  
    /* Take the address of that value.  */
    se->expr = gfc_build_addr_expr (NULL_TREE, var);
@@ -16748,7 +17727,7 @@ Index: gcc/fortran/trans-expr.c
  }
  
  
-@@ -8901,6 +8982,7 @@
+@@ -8901,6 +8985,7 @@
    bool scalar_to_array;
    tree string_length;
    int n;
@@ -16756,7 +17735,7 @@ Index: gcc/fortran/trans-expr.c
  
    /* Assignment of the form lhs = rhs.  */
    gfc_start_block (&block);
-@@ -8975,8 +9057,13 @@
+@@ -8975,8 +9060,13 @@
  	}
  
        /* Allow the scalarizer to workshare array assignments.  */
@@ -16772,19 +17751,56 @@ Index: gcc/fortran/trans-expr.c
  
        /* Start the scalarized loop body.  */
        gfc_start_scalarized_body (&loop, &body);
-@@ -8998,8 +9085,10 @@
+@@ -8998,8 +9088,13 @@
      }
  
    /* Stabilize a string length for temporaries.  */
 -  if (expr2->ts.type == BT_CHARACTER)
-+  if (expr2->ts.type == BT_CHARACTER && !expr2->ts.deferred)
++  if (expr2->ts.type == BT_CHARACTER && !expr1->ts.deferred
++      && !(TREE_CODE (rse.string_length) == VAR_DECL
++	   || TREE_CODE (rse.string_length) == PARM_DECL
++	   || TREE_CODE (rse.string_length) == INDIRECT_REF))
      string_length = gfc_evaluate_now (rse.string_length, &rse.pre);
 +  else if (expr2->ts.type == BT_CHARACTER)
 +    string_length = rse.string_length;
    else
      string_length = NULL_TREE;
  
-@@ -9033,8 +9122,14 @@
+@@ -9010,8 +9105,33 @@
+ 	lse.string_length = string_length;
+     }
+   else
++    {
+     gfc_conv_expr (&lse, expr1);
++      if (gfc_option.rtcheck & GFC_RTCHECK_MEM
++	  && gfc_expr_attr (expr1).allocatable
++	  && expr1->rank
++	  && !expr2->rank)
++	{
++	  tree cond;
++	  const char* msg;
+ 
++	  tmp = expr1->symtree->n.sym->backend_decl;
++	  if (POINTER_TYPE_P (TREE_TYPE (tmp)))
++	    tmp = build_fold_indirect_ref_loc (input_location, tmp);
++
++	  if (GFC_DESCRIPTOR_TYPE_P (TREE_TYPE (tmp)))
++	    tmp = gfc_conv_descriptor_data_get (tmp);
++	  else
++	    tmp = TREE_OPERAND (lse.expr, 0);
++
++	  cond = fold_build2_loc (input_location, EQ_EXPR, boolean_type_node,
++				  tmp, build_int_cst (TREE_TYPE (tmp), 0));
++	  msg = _("Assignment of scalar to unallocated array");
++	  gfc_trans_runtime_check (true, false, cond, &loop.pre,
++				   &expr1->where, msg);
++	}
++    }
++
+   /* Assignments of scalar derived types with allocatable components
+      to arrays must be done with a deep copy and the rhs temporary
+      must have its components deallocated afterwards.  */
+@@ -9033,8 +9153,14 @@
       the function call must happen before the (re)allocation of the lhs -
       otherwise the character length of the result is not known.
       NOTE: This relies on having the exact dependence of the length type
@@ -16801,7 +17817,7 @@ Index: gcc/fortran/trans-expr.c
      gfc_add_block_to_block (&block, &rse.pre);
  
    /* Nullify the allocatable components corresponding to those of the lhs
-@@ -9117,6 +9212,9 @@
+@@ -9117,6 +9243,9 @@
  	    gfc_add_expr_to_block (&loop.code[expr1->rank - 1], tmp);
  	}
  
@@ -16822,17 +17838,18 @@ Index: gcc/fortran/trans-array.c
     Contributed by Paul Brook <paul@nowt.org>
     and Steven Bosscher <s.bosscher@student.tudelft.nl>
  
-@@ -3112,7 +3112,8 @@
+@@ -3112,7 +3112,9 @@
      index = fold_build2_loc (input_location, PLUS_EXPR, gfc_array_index_type,
  			     index, info->offset);
  
 -  if (expr && is_subref_array (expr))
 +  if (expr && (is_subref_array (expr)
-+	       || (expr->ts.deferred && expr->expr_type == EXPR_VARIABLE)))
++	       || (expr->ts.deferred && (expr->expr_type == EXPR_VARIABLE
++					 || expr->expr_type == EXPR_FUNCTION))))
      decl = expr->symtree->n.sym->backend_decl;
  
    tmp = build_fold_indirect_ref_loc (input_location, info->data);
-@@ -3532,7 +3533,8 @@
+@@ -3532,7 +3534,8 @@
    tree init;
    tree incr;
  
@@ -16842,7 +17859,7 @@ Index: gcc/fortran/trans-array.c
        == (OMPWS_WORKSHARE_FLAG | OMPWS_SCALARIZER_WS)
        && n == loop->dimen - 1)
      {
-@@ -4409,7 +4411,7 @@
+@@ -4409,7 +4412,7 @@
  	  if (!nDepend && dest_expr->rank > 0
  	      && dest_expr->ts.type == BT_CHARACTER
  	      && ss_expr->expr_type == EXPR_VARIABLE)
@@ -16851,7 +17868,48 @@ Index: gcc/fortran/trans-array.c
  	    nDepend = gfc_check_dependency (dest_expr, ss_expr, false);
  
  	  continue;
-@@ -6945,7 +6947,7 @@
+@@ -4956,7 +4959,8 @@
+ gfc_array_init_size (tree descriptor, int rank, int corank, tree * poffset,
+ 		     gfc_expr ** lower, gfc_expr ** upper, stmtblock_t * pblock,
+ 		     stmtblock_t * descriptor_block, tree * overflow,
+-		     tree expr3_elem_size, tree *nelems, gfc_expr *expr3)
++		     tree expr3_elem_size, tree *nelems, gfc_expr *expr3,
++		     gfc_expr *expr)
+ {
+   tree type;
+   tree tmp;
+@@ -4981,8 +4985,19 @@
+   offset = gfc_index_zero_node;
+ 
+   /* Set the dtype.  */
+-  tmp = gfc_conv_descriptor_dtype (descriptor);
+-  gfc_add_modify (descriptor_block, tmp, gfc_get_dtype (type));
++  if (expr->ts.type == BT_CHARACTER && expr->ts.deferred
++      && TREE_CODE (expr->ts.u.cl->backend_decl) == VAR_DECL)
++    {
++      type = gfc_typenode_for_spec (&expr->ts);
++      tmp = gfc_conv_descriptor_dtype (descriptor);
++      gfc_add_modify (descriptor_block, tmp,
++		      gfc_get_dtype_rank_type (rank, type));
++    }
++  else
++    {
++      tmp = gfc_conv_descriptor_dtype (descriptor);
++      gfc_add_modify (descriptor_block, tmp, gfc_get_dtype (type));
++    }
+ 
+   or_expr = boolean_false_node;
+ 
+@@ -5294,7 +5309,7 @@
+   size = gfc_array_init_size (se->expr, ref->u.ar.as->rank,
+ 			      ref->u.ar.as->corank, &offset, lower, upper,
+ 			      &se->pre, &set_descriptor_block, &overflow,
+-			      expr3_elem_size, nelems, expr3);
++			      expr3_elem_size, nelems, expr3, expr);
+ 
+   if (dimension)
+     {
+@@ -6945,7 +6960,7 @@
  				    gfc_array_index_type,
  				    stride, info->stride[n]);
  
@@ -16860,7 +17918,7 @@ Index: gcc/fortran/trans-array.c
  	      && ((info->ref && info->ref->u.ar.type != AR_FULL)
  		  || (expr->expr_type == EXPR_ARRAY && se->use_offset)))
  	    {
-@@ -7191,6 +7193,17 @@
+@@ -7191,6 +7206,17 @@
    if (no_pack || array_constructor || good_allocatable || ultimate_alloc_comp)
      {
        gfc_conv_expr_descriptor (se, expr);
@@ -16878,7 +17936,7 @@ Index: gcc/fortran/trans-array.c
        if (expr->ts.type == BT_CHARACTER)
  	se->string_length = expr->ts.u.cl->backend_decl;
        if (size)
-@@ -7226,10 +7239,11 @@
+@@ -7226,10 +7252,11 @@
      }
  
    /* Deallocate the allocatable components of structures that are
@@ -16894,7 +17952,7 @@ Index: gcc/fortran/trans-array.c
      {
        tmp = build_fold_indirect_ref_loc (input_location, se->expr);
        tmp = gfc_deallocate_alloc_comp (expr->ts.u.derived, tmp, expr->rank);
-@@ -8269,6 +8283,75 @@
+@@ -8269,6 +8296,75 @@
  }
  
  
@@ -16970,7 +18028,7 @@ Index: gcc/fortran/trans-array.c
  /* Allocate the lhs of an assignment to an allocatable array, otherwise
     reallocate it.  */
  
-@@ -8366,6 +8449,12 @@
+@@ -8366,6 +8462,12 @@
    /* Allocate if data is NULL.  */
    cond_null = fold_build2_loc (input_location, EQ_EXPR, boolean_type_node,
  			 array1, build_int_cst (TREE_TYPE (array1), 0));
@@ -16983,7 +18041,7 @@ Index: gcc/fortran/trans-array.c
    tmp = build3_v (COND_EXPR, cond_null,
  		  build1_v (GOTO_EXPR, jump_label1),
  		  build_empty_stmt (input_location));
-@@ -8454,8 +8543,14 @@
+@@ -8454,8 +8556,14 @@
  
    cond = fold_build2_loc (input_location, NE_EXPR, boolean_type_node,
  			  size1, size2);
@@ -16999,7 +18057,7 @@ Index: gcc/fortran/trans-array.c
    /* Deallocation of allocatable components will have to occur on
       reallocation.  Fix the old descriptor now.  */
    if ((expr1->ts.type == BT_DERIVED)
-@@ -8559,6 +8654,12 @@
+@@ -8559,6 +8667,12 @@
        else
  	{
  	  tmp = expr2->ts.u.cl->backend_decl;
@@ -17012,7 +18070,7 @@ Index: gcc/fortran/trans-array.c
  	  tmp = fold_convert (TREE_TYPE (expr1->ts.u.cl->backend_decl), tmp);
  	}
  
-@@ -8586,6 +8687,22 @@
+@@ -8586,6 +8700,22 @@
  			   size2, size_one_node);
    size2 = gfc_evaluate_now (size2, &fblock);
  
@@ -17035,7 +18093,7 @@ Index: gcc/fortran/trans-array.c
    /* Realloc expression.  Note that the scalarizer uses desc.data
       in the array reference - (*desc.data)[<element>].  */
    gfc_init_block (&realloc_block);
-@@ -8628,8 +8745,16 @@
+@@ -8628,8 +8758,16 @@
  			     1, size2);
    gfc_conv_descriptor_data_set (&alloc_block,
  				desc, tmp);
@@ -17334,58 +18392,133 @@ Index: gcc/fortran/ChangeLog
 ===================================================================
 --- a/src/gcc/fortran/ChangeLog	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/fortran/ChangeLog	(.../branches/gcc-5-branch)
-@@ -1,1463 +1,222 @@
+@@ -1,1463 +1,281 @@
 -2015-12-04  Release Manager
-+2016-02-27  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
++2016-03-09  Paul Thomas  <pault@gcc.gnu.org>
  
 -	* GCC 5.3.0 released.
-+	Backported from mainline
-+	PR fortran/61156
-+	* scanner.c (add_path_to_list): If include path is not a directory,
-+	issue a fatal error.
++	Backport from trunk.
++	PR fortran/69423
++	* trans-decl.c (create_function_arglist): Deferred character
++	length functions, with and without declared results, address
++	the passed reference type as '.result' and the local string
++	length as '..result'.
++	(gfc_null_and_pass_deferred_len): Helper function to null and
++	return deferred string lengths, as needed.
++	(gfc_trans_deferred_vars): Call it, thereby reducing repeated
++	code, add call for deferred arrays and reroute pointer function
++	results. Avoid using 'tmp' for anything other that a temporary
++	tree by introducing 'type_of_array' for the arrayspec type.
  
 -2015-11-27  Andre Vehreschild  <vehre@gcc.gnu.org>
-+2016-02-27  Alessandro Fanfarillo  <fanfarillo.gcc@gmail.com>
++2016-03-09  Paul Thomas  <pault@gcc.gnu.org>
  
 -	PR fortran/68218
 -	* trans-array.c (gfc_array_init_size): Add gfc_evaluate_now() when
 -	array spec in allocate is a function call.
-+	Backported from mainline
-+	* trans.c (gfc_allocate_allocatable): size conversion
-+	from byte to number of elements for event variables.
-+	* trans-types.c (gfc_get_derived_type): event variables
-+	represented as a pointer (like lock variable).
++	Backport from trunk.
++	PR fortran/64324
++	* resolve.c (check_uop_procedure): Prevent deferred length
++	characters from being trapped by assumed length error.
  
 -2015-11-24  Paul Thomas  <pault@gcc.gnu.org>
-+2016-02-23  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
- 
--	Backport from trunk.
+-
+ 	Backport from trunk.
 -	PR fortran/68196
 -	* class.c (has_finalizer_component): Prevent infinite recursion
 -	through this function if the derived type and that of its
 -	component are the same.
 -	* trans-types.c (gfc_get_derived_type): Do the same for proc
 -	pointers by ignoring the explicit interface for the component.
++	PR fortran/49630
++	PR fortran/54070
++	PR fortran/60593
++	PR fortran/60795
++	PR fortran/61147
++	PR fortran/64324
++	* trans-array.c (gfc_conv_scalarized_array_ref): Pass decl for
++	function as well as variable expressions.
++	(gfc_array_init_size): Add 'expr' as an argument. Use this to
++	correctly set the descriptor dtype for deferred characters.
++	(gfc_array_allocate): Add 'expr' to the call to
++	'gfc_array_init_size'.
++	* trans.c (gfc_build_array_ref): Expand logic for setting span
++	to include indirect references to character lengths.
++	* trans-decl.c (gfc_get_symbol_decl): Ensure that deferred
++	result char lengths that are PARM_DECLs are indirectly
++	referenced both for directly passed and by reference.
++	(create_function_arglist): If the length type is a pointer type
++	then store the length as the 'passed_length' and make the char
++	length an indirect reference to it.
++	(gfc_trans_deferred_vars): If a character length has escaped
++	being set as an indirect reference, return it via the 'passed
++	length'.
++	* trans-expr.c (gfc_conv_procedure_call): The length of
++	deferred character length results is set TREE_STATIC and set to
++	zero.
++	(gfc_trans_assignment_1): Do not fix the rse string_length if
++	it is a variable, a parameter or an indirect reference. Add the
++	code to trap assignment of scalars to unallocated arrays.
++	* trans-stmt.c (gfc_trans_allocate): Remove 'def_str_len' and
++	all references to it. Instead, replicate the code to obtain a
++	explicitly defined string length and provide a value before
++	array allocation so that the dtype is correctly set.
++	trans-types.c (gfc_get_character_type): If the character length
++	is a pointer, use the indirect reference.
+ 
+-	PR fortran/66465
+-	* check.c (same_type_check): If either of the expressions is
+-	BT_PROCEDURE, use the typespec from the symbol, rather than the
+-	expression.
++2016-02-27  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+ 
+-2015-11-18  Dominique d'Humieres <dominiq@lps.ens.fr>
++	Backported from mainline
++	PR fortran/61156
++	* scanner.c (add_path_to_list): If include path is not a directory,
++	issue a fatal error.
+ 
+-	PR fortran/65751
+-	* expr.c (gfc_check_pointer_assign): Fix error message.
++2016-02-27  Alessandro Fanfarillo  <fanfarillo.gcc@gmail.com>
+ 
+-2015-11-16  Steven G. Kargl  <kargl@gcc.gnu.org>
++	Backported from mainline
++	* trans.c (gfc_allocate_allocatable): size conversion
++	from byte to number of elements for event variables.
++	* trans-types.c (gfc_get_derived_type): event variables
++	represented as a pointer (like lock variable).
+ 
+-	PR fortran/58027
+-	PR fortran/60993
+-	* expr.c (gfc_check_init_expr): Prevent a redundant check when a
+-	__convert_* function was inserted into an array constructor.
+-	(gfc_check_assign_symbol): Check for an initialization expression
+-	when a __convert_* was inserted.
++2016-02-23  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+ 
+-2015-11-14  Steven G. Kargl  <kargl@gcc.gnu.org>
 +	Backported from mainline
 +	PR fortran/65996
 +	* error.c (gfc_error): Save the state of abort_on_error and set
 +	it to false for buffered errors to allow normal processing.
 +	Restore the state before leaving.
  
--	PR fortran/66465
--	* check.c (same_type_check): If either of the expressions is
--	BT_PROCEDURE, use the typespec from the symbol, rather than the
--	expression.
+-	PR fortran/67803
+-	* array.c (gfc_match_array_constructor): If array constructor included
+-	a CHARACTER typespec, check array elements for compatible type.
 +2016-02-12  Tobias Burnus  <burnus@net-b.de>
 +	    Alessandro Fanfarillo  <fanfarillo.gcc@gmail.com>
  
--2015-11-18  Dominique d'Humieres <dominiq@lps.ens.fr>
+-2015-11-13  Steven G. Kargl  <kargl@gccc.gnu.org>
 +	Backported from mainline
 +	2015-12-02  Tobias Burnus  <burnus@net-b.de>
 +	Alessandro Fanfarillo  <fanfarillo.gcc@gmail.com>
  
--	PR fortran/65751
--	* expr.c (gfc_check_pointer_assign): Fix error message.
+-	PR fortran/68319
+-	* decl.c (gfc_match_data, gfc_match_entry): Enforce F2008:C1206.
+-	* io.c (gfc_match_format): Ditto.
+-	* match.c (gfc_match_st_function): Ditto.
 +	* check.c (gfc_check_event_query): New function.
 +	* dump-parse-tree.c (show_code_node): Handle EXEC_EVENT_POST,
 +	EXEC_EVENT_WAIT.
@@ -17442,31 +18575,9 @@ Index: gcc/fortran/ChangeLog
 +	(gfor_fndecl_caf_event_post,gfor_fndecl_caf_event_wait,
 +	gfor_fndecl_caf_event_query): Declare them.
  
--2015-11-16  Steven G. Kargl  <kargl@gcc.gnu.org>
+-2015-11-12  Steven G. Kargl  <kargl@gcc.gnu.org>
 +2016-02-10  Jakub Jelinek  <jakub@redhat.com>
  
--	PR fortran/58027
--	PR fortran/60993
--	* expr.c (gfc_check_init_expr): Prevent a redundant check when a
--	__convert_* function was inserted into an array constructor.
--	(gfc_check_assign_symbol): Check for an initialization expression
--	when a __convert_* was inserted.
--
--2015-11-14  Steven G. Kargl  <kargl@gcc.gnu.org>
--
--	PR fortran/67803
--	* array.c (gfc_match_array_constructor): If array constructor included
--	a CHARACTER typespec, check array elements for compatible type.
--
--2015-11-13  Steven G. Kargl  <kargl@gccc.gnu.org>
--
--	PR fortran/68319
--	* decl.c (gfc_match_data, gfc_match_entry): Enforce F2008:C1206.
--	* io.c (gfc_match_format): Ditto.
--	* match.c (gfc_match_st_function): Ditto.
--
--2015-11-12  Steven G. Kargl  <kargl@gcc.gnu.org>
--
 -	PR fortran/68318
 -	* decl.c (get_proc_name): Increment reference count for ENTRY.
 -	While here, fix comment and use postfix ++ for consistency.
@@ -19293,7 +20404,7 @@ Index: gcc/fortran/trans-stmt.c
    tree label_finish;
    tree memsz;
    tree al_vptr, al_len;
-+  tree def_str_len = NULL_TREE;
++
    /* If an expr3 is present, then store the tree for accessing its
       _vptr, and _len components in the variables, respectively.  The
       element size, i.e. _vptr%size, is stored in expr3_esize.  Any of
@@ -19437,33 +20548,36 @@ Index: gcc/fortran/trans-stmt.c
  	}
        gcc_assert (expr3_esize);
        expr3_esize = fold_convert (sizetype, expr3_esize);
-@@ -5335,6 +5639,7 @@
- 	  expr3_esize = fold_build2_loc (input_location, MULT_EXPR,
- 					 TREE_TYPE (se_sz.expr),
- 					 tmp, se_sz.expr);
-+	  def_str_len = gfc_evaluate_now (se_sz.expr, &block);
- 	}
-     }
- 
-@@ -5386,6 +5691,17 @@
+@@ -5386,6 +5690,7 @@
  
        se.want_pointer = 1;
        se.descriptor_only = 1;
 +
-+      if (expr->ts.type == BT_CHARACTER
-+	  && expr->ts.deferred
-+	  && TREE_CODE (expr->ts.u.cl->backend_decl) == VAR_DECL
-+	  && def_str_len != NULL_TREE)
-+	{
-+	  tmp = expr->ts.u.cl->backend_decl;
-+	  gfc_add_modify (&block, tmp,
-+			  fold_convert (TREE_TYPE (tmp), def_str_len));
-+	}
-+
        gfc_conv_expr (&se, expr);
        if (expr->ts.type == BT_CHARACTER && expr->ts.deferred)
  	/* se.string_length now stores the .string_length variable of expr
-@@ -5615,7 +5931,6 @@
+@@ -5519,6 +5824,20 @@
+ 	      /* Prevent setting the length twice.  */
+ 	      al_len_needs_set = false;
+ 	    }
++	  else if (expr->ts.type == BT_CHARACTER && al_len != NULL_TREE
++		   && code->ext.alloc.ts.u.cl->length)
++	    {
++	      /* Cover the cases where a string length is explicitly
++		 specified by a type spec for deferred length character
++		 arrays or unlimited polymorphic objects without a
++		 source= or mold= expression.  */
++	      gfc_init_se (&se_sz, NULL);
++	      gfc_conv_expr (&se_sz, code->ext.alloc.ts.u.cl->length);
++	      gfc_add_modify (&block, al_len,
++			      fold_convert (TREE_TYPE (al_len),
++					    se_sz.expr));
++	      al_len_needs_set = false;
++	    }
+ 	}
+ 
+       gfc_add_block_to_block (&block, &se.pre);
+@@ -5615,7 +5934,6 @@
  	{
  	  /* Initialization via SOURCE block
  	     (or static default initializer).  */
@@ -19471,7 +20585,7 @@ Index: gcc/fortran/trans-stmt.c
  	  if (expr3 != NULL_TREE
  	      && ((POINTER_TYPE_P (TREE_TYPE (expr3))
  		   && TREE_CODE (expr3) != POINTER_PLUS_EXPR)
-@@ -5629,19 +5944,6 @@
+@@ -5629,19 +5947,6 @@
  	      tmp = gfc_copy_class_to_class (expr3, to,
  					     nelems, upoly_expr);
  	    }
@@ -19491,7 +20605,7 @@ Index: gcc/fortran/trans-stmt.c
  	  else if (al->expr->ts.type == BT_CLASS)
  	    {
  	      gfc_actual_arglist *actual, *last_arg;
-@@ -5648,6 +5950,7 @@
+@@ -5648,6 +5953,7 @@
  	      gfc_expr *ppc;
  	      gfc_code *ppc_code;
  	      gfc_ref *ref, *dataref;
@@ -19499,7 +20613,7 @@ Index: gcc/fortran/trans-stmt.c
  
  	      /* Do a polymorphic deep copy.  */
  	      actual = gfc_get_actual_arglist ();
-@@ -5759,6 +6062,8 @@
+@@ -5759,6 +6065,8 @@
  					 void_type_node, tmp, extcopy, stdcopy);
  		}
  	      gfc_free_statements (ppc_code);
@@ -19508,7 +20622,7 @@ Index: gcc/fortran/trans-stmt.c
  	    }
  	  else
  	    {
-@@ -5767,10 +6072,9 @@
+@@ -5767,10 +6075,9 @@
  	      int realloc_lhs = flag_realloc_lhs;
  	      flag_realloc_lhs = 0;
  	      tmp = gfc_trans_assignment (gfc_expr_to_initialize (expr),
@@ -19520,7 +20634,7 @@ Index: gcc/fortran/trans-stmt.c
  	  gfc_add_expr_to_block (&block, tmp);
  	}
       else if (code->expr3 && code->expr3->mold
-@@ -5788,6 +6092,15 @@
+@@ -5788,6 +6095,15 @@
         gfc_free_expr (expr);
      } // for-loop
  
@@ -19623,7 +20737,7 @@ Index: gcc/fortran/trans.c
     Contributed by Paul Brook
  
  This file is part of GCC.
-@@ -344,6 +344,18 @@
+@@ -344,6 +344,21 @@
  
    type = TREE_TYPE (type);
  
@@ -19631,10 +20745,13 @@ Index: gcc/fortran/trans.c
 +     references.  */
 +  if (type && TREE_CODE (type) == ARRAY_TYPE
 +      && TYPE_MAXVAL (TYPE_DOMAIN (type)) != NULL_TREE
-+      && TREE_CODE (TYPE_MAXVAL (TYPE_DOMAIN (type))) == VAR_DECL
++      && (TREE_CODE (TYPE_MAXVAL (TYPE_DOMAIN (type))) == VAR_DECL
++	  || TREE_CODE (TYPE_MAXVAL (TYPE_DOMAIN (type))) == INDIRECT_REF)
 +      && decl
-+      && DECL_CONTEXT (TYPE_MAXVAL (TYPE_DOMAIN (type)))
-+					== DECL_CONTEXT (decl))
++      && (TREE_CODE (TYPE_MAXVAL (TYPE_DOMAIN (type))) == INDIRECT_REF
++	  || TREE_CODE (decl) == FUNCTION_DECL
++	  || DECL_CONTEXT (TYPE_MAXVAL (TYPE_DOMAIN (type)))
++					== DECL_CONTEXT (decl)))
 +    span = TYPE_MAXVAL (TYPE_DOMAIN (type));
 +  else
 +    span = NULL_TREE;
@@ -19642,8 +20759,13 @@ Index: gcc/fortran/trans.c
    if (DECL_P (base))
      TREE_ADDRESSABLE (base) = 1;
  
-@@ -358,7 +370,8 @@
- 		 || TREE_CODE (decl) == PARM_DECL)
+@@ -355,10 +370,12 @@
+      and reference the element with pointer arithmetic.  */
+   if (decl && (TREE_CODE (decl) == FIELD_DECL
+ 		 || TREE_CODE (decl) == VAR_DECL
+-		 || TREE_CODE (decl) == PARM_DECL)
++		 || TREE_CODE (decl) == PARM_DECL
++		 || TREE_CODE (decl) == FUNCTION_DECL)
  	&& ((GFC_DECL_SUBREF_ARRAY_P (decl)
  	      && !integer_zerop (GFC_DECL_SPAN(decl)))
 -	   || GFC_DECL_CLASS (decl)))
@@ -19652,7 +20774,7 @@ Index: gcc/fortran/trans.c
      {
        if (GFC_DECL_CLASS (decl))
  	{
-@@ -377,6 +390,8 @@
+@@ -377,6 +394,8 @@
  	}
        else if (GFC_DECL_SUBREF_ARRAY_P (decl))
  	span = GFC_DECL_SPAN(decl);
@@ -19661,7 +20783,7 @@ Index: gcc/fortran/trans.c
        else
  	gcc_unreachable ();
  
-@@ -701,7 +716,7 @@
+@@ -701,7 +720,7 @@
  static void
  gfc_allocate_using_lib (stmtblock_t * block, tree pointer, tree size,
  			tree token, tree status, tree errmsg, tree errlen,
@@ -19670,7 +20792,7 @@ Index: gcc/fortran/trans.c
  {
    tree tmp, pstat;
  
-@@ -732,7 +747,8 @@
+@@ -732,7 +751,8 @@
  			      build_int_cst (size_type_node, 1)),
  	     build_int_cst (integer_type_node,
  			    lock_var ? GFC_CAF_LOCK_ALLOC
@@ -19680,7 +20802,7 @@ Index: gcc/fortran/trans.c
  	     token, pstat, errmsg, errlen);
  
    tmp = fold_build2_loc (input_location, MODIFY_EXPR,
-@@ -739,6 +755,16 @@
+@@ -739,6 +759,16 @@
  			 TREE_TYPE (pointer), pointer,
  			 fold_convert ( TREE_TYPE (pointer), tmp));
    gfc_add_expr_to_block (block, tmp);
@@ -19697,7 +20819,7 @@ Index: gcc/fortran/trans.c
  }
  
  
-@@ -794,16 +820,21 @@
+@@ -794,16 +824,21 @@
  			 == INTMOD_ISO_FORTRAN_ENV
  		      && expr->ts.u.derived->intmod_sym_id
  		         == ISOFORTRAN_LOCK_TYPE;
@@ -19721,7 +20843,7 @@ Index: gcc/fortran/trans.c
  
        if (status != NULL_TREE)
  	{
-@@ -1360,6 +1391,16 @@
+@@ -1360,6 +1395,16 @@
  	     token, pstat, errmsg, errlen);
        gfc_add_expr_to_block (&non_null, tmp);
  
@@ -19738,7 +20860,7 @@ Index: gcc/fortran/trans.c
        if (status != NULL_TREE)
  	{
  	  tree stat = build_fold_indirect_ref_loc (input_location, status);
-@@ -1647,6 +1688,7 @@
+@@ -1647,6 +1692,7 @@
  	  gfc_add_expr_to_block (&block, res);
  	}
  
@@ -19746,7 +20868,7 @@ Index: gcc/fortran/trans.c
        gfc_set_backend_locus (&code->loc);
  
        switch (code->op)
-@@ -1808,6 +1850,11 @@
+@@ -1808,6 +1854,11 @@
  	  res = gfc_trans_lock_unlock (code, code->op);
  	  break;
  
@@ -19769,7 +20891,16 @@ Index: gcc/fortran/trans-types.c
     Contributed by Paul Brook <paul@nowt.org>
     and Steven Bosscher <s.bosscher@student.tudelft.nl>
  
-@@ -2380,9 +2380,15 @@
+@@ -1067,6 +1067,8 @@
+   tree len;
+ 
+   len = (cl == NULL) ? NULL_TREE : cl->backend_decl;
++  if (len && POINTER_TYPE_P (TREE_TYPE (len)))
++    len = build_fold_indirect_ref (len);
+ 
+   return gfc_get_character_type_len (kind, len);
+ }
+@@ -2380,9 +2382,15 @@
    if (derived->attr.unlimited_polymorphic
        || (flag_coarray == GFC_FCOARRAY_LIB
  	  && derived->from_intmod == INTMOD_ISO_FORTRAN_ENV
@@ -20094,6 +21225,19 @@ Index: gcc/fortran/resolve.c
    /* F2008, C525.  */
    if ((((sym->ts.type == BT_DERIVED && sym->ts.u.derived->attr.coarray_comp)
  	 || (sym->ts.type == BT_CLASS && sym->attr.class_ok
+@@ -14854,9 +14975,9 @@
+     }
+ 
+   if (sym->ts.type == BT_CHARACTER
+-      && !(sym->ts.u.cl && sym->ts.u.cl->length)
+-      && !(sym->result && sym->result->ts.u.cl
+-	   && sym->result->ts.u.cl->length))
++      && !((sym->ts.u.cl && sym->ts.u.cl->length) || sym->ts.deferred)
++      && !(sym->result && ((sym->result->ts.u.cl
++	   && sym->result->ts.u.cl->length) || sym->result->ts.deferred)))
+     {
+       gfc_error ("User operator procedure %qs at %L cannot be assumed "
+ 		 "character length", sym->name, &where);
 Index: gcc/fortran/st.c
 ===================================================================
 --- a/src/gcc/fortran/st.c	(.../tags/gcc_5_3_0_release)
@@ -20138,7 +21282,69 @@ Index: gcc/fortran/trans-decl.c
  tree gfor_fndecl_co_broadcast;
  tree gfor_fndecl_co_max;
  tree gfor_fndecl_co_min;
-@@ -3505,6 +3508,21 @@
+@@ -1340,8 +1343,8 @@
+ 	&& TREE_CODE (sym->ts.u.cl->backend_decl) == PARM_DECL)
+     {
+       sym->ts.u.cl->passed_length = sym->ts.u.cl->backend_decl;
+-      sym->ts.u.cl->backend_decl = NULL_TREE;
+-      length = gfc_create_string_length (sym);
++      gcc_assert (POINTER_TYPE_P (TREE_TYPE (sym->ts.u.cl->passed_length)));
++      sym->ts.u.cl->backend_decl = build_fold_indirect_ref (sym->ts.u.cl->backend_decl);
+     }
+ 
+   fun_or_res = byref && (sym->attr.result
+@@ -1383,9 +1386,12 @@
+ 		  /* We need to insert a indirect ref for param decls.  */
+ 		  if (sym->ts.u.cl->backend_decl
+ 		      && TREE_CODE (sym->ts.u.cl->backend_decl) == PARM_DECL)
++		    {
++		      sym->ts.u.cl->passed_length = sym->ts.u.cl->backend_decl;
+ 		    sym->ts.u.cl->backend_decl =
+ 			build_fold_indirect_ref (sym->ts.u.cl->backend_decl);
+ 		}
++		}
+ 	      /* For all other parameters make sure, that they are copied so
+ 		 that the value and any modifications are local to the routine
+ 		 by generating a temporary variable.  */
+@@ -1394,6 +1400,10 @@
+ 		       && sym->ts.u.cl->backend_decl)
+ 		{
+ 		  sym->ts.u.cl->passed_length = sym->ts.u.cl->backend_decl;
++		  if (POINTER_TYPE_P (TREE_TYPE (sym->ts.u.cl->passed_length)))
++		    sym->ts.u.cl->backend_decl
++			= build_fold_indirect_ref (sym->ts.u.cl->backend_decl);
++		  else
+ 		  sym->ts.u.cl->backend_decl = NULL_TREE;
+ 		}
+ 	    }
+@@ -2170,8 +2180,13 @@
+ 			       PARM_DECL,
+ 			       get_identifier (".__result"),
+ 			       len_type);
+-	  if (!sym->ts.u.cl->length)
++	  if (POINTER_TYPE_P (len_type))
+ 	    {
++	      sym->ts.u.cl->passed_length = length;
++	      TREE_USED (length) = 1;
++	    }
++	  else if (!sym->ts.u.cl->length)
++	    {
+ 	      sym->ts.u.cl->backend_decl = length;
+ 	      TREE_USED (length) = 1;
+ 	    }
+@@ -2290,7 +2305,10 @@
+ 	  if (f->sym->ts.u.cl->backend_decl == NULL
+ 	      || f->sym->ts.u.cl->backend_decl == length)
+ 	    {
+-	      if (f->sym->ts.u.cl->backend_decl == NULL)
++	      if (POINTER_TYPE_P (len_type))
++		f->sym->ts.u.cl->backend_decl =
++			build_fold_indirect_ref_loc (input_location, length);
++	      else if (f->sym->ts.u.cl->backend_decl == NULL)
+ 		gfc_create_string_length (f->sym);
+ 
+ 	      /* Make sure PARM_DECL type doesn't point to incomplete type.  */
+@@ -3505,6 +3523,21 @@
  	void_type_node, 6, pvoid_type_node, size_type_node, integer_type_node,
  	pint_type, pchar_type_node, integer_type_node);
  
@@ -20160,7 +21366,335 @@ Index: gcc/fortran/trans-decl.c
        gfor_fndecl_co_broadcast = gfc_build_library_function_decl_with_spec (
  	get_identifier (PREFIX("caf_co_broadcast")), "W.WW",
  	void_type_node, 5, pvoid_type_node, integer_type_node,
-@@ -4784,7 +4802,7 @@
+@@ -3828,6 +3861,62 @@
+ }
+ 
+ 
++/* Helper function to manage deferred string lengths.  */
++
++static tree
++gfc_null_and_pass_deferred_len (gfc_symbol *sym, stmtblock_t *init,
++			        locus *loc)
++{
++  tree tmp;
++
++  /* Character length passed by reference.  */
++  tmp = sym->ts.u.cl->passed_length;
++  tmp = build_fold_indirect_ref_loc (input_location, tmp);
++  tmp = fold_convert (gfc_charlen_type_node, tmp);
++
++  if (!sym->attr.dummy || sym->attr.intent == INTENT_OUT)
++    /* Zero the string length when entering the scope.  */
++    gfc_add_modify (init, sym->ts.u.cl->backend_decl,
++		    build_int_cst (gfc_charlen_type_node, 0));
++  else
++    {
++      tree tmp2;
++
++      tmp2 = fold_build2_loc (input_location, MODIFY_EXPR,
++			      gfc_charlen_type_node,
++			      sym->ts.u.cl->backend_decl, tmp);
++      if (sym->attr.optional)
++	{
++	  tree present = gfc_conv_expr_present (sym);
++	  tmp2 = build3_loc (input_location, COND_EXPR,
++			     void_type_node, present, tmp2,
++			     build_empty_stmt (input_location));
++	}
++      gfc_add_expr_to_block (init, tmp2);
++    }
++
++  gfc_restore_backend_locus (loc);
++
++  /* Pass the final character length back.  */
++  if (sym->attr.intent != INTENT_IN)
++    {
++      tmp = fold_build2_loc (input_location, MODIFY_EXPR,
++			     gfc_charlen_type_node, tmp,
++			     sym->ts.u.cl->backend_decl);
++      if (sym->attr.optional)
++	{
++	  tree present = gfc_conv_expr_present (sym);
++	  tmp = build3_loc (input_location, COND_EXPR,
++			    void_type_node, present, tmp,
++			    build_empty_stmt (input_location));
++	}
++    }
++  else
++    tmp = NULL_TREE;
++
++  return tmp;
++}
++
+ /* Generate function entry and exit code, and add it to the function body.
+    This includes:
+     Allocation and initialization of array variables.
+@@ -3877,7 +3966,19 @@
+ 	  /* An automatic character length, pointer array result.  */
+ 	  if (proc_sym->ts.type == BT_CHARACTER
+ 		&& TREE_CODE (proc_sym->ts.u.cl->backend_decl) == VAR_DECL)
+-	    gfc_trans_dummy_character (proc_sym, proc_sym->ts.u.cl, block);
++	    {
++	      tmp = NULL;
++	      if (proc_sym->ts.deferred)
++		{
++		  gfc_save_backend_locus (&loc);
++		  gfc_set_backend_locus (&proc_sym->declared_at);
++		  gfc_start_block (&init);
++		  tmp = gfc_null_and_pass_deferred_len (proc_sym, &init, &loc);
++		  gfc_add_init_cleanup (block, gfc_finish_block (&init), tmp);
++		}
++	      else
++		gfc_trans_dummy_character (proc_sym, proc_sym->ts.u.cl, block);
++	    }
+ 	}
+       else if (proc_sym->ts.type == BT_CHARACTER)
+ 	{
+@@ -3903,6 +4004,10 @@
+ 	      gfc_restore_backend_locus (&loc);
+ 
+ 	      /* Pass back the string length on exit.  */
++	      tmp = proc_sym->ts.u.cl->backend_decl;
++	      if (TREE_CODE (tmp) != INDIRECT_REF
++		  && proc_sym->ts.u.cl->passed_length)
++		{
+ 	      tmp = proc_sym->ts.u.cl->passed_length;
+ 	      tmp = build_fold_indirect_ref_loc (input_location, tmp);
+ 	      tmp = fold_convert (gfc_charlen_type_node, tmp);
+@@ -3909,6 +4014,10 @@
+ 	      tmp = fold_build2_loc (input_location, MODIFY_EXPR,
+ 				     gfc_charlen_type_node, tmp,
+ 				     proc_sym->ts.u.cl->backend_decl);
++		}
++	      else
++		tmp = NULL_TREE;
++
+ 	      gfc_add_init_cleanup (block, gfc_finish_block (&init), tmp);
+ 	    }
+ 	  else if (TREE_CODE (proc_sym->ts.u.cl->backend_decl) == VAR_DECL)
+@@ -3979,10 +4088,10 @@
+       else if (sym->attr.dimension || sym->attr.codimension)
+ 	{
+           /* Assumed-size Cray pointees need to be treated as AS_EXPLICIT.  */
+-          array_type tmp = sym->as->type;
+-          if (tmp == AS_ASSUMED_SIZE && sym->as->cp_was_assumed)
+-            tmp = AS_EXPLICIT;
+-          switch (tmp)
++          array_type type_of_array = sym->as->type;
++          if (type_of_array == AS_ASSUMED_SIZE && sym->as->cp_was_assumed)
++            type_of_array = AS_EXPLICIT;
++          switch (type_of_array)
+ 	    {
+ 	    case AS_EXPLICIT:
+ 	      if (sym->attr.dummy || sym->attr.result)
+@@ -4059,6 +4168,15 @@
+ 	    case AS_DEFERRED:
+ 	      seen_trans_deferred_array = true;
+ 	      gfc_trans_deferred_array (sym, block);
++	      if (sym->ts.type == BT_CHARACTER && sym->ts.deferred
++		  && sym->attr.result)
++		{
++		  gfc_start_block (&init);
++		  gfc_save_backend_locus (&loc);
++		  gfc_set_backend_locus (&sym->declared_at);
++		  tmp = gfc_null_and_pass_deferred_len (sym, &init, &loc);
++		  gfc_add_init_cleanup (block, gfc_finish_block (&init), tmp);
++		}
+ 	      break;
+ 
+ 	    default:
+@@ -4073,6 +4191,7 @@
+ 	continue;
+       else if ((!sym->attr.dummy || sym->ts.deferred)
+ 		&& (sym->attr.allocatable
++		    || (sym->attr.pointer && sym->attr.result)
+ 		    || (sym->ts.type == BT_CLASS
+ 			&& CLASS_DATA (sym)->attr.allocatable)))
+ 	{
+@@ -4080,95 +4199,50 @@
+ 	    {
+ 	      tree descriptor = NULL_TREE;
+ 
+-	      /* Nullify and automatic deallocation of allocatable
+-		 scalars.  */
+-	      e = gfc_lval_expr_from_sym (sym);
+-	      if (sym->ts.type == BT_CLASS)
+-		gfc_add_data_component (e);
+-
+-	      gfc_init_se (&se, NULL);
+-	      if (sym->ts.type != BT_CLASS
+-		  || sym->ts.u.derived->attr.dimension
+-		  || sym->ts.u.derived->attr.codimension)
+-		{
+-		  se.want_pointer = 1;
+-		  gfc_conv_expr (&se, e);
+-		}
+-	      else if (sym->ts.type == BT_CLASS
+-		       && !CLASS_DATA (sym)->attr.dimension
+-		       && !CLASS_DATA (sym)->attr.codimension)
+-		{
+-		  se.want_pointer = 1;
+-		  gfc_conv_expr (&se, e);
+-		}
+-	      else
+-		{
+-		  gfc_conv_expr (&se, e);
+-		  descriptor = se.expr;
+-		  se.expr = gfc_conv_descriptor_data_addr (se.expr);
+-		  se.expr = build_fold_indirect_ref_loc (input_location, se.expr);
+-		}
+-	      gfc_free_expr (e);
+-
+ 	      gfc_save_backend_locus (&loc);
+ 	      gfc_set_backend_locus (&sym->declared_at);
+ 	      gfc_start_block (&init);
+ 
+-	      if (!sym->attr.dummy || sym->attr.intent == INTENT_OUT)
++	      if (!sym->attr.pointer)
+ 		{
+-		  /* Nullify when entering the scope.  */
+-		  tmp = fold_build2_loc (input_location, MODIFY_EXPR,
+-					 TREE_TYPE (se.expr), se.expr,
+-					 fold_convert (TREE_TYPE (se.expr),
+-						       null_pointer_node));
+-		  if (sym->attr.optional)
++		  /* Nullify and automatic deallocation of allocatable
++		     scalars.  */
++		  e = gfc_lval_expr_from_sym (sym);
++		  if (sym->ts.type == BT_CLASS)
++		    gfc_add_data_component (e);
++
++		  gfc_init_se (&se, NULL);
++		  if (sym->ts.type != BT_CLASS
++		      || sym->ts.u.derived->attr.dimension
++		      || sym->ts.u.derived->attr.codimension)
+ 		    {
+-		      tree present = gfc_conv_expr_present (sym);
+-		      tmp = build3_loc (input_location, COND_EXPR,
+-					void_type_node, present, tmp,
+-					build_empty_stmt (input_location));
++		      se.want_pointer = 1;
++		      gfc_conv_expr (&se, e);
+ 		    }
+-		  gfc_add_expr_to_block (&init, tmp);
+-		}
+-
+-	      if ((sym->attr.dummy || sym->attr.result)
+-		    && sym->ts.type == BT_CHARACTER
+-		    && sym->ts.deferred)
+-		{
+-		  /* Character length passed by reference.  */
+-		  tmp = sym->ts.u.cl->passed_length;
+-		  tmp = build_fold_indirect_ref_loc (input_location, tmp);
+-		  tmp = fold_convert (gfc_charlen_type_node, tmp);
+-
+-		  if (!sym->attr.dummy || sym->attr.intent == INTENT_OUT)
+-		    /* Zero the string length when entering the scope.  */
+-		    gfc_add_modify (&init, sym->ts.u.cl->backend_decl,
+-				build_int_cst (gfc_charlen_type_node, 0));
++		  else if (sym->ts.type == BT_CLASS
++			   && !CLASS_DATA (sym)->attr.dimension
++			   && !CLASS_DATA (sym)->attr.codimension)
++		    {
++		      se.want_pointer = 1;
++		      gfc_conv_expr (&se, e);
++		    }
+ 		  else
+ 		    {
+-		      tree tmp2;
+-
+-		      tmp2 = fold_build2_loc (input_location, MODIFY_EXPR,
+-					      gfc_charlen_type_node,
+-					      sym->ts.u.cl->backend_decl, tmp);
+-		      if (sym->attr.optional)
+-			{
+-			  tree present = gfc_conv_expr_present (sym);
+-			  tmp2 = build3_loc (input_location, COND_EXPR,
+-					     void_type_node, present, tmp2,
+-					     build_empty_stmt (input_location));
+-			}
+-		      gfc_add_expr_to_block (&init, tmp2);
++		      se.descriptor_only = 1;
++		      gfc_conv_expr (&se, e);
++		      descriptor = se.expr;
++		      se.expr = gfc_conv_descriptor_data_addr (se.expr);
++		      se.expr = build_fold_indirect_ref_loc (input_location, se.expr);
+ 		    }
++		  gfc_free_expr (e);
+ 
+-		  gfc_restore_backend_locus (&loc);
+-
+-		  /* Pass the final character length back.  */
+-		  if (sym->attr.intent != INTENT_IN)
++		  if (!sym->attr.dummy || sym->attr.intent == INTENT_OUT)
+ 		    {
++		      /* Nullify when entering the scope.  */
+ 		      tmp = fold_build2_loc (input_location, MODIFY_EXPR,
+-					     gfc_charlen_type_node, tmp,
+-					     sym->ts.u.cl->backend_decl);
++					     TREE_TYPE (se.expr), se.expr,
++					     fold_convert (TREE_TYPE (se.expr),
++							   null_pointer_node));
+ 		      if (sym->attr.optional)
+ 			{
+ 			  tree present = gfc_conv_expr_present (sym);
+@@ -4176,16 +4250,21 @@
+ 					    void_type_node, present, tmp,
+ 					    build_empty_stmt (input_location));
+ 			}
++		      gfc_add_expr_to_block (&init, tmp);
+ 		    }
+-		  else
+-		    tmp = NULL_TREE;
+ 		}
++
++	      if ((sym->attr.dummy || sym->attr.result)
++		    && sym->ts.type == BT_CHARACTER
++		    && sym->ts.deferred
++		    && sym->ts.u.cl->passed_length)
++		tmp = gfc_null_and_pass_deferred_len (sym, &init, &loc);
+ 	      else
+ 		gfc_restore_backend_locus (&loc);
+ 
+ 	      /* Deallocate when leaving the scope. Nullifying is not
+ 		 needed.  */
+-	      if (!sym->attr.result && !sym->attr.dummy
++	      if (!sym->attr.result && !sym->attr.dummy && !sym->attr.pointer
+ 		  && !sym->ns->proc_name->attr.is_main_program)
+ 		{
+ 		  if (sym->ts.type == BT_CLASS
+@@ -4202,6 +4281,7 @@
+ 		      gfc_free_expr (expr);
+ 		    }
+ 		}
++
+ 	      if (sym->ts.type == BT_CLASS)
+ 		{
+ 		  /* Initialize _vptr to declared type.  */
+@@ -4242,19 +4322,9 @@
+ 	  if (sym->attr.dummy)
+ 	    {
+ 	      gfc_start_block (&init);
+-
+-	      /* Character length passed by reference.  */
+-	      tmp = sym->ts.u.cl->passed_length;
+-	      tmp = build_fold_indirect_ref_loc (input_location, tmp);
+-	      tmp = fold_convert (gfc_charlen_type_node, tmp);
+-	      gfc_add_modify (&init, sym->ts.u.cl->backend_decl, tmp);
+-	      /* Pass the final character length back.  */
+-	      if (sym->attr.intent != INTENT_IN)
+-		tmp = fold_build2_loc (input_location, MODIFY_EXPR,
+-				       gfc_charlen_type_node, tmp,
+-				       sym->ts.u.cl->backend_decl);
+-	      else
+-		tmp = NULL_TREE;
++	      gfc_save_backend_locus (&loc);
++	      gfc_set_backend_locus (&sym->declared_at);
++	      tmp = gfc_null_and_pass_deferred_len (sym, &init, &loc);
+ 	      gfc_add_init_cleanup (block, gfc_finish_block (&init), tmp);
+ 	    }
+ 	}
+@@ -4784,7 +4854,7 @@
  generate_coarray_sym_init (gfc_symbol *sym)
  {
    tree tmp, size, decl, token;
@@ -20169,7 +21703,7 @@ Index: gcc/fortran/trans-decl.c
    int reg_type;
  
    if (sym->attr.dummy || sym->attr.allocatable || !sym->attr.codimension
-@@ -4800,6 +4818,10 @@
+@@ -4800,6 +4870,10 @@
  		 && sym->ts.u.derived->from_intmod == INTMOD_ISO_FORTRAN_ENV
  		 && sym->ts.u.derived->intmod_sym_id == ISOFORTRAN_LOCK_TYPE;
  
@@ -20180,7 +21714,7 @@ Index: gcc/fortran/trans-decl.c
    /* FIXME: Workaround for PR middle-end/49106, cf. also PR middle-end/49108
       to make sure the variable is not optimized away.  */
    DECL_PRESERVE_P (DECL_CONTEXT (decl)) = 1;
-@@ -4806,7 +4828,7 @@
+@@ -4806,7 +4880,7 @@
  
    /* For lock types, we pass the array size as only the library knows the
       size of the variable.  */
@@ -20189,7 +21723,7 @@ Index: gcc/fortran/trans-decl.c
      size = gfc_index_one_node;
    else
      size = TYPE_SIZE_UNIT (gfc_get_element_type (TREE_TYPE (decl)));
-@@ -4828,6 +4850,8 @@
+@@ -4828,6 +4902,8 @@
  			       GFC_TYPE_ARRAY_CAF_TOKEN (TREE_TYPE(decl)));
    if (is_lock_type)
      reg_type = sym->attr.artificial ? GFC_CAF_CRITICAL : GFC_CAF_LOCK_STATIC;
@@ -22843,6 +24377,24 @@ Index: gcc/tree-sra.c
  	root->grp_total_scalarization = 0;
      }
  
+@@ -3242,6 +3242,7 @@
+     }
+   else if (racc
+ 	   && !racc->grp_unscalarized_data
++	   && !racc->grp_unscalarizable_region
+ 	   && TREE_CODE (lhs) == SSA_NAME
+ 	   && !access_has_replacements_p (racc))
+     {
+@@ -3405,7 +3406,8 @@
+       else
+ 	{
+ 	  if (access_has_children_p (racc)
+-	      && !racc->grp_unscalarized_data)
++	      && !racc->grp_unscalarized_data
++	      && TREE_CODE (lhs) != SSA_NAME)
+ 	    {
+ 	      if (dump_file)
+ 		{
 Index: gcc/genpreds.c
 ===================================================================
 --- a/src/gcc/genpreds.c	(.../tags/gcc_5_3_0_release)
@@ -25843,7 +27395,41 @@ Index: gcc/ira.c
 ===================================================================
 --- a/src/gcc/ira.c	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/ira.c	(.../branches/gcc-5-branch)
-@@ -3422,7 +3422,8 @@
+@@ -3349,9 +3349,6 @@
+   return NULL_RTX;
+ }
+ 
+-/* Nonzero if we recorded an equivalence for a LABEL_REF.  */
+-static int recorded_label_ref;
+-
+ /* Find registers that are equivalent to a single value throughout the
+    compilation (either because they can be referenced in memory or are
+    set once from a single constant).  Lower their priority for a
+@@ -3361,10 +3358,8 @@
+    value into the using insn.  If it succeeds, we can eliminate the
+    register completely.
+ 
+-   Initialize init_insns in ira_reg_equiv array.
+-
+-   Return non-zero if jump label rebuilding should be done.  */
+-static int
++   Initialize init_insns in ira_reg_equiv array.  */
++static void
+ update_equiv_regs (void)
+ {
+   rtx_insn *insn;
+@@ -3373,10 +3368,6 @@
+   bitmap cleared_regs;
+   bool *pdx_subregs;
+ 
+-  /* We need to keep track of whether or not we recorded a LABEL_REF so
+-     that we know if the jump optimizer needs to be rerun.  */
+-  recorded_label_ref = 0;
+-
+   /* Use pdx_subregs to show whether a reg is used in a paradoxical
+      subreg.  */
+   pdx_subregs = XCNEWVEC (bool, max_regno);
+@@ -3422,7 +3413,8 @@
  
  	  /* If this insn contains more (or less) than a single SET,
  	     only mark all destinations as having no known equivalence.  */
@@ -25853,6 +27439,145 @@ Index: gcc/ira.c
  	    {
  	      note_stores (PATTERN (insn), no_equiv, NULL);
  	      continue;
+@@ -3607,17 +3599,6 @@
+ 		  = gen_rtx_INSN_LIST (VOIDmode, insn,
+ 				       ira_reg_equiv[regno].init_insns);
+ 
+-	      /* Record whether or not we created a REG_EQUIV note for a LABEL_REF.
+-		 We might end up substituting the LABEL_REF for uses of the
+-		 pseudo here or later.  That kind of transformation may turn an
+-		 indirect jump into a direct jump, in which case we must rerun the
+-		 jump optimizer to ensure that the JUMP_LABEL fields are valid.  */
+-	      if (GET_CODE (x) == LABEL_REF
+-		  || (GET_CODE (x) == CONST
+-		      && GET_CODE (XEXP (x, 0)) == PLUS
+-		      && (GET_CODE (XEXP (XEXP (x, 0), 0)) == LABEL_REF)))
+-		recorded_label_ref = 1;
+-
+ 	      reg_equiv[regno].replacement = x;
+ 	      reg_equiv[regno].src_p = &SET_SRC (set);
+ 	      reg_equiv[regno].loop_depth = (short) loop_depth;
+@@ -3735,9 +3716,9 @@
+ 	  if (! INSN_P (insn))
+ 	    continue;
+ 
+-	  /* Don't substitute into a non-local goto, this confuses CFG.  */
+-	  if (JUMP_P (insn)
+-	      && find_reg_note (insn, REG_NON_LOCAL_GOTO, NULL_RTX))
++	  /* Don't substitute into jumps.  indirect_jump_optimize does
++	     this for anything we are prepared to handle.  */
++	  if (JUMP_P (insn))
+ 	    continue;
+ 
+ 	  for (link = REG_NOTES (insn); link; link = XEXP (link, 1))
+@@ -3889,11 +3870,60 @@
+   end_alias_analysis ();
+   free (reg_equiv);
+   free (pdx_subregs);
+-  return recorded_label_ref;
+ }
+ 
++/* A pass over indirect jumps, converting simple cases to direct jumps.
++   Combine does this optimization too, but only within a basic block.  */
++static void
++indirect_jump_optimize (void)
++{
++  basic_block bb;
++  bool rebuild_p = false;
++
++  FOR_EACH_BB_REVERSE_FN (bb, cfun)
++    {
++      rtx_insn *insn = BB_END (bb);
++      if (!JUMP_P (insn))
++	continue;
++
++      rtx x = pc_set (insn);
++      if (!x || !REG_P (SET_SRC (x)))
++	continue;
++
++      int regno = REGNO (SET_SRC (x));
++      if (DF_REG_DEF_COUNT (regno) == 1)
++	{
++	  df_ref def = DF_REG_DEF_CHAIN (regno);
++	  if (!DF_REF_IS_ARTIFICIAL (def))
++	    {
++	      rtx_insn *def_insn = DF_REF_INSN (def);
++	      rtx note = find_reg_note (def_insn, REG_LABEL_OPERAND, NULL_RTX);
++
++	      if (note)
++		{
++		  /* Substitute a LABEL_REF to the label given by the
++		     note rather than using SET_SRC of DEF_INSN.
++		     DEF_INSN might be loading the label constant from
++		     a constant pool, which isn't what we want in a
++		     direct branch.  */
++		  rtx lab = gen_rtx_LABEL_REF (Pmode, XEXP (note, 0));
++		  if (validate_replace_rtx (SET_SRC (x), lab, insn))
++		    rebuild_p = true;
++		}
++	    }
++	}
++    }
++
++  if (rebuild_p)
++    {
++      timevar_push (TV_JUMP);
++      rebuild_jump_labels (get_insns ());
++      if (purge_all_dead_edges ())
++	delete_unreachable_blocks ();
++      timevar_pop (TV_JUMP);
++    }
++}
+ 
+-
+ /* Set up fields memory, constant, and invariant from init_insns in
+    the structures of array ira_reg_equiv.  */
+ static void
+@@ -5123,7 +5153,6 @@
+ {
+   bool loops_p;
+   int ira_max_point_before_emit;
+-  int rebuild_p;
+   bool saved_flag_caller_saves = flag_caller_saves;
+   enum ira_region saved_flag_ira_region = flag_ira_region;
+ 
+@@ -5200,6 +5229,10 @@
+ 
+   df_clear_flags (DF_NO_INSN_RESCAN);
+ 
++  indirect_jump_optimize ();
++  if (delete_trivially_dead_insns (get_insns (), max_reg_num ()))
++    df_analyze ();
++
+   regstat_init_n_sets_and_refs ();
+   regstat_compute_ri ();
+ 
+@@ -5217,24 +5250,12 @@
+   if (resize_reg_info () && flag_ira_loop_pressure)
+     ira_set_pseudo_classes (true, ira_dump_file);
+ 
+-  rebuild_p = update_equiv_regs ();
++  update_equiv_regs ();
+   setup_reg_equiv ();
+   setup_reg_equiv_init ();
+ 
+-  if (optimize && rebuild_p)
+-    {
+-      timevar_push (TV_JUMP);
+-      rebuild_jump_labels (get_insns ());
+-      if (purge_all_dead_edges ())
+-	delete_unreachable_blocks ();
+-      timevar_pop (TV_JUMP);
+-    }
+-
+   allocated_reg_info_size = max_reg_num ();
+ 
+-  if (delete_trivially_dead_insns (get_insns (), max_reg_num ()))
+-    df_analyze ();
+-
+   /* It is not worth to do such improvement when we use a simple
+      allocation because of -O0 usage or because the function is too
+      big.  */
 Index: gcc/tree-ssa.c
 ===================================================================
 --- a/src/gcc/tree-ssa.c	(.../tags/gcc_5_3_0_release)
@@ -30000,6 +31725,22 @@ Index: gcc/config/sparc/sparc.md
    [(set (match_operand:DI 0 "register_operand" "=r")
  	(not:DI (match_operand:DI 1 "arith_operand" "rI")))]
    "TARGET_ARCH64"
+Index: gcc/config/i386/sol2.h
+===================================================================
+--- a/src/gcc/config/i386/sol2.h	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/config/i386/sol2.h	(.../branches/gcc-5-branch)
+@@ -21,6 +21,11 @@
+ #define SUBTARGET_OPTIMIZATION_OPTIONS				\
+   { OPT_LEVELS_1_PLUS, OPT_momit_leaf_frame_pointer, NULL, 1 }
+ 
++/* 32-bit Solaris/x86 only guarantees 4-byte stack alignment as required by
++   the i386 psABI, so realign it as necessary for SSE instructions.  */
++#undef STACK_REALIGN_DEFAULT
++#define STACK_REALIGN_DEFAULT (TARGET_64BIT ? 0 : 1)
++
+ /* Old versions of the Solaris assembler can not handle the difference of
+    labels in different sections, so force DW_EH_PE_datarel if so.  */
+ #ifndef HAVE_AS_IX86_DIFF_SECT_DELTA
 Index: gcc/config/i386/constraints.md
 ===================================================================
 --- a/src/gcc/config/i386/constraints.md	(.../tags/gcc_5_3_0_release)
@@ -31512,17 +33253,20 @@ Index: gcc/config/rs6000/rs6000.c
 ===================================================================
 --- a/src/gcc/config/rs6000/rs6000.c	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/config/rs6000/rs6000.c	(.../branches/gcc-5-branch)
-@@ -20737,6 +20737,9 @@
+@@ -20737,6 +20737,12 @@
    else if (reg_overlap_mentioned_p (retval, oldval))
      oldval = copy_to_reg (oldval);
  
 +  if (mode != TImode && !reg_or_short_operand (oldval, mode))
 +    oldval = copy_to_mode_reg (mode, oldval);
 +
++  if (reg_overlap_mentioned_p (retval, newval))
++    newval = copy_to_reg (newval);
++
    mem = rs6000_pre_atomic_barrier (mem, mod_s);
  
    label1 = NULL_RTX;
-@@ -20751,10 +20754,8 @@
+@@ -20751,10 +20757,8 @@
  
    x = retval;
    if (mask)
@@ -31560,6 +33304,45 @@ Index: gcc/config/rs6000/altivec.md
    [(set_attr "type" "vecload")])
  
  (define_expand "altivec_lvx_<mode>"
+Index: gcc/config/rs6000/rs6000.md
+===================================================================
+--- a/src/gcc/config/rs6000/rs6000.md	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/config/rs6000/rs6000.md	(.../branches/gcc-5-branch)
+@@ -6144,10 +6144,12 @@
+    xsrdpiz %x0,%x1"
+   [(set_attr "type" "fp")])
+ 
+-;; Since FCTIWZ doesn't sign extend the upper bits, we have to do a store and a
+-;; load to properly sign extend the value, but at least doing a store, load
+-;; into a GPR to sign extend, a store from the GPR and a load back into the FPR
+-;; if we have 32-bit memory ops
++;; Opitmize converting SF/DFmode to signed SImode and back to SF/DFmode.  This
++;; optimization prevents on ISA 2.06 systems and earlier having to store the
++;; value from the FPR/vector unit to the stack, load the value into a GPR, sign
++;; extend it, store it back on the stack from the GPR, load it back into the
++;; FP/vector unit to do the rounding. If we have direct move (ISA 2.07),
++;; disable using store and load to sign/zero extend the value.
+ (define_insn_and_split "*round32<mode>2_fprs"
+   [(set (match_operand:SFDF 0 "gpc_reg_operand" "=d")
+ 	(float:SFDF
+@@ -6156,7 +6158,7 @@
+    (clobber (match_scratch:DI 3 "=d"))]
+   "TARGET_HARD_FLOAT && TARGET_FPRS && TARGET_DOUBLE_FLOAT
+    && <SI_CONVERT_FP> && TARGET_LFIWAX && TARGET_STFIWX && TARGET_FCFID
+-   && can_create_pseudo_p ()"
++   && !TARGET_DIRECT_MOVE && can_create_pseudo_p ()"
+   "#"
+   ""
+   [(pc)]
+@@ -6188,7 +6190,7 @@
+    (clobber (match_scratch:DI 2 "=d"))
+    (clobber (match_scratch:DI 3 "=d"))]
+   "TARGET_HARD_FLOAT && TARGET_FPRS && TARGET_DOUBLE_FLOAT
+-   && TARGET_LFIWZX && TARGET_STFIWX && TARGET_FCFIDU
++   && TARGET_LFIWZX && TARGET_STFIWX && TARGET_FCFIDU && !TARGET_DIRECT_MOVE
+    && can_create_pseudo_p ()"
+   "#"
+   ""
 Index: gcc/config/arm/arm-builtins.c
 ===================================================================
 --- a/src/gcc/config/arm/arm-builtins.c	(.../tags/gcc_5_3_0_release)
