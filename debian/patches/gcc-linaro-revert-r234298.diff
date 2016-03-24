@@ -1,0 +1,1296 @@
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vzips16_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vzips16_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vzips16' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vtrns16_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vtrns16_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vtrns16' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vexts64_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vexts64_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vexts64' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O3 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vzipu16_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vzipu16_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vzipu16' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vzipqs8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vzipqs8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vzipQs8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vextQu8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vextQu8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vextQu8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O3 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vtrnu16_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vtrnu16_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vtrnu16' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vtrnqs8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vtrnqs8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vtrnQs8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vtrnqf32_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vtrnqf32_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vtrnQf32' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vextu64_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vextu64_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vextu64' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O3 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vrev64qp8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vrev64qp8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vrev64q_p8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vuzpqp8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vuzpqp8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vuzpQp8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vrev32p8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vrev32p8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vrev32p8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vextu8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vextu8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vextu8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O3 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vrev64qp16_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vrev64qp16_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vrev64q_p16' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vextQs64_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vextQs64_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vextQs64' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O3 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vtrnqs16_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vtrnqs16_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vtrnQs16' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vtrns8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vtrns8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vtrns8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vrev64qs32_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vrev64qs32_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vrev64q_s32' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vextQu64_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vextQu64_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vextQu64' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O3 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vtrnqu16_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vtrnqu16_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vtrnQu16' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vrev64s8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vrev64s8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vrev64s8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vrev64qu32_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vrev64qu32_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vrev64q_u32' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vuzpqp16_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vuzpqp16_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vuzpQp16' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vextp16_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vextp16_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vextp16' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O3 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vuzpqs32_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vuzpqs32_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vuzpQs32' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vexts32_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vexts32_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vexts32' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O3 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vuzpqu32_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vuzpqu32_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vuzpQu32' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vuzps8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vuzps8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vuzps8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vextu32_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vextu32_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vextu32' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O3 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vzipqp8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vzipqp8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vzipQp8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vrev32s16_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vrev32s16_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vrev32s16' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vtrnqp8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vtrnqp8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vtrnQp8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vrev32qs8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vrev32qs8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vrev32q_s8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vrev32u16_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vrev32u16_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vrev32u16' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vrev64p16_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vrev64p16_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vrev64p16' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vrev64s32_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vrev64s32_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vrev64s32' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vrev16qs8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vrev16qs8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vrev16q_s8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/simd.exp
++++ b/src/gcc/testsuite/gcc.target/arm/simd/simd.exp
+@@ -27,22 +27,9 @@
+ # Initialize `dg'.
+ dg-init
+ 
+-# If the target hardware supports NEON, the default action is "run", otherwise
+-# just "compile".
+-global dg-do-what-default
+-set save-dg-do-what-default ${dg-do-what-default}
+-if {![check_effective_target_arm_neon_ok]} then {
+-  return
+-} elseif {[is-effective-target arm_neon_hw]} then {
+-  set dg-do-what-default run
+-} else {
+-  set dg-do-what-default compile
+-}
+-
+ # Main loop.
+ dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/*.\[cCS\]]] \
+ 	"" ""
+ 
+ # All done.
+-set dg-do-what-default ${save-dg-do-what-default}
+ dg-finish
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vrev64u32_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vrev64u32_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vrev64u32' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vrev64qu8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vrev64qu8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vrev64q_u8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vuzpp16_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vuzpp16_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vuzpp16' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vuzps32_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vuzps32_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vuzps32' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vuzpu32_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vuzpu32_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vuzpu32' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vextQp16_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vextQp16_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vextQp16' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O3 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vextQs32_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vextQs32_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vextQs32' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O3 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vrev32qp16_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vrev32qp16_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vrev32q_p16' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vzipqp16_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vzipqp16_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vzipQp16' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vzipqs32_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vzipqs32_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vzipQs32' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vtrnp8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vtrnp8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vtrnp8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vextQu32_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vextQu32_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vextQu32' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O3 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vuzpqu8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vuzpqu8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vuzpQu8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vzips8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vzips8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vzips8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vzipqu32_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vzipqu32_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vzipQu32' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vrev16s8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vrev16s8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vrev16s8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vrev32u8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vrev32u8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vrev32u8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vrev64p8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vrev64p8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vrev64p8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vuzpp8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vuzpp8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vuzpp8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vzipp16_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vzipp16_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vzipp16' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vtrnp16_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vtrnp16_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vtrnp16' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vextp64_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vextp64_1.c
+@@ -1,5 +1,6 @@
+ /* Test the `vextp64' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
+ /* { dg-require-effective-target arm_crypto_ok } */
+ /* { dg-options "-save-temps -O3 -fno-inline" } */
+ /* { dg-add-options arm_crypto } */
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vrev32qp8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vrev32qp8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vrev32q_p8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vzips32_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vzips32_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vzips32' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vtrns32_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vtrns32_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vtrns32' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vextQs8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vextQs8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vextQs8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O3 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vrev16qp8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vrev16qp8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vrev16q_p8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vzipu32_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vzipu32_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vzipu32' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vtrnu32_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vtrnu32_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vtrnu32' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vzipqu8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vzipqu8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vzipQu8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vtrnqu8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vtrnqu8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vtrnQu8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vrev64qf32_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vrev64qf32_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vrev64q_f32' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vuzpqf32_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vuzpqf32_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vuzpQf32' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vzipp8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vzipp8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vzipp8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vextf32_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vextf32_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vextf32' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O3 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vextQp64_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vextQp64_1.c
+@@ -1,5 +1,6 @@
+ /* Test the `vextQp64' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
+ /* { dg-require-effective-target arm_crypto_ok } */
+ /* { dg-options "-save-temps -O3 -fno-inline" } */
+ /* { dg-add-options arm_crypto } */
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vexts8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vexts8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vexts8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O3 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vrev16p8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vrev16p8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vrev16p8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vtrnqp16_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vtrnqp16_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vtrnQp16' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vtrnqs32_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vtrnqs32_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vtrnQs32' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vtrnqu32_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vtrnqu32_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vtrnQu32' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vtrnu8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vtrnu8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vtrnu8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vrev64qs16_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vrev64qs16_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vrev64q_s16' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vrev64f32_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vrev64f32_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vrev64f32' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vrev64u8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vrev64u8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vrev64u8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vrev64qu16_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vrev64qu16_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vrev64q_u16' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vrev32p16_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vrev32p16_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vrev32p16' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vextQp8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vextQp8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vextQp8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O3 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vuzpf32_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vuzpf32_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vuzpf32' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vuzpqs16_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vuzpqs16_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vuzpQs16' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vexts16_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vexts16_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vexts16' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O3 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vuzpqu16_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vuzpqu16_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vuzpQu16' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vuzpu8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vuzpu8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vuzpu8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vextQf32_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vextQf32_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vextQf32' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O3 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vextu16_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vextu16_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vextu16' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O3 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vzipqf32_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vzipqf32_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vzipQf32' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vrev32qu8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vrev32qu8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vrev32q_u8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vrev64s16_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vrev64s16_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vrev64s16' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vrev16qu8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vrev16qu8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vrev16q_u8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vrev64u16_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vrev64u16_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vrev64u16' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vrev64qs8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vrev64qs8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vrev64q_s8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vextp8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vextp8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vextp8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O3 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vuzps16_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vuzps16_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vuzps16' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vuzpqs8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vuzpqs8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vuzpQs8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vuzpu16_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vuzpu16_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vuzpu16' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vextQs16_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vextQs16_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vextQs16' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O3 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vrev32s8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vrev32s8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vrev32s8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vrev32qs16_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vrev32qs16_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vrev32q_s16' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vextQu16_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vextQu16_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vextQu16' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O3 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vzipf32_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vzipf32_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vzipf32' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vzipqs16_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vzipqs16_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vzipQs16' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vtrnf32_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vtrnf32_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vtrnf32' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vrev32qu16_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vrev32qu16_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vrev32q_u16' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vzipqu16_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vzipqu16_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vzipQu16' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vzipu8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vzipu8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vzipu8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -O1 -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/gcc.target/arm/simd/vrev16u8_1.c
++++ b/src/gcc/testsuite/gcc.target/arm/simd/vrev16u8_1.c
+@@ -1,5 +1,7 @@
+ /* Test the `vrev16u8' ARM Neon intrinsic.  */
+ 
++/* { dg-do run } */
++/* { dg-require-effective-target arm_neon_ok } */
+ /* { dg-options "-save-temps -fno-inline" } */
+ /* { dg-add-options arm_neon } */
+ 
+--- a/src/gcc/testsuite/ChangeLog
++++ b/src/gcc/testsuite/ChangeLog
+@@ -5,130 +5,6 @@
+ 
+ 	* gcc.target/arm/no-volatile-in-it.c: Skip if -mcpu is overriden.
+ 
+-2016-03-17  Andre Vieira  <Andre.SimoesDiasVieira@arm.com>
+-
+-	Backport from mainline.
+-	2015-05-21  Sandra Loosemore  <sandra@codesourcery.com>
+-
+-	* gcc.target/arm/simd/simd.exp: Skip all tests if no arm_neon_ok
+-	effective target support.  If no arm_neon_hw support, do not attempt
+-	to execute the tests; only compile them.
+-	* gcc.target/arm/simd/vextf32_1.c: Remove explicit "dg-do run"
+-	and "dg-require-effective-target arm_neon_ok".
+-	* gcc.target/arm/simd/vextp16_1.c: Likewise.
+-	* gcc.target/arm/simd/vextp64_1.c: Likewise.
+-	* gcc.target/arm/simd/vextp8_1.c: Likewise.
+-	* gcc.target/arm/simd/vextQf32_1.c: Likewise.
+-	* gcc.target/arm/simd/vextQp16_1.c: Likewise.
+-	* gcc.target/arm/simd/vextQp64_1.c: Likewise.
+-	* gcc.target/arm/simd/vextQp8_1.c: Likewise.
+-	* gcc.target/arm/simd/vextQs16_1.c: Likewise.
+-	* gcc.target/arm/simd/vextQs32_1.c: Likewise.
+-	* gcc.target/arm/simd/vextQs64_1.c: Likewise.
+-	* gcc.target/arm/simd/vextQs8_1.c: Likewise.
+-	* gcc.target/arm/simd/vextQu16_1.c: Likewise.
+-	* gcc.target/arm/simd/vextQu32_1.c: Likewise.
+-	* gcc.target/arm/simd/vextQu64_1.c: Likewise.
+-	* gcc.target/arm/simd/vextQu8_1.c: Likewise.
+-	* gcc.target/arm/simd/vexts16_1.c: Likewise.
+-	* gcc.target/arm/simd/vexts32_1.c: Likewise.
+-	* gcc.target/arm/simd/vexts64_1.c: Likewise.
+-	* gcc.target/arm/simd/vexts8_1.c: Likewise.
+-	* gcc.target/arm/simd/vextu16_1.c: Likewise.
+-	* gcc.target/arm/simd/vextu32_1.c: Likewise.
+-	* gcc.target/arm/simd/vextu64_1.c: Likewise.
+-	* gcc.target/arm/simd/vextu8_1.c: Likewise.
+-	* gcc.target/arm/simd/vrev16p8_1.c: Likewise.
+-	* gcc.target/arm/simd/vrev16qp8_1.c: Likewise.
+-	* gcc.target/arm/simd/vrev16qs8_1.c: Likewise.
+-	* gcc.target/arm/simd/vrev16qu8_1.c: Likewise.
+-	* gcc.target/arm/simd/vrev16s8_1.c: Likewise.
+-	* gcc.target/arm/simd/vrev16u8_1.c: Likewise.
+-	* gcc.target/arm/simd/vrev32p16_1.c: Likewise.
+-	* gcc.target/arm/simd/vrev32p8_1.c: Likewise.
+-	* gcc.target/arm/simd/vrev32qp16_1.c: Likewise.
+-	* gcc.target/arm/simd/vrev32qp8_1.c: Likewise.
+-	* gcc.target/arm/simd/vrev32qs16_1.c: Likewise.
+-	* gcc.target/arm/simd/vrev32qs8_1.c: Likewise.
+-	* gcc.target/arm/simd/vrev32qu16_1.c: Likewise.
+-	* gcc.target/arm/simd/vrev32qu8_1.c: Likewise.
+-	* gcc.target/arm/simd/vrev32s16_1.c: Likewise.
+-	* gcc.target/arm/simd/vrev32s8_1.c: Likewise.
+-	* gcc.target/arm/simd/vrev32u16_1.c: Likewise.
+-	* gcc.target/arm/simd/vrev32u8_1.c: Likewise.
+-	* gcc.target/arm/simd/vrev64f32_1.c: Likewise.
+-	* gcc.target/arm/simd/vrev64p16_1.c: Likewise.
+-	* gcc.target/arm/simd/vrev64p8_1.c: Likewise.
+-	* gcc.target/arm/simd/vrev64qf32_1.c: Likewise.
+-	* gcc.target/arm/simd/vrev64qp16_1.c: Likewise.
+-	* gcc.target/arm/simd/vrev64qp8_1.c: Likewise.
+-	* gcc.target/arm/simd/vrev64qs16_1.c: Likewise.
+-	* gcc.target/arm/simd/vrev64qs32_1.c: Likewise.
+-	* gcc.target/arm/simd/vrev64qs8_1.c: Likewise.
+-	* gcc.target/arm/simd/vrev64qu16_1.c: Likewise.
+-	* gcc.target/arm/simd/vrev64qu32_1.c: Likewise.
+-	* gcc.target/arm/simd/vrev64qu8_1.c: Likewise.
+-	* gcc.target/arm/simd/vrev64s16_1.c: Likewise.
+-	* gcc.target/arm/simd/vrev64s32_1.c: Likewise.
+-	* gcc.target/arm/simd/vrev64s8_1.c: Likewise.
+-	* gcc.target/arm/simd/vrev64u16_1.c: Likewise.
+-	* gcc.target/arm/simd/vrev64u32_1.c: Likewise.
+-	* gcc.target/arm/simd/vrev64u8_1.c: Likewise.
+-	* gcc.target/arm/simd/vtrnf32_1.c: Likewise.
+-	* gcc.target/arm/simd/vtrnp16_1.c: Likewise.
+-	* gcc.target/arm/simd/vtrnp8_1.c: Likewise.
+-	* gcc.target/arm/simd/vtrnqf32_1.c: Likewise.
+-	* gcc.target/arm/simd/vtrnqp16_1.c: Likewise.
+-	* gcc.target/arm/simd/vtrnqp8_1.c: Likewise.
+-	* gcc.target/arm/simd/vtrnqs16_1.c: Likewise.
+-	* gcc.target/arm/simd/vtrnqs32_1.c: Likewise.
+-	* gcc.target/arm/simd/vtrnqs8_1.c: Likewise.
+-	* gcc.target/arm/simd/vtrnqu16_1.c: Likewise.
+-	* gcc.target/arm/simd/vtrnqu32_1.c: Likewise.
+-	* gcc.target/arm/simd/vtrnqu8_1.c: Likewise.
+-	* gcc.target/arm/simd/vtrns16_1.c: Likewise.
+-	* gcc.target/arm/simd/vtrns32_1.c: Likewise.
+-	* gcc.target/arm/simd/vtrns8_1.c: Likewise.
+-	* gcc.target/arm/simd/vtrnu16_1.c: Likewise.
+-	* gcc.target/arm/simd/vtrnu32_1.c: Likewise.
+-	* gcc.target/arm/simd/vtrnu8_1.c: Likewise.
+-	* gcc.target/arm/simd/vuzpf32_1.c: Likewise.
+-	* gcc.target/arm/simd/vuzpp16_1.c: Likewise.
+-	* gcc.target/arm/simd/vuzpp8_1.c: Likewise.
+-	* gcc.target/arm/simd/vuzpqf32_1.c: Likewise.
+-	* gcc.target/arm/simd/vuzpqp16_1.c: Likewise.
+-	* gcc.target/arm/simd/vuzpqp8_1.c: Likewise.
+-	* gcc.target/arm/simd/vuzpqs16_1.c: Likewise.
+-	* gcc.target/arm/simd/vuzpqs32_1.c: Likewise.
+-	* gcc.target/arm/simd/vuzpqs8_1.c: Likewise.
+-	* gcc.target/arm/simd/vuzpqu16_1.c: Likewise.
+-	* gcc.target/arm/simd/vuzpqu32_1.c: Likewise.
+-	* gcc.target/arm/simd/vuzpqu8_1.c: Likewise.
+-	* gcc.target/arm/simd/vuzps16_1.c: Likewise.
+-	* gcc.target/arm/simd/vuzps32_1.c: Likewise.
+-	* gcc.target/arm/simd/vuzps8_1.c: Likewise.
+-	* gcc.target/arm/simd/vuzpu16_1.c: Likewise.
+-	* gcc.target/arm/simd/vuzpu32_1.c: Likewise.
+-	* gcc.target/arm/simd/vuzpu8_1.c: Likewise.
+-	* gcc.target/arm/simd/vzipf32_1.c: Likewise.
+-	* gcc.target/arm/simd/vzipp16_1.c: Likewise.
+-	* gcc.target/arm/simd/vzipp8_1.c: Likewise.
+-	* gcc.target/arm/simd/vzipqf32_1.c: Likewise.
+-	* gcc.target/arm/simd/vzipqp16_1.c: Likewise.
+-	* gcc.target/arm/simd/vzipqp8_1.c: Likewise.
+-	* gcc.target/arm/simd/vzipqs16_1.c: Likewise.
+-	* gcc.target/arm/simd/vzipqs32_1.c: Likewise.
+-	* gcc.target/arm/simd/vzipqs8_1.c: Likewise.
+-	* gcc.target/arm/simd/vzipqu16_1.c: Likewise.
+-	* gcc.target/arm/simd/vzipqu32_1.c: Likewise.
+-	* gcc.target/arm/simd/vzipqu8_1.c: Likewise.
+-	* gcc.target/arm/simd/vzips16_1.c: Likewise.
+-	* gcc.target/arm/simd/vzips32_1.c: Likewise.
+-	* gcc.target/arm/simd/vzips8_1.c: Likewise.
+-	* gcc.target/arm/simd/vzipu16_1.c: Likewise.
+-	* gcc.target/arm/simd/vzipu32_1.c: Likewise.
+-	* gcc.target/arm/simd/vzipu8_1.c: Likewise.
+-
+ 2016-03-15  Bernd Schmidt  <bschmidt@redhat.com>
+ 
+ 	Backport from mainline

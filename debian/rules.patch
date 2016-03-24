@@ -14,6 +14,9 @@ series_file	?= $(patchdir)/series
 
 debian_patches = \
 	svn-updates \
+	$(if $(with_linaro_branch),gcc-linaro-revert-r234298) \
+	$(if $(with_linaro_branch),gcc-linaro-revert-r234326) \
+	$(if $(with_linaro_branch),gcc-linaro-revert-r234324) \
 	$(if $(with_linaro_branch),gcc-linaro) \
 	$(if $(with_linaro_branch),gcc-linaro-no-macros) \
 
@@ -94,7 +97,6 @@ debian_patches += \
 	pr69144 \
 	pr66904 \
 	pr68273 \
-	pr70209 \
 	pr70218 \
 
 # this is still needed on powerpc, e.g. firefox and insighttoolkit4 will ftbfs.

@@ -1,3 +1,16 @@
+gcc-5 (5.3.1-13) unstable; urgency=medium
+
+  * Update to SVN 20160323 (r234424, 5.3.1) from the gcc-5-branch.
+    - Fix PR target/70188 (parisc), PR ipa/70306, PR target/70325 (x86),
+      PR target/70327 (x86), PR ipa/70269, PR ipa/70161, PR target/70293 (x86),
+      PR c++/70209.
+  * Update the Linaro support to the 5-2016.03 snapshot.
+    - Fix PR target/70113 (AArch64), PR target/69894, PR target/69895,
+      PR target/62254, PR target/69610, PR target/69161, PR target/67896.
+  * Fix building from the ibm branch with glibc 2.23.
+
+ -- Matthias Klose <doko@debian.org>  Thu, 24 Mar 2016 14:43:10 +0100
+
 gcc-5 (5.3.1-12) unstable; urgency=medium
 
   * Update to SVN 20160315 (r234249, 5.3.1) from the gcc-5-branch.
