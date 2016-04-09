@@ -14,11 +14,15 @@ series_file	?= $(patchdir)/series
 
 debian_patches = \
 	svn-updates \
+	$(if $(with_linaro_branch),gcc-linaro-revert-r234680) \
+	$(if $(with_linaro_branch),gcc-linaro-revert-r234665) \
 	$(if $(with_linaro_branch),gcc-linaro-revert-r234298) \
 	$(if $(with_linaro_branch),gcc-linaro-revert-r234326) \
 	$(if $(with_linaro_branch),gcc-linaro-revert-r234324) \
 	$(if $(with_linaro_branch),gcc-linaro) \
+	$(if $(with_linaro_branch),gcc-linaro-pr69875) \
 	$(if $(with_linaro_branch),gcc-linaro-no-macros) \
+	$(if $(with_linaro_branch),pr70496) \
 
 #	svn-updates \
 

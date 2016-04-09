@@ -1,6 +1,6 @@
-# DP: updates from the ibm/5 branch upto 20160324 (r234454).
+# DP: updates from the ibm/5 branch upto 20160404 (r234723).
 
-svn diff svn://gcc.gnu.org/svn/gcc/branches/gcc-5-branch@234111 svn://gcc.gnu.org/svn/gcc/branches/ibm/gcc-5-branch \
+svn diff svn://gcc.gnu.org/svn/gcc/branches/gcc-5-branch@234658 svn://gcc.gnu.org/svn/gcc/branches/ibm/gcc-5-branch \
 	| sed -r 's,^--- (\S+)\t(\S+)(.*)$,--- a/src/\1\t\2,;s,^\+\+\+ (\S+)\t(\S+)(.*)$,+++ b/src/\1\t\2,' \
 	| awk '/^Index:.*\.(class|texi)/ {skip=1; next} /^Index:/ { skip=0 } skip==0'
 
@@ -2082,16 +2082,30 @@ Index: libgcc/ChangeLog.ibm
 ===================================================================
 --- a/src/libgcc/ChangeLog.ibm	(.../gcc-5-branch)
 +++ b/src/libgcc/ChangeLog.ibm	(.../ibm/gcc-5-branch)
-@@ -0,0 +1,97 @@
+@@ -0,0 +1,114 @@
++2016-03-24  Michael Meissner  <meissner@linux.vnet.ibm.com>
++
++	Merge up to 234461.
++
 +2016-03-22  Michael Meissner  <meissner@linux.vnet.ibm.com>
++
++	Backport from mainline
++	2016-03-22  Michael Meissner  <meissner@linux.vnet.ibm.com>
 +
 +	PR libgcc/70363
 +	* config/rs6000/extendkftf2-sw.c (__extendkftf2_sw): If libgcc was
 +	built with an assembler that does not support ISA 3.0
 +	instructions, rename __extendkftf2_sw to __extendkftf2.
 +
-+2016-02-26  Paul E. Murphy  <murphyp@linux.vnet.ibm.com>
-+	    Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
++2016-03-14  Michael Meissner  <meissner@linux.vnet.ibm.com>
++
++	Merge up to 234186.
++
++2016-02-29  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
++
++	Backport from mainline
++	2016-02-26  Paul E. Murphy  <murphyp@linux.vnet.ibm.com>
++		    Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
 +
 +	* config/rs6000/sfp-machine.h (_FP_DECL_EX): Declare _fpsr as a
 +	union of u64 and double.
@@ -2101,8 +2115,11 @@ Index: libgcc/ChangeLog.ibm
 +	(FP_ROUNDMODE): Update the usage of _fpscr.
 +
 +2016-01-21  Michael Meissner  <meissner@linux.vnet.ibm.com>
-+	    Steven Munroe <munroesj@linux.vnet.ibm.com>
-+	    Tulio Magno Quites Machado Filho <tulioqm@br.ibm.com>
++
++	Backport from mainline
++	2016-01-21  Michael Meissner  <meissner@linux.vnet.ibm.com>
++		    Steven Munroe <munroesj@linux.vnet.ibm.com>
++		    Tulio Magno Quites Machado Filho <tulioqm@br.ibm.com>
 +
 +	* config/rs6000/float128-sed: New files to convert TF names to KF
 +	names for PowerPC IEEE 128-bit floating point support.
@@ -2180,13 +2197,6 @@ Index: libgcc/ChangeLog.ibm
 +	* configure.ac (powerpc*-*-linux*): Likewise.
 +	* configure: Regenerate.
 +
-Index: gcc/DATESTAMP
-===================================================================
---- a/src/gcc/DATESTAMP	(.../gcc-5-branch)
-+++ b/src/gcc/DATESTAMP	(.../ibm/gcc-5-branch)
-@@ -1 +1 @@
--20160310
-+20160314
 Index: gcc/configure
 ===================================================================
 --- a/src/gcc/configure	(.../gcc-5-branch)
@@ -2428,38 +2438,6 @@ Index: gcc/gcc.c
  
  #ifndef LIBASAN_SPEC
  #define STATIC_LIBASAN_LIBS \
-Index: gcc/ChangeLog
-===================================================================
---- a/src/gcc/ChangeLog	(.../gcc-5-branch)
-+++ b/src/gcc/ChangeLog	(.../ibm/gcc-5-branch)
-@@ -1,3 +1,27 @@
-+2016-03-14  Michael Meissner  <meissner@linux.vnet.ibm.com>
-+
-+	Backport from mainline
-+	2016-03-11  Michael Meissner  <meissner@linux.vnet.ibm.com>
-+
-+	PR target/70131
-+	* config/rs6000/rs6000.md (round32<mode>2_fprs): Do not do the
-+	optimization if we have direct move.
-+	(roundu32<mode>2_fprs): Likewise.
-+
-+2016-03-14  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
-+
-+	Backport from mainline
-+	2016-03-07  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
-+
-+	PR target/62281
-+	* config/i386/sol2.h (STACK_REALIGN_DEFAULT): Define.
-+
-+2016-03-10  Ulrich Weigand  <Ulrich.Weigand@de.ibm.com>
-+
-+	PR target/70168
-+	* config/rs6000/rs6000.c (rs6000_expand_atomic_compare_and_swap):
-+	Handle overlapping retval and newval.
-+
- 2016-03-10  Alan Modra  <amodra@gmail.com>
- 
- 	PR rtl-optimization/69195
 Index: gcc/testsuite/gcc.target/powerpc/extswsli-1.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.target/powerpc/extswsli-1.c	(.../gcc-5-branch)
@@ -3484,53 +3462,6 @@ Index: gcc/testsuite/gcc.target/powerpc/p9-lxvx-stxvx-2.c
 +  vector unsigned int u32 = vec_vsx_ld (1, (const unsigned int *)p);
 +  vec_ste (u32, 1, (unsigned int *)p);
 +}
-Index: gcc/testsuite/gcc.target/powerpc/ppc-round2.c
-===================================================================
---- a/src/gcc/testsuite/gcc.target/powerpc/ppc-round2.c	(.../gcc-5-branch)
-+++ b/src/gcc/testsuite/gcc.target/powerpc/ppc-round2.c	(.../ibm/gcc-5-branch)
-@@ -0,0 +1,42 @@
-+/* { dg-do compile { target { powerpc*-*-* && lp64 } } } */
-+/* { dg-skip-if "" { powerpc*-*-darwin* } { "*" } { "" } } */
-+/* { dg-require-effective-target powerpc_p8vector_ok } */
-+/* { dg-skip-if "do not override -mcpu" { powerpc*-*-* } { "-mcpu=*" } { "-mcpu=power8" } } */
-+/* { dg-options "-O2 -mcpu=power8" } */
-+/* { dg-final { scan-assembler-times "fcfid "      2 } } */
-+/* { dg-final { scan-assembler-times "fcfids "     2 } } */
-+/* { dg-final { scan-assembler-times "fctiwuz "    2 } } */
-+/* { dg-final { scan-assembler-times "fctiwz "     2 } } */
-+/* { dg-final { scan-assembler-times "mfvsrd "     4 } } */
-+/* { dg-final { scan-assembler-times "mtvsrwa "    2 } } */
-+/* { dg-final { scan-assembler-times "mtvsrwz "    2 } } */
-+/* { dg-final { scan-assembler-not   "lwz"           } } */
-+/* { dg-final { scan-assembler-not   "lfiwax "       } } */
-+/* { dg-final { scan-assembler-not   "lfiwzx "       } } */
-+/* { dg-final { scan-assembler-not   "stw"           } } */
-+/* { dg-final { scan-assembler-not   "stfiwx "       } } */
-+
-+/* Make sure we don't have loads/stores to the GPR unit.  */
-+double
-+round_double_int (double a)
-+{
-+  return (double)(int)a;
-+}
-+
-+float
-+round_float_int (float a)
-+{
-+  return (float)(int)a;
-+}
-+
-+double
-+round_double_uint (double a)
-+{
-+  return (double)(unsigned int)a;
-+}
-+
-+float
-+round_float_uint (float a)
-+{
-+  return (float)(unsigned int)a;
-+}
 Index: gcc/testsuite/gcc.target/powerpc/float128-hw.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.target/powerpc/float128-hw.c	(.../gcc-5-branch)
@@ -3958,7 +3889,11 @@ Index: gcc/testsuite/ChangeLog.ibm
 ===================================================================
 --- a/src/gcc/testsuite/ChangeLog.ibm	(.../gcc-5-branch)
 +++ b/src/gcc/testsuite/ChangeLog.ibm	(.../ibm/gcc-5-branch)
-@@ -0,0 +1,137 @@
+@@ -0,0 +1,145 @@
++2016-03-24  Michael Meissner  <meissner@linux.vnet.ibm.com>
++
++	Merge up to 234461.
++
 +2016-03-23  Michael Meissner  <meissner@linux.vnet.ibm.com>
 +
 +	Back port from mainline
@@ -3969,6 +3904,10 @@ Index: gcc/testsuite/ChangeLog.ibm
 +	vector constants.
 +	* gcc.target/powerpc/pr67071-2.c: Likewise.
 +	* gcc.target/powerpc/pr67071-3.c: Likewise.
++
++2016-03-14  Michael Meissner  <meissner@linux.vnet.ibm.com>
++
++	Merge up to 234186.
 +
 +2016-02-04  Michael Meissner  <meissner@linux.vnet.ibm.com>
 +
@@ -4235,7 +4174,7 @@ Index: gcc/testsuite/lib/target-supports.exp
  	    expr 0
  	} else {
  	    set options "-mvsx"
-@@ -3239,6 +3349,108 @@
+@@ -3260,6 +3370,108 @@
      }
  }
  
@@ -4344,7 +4283,7 @@ Index: gcc/testsuite/lib/target-supports.exp
  # Return 1 if this is a PowerPC target supporting -mvsx
  
  proc check_effective_target_powerpc_vsx_ok { } {
-@@ -5306,6 +5518,10 @@
+@@ -5327,6 +5539,10 @@
  	  "vmx_hw"         { set selected [check_vmx_hw_available] }
  	  "vsx_hw"         { set selected [check_vsx_hw_available] }
  	  "p8vector_hw"    { set selected [check_p8vector_hw_available] }
@@ -4355,7 +4294,7 @@ Index: gcc/testsuite/lib/target-supports.exp
  	  "ppc_recip_hw"   { set selected [check_ppc_recip_hw_available] }
  	  "dfp_hw"         { set selected [check_dfp_hw_available] }
  	  "htm_hw"         { set selected [check_htm_hw_available] }
-@@ -5330,6 +5546,10 @@
+@@ -5351,6 +5567,10 @@
  	  "vmx_hw"         { return 1 }
  	  "vsx_hw"         { return 1 }
  	  "p8vector_hw"    { return 1 }
@@ -4366,7 +4305,7 @@ Index: gcc/testsuite/lib/target-supports.exp
  	  "ppc_recip_hw"   { return 1 }
  	  "dfp_hw"         { return 1 }
  	  "htm_hw"         { return 1 }
-@@ -6004,7 +6224,9 @@
+@@ -6025,7 +6245,9 @@
          }
  
          lappend DEFAULT_VECTCFLAGS "-maltivec"
@@ -4377,162 +4316,6 @@ Index: gcc/testsuite/lib/target-supports.exp
              lappend DEFAULT_VECTCFLAGS "-mpower8-vector"
          } elseif [check_vsx_hw_available] {
              lappend DEFAULT_VECTCFLAGS "-mvsx" "-mno-allow-movmisalign"
-Index: gcc/testsuite/gfortran.dg/prof/dynamic_dispatch_6.f03
-===================================================================
---- a/src/gcc/testsuite/gfortran.dg/prof/dynamic_dispatch_6.f03	(.../gcc-5-branch)
-+++ b/src/gcc/testsuite/gfortran.dg/prof/dynamic_dispatch_6.f03	(.../ibm/gcc-5-branch)
-@@ -0,0 +1,68 @@
-+! { dg-require-profiling "-fprofile-generate" }
-+! { dg-options "-Ofast" }
-+!
-+! PR 45076: [OOP] gfortran.dg/dynamic_dispatch_6.f03 ICEs with -fprofile-use
-+!
-+! Contributed by Damian Rouson <damian@rouson.net>
-+
-+module field_module
-+  implicit none
-+  private
-+  public :: field
-+  type ,abstract :: field 
-+  end type
-+end module
-+
-+module periodic_5th_order_module
-+  use field_module ,only : field
-+  implicit none
-+  type ,extends(field) :: periodic_5th_order
-+  end type
-+end module
-+
-+module field_factory_module
-+  implicit none
-+  private
-+  public :: field_factory
-+  type, abstract :: field_factory 
-+  contains 
-+    procedure(create_interface), deferred :: create 
-+  end type 
-+  abstract interface 
-+    function create_interface(this) 
-+      use field_module ,only : field
-+      import :: field_factory
-+      class(field_factory), intent(in) :: this 
-+      class(field) ,pointer :: create_interface
-+    end function
-+  end interface 
-+end module
-+
-+module periodic_5th_factory_module
-+  use field_factory_module , only : field_factory
-+  implicit none
-+  private
-+  public :: periodic_5th_factory
-+  type, extends(field_factory) :: periodic_5th_factory 
-+  contains 
-+    procedure :: create=>new_periodic_5th_order
-+  end type 
-+contains
-+  function new_periodic_5th_order(this) 
-+    use field_module ,only : field
-+    use periodic_5th_order_module ,only : periodic_5th_order
-+    class(periodic_5th_factory), intent(in) :: this
-+    class(field) ,pointer :: new_periodic_5th_order
-+  end function
-+end module
-+
-+program main 
-+  use field_module ,only : field 
-+  use field_factory_module ,only : field_factory
-+  use periodic_5th_factory_module ,only : periodic_5th_factory
-+  implicit none 
-+  class(field) ,pointer :: u
-+  class(field_factory), allocatable :: field_creator 
-+  allocate (periodic_5th_factory ::  field_creator) 
-+  u => field_creator%create() 
-+end program
-Index: gcc/testsuite/gfortran.dg/prof/prof.exp
-===================================================================
---- a/src/gcc/testsuite/gfortran.dg/prof/prof.exp	(.../gcc-5-branch)
-+++ b/src/gcc/testsuite/gfortran.dg/prof/prof.exp	(.../ibm/gcc-5-branch)
-@@ -0,0 +1,56 @@
-+# Copyright (C) 2001-2016 Free Software Foundation, Inc.
-+
-+# This program is free software; you can redistribute it and/or modify
-+# it under the terms of the GNU General Public License as published by
-+# the Free Software Foundation; either version 3 of the License, or
-+# (at your option) any later version.
-+# 
-+# This program is distributed in the hope that it will be useful,
-+# but WITHOUT ANY WARRANTY; without even the implied warranty of
-+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+# GNU General Public License for more details.
-+# 
-+# You should have received a copy of the GNU General Public License
-+# along with GCC; see the file COPYING3.  If not see
-+# <http://www.gnu.org/licenses/>.
-+
-+# Test the functionality of programs compiled with profile-directed block
-+# ordering using -fprofile-generate followed by -fprofile-use.
-+
-+load_lib target-supports.exp
-+
-+# Some targets don't support tree profiling.
-+if { ![check_profiling_available "-fprofile-generate"] } {
-+    return
-+}
-+
-+# The procedures in profopt.exp need these parameters.
-+set tool gfortran
-+set prof_ext "gcda"
-+
-+if $tracelevel then {
-+    strace $tracelevel
-+}
-+
-+# Load support procs.
-+load_lib profopt.exp
-+
-+# Save and override the default list defined in profopt.exp.
-+set treeprof_save_profopt_options $PROFOPT_OPTIONS
-+set PROFOPT_OPTIONS [list {}]
-+
-+# These are globals used by profopt-execute.  The first is options
-+# needed to generate profile data, the second is options to use the
-+# profile data.
-+set profile_option "-fprofile-generate -D_PROFILE_GENERATE"
-+set feedback_option "-fprofile-use -D_PROFILE_USE"
-+
-+foreach src [lsort [glob -nocomplain $srcdir/$subdir/*.f*]] {
-+    # If we're only testing specific files and this isn't one of them, skip it.
-+    if ![runtest_file_p $runtests $src] then {
-+        continue
-+    }
-+    profopt-execute $src
-+}
-+
-+set PROFOPT_OPTIONS $treeprof_save_profopt_options
-Index: gcc/testsuite/ChangeLog
-===================================================================
---- a/src/gcc/testsuite/ChangeLog	(.../gcc-5-branch)
-+++ b/src/gcc/testsuite/ChangeLog	(.../ibm/gcc-5-branch)
-@@ -1,3 +1,17 @@
-+2016-03-14  Michael Meissner  <meissner@linux.vnet.ibm.com>
-+
-+	Backport from mainline
-+	2016-03-11  Michael Meissner  <meissner@linux.vnet.ibm.com>
-+
-+	PR target/70131
-+	* gcc.target/powerpc/ppc-round2.c: New test.
-+
-+2016-03-14  Dominique d'Humieres  <dominiq@lps.ens.fr>
-+
-+	PR fortran/45076
-+	gfortran.dg/prof/prof.exp: New script.
-+	gfortran.dg/prof/dynamic_dispatch_6.f03: New test.
-+
- 2016-03-10  Alan Modra  <amodra@gmail.com>
- 
- 	* gcc.dg/pr69195.c: New.
 Index: gcc/testsuite/g++.dg/pr69667.C
 ===================================================================
 --- a/src/gcc/testsuite/g++.dg/pr69667.C	(.../gcc-5-branch)
@@ -5031,7 +4814,17 @@ Index: gcc/ChangeLog.ibm
 ===================================================================
 --- a/src/gcc/ChangeLog.ibm	(.../gcc-5-branch)
 +++ b/src/gcc/ChangeLog.ibm	(.../ibm/gcc-5-branch)
-@@ -0,0 +1,1126 @@
+@@ -0,0 +1,1140 @@
++2016-03-31  Peter Bergner  <bergner@vnet.ibm.com>
++
++	Merge up to 234658.
++	* REVISION: Update subversion id.
++
++2016-03-24  Michael Meissner  <meissner@linux.vnet.ibm.com>
++
++	Merge up to 234461.
++	* REVISION: Update subversion id.
++
 +2016-03-23  Michael Meissner  <meissner@linux.vnet.ibm.com>
 +
 +	Back port from mainline
@@ -5084,6 +4877,10 @@ Index: gcc/ChangeLog.ibm
 +	* config/rs6000/rs6000.c (cpu_expand_builtin): Provide correct
 +	number of arguments to gen_rtx_SET calls in code dependent on
 +	glibc 2.23 or later.
++
++2016-03-14  Michael Meissner  <meissner@linux.vnet.ibm.com>
++
++	Merge up to 234186.
 +
 +2016-03-10  Peter Bergner  <bergner@vnet.ibm.com>
 +
@@ -6180,22 +5977,6 @@ Index: gcc/config.gcc
  			| rios | rios1 | rios2 | rsc | rsc1 | rs64a \
  			| 401 | 403 | 405 | 405fp | 440 | 440fp | 464 | 464fp \
  			| 476 | 476fp | 505 | 601 | 602 | 603 | 603e | ec603e \
-Index: gcc/config/i386/sol2.h
-===================================================================
---- a/src/gcc/config/i386/sol2.h	(.../gcc-5-branch)
-+++ b/src/gcc/config/i386/sol2.h	(.../ibm/gcc-5-branch)
-@@ -21,6 +21,11 @@
- #define SUBTARGET_OPTIMIZATION_OPTIONS				\
-   { OPT_LEVELS_1_PLUS, OPT_momit_leaf_frame_pointer, NULL, 1 }
- 
-+/* 32-bit Solaris/x86 only guarantees 4-byte stack alignment as required by
-+   the i386 psABI, so realign it as necessary for SSE instructions.  */
-+#undef STACK_REALIGN_DEFAULT
-+#define STACK_REALIGN_DEFAULT (TARGET_64BIT ? 0 : 1)
-+
- /* Old versions of the Solaris assembler can not handle the difference of
-    labels in different sections, so force DW_EH_PE_datarel if so.  */
- #ifndef HAVE_AS_IX86_DIFF_SECT_DELTA
 Index: gcc/config/rs6000/aix53.h
 ===================================================================
 --- a/src/gcc/config/rs6000/aix53.h	(.../gcc-5-branch)
@@ -6500,7 +6281,7 @@ Index: gcc/config/rs6000/predicates.md
  ;; Return 1 if op is a HTM specific SPR register.
  (define_predicate "htm_spr_reg_operand"
    (match_operand 0 "register_operand")
-@@ -467,6 +567,8 @@
+@@ -468,6 +568,8 @@
  
    switch (mode)
      {
@@ -6509,7 +6290,7 @@ Index: gcc/config/rs6000/predicates.md
      case TFmode:
      case DFmode:
      case SFmode:
-@@ -493,6 +595,12 @@
+@@ -494,6 +596,12 @@
    if (TARGET_PAIRED_FLOAT)
      return false;
  
@@ -6522,7 +6303,7 @@ Index: gcc/config/rs6000/predicates.md
    if (VECTOR_MEM_ALTIVEC_OR_VSX_P (mode))
      {
        if (zero_constant (op, mode))
-@@ -561,6 +669,14 @@
+@@ -562,6 +670,14 @@
    return EASY_VECTOR_MSB (val, GET_MODE_INNER (mode));
  })
  
@@ -6537,7 +6318,7 @@ Index: gcc/config/rs6000/predicates.md
  ;; Return 1 if operand is constant zero (scalars and vectors).
  (define_predicate "zero_constant"
    (and (match_code "const_int,const_double,const_wide_int,const_vector")
-@@ -656,7 +772,7 @@
+@@ -657,7 +773,7 @@
  ;; Like indexed_or_indirect_operand, but also allow a GPR register if direct
  ;; moves are supported.
  (define_predicate "reg_or_indexed_operand"
@@ -6546,7 +6327,7 @@ Index: gcc/config/rs6000/predicates.md
  {
    if (MEM_P (op))
      return indexed_or_indirect_operand (op, mode);
-@@ -1739,6 +1855,35 @@
+@@ -1740,6 +1856,35 @@
    return GET_CODE (op) == UNSPEC && XINT (op, 1) == UNSPEC_TOCREL;
  })
  
@@ -6582,7 +6363,7 @@ Index: gcc/config/rs6000/predicates.md
  ;; Match the first insn (addis) in fusing the combination of addis and loads to
  ;; GPR registers on power8.
  (define_predicate "fusion_gpr_addis"
-@@ -1761,8 +1906,6 @@
+@@ -1762,8 +1907,6 @@
    else
      return 0;
  
@@ -6591,7 +6372,7 @@ Index: gcc/config/rs6000/predicates.md
    value = INTVAL (int_const);
    if ((value & (HOST_WIDE_INT)0xffff) != 0)
      return 0;
-@@ -1770,6 +1913,12 @@
+@@ -1771,6 +1914,12 @@
    if ((value & (HOST_WIDE_INT)0xffff0000) == 0)
      return 0;
  
@@ -6604,7 +6385,7 @@ Index: gcc/config/rs6000/predicates.md
    return (IN_RANGE (value >> 16, -32, 31));
  })
  
-@@ -1835,13 +1984,14 @@
+@@ -1836,13 +1985,14 @@
  ;; Match a GPR load (lbz, lhz, lwz, ld) that uses a combined address in the
  ;; memory field with both the addis and the memory offset.  Sign extension
  ;; is not handled here, since lha and lwa are not fused.
@@ -6623,7 +6404,7 @@ Index: gcc/config/rs6000/predicates.md
      {
        op = XEXP (op, 0);
        mode = GET_MODE (op);
-@@ -1862,6 +2012,12 @@
+@@ -1863,6 +2013,12 @@
  	return 0;
        break;
  
@@ -6636,7 +6417,7 @@ Index: gcc/config/rs6000/predicates.md
      default:
        return 0;
      }
-@@ -1889,3 +2045,79 @@
+@@ -1890,3 +2046,79 @@
  
    return 0;
  })
@@ -6985,7 +6766,7 @@ Index: gcc/config/rs6000/rs6000-c.c
 ===================================================================
 --- a/src/gcc/config/rs6000/rs6000-c.c	(.../gcc-5-branch)
 +++ b/src/gcc/config/rs6000/rs6000-c.c	(.../ibm/gcc-5-branch)
-@@ -364,6 +364,8 @@
+@@ -378,6 +378,8 @@
      rs6000_define_or_undefine_macro (define_p, "_ARCH_PWR7");
    if ((flags & OPTION_MASK_DIRECT_MOVE) != 0)
      rs6000_define_or_undefine_macro (define_p, "_ARCH_PWR8");
@@ -6994,7 +6775,7 @@ Index: gcc/config/rs6000/rs6000-c.c
    if ((flags & OPTION_MASK_SOFT_FLOAT) != 0)
      rs6000_define_or_undefine_macro (define_p, "_SOFT_FLOAT");
    if ((flags & OPTION_MASK_RECIP_PRECISION) != 0)
-@@ -423,6 +425,10 @@
+@@ -437,6 +439,10 @@
      builtin_define ("__RSQRTE__");
    if (TARGET_FRSQRTES)
      builtin_define ("__RSQRTEF__");
@@ -7005,7 +6786,7 @@ Index: gcc/config/rs6000/rs6000-c.c
  
    if (TARGET_EXTRA_BUILTINS && cpp_get_options (pfile)->lang != CLK_ASM)
      {
-@@ -496,6 +502,11 @@
+@@ -510,6 +516,11 @@
      {
        builtin_define ("__LONG_DOUBLE_128__");
        builtin_define ("__LONGDOUBLE128");
@@ -7986,17 +7767,7 @@ Index: gcc/config/rs6000/rs6000.c
    /* Set -mallow-movmisalign to explicitly on if we have full ISA 2.07
       support. If we only have ISA 2.06 support, and the user did not specify
       the switch, leave it set to -1 so the movmisalign patterns are enabled,
-@@ -3701,7 +4244,8 @@
- 
-   else if (TARGET_ALLOW_MOVMISALIGN && !TARGET_VSX)
-     {
--      if (TARGET_ALLOW_MOVMISALIGN > 0)
-+      if (TARGET_ALLOW_MOVMISALIGN > 0
-+	  && global_options_set.x_TARGET_ALLOW_MOVMISALIGN)
- 	error ("-mallow-movmisalign requires -mvsx");
- 
-       TARGET_ALLOW_MOVMISALIGN = 0;
-@@ -3731,6 +4275,38 @@
+@@ -3732,6 +4275,38 @@
  	}
      }
  
@@ -8035,7 +7806,7 @@ Index: gcc/config/rs6000/rs6000.c
    if (TARGET_DEBUG_REG || TARGET_DEBUG_TARGET)
      rs6000_print_isa_options (stderr, 0, "after defaults", rs6000_isa_flags);
  
-@@ -3811,7 +4387,8 @@
+@@ -3812,7 +4387,8 @@
       unless the altivec ABI was set.  This is set by default for 64-bit, but
       not for 32-bit.  */
    if (main_target_opt != NULL && !main_target_opt->x_rs6000_altivec_abi)
@@ -8045,7 +7816,7 @@ Index: gcc/config/rs6000/rs6000.c
  			  & ~rs6000_isa_flags_explicit);
  
    /* Enable Altivec ABI for AIX -maltivec.  */
-@@ -3927,6 +4504,7 @@
+@@ -3928,6 +4504,7 @@
  			&& rs6000_cpu != PROCESSOR_POWER6
  			&& rs6000_cpu != PROCESSOR_POWER7
  			&& rs6000_cpu != PROCESSOR_POWER8
@@ -8053,7 +7824,7 @@ Index: gcc/config/rs6000/rs6000.c
  			&& rs6000_cpu != PROCESSOR_PPCA2
  			&& rs6000_cpu != PROCESSOR_CELL
  			&& rs6000_cpu != PROCESSOR_PPC476);
-@@ -3933,12 +4511,14 @@
+@@ -3934,12 +4511,14 @@
    rs6000_sched_groups = (rs6000_cpu == PROCESSOR_POWER4
  			 || rs6000_cpu == PROCESSOR_POWER5
  			 || rs6000_cpu == PROCESSOR_POWER7
@@ -8069,7 +7840,7 @@ Index: gcc/config/rs6000/rs6000.c
  				 || rs6000_cpu == PROCESSOR_PPCE500MC
  				 || rs6000_cpu == PROCESSOR_PPCE500MC64
  				 || rs6000_cpu == PROCESSOR_PPCE5500
-@@ -4186,6 +4766,10 @@
+@@ -4187,6 +4766,10 @@
  	rs6000_cost = &power8_cost;
  	break;
  
@@ -8080,7 +7851,7 @@ Index: gcc/config/rs6000/rs6000.c
        case PROCESSOR_PPCA2:
  	rs6000_cost = &ppca2_cost;
  	break;
-@@ -4366,7 +4950,8 @@
+@@ -4367,7 +4950,8 @@
  	  || rs6000_cpu == PROCESSOR_POWER5
  	  || rs6000_cpu == PROCESSOR_POWER6
  	  || rs6000_cpu == PROCESSOR_POWER7
@@ -8090,7 +7861,7 @@ Index: gcc/config/rs6000/rs6000.c
      return 5;
    else
      return align_loops_log;
-@@ -5183,7 +5768,9 @@
+@@ -5184,7 +5768,9 @@
        || !global_options_set.x_rs6000_cpu_index)
      {
        fputs ("\t.machine ", asm_out_file);
@@ -8101,7 +7872,7 @@ Index: gcc/config/rs6000/rs6000.c
  	fputs ("power8\n", asm_out_file);
        else if ((rs6000_isa_flags & OPTION_MASK_POPCNTD) != 0)
  	fputs ("power7\n", asm_out_file);
-@@ -5226,7 +5813,7 @@
+@@ -5227,7 +5813,7 @@
  	  && info->first_altivec_reg_save == LAST_ALTIVEC_REGNO + 1
  	  && ! info->lr_save_p
  	  && ! info->cr_save_p
@@ -8110,7 +7881,7 @@ Index: gcc/config/rs6000/rs6000.c
  	  && ! info->push_p)
  	return 1;
      }
-@@ -5448,7 +6035,97 @@
+@@ -5449,7 +6035,97 @@
    return true;
  }
  
@@ -8208,7 +7979,7 @@ Index: gcc/config/rs6000/rs6000.c
  /* Return true if OP is of the given MODE and can be synthesized
     with a vspltisb, vspltish or vspltisw.  */
  
-@@ -5512,6 +6189,9 @@
+@@ -5513,6 +6189,9 @@
    if (vspltis_constant (op, step, copies))
      return true;
  
@@ -8218,7 +7989,7 @@ Index: gcc/config/rs6000/rs6000.c
    return false;
  }
  
-@@ -5555,7 +6235,7 @@
+@@ -5556,7 +6235,7 @@
  const char *
  output_vec_const_move (rtx *operands)
  {
@@ -8227,7 +7998,7 @@ Index: gcc/config/rs6000/rs6000.c
    machine_mode mode;
    rtx dest, vec;
  
-@@ -5568,10 +6248,13 @@
+@@ -5569,10 +6248,13 @@
        if (zero_constant (vec, mode))
  	return "xxlxor %x0,%x0,%x0";
  
@@ -8242,7 +8013,7 @@ Index: gcc/config/rs6000/rs6000.c
      }
  
    if (TARGET_ALTIVEC)
-@@ -5580,6 +6263,11 @@
+@@ -5581,6 +6263,11 @@
        if (zero_constant (vec, mode))
  	return "vxor %0,%0,%0";
  
@@ -8254,7 +8025,7 @@ Index: gcc/config/rs6000/rs6000.c
        splat_vec = gen_easy_altivec_constant (vec);
        gcc_assert (GET_CODE (splat_vec) == VEC_DUPLICATE);
        operands[1] = XEXP (splat_vec, 0);
-@@ -6127,13 +6815,16 @@
+@@ -6128,13 +6815,16 @@
  	      || mode == DDmode || mode == TDmode || mode == PTImode)
  	  && REG_P (SUBREG_REG (op))
  	  && (GET_MODE (SUBREG_REG (op)) == DFmode
@@ -8273,7 +8044,7 @@ Index: gcc/config/rs6000/rs6000.c
  	  && REG_P (SUBREG_REG (op))
  	  && (GET_MODE (SUBREG_REG (op)) == DImode
  	      || GET_MODE (SUBREG_REG (op)) == TImode
-@@ -6495,10 +7186,13 @@
+@@ -6496,10 +7186,13 @@
      case V2DImode:
      case V1TImode:
      case TImode:
@@ -8289,7 +8060,7 @@ Index: gcc/config/rs6000/rs6000.c
        if (VECTOR_MEM_ALTIVEC_OR_VSX_P (mode))
  	return false;
        break;
-@@ -6547,13 +7241,21 @@
+@@ -6548,13 +7241,21 @@
  }
  
  /* Return true if a MODE sized memory accesses to OP plus OFFSET
@@ -8313,7 +8084,7 @@ Index: gcc/config/rs6000/rs6000.c
    unsigned HOST_WIDE_INT dsize, dalign, lsb, mask;
  
    if (GET_CODE (op) != SYMBOL_REF)
-@@ -6606,38 +7308,20 @@
+@@ -6607,38 +7308,20 @@
  	  if (dsize > 32768)
  	    return false;
  
@@ -8361,7 +8132,7 @@ Index: gcc/config/rs6000/rs6000.c
    lsb = offset & -offset;
    mask &= lsb - 1;
    dalign = mask + 1;
-@@ -6774,6 +7458,8 @@
+@@ -6775,6 +7458,8 @@
        break;
  
      case TFmode:
@@ -8370,7 +8141,7 @@ Index: gcc/config/rs6000/rs6000.c
        if (TARGET_E500_DOUBLE)
  	return (SPE_CONST_OFFSET_OK (offset)
  		&& SPE_CONST_OFFSET_OK (offset + 8));
-@@ -6967,6 +7653,8 @@
+@@ -6968,6 +7653,8 @@
      case TDmode:
      case TImode:
      case PTImode:
@@ -8379,7 +8150,7 @@ Index: gcc/config/rs6000/rs6000.c
        /* As in legitimate_offset_address_p we do not assume
  	 worst-case.  The mode here is just a hint as to the registers
  	 used.  A TImode is usually in gprs, but may actually be in
-@@ -7576,13 +8264,14 @@
+@@ -7577,13 +8264,14 @@
     can be addressed relative to the toc pointer.  */
  
  static bool
@@ -8396,7 +8167,7 @@ Index: gcc/config/rs6000/rs6000.c
  }
  
  /* Our implementation of LEGITIMIZE_RELOAD_ADDRESS.  Returns a value to
-@@ -7739,6 +8428,8 @@
+@@ -7740,6 +8428,8 @@
        && !reg_addr[mode].scalar_in_vmx_p
        && mode != TFmode
        && mode != TDmode
@@ -8405,7 +8176,7 @@ Index: gcc/config/rs6000/rs6000.c
        && (mode != TImode || !TARGET_VSX_TIMODE)
        && mode != PTImode
        && (mode != DImode || TARGET_POWERPC64)
-@@ -7787,7 +8478,7 @@
+@@ -7788,7 +8478,7 @@
    if (TARGET_TOC
        && reg_offset_p
        && GET_CODE (x) == SYMBOL_REF
@@ -8414,7 +8185,7 @@ Index: gcc/config/rs6000/rs6000.c
      {
        x = create_TOC_reference (x, NULL_RTX);
        if (TARGET_CMODEL != CMODEL_SMALL)
-@@ -7874,6 +8565,9 @@
+@@ -7875,6 +8565,9 @@
        && legitimate_constant_pool_address_p (x, mode,
  					     reg_ok_strict || lra_in_progress))
      return 1;
@@ -8424,7 +8195,7 @@ Index: gcc/config/rs6000/rs6000.c
    /* For TImode, if we have load/store quad and TImode in VSX registers, only
       allow register indirect addresses.  This will allow the values to go in
       either GPRs or VSX registers without reloading.  The vector types would
-@@ -7892,8 +8586,7 @@
+@@ -7893,8 +8586,7 @@
      return 1;
    if (rs6000_legitimate_offset_address_p (mode, x, reg_ok_strict, false))
      return 1;
@@ -8434,7 +8205,7 @@ Index: gcc/config/rs6000/rs6000.c
        && ((TARGET_HARD_FLOAT && TARGET_FPRS && TARGET_DOUBLE_FLOAT)
  	  || TARGET_POWERPC64
  	  || (mode != DFmode && mode != DDmode)
-@@ -8385,8 +9078,14 @@
+@@ -8386,8 +9078,14 @@
  rtx
  rs6000_gen_le_vsx_permute (rtx source, machine_mode mode)
  {
@@ -8451,7 +8222,7 @@ Index: gcc/config/rs6000/rs6000.c
  }
  
  /* Emit a little-endian load from vector memory location SOURCE to VSX
-@@ -8426,7 +9125,7 @@
+@@ -8427,7 +9125,7 @@
       during expand.  */
    gcc_assert (!reload_in_progress && !lra_in_progress && !reload_completed);
  
@@ -8460,7 +8231,7 @@ Index: gcc/config/rs6000/rs6000.c
       V1TImode).  */
    if (mode == TImode || mode == V1TImode)
      {
-@@ -8453,6 +9152,7 @@
+@@ -8454,6 +9152,7 @@
  {
    gcc_assert (!BYTES_BIG_ENDIAN
  	      && VECTOR_MEM_VSX_P (mode)
@@ -8468,7 +8239,7 @@ Index: gcc/config/rs6000/rs6000.c
  	      && !gpr_or_gpr_p (dest, source)
  	      && (MEM_P (source) ^ MEM_P (dest)));
  
-@@ -8561,9 +9261,8 @@
+@@ -8562,9 +9261,8 @@
    /* 128-bit constant floating-point values on Darwin should really be loaded
       as two parts.  However, this premature splitting is a problem when DFmode
       values can go into Altivec registers.  */
@@ -8480,7 +8251,7 @@ Index: gcc/config/rs6000/rs6000.c
      {
        rs6000_emit_move (simplify_gen_subreg (DFmode, operands[0], mode, 0),
  			simplify_gen_subreg (DFmode, operands[1], mode, 0),
-@@ -8755,7 +9454,10 @@
+@@ -8756,7 +9454,10 @@
  
      case TFmode:
      case TDmode:
@@ -8492,7 +8263,7 @@ Index: gcc/config/rs6000/rs6000.c
        /* fall through */
  
      case DFmode:
-@@ -8865,7 +9567,7 @@
+@@ -8866,7 +9567,7 @@
  	 reference to it.  */
        if (TARGET_TOC
  	  && GET_CODE (operands[1]) == SYMBOL_REF
@@ -8501,7 +8272,7 @@ Index: gcc/config/rs6000/rs6000.c
  	operands[1] = create_TOC_reference (operands[1], operands[0]);
        else if (mode == Pmode
  	       && CONSTANT_P (operands[1])
-@@ -8980,7 +9682,7 @@
+@@ -8981,7 +9682,7 @@
  
  /* Nonzero if we can use a floating-point register to pass this arg.  */
  #define USE_FP_FOR_ARG_P(CUM,MODE)		\
@@ -8510,7 +8281,7 @@ Index: gcc/config/rs6000/rs6000.c
     && (CUM)->fregno <= FP_ARG_MAX_REG		\
     && TARGET_HARD_FLOAT && TARGET_FPRS)
  
-@@ -9181,7 +9883,7 @@
+@@ -9182,7 +9883,7 @@
  
        if (field_count > 0)
  	{
@@ -8519,7 +8290,7 @@ Index: gcc/config/rs6000/rs6000.c
  			(GET_MODE_SIZE (field_mode) + 7) >> 3 : 1);
  
  	  /* The ELFv2 ABI allows homogeneous aggregates to occupy
-@@ -9291,7 +9993,8 @@
+@@ -9292,7 +9993,8 @@
        return true;
      }
  
@@ -8529,7 +8300,7 @@ Index: gcc/config/rs6000/rs6000.c
      return true;
  
    return false;
-@@ -9363,6 +10066,7 @@
+@@ -9364,6 +10066,7 @@
  		      ? CALL_LIBCALL : CALL_NORMAL);
    cum->sysv_gregno = GP_ARG_MIN_REG;
    cum->stdarg = stdarg_p (fntype);
@@ -8537,7 +8308,7 @@ Index: gcc/config/rs6000/rs6000.c
  
    cum->nargs_prototype = 0;
    if (incoming || cum->prototype)
-@@ -9421,7 +10125,7 @@
+@@ -9422,7 +10125,7 @@
  		      <= 8))
  		rs6000_returns_struct = true;
  	    }
@@ -8546,7 +8317,7 @@ Index: gcc/config/rs6000/rs6000.c
  	    rs6000_passes_float = true;
  	  else if (ALTIVEC_OR_VSX_VECTOR_MODE (return_mode)
  		   || SPE_VECTOR_MODE (return_mode))
-@@ -9559,8 +10263,10 @@
+@@ -9560,8 +10263,10 @@
        && (GET_MODE_SIZE (mode) == 8
  	  || (TARGET_HARD_FLOAT
  	      && TARGET_FPRS
@@ -8558,7 +8329,7 @@ Index: gcc/config/rs6000/rs6000.c
    else if (SPE_VECTOR_MODE (mode)
  	   || (type && TREE_CODE (type) == VECTOR_TYPE
  	       && int_size_in_bytes (type) >= 8
-@@ -9832,7 +10538,7 @@
+@@ -9833,7 +10538,7 @@
    if (DEFAULT_ABI == ABI_V4
        && cum->escapes)
      {
@@ -8567,7 +8338,7 @@ Index: gcc/config/rs6000/rs6000.c
  	rs6000_passes_float = true;
        else if (named && ALTIVEC_OR_VSX_VECTOR_MODE (mode))
  	rs6000_passes_vector = true;
-@@ -9939,8 +10645,8 @@
+@@ -9940,8 +10645,8 @@
        if (TARGET_HARD_FLOAT && TARGET_FPRS
  	  && ((TARGET_SINGLE_FLOAT && mode == SFmode)
  	      || (TARGET_DOUBLE_FLOAT && mode == DFmode)
@@ -8578,7 +8349,7 @@ Index: gcc/config/rs6000/rs6000.c
  	{
  	  /* _Decimal128 must use an even/odd register pair.  This assumes
  	     that the register number is odd when fregno is odd.  */
-@@ -9947,13 +10653,13 @@
+@@ -9948,13 +10653,13 @@
  	  if (mode == TDmode && (cum->fregno % 2) == 1)
  	    cum->fregno++;
  
@@ -8594,7 +8365,7 @@ Index: gcc/config/rs6000/rs6000.c
  		  || mode == DDmode || mode == TDmode)
  		cum->words += cum->words & 1;
  	      cum->words += rs6000_arg_size (mode, type);
-@@ -10005,8 +10711,7 @@
+@@ -10006,8 +10711,7 @@
  
        cum->words = align_words + n_words;
  
@@ -8604,7 +8375,7 @@ Index: gcc/config/rs6000/rs6000.c
  	{
  	  /* _Decimal128 must be passed in an even/odd float register pair.
  	     This assumes that the register number is odd when fregno is
-@@ -10248,7 +10953,7 @@
+@@ -10249,7 +10953,7 @@
  	      = gen_rtx_EXPR_LIST (VOIDmode,
  				   gen_rtx_REG (mode, cum->fregno++),
  				   GEN_INT (bitpos / BITS_PER_UNIT));
@@ -8613,7 +8384,7 @@ Index: gcc/config/rs6000/rs6000.c
  	      cum->fregno++;
  	  }
  	else if (cum->named && USE_ALTIVEC_FOR_ARG_P (cum, mode, 1))
-@@ -10524,9 +11229,11 @@
+@@ -10525,9 +11229,11 @@
        rtx r, off;
        int i, k = 0;
  
@@ -8628,7 +8399,7 @@ Index: gcc/config/rs6000/rs6000.c
  	{
  	  int align_words = (cum->words + 1) & ~1;
  	  k = rs6000_psave_function_arg (mode, type, align_words, rvec);
-@@ -10599,8 +11306,8 @@
+@@ -10600,8 +11306,8 @@
        if (TARGET_HARD_FLOAT && TARGET_FPRS
  	  && ((TARGET_SINGLE_FLOAT && mode == SFmode)
  	      || (TARGET_DOUBLE_FLOAT && mode == DFmode)
@@ -8639,7 +8410,7 @@ Index: gcc/config/rs6000/rs6000.c
  	{
  	  /* _Decimal128 must use an even/odd register pair.  This assumes
  	     that the register number is odd when fregno is odd.  */
-@@ -10607,7 +11314,7 @@
+@@ -10608,7 +11314,7 @@
  	  if (mode == TDmode && (cum->fregno % 2) == 1)
  	    cum->fregno++;
  
@@ -8648,7 +8419,7 @@ Index: gcc/config/rs6000/rs6000.c
  	      <= FP_ARG_V4_MAX_REG)
  	    return gen_rtx_REG (mode, cum->fregno);
  	  else
-@@ -10669,7 +11376,7 @@
+@@ -10670,7 +11376,7 @@
  	      machine_mode fmode = elt_mode;
  	      if (cum->fregno + (i + 1) * n_fpreg > FP_ARG_MAX_REG + 1)
  		{
@@ -8657,7 +8428,7 @@ Index: gcc/config/rs6000/rs6000.c
  		  fmode = DECIMAL_FLOAT_MODE_P (fmode) ? DDmode : DFmode;
  		}
  
-@@ -10757,11 +11464,14 @@
+@@ -10758,11 +11464,14 @@
  
    if (USE_ALTIVEC_FOR_ARG_P (cum, elt_mode, named))
      {
@@ -8677,7 +8448,7 @@ Index: gcc/config/rs6000/rs6000.c
  	return 0;
  
        /* Otherwise, we pass in VRs only.  Check for partial copies.  */
-@@ -10843,16 +11553,17 @@
+@@ -10844,16 +11553,17 @@
  			  machine_mode mode, const_tree type,
  			  bool named ATTRIBUTE_UNUSED)
  {
@@ -8700,7 +8471,7 @@ Index: gcc/config/rs6000/rs6000.c
    if (DEFAULT_ABI == ABI_V4 && AGGREGATE_TYPE_P (type))
      {
        if (TARGET_DEBUG_ARG)
-@@ -11023,10 +11734,10 @@
+@@ -11024,10 +11734,10 @@
    return false;
  }
  
@@ -8713,7 +8484,7 @@ Index: gcc/config/rs6000/rs6000.c
     all parameters in registers.  */
  
  int
-@@ -11186,7 +11897,7 @@
+@@ -11187,7 +11897,7 @@
    else
      {
        first_reg_offset = next_cum.words;
@@ -8722,7 +8493,7 @@ Index: gcc/config/rs6000/rs6000.c
  
        if (targetm.calls.must_pass_in_stack (mode, type))
  	first_reg_offset += rs6000_arg_size (TYPE_MODE (type), type);
-@@ -11381,7 +12092,7 @@
+@@ -11382,7 +12092,7 @@
      }
  
    /* Find the overflow area.  */
@@ -8731,7 +8502,7 @@ Index: gcc/config/rs6000/rs6000.c
    if (words != 0)
      t = fold_build_pointer_plus_hwi (t, words * MIN_UNITS_PER_WORD);
    t = build2 (MODIFY_EXPR, TREE_TYPE (ovf), ovf, t);
-@@ -11523,10 +12234,8 @@
+@@ -11524,10 +12234,8 @@
        && ((TARGET_SINGLE_FLOAT && TYPE_MODE (type) == SFmode)
            || (TARGET_DOUBLE_FLOAT 
                && (TYPE_MODE (type) == DFmode 
@@ -8744,7 +8515,7 @@ Index: gcc/config/rs6000/rs6000.c
      {
        /* FP args go in FP registers, if present.  */
        reg = fpr;
-@@ -12906,7 +13615,104 @@
+@@ -12907,7 +13615,104 @@
    return NULL_RTX;
  }
  
@@ -8849,7 +8620,7 @@ Index: gcc/config/rs6000/rs6000.c
  rs6000_expand_ternop_builtin (enum insn_code icode, tree exp, rtx target)
  {
    rtx pat;
-@@ -14232,6 +15038,11 @@
+@@ -14233,6 +15038,11 @@
      case RS6000_BUILTIN_MTFSF:
        return rs6000_expand_mtfsf_builtin (CODE_FOR_rs6000_mtfsf, exp);
  
@@ -8861,7 +8632,7 @@ Index: gcc/config/rs6000/rs6000.c
      case ALTIVEC_BUILTIN_MASK_FOR_LOAD:
      case ALTIVEC_BUILTIN_MASK_FOR_STORE:
        {
-@@ -14417,6 +15228,30 @@
+@@ -14418,6 +15228,30 @@
    dfloat128_type_internal_node = dfloat128_type_node;
    void_type_internal_node = void_type_node;
  
@@ -8892,7 +8663,7 @@ Index: gcc/config/rs6000/rs6000.c
    /* Initialize the modes for builtin_function_type, mapping a machine mode to
       tree type node.  */
    builtin_mode_to_type[QImode][0] = integer_type_node;
-@@ -14429,6 +15264,8 @@
+@@ -14430,6 +15264,8 @@
    builtin_mode_to_type[TImode][1] = unsigned_intTI_type_node;
    builtin_mode_to_type[SFmode][0] = float_type_node;
    builtin_mode_to_type[DFmode][0] = double_type_node;
@@ -8901,7 +8672,7 @@ Index: gcc/config/rs6000/rs6000.c
    builtin_mode_to_type[TFmode][0] = long_double_type_node;
    builtin_mode_to_type[DDmode][0] = dfloat64_type_node;
    builtin_mode_to_type[TDmode][0] = dfloat128_type_node;
-@@ -14596,6 +15433,14 @@
+@@ -14597,6 +15433,14 @@
  				    NULL_TREE);
    def_builtin ("__builtin_mtfsf", ftype, RS6000_BUILTIN_MTFSF);
  
@@ -8916,7 +8687,7 @@ Index: gcc/config/rs6000/rs6000.c
  #if TARGET_XCOFF
    /* AIX libm provides clog as __clog.  */
    if ((tdecl = builtin_decl_explicit (BUILT_IN_CLOG)) != NULL_TREE)
-@@ -15919,78 +16764,185 @@
+@@ -15920,78 +16764,185 @@
      }
  }
  
@@ -9160,7 +8931,7 @@ Index: gcc/config/rs6000/rs6000.c
  
  /* Expand a block clear operation, and return 1 if successful.  Return 0
     if we should let the compiler generate normal code.
-@@ -16760,7 +17712,7 @@
+@@ -16761,7 +17712,7 @@
  static int
  rs6000_secondary_reload_memory (rtx addr,
  				enum reg_class rclass,
@@ -9169,7 +8940,7 @@ Index: gcc/config/rs6000/rs6000.c
  {
    int extra_cost = 0;
    rtx reg, and_arg, plus_arg0, plus_arg1;
-@@ -17040,6 +17992,11 @@
+@@ -17041,6 +17992,11 @@
  	  || (to_type == VSX_REG_TYPE && from_type == GPR_REG_TYPE)))
      return true;
  
@@ -9181,7 +8952,7 @@ Index: gcc/config/rs6000/rs6000.c
    else if (TARGET_MFPGPR && TARGET_POWERPC64 && size == 8
  	   && ((to_type == GPR_REG_TYPE && from_type == FPR_REG_TYPE)
  	       || (to_type == FPR_REG_TYPE && from_type == GPR_REG_TYPE)))
-@@ -17053,7 +18010,7 @@
+@@ -17054,7 +18010,7 @@
    return false;
  }
  
@@ -9190,7 +8961,7 @@ Index: gcc/config/rs6000/rs6000.c
     special direct moves that involve allocating an extra register, return the
     insn code of the helper function if there is such a function or
     CODE_FOR_nothing if not.  */
-@@ -17075,8 +18032,8 @@
+@@ -17076,8 +18032,8 @@
        if (size == 16)
  	{
  	  /* Handle moving 128-bit values from GPRs to VSX point registers on
@@ -9201,7 +8972,7 @@ Index: gcc/config/rs6000/rs6000.c
  	  if (to_type == VSX_REG_TYPE && from_type == GPR_REG_TYPE)
  	    {
  	      cost = 3;			/* 2 mtvsrd's, 1 xxpermdi.  */
-@@ -17084,7 +18041,7 @@
+@@ -17085,7 +18041,7 @@
  	    }
  
  	  /* Handle moving 128-bit values from VSX point registers to GPRs on
@@ -9210,7 +8981,7 @@ Index: gcc/config/rs6000/rs6000.c
  	     bottom 64-bit value.  */
  	  else if (to_type == GPR_REG_TYPE && from_type == VSX_REG_TYPE)
  	    {
-@@ -17112,7 +18069,7 @@
+@@ -17113,7 +18069,7 @@
    if (TARGET_POWERPC64 && size == 16)
      {
        /* Handle moving 128-bit values from GPRs to VSX point registers on
@@ -9219,7 +8990,7 @@ Index: gcc/config/rs6000/rs6000.c
  	 64-bit values back together.  */
        if (to_type == VSX_REG_TYPE && from_type == GPR_REG_TYPE)
  	{
-@@ -17121,7 +18078,7 @@
+@@ -17122,7 +18078,7 @@
  	}
  
        /* Handle moving 128-bit values from VSX point registers to GPRs on
@@ -9228,7 +8999,7 @@ Index: gcc/config/rs6000/rs6000.c
  	 bottom 64-bit value.  */
        else if (to_type == GPR_REG_TYPE && from_type == VSX_REG_TYPE)
  	{
-@@ -17133,8 +18090,8 @@
+@@ -17134,8 +18090,8 @@
    else if (!TARGET_POWERPC64 && size == 8)
      {
        /* Handle moving 64-bit values from GPRs to floating point registers on
@@ -9239,7 +9010,7 @@ Index: gcc/config/rs6000/rs6000.c
  	 specially since a different instruction is used, and the secondary
  	 reload support requires a single instruction class in the scratch
  	 register constraint.  However, right now TFmode is not allowed in
-@@ -17161,7 +18118,7 @@
+@@ -17162,7 +18118,7 @@
  
  /* Return whether a move between two register classes can be done either
     directly (simple move) or via a pattern that uses a single extra temporary
@@ -9248,7 +9019,7 @@ Index: gcc/config/rs6000/rs6000.c
  
  static bool
  rs6000_secondary_reload_move (enum rs6000_reg_type to_type,
-@@ -17270,8 +18227,10 @@
+@@ -17271,8 +18227,10 @@
  
    /* If this is a scalar floating point value and we want to load it into the
       traditional Altivec registers, do it via a move via a traditional floating
@@ -9260,7 +9031,7 @@ Index: gcc/config/rs6000/rs6000.c
        && (rclass == VSX_REGS || rclass == ALTIVEC_REGS)
        && (memory_p || (GET_CODE (x) == CONST_DOUBLE)))
      {
-@@ -17835,10 +18794,14 @@
+@@ -17836,10 +18794,14 @@
  	  return NO_REGS;
  	}
  
@@ -9279,7 +9050,7 @@ Index: gcc/config/rs6000/rs6000.c
  	return FLOAT_REGS;
  
        /* Prefer the Altivec registers if Altivec is handling the vector
-@@ -17987,6 +18950,7 @@
+@@ -17988,6 +18950,7 @@
       instead of reloading the secondary memory address for Altivec moves.  */
    if (TARGET_VSX
        && GET_MODE_SIZE (mode) < 16
@@ -9287,7 +9058,7 @@ Index: gcc/config/rs6000/rs6000.c
        && (((rclass == GENERAL_REGS || rclass == BASE_REGS)
             && (regno >= 0 && ALTIVEC_REGNO_P (regno)))
            || ((rclass == VSX_REGS || rclass == ALTIVEC_REGS)
-@@ -18058,6 +19022,8 @@
+@@ -18059,6 +19022,8 @@
  	{
  	  unsigned to_nregs = hard_regno_nregs[FIRST_FPR_REGNO][to];
  	  unsigned from_nregs = hard_regno_nregs[FIRST_FPR_REGNO][from];
@@ -9296,7 +9067,7 @@ Index: gcc/config/rs6000/rs6000.c
  
  	  /* Don't allow 64-bit types to overlap with 128-bit types that take a
  	     single register under VSX because the scalar part of the register
-@@ -18066,7 +19032,10 @@
+@@ -18067,7 +19032,10 @@
  	     IEEE floating point can't overlap, and neither can small
  	     values.  */
  
@@ -9308,7 +9079,7 @@ Index: gcc/config/rs6000/rs6000.c
  	    return true;
  
  	  /* TDmode in floating-mode registers must always go into a register
-@@ -18094,6 +19063,8 @@
+@@ -18095,6 +19063,8 @@
    if (TARGET_E500_DOUBLE
        && ((((to) == DFmode) + ((from) == DFmode)) == 1
  	  || (((to) == TFmode) + ((from) == TFmode)) == 1
@@ -9317,7 +9088,7 @@ Index: gcc/config/rs6000/rs6000.c
  	  || (((to) == DDmode) + ((from) == DDmode)) == 1
  	  || (((to) == TDmode) + ((from) == TDmode)) == 1
  	  || (((to) == DImode) + ((from) == DImode)) == 1))
-@@ -18193,6 +19164,11 @@
+@@ -18194,6 +19164,11 @@
  	  if (src_gpr_p)
  	    return "#";
  
@@ -9329,7 +9100,7 @@ Index: gcc/config/rs6000/rs6000.c
  	  else if (TARGET_VSX && TARGET_DIRECT_MOVE && src_vsx_p)
  	    return "#";
  	}
-@@ -18202,6 +19178,11 @@
+@@ -18203,6 +19178,11 @@
  	  if (src_vsx_p)
  	    return "xxlor %x0,%x1,%x1";
  
@@ -9341,7 +9112,7 @@ Index: gcc/config/rs6000/rs6000.c
  	  else if (TARGET_DIRECT_MOVE && src_gpr_p)
  	    return "#";
  	}
-@@ -18290,13 +19271,7 @@
+@@ -18291,13 +19271,7 @@
  	return output_vec_const_move (operands);
      }
  
@@ -9356,7 +9127,7 @@ Index: gcc/config/rs6000/rs6000.c
  }
  
  /* Validate a 128-bit move.  */
-@@ -19071,7 +20046,7 @@
+@@ -19072,7 +20046,7 @@
  	/* Ugly hack because %y is overloaded.  */
  	if ((TARGET_SPE || TARGET_E500_DOUBLE)
  	    && (GET_MODE_SIZE (GET_MODE (x)) == 8
@@ -9365,7 +9136,7 @@ Index: gcc/config/rs6000/rs6000.c
  		|| GET_MODE (x) == TImode
  		|| GET_MODE (x) == PTImode))
  	  {
-@@ -19399,7 +20374,9 @@
+@@ -19400,7 +20374,9 @@
    rtx op0 = XEXP (cmp, 0);
    rtx op1 = XEXP (cmp, 1);
  
@@ -9376,7 +9147,7 @@ Index: gcc/config/rs6000/rs6000.c
      comp_mode = CCFPmode;
    else if (code == GTU || code == LTU
  	   || code == GEU || code == LEU)
-@@ -19483,6 +20460,8 @@
+@@ -19484,6 +20460,8 @@
  	      break;
  
  	    case TFmode:
@@ -9385,7 +9156,7 @@ Index: gcc/config/rs6000/rs6000.c
  	      cmp = (flag_finite_math_only && !flag_trapping_math)
  		? gen_tsttfeq_gpr (compare_result, op0, op1)
  		: gen_cmptfeq_gpr (compare_result, op0, op1);
-@@ -19510,6 +20489,8 @@
+@@ -19511,6 +20489,8 @@
  	      break;
  
  	    case TFmode:
@@ -9394,7 +9165,7 @@ Index: gcc/config/rs6000/rs6000.c
  	      cmp = (flag_finite_math_only && !flag_trapping_math)
  		? gen_tsttfgt_gpr (compare_result, op0, op1)
  		: gen_cmptfgt_gpr (compare_result, op0, op1);
-@@ -19537,6 +20518,8 @@
+@@ -19538,6 +20518,8 @@
  	      break;
  
  	    case TFmode:
@@ -9403,7 +9174,7 @@ Index: gcc/config/rs6000/rs6000.c
  	      cmp = (flag_finite_math_only && !flag_trapping_math)
  		? gen_tsttflt_gpr (compare_result, op0, op1)
  		: gen_cmptflt_gpr (compare_result, op0, op1);
-@@ -19574,6 +20557,8 @@
+@@ -19575,6 +20557,8 @@
  	      break;
  
  	    case TFmode:
@@ -9412,7 +9183,7 @@ Index: gcc/config/rs6000/rs6000.c
  	      cmp = (flag_finite_math_only && !flag_trapping_math)
  		? gen_tsttfeq_gpr (compare_result2, op0, op1)
  		: gen_cmptfeq_gpr (compare_result2, op0, op1);
-@@ -19596,14 +20581,90 @@
+@@ -19597,14 +20581,90 @@
  
        emit_insn (cmp);
      }
@@ -9506,7 +9277,7 @@ Index: gcc/config/rs6000/rs6000.c
  	emit_insn (gen_rtx_PARALLEL (VOIDmode,
  	  gen_rtvec (10,
  		     gen_rtx_SET (VOIDmode,
-@@ -19637,6 +20698,7 @@
+@@ -19638,6 +20698,7 @@
    /* Some kinds of FP comparisons need an OR operation;
       under flag_finite_math_only we don't bother.  */
    if (FLOAT_MODE_P (mode)
@@ -9514,7 +9285,7 @@ Index: gcc/config/rs6000/rs6000.c
        && !flag_finite_math_only
        && !(TARGET_HARD_FLOAT && !TARGET_FPRS)
        && (code == LE || code == GE
-@@ -19675,7 +20737,377 @@
+@@ -19676,7 +20737,377 @@
    return gen_rtx_fmt_ee (code, VOIDmode, compare_result, const0_rtx);
  }
  
@@ -9892,17 +9663,7 @@ Index: gcc/config/rs6000/rs6000.c
  /* Emit the RTL for an sISEL pattern.  */
  
  void
-@@ -20740,6 +22172,9 @@
-   if (mode != TImode && !reg_or_short_operand (oldval, mode))
-     oldval = copy_to_mode_reg (mode, oldval);
- 
-+  if (reg_overlap_mentioned_p (retval, newval))
-+    newval = copy_to_reg (newval);
-+
-   mem = rs6000_pre_atomic_barrier (mem, mod_s);
- 
-   label1 = NULL_RTX;
-@@ -21034,7 +22469,7 @@
+@@ -21038,7 +22469,7 @@
  	((TARGET_HARD_FLOAT && TARGET_DOUBLE_FLOAT) ? DFmode : SFmode);
    else if (ALTIVEC_REGNO_P (reg))
      reg_mode = V16QImode;
@@ -9911,7 +9672,7 @@ Index: gcc/config/rs6000/rs6000.c
      reg_mode = DFmode;
    else
      reg_mode = word_mode;
-@@ -22071,31 +23506,6 @@
+@@ -22075,31 +23506,6 @@
    else
      info_ptr->push_p = non_fixed_size > (TARGET_32BIT ? 220 : 288);
  
@@ -9943,7 +9704,7 @@ Index: gcc/config/rs6000/rs6000.c
    return info_ptr;
  }
  
-@@ -22136,7 +23546,8 @@
+@@ -22140,7 +23546,8 @@
  
  	      if (SPE_VECTOR_MODE (mode))
  		return true;
@@ -9953,7 +9714,7 @@ Index: gcc/config/rs6000/rs6000.c
  		return true;
  	    }
  	}
-@@ -22201,28 +23612,28 @@
+@@ -22205,28 +23612,28 @@
    if (info->calls_p)
      fprintf (stderr, "\tcalls_p             = %5d\n", info->calls_p);
  
@@ -9989,7 +9750,7 @@ Index: gcc/config/rs6000/rs6000.c
      fprintf (stderr, "\tcr_save_offset      = %5d\n", info->cr_save_offset);
  
    if (info->varargs_save_offset)
-@@ -22683,7 +24094,7 @@
+@@ -22687,7 +24094,7 @@
     If COPY_REG, make sure a copy of the old frame is left there.
     The generated code may use hard register 0 as a temporary.  */
  
@@ -9998,7 +9759,7 @@ Index: gcc/config/rs6000/rs6000.c
  rs6000_emit_allocate_stack (HOST_WIDE_INT size, rtx copy_reg, int copy_off)
  {
    rtx_insn *insn;
-@@ -22696,7 +24107,7 @@
+@@ -22700,7 +24107,7 @@
      {
        warning (0, "stack frame too large");
        emit_insn (gen_trap ());
@@ -10007,7 +9768,7 @@ Index: gcc/config/rs6000/rs6000.c
      }
  
    if (crtl->limit_stack)
-@@ -22747,9 +24158,9 @@
+@@ -22751,9 +24158,9 @@
    
    insn = emit_insn (TARGET_32BIT
  		    ? gen_movsi_update_stack (stack_reg, stack_reg,
@@ -10019,7 +9780,7 @@ Index: gcc/config/rs6000/rs6000.c
    /* Since we didn't use gen_frame_mem to generate the MEM, grab
       it now and set the alias set/attributes. The above gen_*_update
       calls will generate a PARALLEL with the MEM set being the first
-@@ -22768,6 +24179,7 @@
+@@ -22772,6 +24179,7 @@
  		gen_rtx_SET (VOIDmode, stack_reg,
  			     gen_rtx_PLUS (Pmode, stack_reg,
  					   GEN_INT (-size))));
@@ -10027,7 +9788,7 @@ Index: gcc/config/rs6000/rs6000.c
  }
  
  #define PROBE_INTERVAL (1 << STACK_CHECK_PROBE_INTERVAL_EXP)
-@@ -23514,6 +24926,48 @@
+@@ -23518,6 +24926,48 @@
                    || (DEFAULT_ABI == ABI_DARWIN && flag_pic))));
  }
  
@@ -10076,7 +9837,7 @@ Index: gcc/config/rs6000/rs6000.c
  /* Emit function prologue as insns.  */
  
  void
-@@ -23531,9 +24985,18 @@
+@@ -23535,9 +24985,18 @@
    int using_static_chain_p = (cfun->static_chain_decl != NULL_TREE
  			      && df_regs_ever_live_p (STATIC_CHAIN_REGNUM)
  			      && call_used_regs[STATIC_CHAIN_REGNUM]);
@@ -10095,7 +9856,7 @@ Index: gcc/config/rs6000/rs6000.c
  
  #ifdef ENABLE_CHECKING
    /* Track and check usage of r0, r11, r12.  */
-@@ -23568,7 +25031,6 @@
+@@ -23572,7 +25031,6 @@
  	cfun->machine->r2_setup_needed = true;
      }
  
@@ -10103,7 +9864,7 @@ Index: gcc/config/rs6000/rs6000.c
    if (flag_stack_usage_info)
      current_function_static_stack_size = info->total_size;
  
-@@ -23725,7 +25187,7 @@
+@@ -23729,7 +25187,7 @@
  	       || info->first_fp_reg_save < 64
  	       || info->first_gp_reg_save < 32
  	       || info->altivec_size != 0
@@ -10112,7 +9873,7 @@ Index: gcc/config/rs6000/rs6000.c
  	       || crtl->calls_eh_return)
  	ptr_regno = 12;
        else
-@@ -23752,7 +25214,10 @@
+@@ -23756,7 +25214,10 @@
  	    ptr_off = info->altivec_save_offset + info->altivec_size;
  	  frame_off = -ptr_off;
  	}
@@ -10124,7 +9885,7 @@ Index: gcc/config/rs6000/rs6000.c
        sp_off = info->total_size;
        if (frame_reg_rtx != sp_reg_rtx)
  	rs6000_emit_stack_tie (frame_reg_rtx, false);
-@@ -23793,7 +25258,8 @@
+@@ -23797,7 +25258,8 @@
    if (!WORLD_SAVE_P (info)
        && info->cr_save_p
        && REGNO (frame_reg_rtx) != cr_save_regno
@@ -10134,7 +9895,7 @@ Index: gcc/config/rs6000/rs6000.c
      {
        cr_save_rtx = gen_rtx_REG (SImode, cr_save_regno);
        START_USE (cr_save_regno);
-@@ -23939,6 +25405,8 @@
+@@ -23943,6 +25405,8 @@
        int end_save = info->gp_save_offset + info->gp_size;
        int ptr_off;
  
@@ -10143,7 +9904,7 @@ Index: gcc/config/rs6000/rs6000.c
        if (!ptr_set_up)
  	ptr_reg = gen_rtx_REG (Pmode, ptr_regno);
  
-@@ -24259,7 +25727,10 @@
+@@ -24263,7 +25727,10 @@
  	}
        else if (REGNO (frame_reg_rtx) == 1)
  	frame_off = info->total_size;
@@ -10155,7 +9916,7 @@ Index: gcc/config/rs6000/rs6000.c
        sp_off = info->total_size;
        if (frame_reg_rtx != sp_reg_rtx)
  	rs6000_emit_stack_tie (frame_reg_rtx, false);
-@@ -24275,7 +25746,7 @@
+@@ -24279,7 +25746,7 @@
  
    /* Save AltiVec registers if needed.  Save here because the red zone does
       not always include AltiVec registers.  */
@@ -10164,7 +9925,7 @@ Index: gcc/config/rs6000/rs6000.c
        && info->altivec_size != 0 && (strategy & SAVE_INLINE_VRS) == 0)
      {
        int end_save = info->altivec_save_offset + info->altivec_size;
-@@ -24289,6 +25760,8 @@
+@@ -24293,6 +25760,8 @@
  
        gcc_checking_assert (scratch_regno == 11 || scratch_regno == 12);
        NOT_INUSE (0);
@@ -10173,7 +9934,7 @@ Index: gcc/config/rs6000/rs6000.c
        if (end_save + frame_off != 0)
  	{
  	  rtx offset = GEN_INT (end_save + frame_off);
-@@ -24311,7 +25784,7 @@
+@@ -24315,7 +25784,7 @@
  	  frame_off = ptr_off;
  	}
      }
@@ -10182,7 +9943,7 @@ Index: gcc/config/rs6000/rs6000.c
  	   && info->altivec_size != 0)
      {
        int i;
-@@ -24353,9 +25826,7 @@
+@@ -24357,9 +25826,7 @@
       epilogue.  */
  
    if (!WORLD_SAVE_P (info)
@@ -10193,7 +9954,7 @@ Index: gcc/config/rs6000/rs6000.c
      {
        rtx reg, vrsave;
        int offset;
-@@ -24368,7 +25839,7 @@
+@@ -24372,7 +25839,7 @@
        if ((DEFAULT_ABI == ABI_AIX || DEFAULT_ABI == ABI_ELFv2)
  	  && !using_static_chain_p)
  	save_regno = 11;
@@ -10202,7 +9963,7 @@ Index: gcc/config/rs6000/rs6000.c
  	{
  	  save_regno = 11;
  	  if (using_static_chain_p)
-@@ -24414,6 +25885,7 @@
+@@ -24418,6 +25885,7 @@
  	  rtx lr = gen_rtx_REG (Pmode, LR_REGNO);
  	  rtx tmp = gen_rtx_REG (Pmode, 12);
  
@@ -10210,7 +9971,7 @@ Index: gcc/config/rs6000/rs6000.c
  	  insn = emit_move_insn (tmp, lr);
  	  RTX_FRAME_RELATED_P (insn) = 1;
  
-@@ -24469,6 +25941,47 @@
+@@ -24473,6 +25941,47 @@
        rtx reg = gen_rtx_REG (reg_mode, TOC_REGNUM);
        emit_insn (gen_frame_store (reg, sp_reg_rtx, RS6000_TOC_SAVE_SLOT));
      }
@@ -10258,7 +10019,7 @@ Index: gcc/config/rs6000/rs6000.c
  }
  
  /* Output .extern statements for the save/restore routines we use.  */
-@@ -24802,7 +26315,9 @@
+@@ -24806,7 +26315,9 @@
       here will not trigger at the moment;  We don't actually need a
       frame pointer for alloca, but the generic parts of the compiler
       give us one anyway.  */
@@ -10269,7 +10030,7 @@ Index: gcc/config/rs6000/rs6000.c
  				 || (cfun->calls_alloca
  				     && !frame_pointer_needed));
    restore_lr = (info->lr_save_p
-@@ -24916,8 +26431,7 @@
+@@ -24920,8 +26431,7 @@
  
    /* Restore AltiVec registers if we must do so before adjusting the
       stack.  */
@@ -10279,7 +10040,7 @@ Index: gcc/config/rs6000/rs6000.c
        && (ALWAYS_RESTORE_ALTIVEC_BEFORE_POP
  	  || (DEFAULT_ABI != ABI_V4
  	      && offset_below_red_zone_p (info->altivec_save_offset))))
-@@ -25004,9 +26518,7 @@
+@@ -25008,9 +26518,7 @@
      }
  
    /* Restore VRSAVE if we must do so before adjusting the stack.  */
@@ -10290,7 +10051,7 @@ Index: gcc/config/rs6000/rs6000.c
        && (ALWAYS_RESTORE_ALTIVEC_BEFORE_POP
  	  || (DEFAULT_ABI != ABI_V4
  	      && offset_below_red_zone_p (info->vrsave_save_offset))))
-@@ -25100,7 +26612,6 @@
+@@ -25104,7 +26612,6 @@
  
    /* Restore AltiVec registers if we have not done so already.  */
    if (!ALWAYS_RESTORE_ALTIVEC_BEFORE_POP
@@ -10298,7 +10059,7 @@ Index: gcc/config/rs6000/rs6000.c
        && info->altivec_size != 0
        && (DEFAULT_ABI == ABI_V4
  	  || !offset_below_red_zone_p (info->altivec_save_offset)))
-@@ -25208,9 +26719,7 @@
+@@ -25212,9 +26719,7 @@
  
    /* Restore VRSAVE if we have not done so already.  */
    if (!ALWAYS_RESTORE_ALTIVEC_BEFORE_POP
@@ -10309,7 +10070,7 @@ Index: gcc/config/rs6000/rs6000.c
        && (DEFAULT_ABI == ABI_V4
  	  || !offset_below_red_zone_p (info->vrsave_save_offset)))
      {
-@@ -25815,6 +27324,8 @@
+@@ -25819,6 +27324,8 @@
  			case DDmode:
  			case TFmode:
  			case TDmode:
@@ -10318,7 +10079,7 @@ Index: gcc/config/rs6000/rs6000.c
  			  bits = 0x3;
  			  break;
  
-@@ -25901,6 +27412,190 @@
+@@ -25905,6 +27412,190 @@
        fputs ("\t.align 2\n", file);
      }
  }
@@ -10509,7 +10270,7 @@ Index: gcc/config/rs6000/rs6000.c
  
  /* A C compound statement that outputs the assembler code for a thunk
     function, used to implement C++ virtual function calls with
-@@ -26309,7 +28004,8 @@
+@@ -26313,7 +28004,8 @@
       TOC, things we put here aren't actually in the TOC, so we can allow
       FP constants.  */
    if (GET_CODE (x) == CONST_DOUBLE &&
@@ -10519,7 +10280,7 @@ Index: gcc/config/rs6000/rs6000.c
      {
        REAL_VALUE_TYPE rv;
        long k[4];
-@@ -26979,6 +28675,7 @@
+@@ -26983,6 +28675,7 @@
                   || rs6000_cpu_attr == CPU_POWER5
  		 || rs6000_cpu_attr == CPU_POWER7
  		 || rs6000_cpu_attr == CPU_POWER8
@@ -10527,7 +10288,7 @@ Index: gcc/config/rs6000/rs6000.c
                   || rs6000_cpu_attr == CPU_CELL)
                  && recog_memoized (dep_insn)
                  && (INSN_CODE (dep_insn) >= 0))
-@@ -27551,6 +29248,7 @@
+@@ -27555,6 +29248,7 @@
    case CPU_POWER7:
      return 5;
    case CPU_POWER8:
@@ -10535,7 +10296,7 @@ Index: gcc/config/rs6000/rs6000.c
      return 7;
    default:
      return 1;
-@@ -28184,6 +29882,7 @@
+@@ -28188,6 +29882,7 @@
          }
        break;
      case PROCESSOR_POWER8:
@@ -10543,7 +10304,7 @@ Index: gcc/config/rs6000/rs6000.c
        type = get_attr_type (insn);
  
        switch (type)
-@@ -28314,6 +30013,7 @@
+@@ -28318,6 +30013,7 @@
      }
      break;
    case PROCESSOR_POWER8:
@@ -10551,7 +10312,7 @@ Index: gcc/config/rs6000/rs6000.c
      type = get_attr_type (insn);
  
      switch (type)
-@@ -28432,7 +30132,7 @@
+@@ -28436,7 +30132,7 @@
  
        /* Do we have a special group ending nop? */
        if (rs6000_cpu_attr == CPU_POWER6 || rs6000_cpu_attr == CPU_POWER7
@@ -10560,7 +10321,7 @@ Index: gcc/config/rs6000/rs6000.c
  	{
  	  nop = gen_group_ending_nop ();
  	  emit_insn_before (nop, next_insn);
-@@ -29032,6 +30732,21 @@
+@@ -29036,6 +30732,21 @@
    if (type == bool_int_type_node) return "U6__booli";
    if (type == bool_long_type_node) return "U6__booll";
  
@@ -10582,7 +10343,7 @@ Index: gcc/config/rs6000/rs6000.c
    /* Mangle IBM extended float long double as `g' (__float128) on
       powerpc*-linux where long-double-64 previously was the default.  */
    if (TYPE_MAIN_VARIANT (type) == long_double_type_node
-@@ -29909,6 +31624,20 @@
+@@ -29913,6 +31624,20 @@
    if (TARGET_32BIT || DEFAULT_ABI == ABI_ELFv2)
      file_end_indicate_exec_stack ();
  #endif
@@ -10603,7 +10364,7 @@ Index: gcc/config/rs6000/rs6000.c
  }
  #endif
  
-@@ -30573,12 +32302,15 @@
+@@ -30577,12 +32302,15 @@
  	  else
  	    *total = rs6000_cost->divsi;
  	}
@@ -10621,7 +10382,7 @@ Index: gcc/config/rs6000/rs6000.c
      case FFS:
        *total = COSTS_N_INSNS (4);
        return false;
-@@ -30608,6 +32340,17 @@
+@@ -30612,6 +32340,17 @@
        return false;
  
      case ASHIFT:
@@ -10639,7 +10400,7 @@ Index: gcc/config/rs6000/rs6000.c
      case ASHIFTRT:
      case LSHIFTRT:
      case ROTATE:
-@@ -30817,7 +32560,8 @@
+@@ -30821,7 +32560,8 @@
           expensive than memory in order to bias spills to memory .*/
        else if ((rs6000_cpu == PROCESSOR_POWER6
  		|| rs6000_cpu == PROCESSOR_POWER7
@@ -10649,7 +10410,7 @@ Index: gcc/config/rs6000/rs6000.c
  	       && reg_classes_intersect_p (rclass, LINK_OR_CTR_REGS))
          ret = 6 * hard_regno_nregs[0][mode];
  
-@@ -30834,7 +32578,7 @@
+@@ -30838,7 +32578,7 @@
  
    /* Moving between two similar registers is just one instruction.  */
    else if (reg_classes_intersect_p (to, from))
@@ -10658,7 +10419,7 @@ Index: gcc/config/rs6000/rs6000.c
  
    /* Everything else has to go through GENERAL_REGS.  */
    else
-@@ -31903,7 +33647,7 @@
+@@ -31907,7 +33647,7 @@
      {
        int first_reg, n_regs;
  
@@ -10667,7 +10428,7 @@ Index: gcc/config/rs6000/rs6000.c
  	{
  	  /* _Decimal128 must use even/odd register pairs.  */
  	  first_reg = (elt_mode == TDmode) ? FP_ARG_RETURN + 1 : FP_ARG_RETURN;
-@@ -31940,7 +33684,7 @@
+@@ -31944,7 +33684,7 @@
    if (DECIMAL_FLOAT_MODE_P (mode) && TARGET_HARD_FLOAT && TARGET_FPRS)
      /* _Decimal128 must use an even/odd register pair.  */
      regno = (mode == TDmode) ? FP_ARG_RETURN + 1 : FP_ARG_RETURN;
@@ -10676,7 +10437,7 @@ Index: gcc/config/rs6000/rs6000.c
  	   && ((TARGET_SINGLE_FLOAT && (mode == SFmode)) || TARGET_DOUBLE_FLOAT))
      regno = FP_ARG_RETURN;
    else if (TREE_CODE (valtype) == COMPLEX_TYPE
-@@ -31949,13 +33693,13 @@
+@@ -31953,13 +33693,13 @@
    /* VSX is a superset of Altivec and adds V2DImode/V2DFmode.  Since the same
       return register is used in both cases, and we won't see V2DImode/V2DFmode
       for pure altivec, combine the two cases.  */
@@ -10692,7 +10453,7 @@ Index: gcc/config/rs6000/rs6000.c
      return spe_build_register_parallel (mode, GP_ARG_RETURN);
    else
      regno = GP_ARG_RETURN;
-@@ -31977,7 +33721,7 @@
+@@ -31981,7 +33721,7 @@
    if (DECIMAL_FLOAT_MODE_P (mode) && TARGET_HARD_FLOAT && TARGET_FPRS)
      /* _Decimal128 must use an even/odd register pair.  */
      regno = (mode == TDmode) ? FP_ARG_RETURN + 1 : FP_ARG_RETURN;
@@ -10701,7 +10462,7 @@ Index: gcc/config/rs6000/rs6000.c
  	   && TARGET_HARD_FLOAT && TARGET_FPRS
             && ((TARGET_SINGLE_FLOAT && mode == SFmode) || TARGET_DOUBLE_FLOAT))
      regno = FP_ARG_RETURN;
-@@ -31991,7 +33735,7 @@
+@@ -31995,7 +33735,7 @@
      return rs6000_complex_function_value (mode);
    else if (TARGET_E500_DOUBLE && TARGET_HARD_FLOAT
  	   && (mode == DFmode || mode == DCmode
@@ -10710,7 +10471,7 @@ Index: gcc/config/rs6000/rs6000.c
      return spe_build_register_parallel (mode, GP_ARG_RETURN);
    else
      regno = GP_ARG_RETURN;
-@@ -32217,6 +33961,8 @@
+@@ -32221,6 +33961,8 @@
  
    if (DECIMAL_FLOAT_MODE_P (mode))
      return default_decimal_float_supported_p ();
@@ -10719,7 +10480,7 @@ Index: gcc/config/rs6000/rs6000.c
    else
      return default_scalar_mode_supported_p (mode);
  }
-@@ -32232,7 +33978,10 @@
+@@ -32236,7 +33978,10 @@
    if (TARGET_SPE && SPE_VECTOR_MODE (mode))
      return true;
  
@@ -10731,7 +10492,7 @@ Index: gcc/config/rs6000/rs6000.c
      return true;
  
    else
-@@ -32239,6 +33988,26 @@
+@@ -32243,6 +33988,26 @@
      return false;
  }
  
@@ -10758,7 +10519,7 @@ Index: gcc/config/rs6000/rs6000.c
  /* Target hook for invalid_arg_for_unprototyped_fn. */
  static const char *
  invalid_arg_for_unprototyped_fn (const_tree typelist, const_tree funcdecl, const_tree val)
-@@ -32324,6 +34093,8 @@
+@@ -32328,6 +34093,8 @@
    { "dlmzb",			OPTION_MASK_DLMZB,		false, true  },
    { "efficient-unaligned-vsx",	OPTION_MASK_EFFICIENT_UNALIGNED_VSX,
  								false, true  },
@@ -10767,7 +10528,7 @@ Index: gcc/config/rs6000/rs6000.c
    { "fprnd",			OPTION_MASK_FPRND,		false, true  },
    { "hard-dfp",			OPTION_MASK_DFP,		false, true  },
    { "htm",			OPTION_MASK_HTM,		false, true  },
-@@ -32330,6 +34101,7 @@
+@@ -32334,6 +34101,7 @@
    { "isel",			OPTION_MASK_ISEL,		false, true  },
    { "mfcrf",			OPTION_MASK_MFCRF,		false, true  },
    { "mfpgpr",			OPTION_MASK_MFPGPR,		false, true  },
@@ -10775,7 +10536,7 @@ Index: gcc/config/rs6000/rs6000.c
    { "mulhw",			OPTION_MASK_MULHW,		false, true  },
    { "multiple",			OPTION_MASK_MULTIPLE,		false, true  },
    { "popcntb",			OPTION_MASK_POPCNTB,		false, true  },
-@@ -32337,6 +34109,10 @@
+@@ -32341,6 +34109,10 @@
    { "power8-fusion",		OPTION_MASK_P8_FUSION,		false, true  },
    { "power8-fusion-sign",	OPTION_MASK_P8_FUSION_SIGN,	false, true  },
    { "power8-vector",		OPTION_MASK_P8_VECTOR,		false, true  },
@@ -10786,7 +10547,7 @@ Index: gcc/config/rs6000/rs6000.c
    { "powerpc-gfxopt",		OPTION_MASK_PPC_GFXOPT,		false, true  },
    { "powerpc-gpopt",		OPTION_MASK_PPC_GPOPT,		false, true  },
    { "quad-memory",		OPTION_MASK_QUAD_MEMORY,	false, true  },
-@@ -32344,6 +34120,7 @@
+@@ -32348,6 +34120,7 @@
    { "recip-precision",		OPTION_MASK_RECIP_PRECISION,	false, true  },
    { "save-toc-indirect",	OPTION_MASK_SAVE_TOC_INDIRECT,	false, true  },
    { "string",			OPTION_MASK_STRING,		false, true  },
@@ -10794,7 +10555,7 @@ Index: gcc/config/rs6000/rs6000.c
    { "update",			OPTION_MASK_NO_UPDATE,		true , true  },
    { "upper-regs-df",		OPTION_MASK_UPPER_REGS_DF,	false, true  },
    { "upper-regs-sf",		OPTION_MASK_UPPER_REGS_SF,	false, true  },
-@@ -32402,7 +34179,7 @@
+@@ -32406,7 +34179,7 @@
  struct rs6000_opt_var {
    const char *name;		/* option name */
    size_t global_offset;		/* offset of the option in global_options.  */
@@ -10803,7 +10564,7 @@ Index: gcc/config/rs6000/rs6000.c
  };
  
  static struct rs6000_opt_var const rs6000_opt_vars[] =
-@@ -33454,6 +35231,8 @@
+@@ -33458,6 +35231,8 @@
        && TARGET_MINIMAL_TOC
        && get_pool_size () != 0)
      add_to_hard_reg_set (&set->set, Pmode, RS6000_PIC_OFFSET_TABLE_REGNUM);
@@ -10812,7 +10573,7 @@ Index: gcc/config/rs6000/rs6000.c
  }
  
  
-@@ -33845,72 +35624,21 @@
+@@ -33849,72 +35624,21 @@
    return;
  }
  
@@ -10891,7 +10652,7 @@ Index: gcc/config/rs6000/rs6000.c
    /* Emit the addis instruction.  */
    fuse_ops[0] = target;
    if (satisfies_constraint_L (addis_value))
-@@ -33989,68 +35717,531 @@
+@@ -33993,68 +35717,531 @@
    if (!addis_str)
      fatal_insn ("Could not generate addis value for fusion", addis_value);
  
@@ -11447,7 +11208,7 @@ Index: gcc/config/rs6000/rs6000.c
  /* Analyze vector computations and remove unnecessary doubleword
     swaps (xxswapdi instructions).  This pass is performed only
     for little-endian VSX code generation.
-@@ -34130,10 +36321,8 @@
+@@ -34134,10 +36321,8 @@
     throughout the computation, we can get correct behavior by replacing
     M with M' as follows:
  
@@ -11460,7 +11221,7 @@ Index: gcc/config/rs6000/rs6000.c
  
     This seems promising at first, since we are just replacing one mask
     with another.  But certain masks are preferable to others.  If M
-@@ -34151,8 +36340,12 @@
+@@ -34155,8 +36340,12 @@
     mask to be produced by an UNSPEC_LVSL, in which case the mask 
     cannot be known at compile time.  In such a case we would have to
     generate several instructions to compute M' as above at run time,
@@ -11474,7 +11235,7 @@ Index: gcc/config/rs6000/rs6000.c
  /* This is based on the union-find logic in web.c.  web_entry_base is
     defined in df.h.  */
  class swap_web_entry : public web_entry_base
-@@ -34187,7 +36380,7 @@
+@@ -34191,7 +36380,7 @@
    /* A nonzero value indicates what kind of special handling for this
       insn is required if doublewords are swapped.  Undefined if
       is_swappable is not set.  */
@@ -11483,7 +11244,7 @@ Index: gcc/config/rs6000/rs6000.c
    /* Set if the web represented by this entry cannot be optimized.  */
    unsigned int web_not_optimizable : 1;
    /* Set if this insn should be deleted.  */
-@@ -34201,7 +36394,11 @@
+@@ -34205,7 +36394,11 @@
    SH_NOSWAP_LD,
    SH_NOSWAP_ST,
    SH_EXTRACT,
@@ -11496,7 +11257,7 @@ Index: gcc/config/rs6000/rs6000.c
  };
  
  /* Union INSN with all insns containing definitions that reach USE.
-@@ -34336,6 +36533,164 @@
+@@ -34340,6 +36533,164 @@
    return 1;
  }
  
@@ -11661,7 +11422,7 @@ Index: gcc/config/rs6000/rs6000.c
  /* Return 1 iff OP is an operand that will not be affected by having
     vector doublewords swapped in memory.  */
  static unsigned int
-@@ -34393,6 +36748,22 @@
+@@ -34397,6 +36748,22 @@
  	  *special = SH_EXTRACT;
  	  return 1;
  	}
@@ -11684,7 +11445,7 @@ Index: gcc/config/rs6000/rs6000.c
        else
  	return 0;
  
-@@ -34457,6 +36828,9 @@
+@@ -34461,6 +36828,9 @@
  	  case UNSPEC_VSPLT_DIRECT:
  	    *special = SH_SPLAT;
  	    return 1;
@@ -11694,7 +11455,7 @@ Index: gcc/config/rs6000/rs6000.c
  	  }
        }
  
-@@ -34570,6 +36944,59 @@
+@@ -34574,6 +36944,59 @@
        return 1;
      }
  
@@ -11754,7 +11515,7 @@ Index: gcc/config/rs6000/rs6000.c
    /* Otherwise check the operands for vector lane violations.  */
    return rtx_is_swappable_p (body, special);
  }
-@@ -34591,7 +37018,7 @@
+@@ -34595,7 +37018,7 @@
  
    for (; link; link = link->next)
      {
@@ -11763,7 +11524,7 @@ Index: gcc/config/rs6000/rs6000.c
  	continue;
  
        if (DF_REF_IS_ARTIFICIAL (link->ref))
-@@ -34690,7 +37117,7 @@
+@@ -34694,7 +37117,7 @@
  	{
  	  /* Ignore uses for addressability.  */
  	  machine_mode mode = GET_MODE (DF_REF_REG (use));
@@ -11772,7 +11533,7 @@ Index: gcc/config/rs6000/rs6000.c
  	    continue;
  
  	  struct df_link *link = DF_REF_CHAIN (use);
-@@ -34859,6 +37286,235 @@
+@@ -34863,6 +37286,235 @@
      fprintf (dump_file, "Changing lane for splat %d\n", INSN_UID (insn));
  }
  
@@ -12008,7 +11769,7 @@ Index: gcc/config/rs6000/rs6000.c
  /* The insn described by INSN_ENTRY[I] can be swapped, but only
     with special handling.  Take care of that here.  */
  static void
-@@ -34905,17 +37561,38 @@
+@@ -34909,17 +37561,38 @@
        /* Change the lane on a direct-splat operation.  */
        adjust_splat (insn);
        break;
@@ -12049,7 +11810,7 @@ Index: gcc/config/rs6000/rs6000.c
    rtx copy = gen_rtx_SET (VOIDmode, SET_DEST (body), src_reg);
    rtx_insn *new_insn = emit_insn_before (copy, insn);
    set_block_for_insn (new_insn, BLOCK_FOR_INSN (insn));
-@@ -34924,7 +37601,10 @@
+@@ -34928,7 +37601,10 @@
    if (dump_file)
      {
        unsigned int new_uid = INSN_UID (new_insn);
@@ -12061,7 +11822,7 @@ Index: gcc/config/rs6000/rs6000.c
      }
  
    df_insn_delete (insn);
-@@ -34977,6 +37657,14 @@
+@@ -34981,6 +37657,14 @@
  	      fputs ("special:extract ", dump_file);
  	    else if (insn_entry[i].special_handling == SH_SPLAT)
  	      fputs ("special:splat ", dump_file);
@@ -12076,7 +11837,7 @@ Index: gcc/config/rs6000/rs6000.c
  	  }
  	if (insn_entry[i].web_not_optimizable)
  	  fputs ("unoptimizable ", dump_file);
-@@ -35044,10 +37732,11 @@
+@@ -35048,10 +37732,11 @@
  		    mode = V4SImode;
  		}
  
@@ -12090,7 +11851,7 @@ Index: gcc/config/rs6000/rs6000.c
  		    insn_entry[uid].is_128_int = 1;
  		  if (DF_REF_INSN_INFO (mention))
  		    insn_entry[uid].contains_subreg
-@@ -35068,13 +37757,14 @@
+@@ -35072,13 +37757,14 @@
  		 isn't sufficient to ensure we union the call into the
  		 web with the parameter setup code.  */
  	      if (mode == DImode && GET_CODE (insn) == SET
@@ -12108,7 +11869,7 @@ Index: gcc/config/rs6000/rs6000.c
  		    insn_entry[uid].is_128_int = 1;
  		  if (DF_REF_INSN_INFO (mention))
  		    insn_entry[uid].contains_subreg
-@@ -35242,7 +37932,7 @@
+@@ -35246,7 +37932,7 @@
    virtual bool gate (function *)
      {
        return (optimize > 0 && !BYTES_BIG_ENDIAN && TARGET_VSX
@@ -13340,8 +13101,15 @@ Index: gcc/config/rs6000/rs6000.md
  ; Whether a floating point move is ok, don't allow SD without hardware FP
  (define_mode_attr fmove_ok [(SF "")
  			    (DF "")
-@@ -389,16 +427,22 @@
- 					(DD "REAL_VALUE_TO_TARGET_DECIMAL64")])
+@@ -392,21 +430,29 @@
+ (define_mode_attr zero_fp [(SF "j")
+ 			   (DF "j")
+ 			   (TF "j")
++			   (IF "j")
++			   (KF "j")
+ 			   (SD "wn")
+ 			   (DD "wn")
+ 			   (TD "wn")])
  
  ; Definitions for load to 32-bit fpr register
 -(define_mode_attr f32_lr [(SF "f")		 (SD "wz")])
@@ -13371,7 +13139,7 @@ Index: gcc/config/rs6000/rs6000.md
  
  ; Definitions for 32-bit fpr direct move
  ; At present, the decimal modes are not allowed in the traditional altivec
-@@ -420,6 +464,9 @@
+@@ -428,6 +474,9 @@
  ; Definitions for 64-bit use of altivec registers
  (define_mode_attr f64_av  [(DF "wv") (DD "wn")])
  
@@ -13381,7 +13149,7 @@ Index: gcc/config/rs6000/rs6000.md
  ; These modes do not fit in integer registers in 32-bit mode.
  ; but on e500v2, the gpr are 64 bit registers
  (define_mode_iterator DIFD [DI (DF "!TARGET_E500_DOUBLE") DD])
-@@ -430,6 +477,19 @@
+@@ -438,6 +487,19 @@
  ; Iterator for just SF/DF
  (define_mode_iterator SFDF [SF DF])
  
@@ -13401,7 +13169,7 @@ Index: gcc/config/rs6000/rs6000.md
  ; SF/DF suffix for traditional floating instructions
  (define_mode_attr Ftrad		[(SF "s") (DF "")])
  
-@@ -437,7 +497,7 @@
+@@ -445,7 +507,7 @@
  (define_mode_attr Fvsx		[(SF "sp") (DF	"dp")])
  
  ; SF/DF constraint for arithmetic on traditional floating point registers
@@ -13410,7 +13178,7 @@ Index: gcc/config/rs6000/rs6000.md
  
  ; SF/DF constraint for arithmetic on VSX registers using instructions added in
  ; ISA 2.06 (power7).  This includes instructions that normally target DF mode,
-@@ -470,10 +530,27 @@
+@@ -478,10 +540,27 @@
  (define_code_iterator iorxor [ior xor])
  
  ; Signed/unsigned variants of ops.
@@ -13441,7 +13209,7 @@ Index: gcc/config/rs6000/rs6000.md
  ; Various instructions that come in SI and DI forms.
  ; A generic w/d attribute, for things like cmpw/cmpd.
  (define_mode_attr wd [(QI    "b")
-@@ -602,7 +679,7 @@
+@@ -610,7 +689,7 @@
  ;; Reload iterator for creating the function to allocate a base register to
  ;; supplement addressing modes.
  (define_mode_iterator RELOAD [V16QI V8HI V4SI V2DI V4SF V2DF V1TI
@@ -13450,7 +13218,7 @@ Index: gcc/config/rs6000/rs6000.md
  
  
  ;; Start with fixed-point load and store insns.  Here we put only the more
-@@ -2081,6 +2158,12 @@
+@@ -2089,6 +2168,12 @@
  	      (clobber (reg:GPR CA_REGNO))])]
    ""
  {
@@ -13463,7 +13231,7 @@ Index: gcc/config/rs6000/rs6000.md
    operands[2] = gen_reg_rtx (<MODE>mode);
    operands[3] = gen_reg_rtx (<MODE>mode);
    operands[4] = gen_reg_rtx (<MODE>mode);
-@@ -2087,6 +2170,13 @@
+@@ -2095,6 +2180,13 @@
    operands[5] = GEN_INT (GET_MODE_BITSIZE (<MODE>mode) - 1);
  })
  
@@ -13477,7 +13245,7 @@ Index: gcc/config/rs6000/rs6000.md
  (define_expand "ffs<mode>2"
    [(set (match_dup 2)
  	(neg:GPR (match_operand:GPR 1 "gpc_reg_operand" "")))
-@@ -2760,6 +2850,14 @@
+@@ -2768,6 +2860,14 @@
    DONE;
  })
  
@@ -13492,7 +13260,7 @@ Index: gcc/config/rs6000/rs6000.md
  
  (define_insn "udiv<mode>3"
    [(set (match_operand:GPR 0 "gpc_reg_operand" "=r")
-@@ -2861,9 +2959,9 @@
+@@ -2869,9 +2969,9 @@
     (set_attr "cell_micro" "not")])
  
  (define_expand "mod<mode>3"
@@ -13505,7 +13273,7 @@ Index: gcc/config/rs6000/rs6000.md
    ""
  {
    int i;
-@@ -2873,16 +2971,93 @@
+@@ -2881,16 +2981,93 @@
    if (GET_CODE (operands[2]) != CONST_INT
        || INTVAL (operands[2]) <= 0
        || (i = exact_log2 (INTVAL (operands[2]))) < 0)
@@ -13606,7 +13374,7 @@ Index: gcc/config/rs6000/rs6000.md
  
  ;; Logical instructions
  ;; The logical instructions are mostly combined by using match_operator,
-@@ -3818,7 +3993,130 @@
+@@ -3826,7 +4003,130 @@
    [(set_attr "type" "shift")
     (set_attr "dot" "yes")])
  
@@ -13737,7 +13505,7 @@ Index: gcc/config/rs6000/rs6000.md
  (define_insn "rotl<mode>3"
    [(set (match_operand:GPR 0 "gpc_reg_operand" "=r")
  	(rotate:GPR (match_operand:GPR 1 "gpc_reg_operand" "r")
-@@ -5223,8 +5521,8 @@
+@@ -5231,8 +5531,8 @@
    "")
  
  (define_insn_and_split "*extendsfdf2_fpr"
@@ -13748,7 +13516,7 @@ Index: gcc/config/rs6000/rs6000.md
    "TARGET_HARD_FLOAT && TARGET_FPRS && TARGET_DOUBLE_FLOAT"
    "@
     #
-@@ -5232,7 +5530,8 @@
+@@ -5240,7 +5540,8 @@
     lfs%U1%X1 %0,%1
     #
     xscpsgndp %x0,%x1,%x1
@@ -13758,7 +13526,7 @@ Index: gcc/config/rs6000/rs6000.md
    "&& reload_completed && REG_P (operands[1]) && REGNO (operands[0]) == REGNO (operands[1])"
    [(const_int 0)]
  {
-@@ -5239,7 +5538,7 @@
+@@ -5247,7 +5548,7 @@
    emit_note (NOTE_INSN_DELETED);
    DONE;
  }
@@ -13767,7 +13535,7 @@ Index: gcc/config/rs6000/rs6000.md
  
  (define_expand "truncdfsf2"
    [(set (match_operand:SF 0 "gpc_reg_operand" "")
-@@ -5259,9 +5558,9 @@
+@@ -5267,9 +5568,9 @@
  ;; This expander is here to avoid FLOAT_WORDS_BIGENDIAN tests in
  ;; builtins.c and optabs.c that are not correct for IBM long double
  ;; when little-endian.
@@ -13779,7 +13547,7 @@ Index: gcc/config/rs6000/rs6000.md
     (set (match_dup 3)
     	(subreg:DI (match_dup 2) 0))
     (set (match_dup 4)
-@@ -5268,10 +5567,8 @@
+@@ -5276,10 +5577,8 @@
     	(match_dup 5))
     (set (match_operand:SI 0 "gpc_reg_operand" "")
    	(match_dup 6))]
@@ -13792,53 +13560,18 @@ Index: gcc/config/rs6000/rs6000.md
  {
    operands[2] = gen_reg_rtx (DFmode);
    operands[3] = gen_reg_rtx (DImode);
-@@ -6144,10 +6441,12 @@
-    xsrdpiz %x0,%x1"
-   [(set_attr "type" "fp")])
- 
--;; Since FCTIWZ doesn't sign extend the upper bits, we have to do a store and a
--;; load to properly sign extend the value, but at least doing a store, load
--;; into a GPR to sign extend, a store from the GPR and a load back into the FPR
--;; if we have 32-bit memory ops
-+;; Opitmize converting SF/DFmode to signed SImode and back to SF/DFmode.  This
-+;; optimization prevents on ISA 2.06 systems and earlier having to store the
-+;; value from the FPR/vector unit to the stack, load the value into a GPR, sign
-+;; extend it, store it back on the stack from the GPR, load it back into the
-+;; FP/vector unit to do the rounding. If we have direct move (ISA 2.07),
-+;; disable using store and load to sign/zero extend the value.
- (define_insn_and_split "*round32<mode>2_fprs"
-   [(set (match_operand:SFDF 0 "gpc_reg_operand" "=d")
- 	(float:SFDF
-@@ -6156,7 +6455,7 @@
-    (clobber (match_scratch:DI 3 "=d"))]
-   "TARGET_HARD_FLOAT && TARGET_FPRS && TARGET_DOUBLE_FLOAT
-    && <SI_CONVERT_FP> && TARGET_LFIWAX && TARGET_STFIWX && TARGET_FCFID
--   && can_create_pseudo_p ()"
-+   && !TARGET_DIRECT_MOVE && can_create_pseudo_p ()"
-   "#"
-   ""
-   [(pc)]
-@@ -6188,7 +6487,7 @@
-    (clobber (match_scratch:DI 2 "=d"))
-    (clobber (match_scratch:DI 3 "=d"))]
-   "TARGET_HARD_FLOAT && TARGET_FPRS && TARGET_DOUBLE_FLOAT
--   && TARGET_LFIWZX && TARGET_STFIWX && TARGET_FCFIDU
-+   && TARGET_LFIWZX && TARGET_STFIWX && TARGET_FCFIDU && !TARGET_DIRECT_MOVE
-    && can_create_pseudo_p ()"
-   "#"
-   ""
-@@ -8080,8 +8379,8 @@
+@@ -8090,8 +8389,8 @@
  }")
  
  (define_insn "mov<mode>_hardfloat"
 -  [(set (match_operand:FMOVE32 0 "nonimmediate_operand" "=!r,!r,m,f,<f32_vsx>,<f32_vsx>,!r,<f32_lr>,<f32_sm>,<f32_av>,Z,?<f32_dm>,?r,*c*l,!r,*h")
--	(match_operand:FMOVE32 1 "input_operand" "r,m,r,f,<f32_vsx>,j,j,<f32_lm>,<f32_sr>,Z,<f32_av>,r,<f32_dm>,r,h,0"))]
+-	(match_operand:FMOVE32 1 "input_operand" "r,m,r,f,<f32_vsx>,<zero_fp>,<zero_fp>,<f32_lm>,<f32_sr>,Z,<f32_av>,r,<f32_dm>,r,h,0"))]
 +  [(set (match_operand:FMOVE32 0 "nonimmediate_operand" "=!r,!r,m,f,<f32_vsx>,<f32_vsx>,!r,<f32_lr>,<f32_lr2>,<f32_sm>,<f32_sm2>,<f32_av>,Z,?<f32_dm>,?r,*c*l,!r,*h")
-+	(match_operand:FMOVE32 1 "input_operand" "r,m,r,f,<f32_vsx>,j,j,<f32_lm>,<f32_lm2>,<f32_sr>,<f32_sr2>,Z,<f32_av>,r,<f32_dm>,r,h,0"))]
++	(match_operand:FMOVE32 1 "input_operand" "r,m,r,f,<f32_vsx>,<zero_fp>,<zero_fp>,<f32_lm>,<f32_lm2>,<f32_sr>,<f32_sr2>,Z,<f32_av>,r,<f32_dm>,r,h,0"))]
    "(gpc_reg_operand (operands[0], <MODE>mode)
     || gpc_reg_operand (operands[1], <MODE>mode))
     && (TARGET_HARD_FLOAT && TARGET_FPRS && TARGET_SINGLE_FLOAT)"
-@@ -8094,7 +8393,9 @@
+@@ -8104,7 +8403,9 @@
     xxlxor %x0,%x0,%x0
     li %0,0
     <f32_li>
@@ -13848,7 +13581,7 @@ Index: gcc/config/rs6000/rs6000.md
     <f32_lv>
     <f32_sv>
     mtvsrwz %x0,%1
-@@ -8102,7 +8403,7 @@
+@@ -8112,7 +8413,7 @@
     mt%0 %1
     mf%1 %0
     nop"
@@ -13857,7 +13590,7 @@ Index: gcc/config/rs6000/rs6000.md
     (set_attr "length" "4")])
  
  (define_insn "*mov<mode>_softfloat"
-@@ -8215,14 +8516,15 @@
+@@ -8225,14 +8526,15 @@
  ;; into a floating point register when it is needed for a floating point
  ;; operation.  Prefer traditional floating point registers over VSX registers,
  ;; since the D-form version of the memory instructions does not need a GPR for
@@ -13870,13 +13603,13 @@ Index: gcc/config/rs6000/rs6000.md
  
  (define_insn "*mov<mode>_hardfloat32"
 -  [(set (match_operand:FMOVE64 0 "nonimmediate_operand" "=m,d,d,<f64_av>,Z,<f64_vsx>,<f64_vsx>,!r,Y,r,!r")
--	(match_operand:FMOVE64 1 "input_operand" "d,m,d,Z,<f64_av>,<f64_vsx>,j,j,r,Y,r"))]
+-	(match_operand:FMOVE64 1 "input_operand" "d,m,d,Z,<f64_av>,<f64_vsx>,<zero_fp>,<zero_fp>,r,Y,r"))]
 +  [(set (match_operand:FMOVE64 0 "nonimmediate_operand" "=m,d,d,<f64_av>,Z,<f64_p9>,o,<f64_vsx>,<f64_vsx>,!r,Y,r,!r")
-+	(match_operand:FMOVE64 1 "input_operand" "d,m,d,Z,<f64_av>,o,<f64_p9>,<f64_vsx>,j,j,r,Y,r"))]
++	(match_operand:FMOVE64 1 "input_operand" "d,m,d,Z,<f64_av>,o,<f64_p9>,<f64_vsx>,<zero_fp>,<zero_fp>,r,Y,r"))]
    "! TARGET_POWERPC64 && TARGET_HARD_FLOAT && TARGET_FPRS && TARGET_DOUBLE_FLOAT 
     && (gpc_reg_operand (operands[0], <MODE>mode)
         || gpc_reg_operand (operands[1], <MODE>mode))"
-@@ -8232,6 +8534,8 @@
+@@ -8242,6 +8544,8 @@
     fmr %0,%1
     lxsd%U1x %x0,%y1
     stxsd%U0x %x1,%y0
@@ -13885,7 +13618,7 @@ Index: gcc/config/rs6000/rs6000.md
     xxlor %x0,%x1,%x1
     xxlxor %x0,%x0,%x0
     #
-@@ -8238,8 +8542,8 @@
+@@ -8248,8 +8552,8 @@
     #
     #
     #"
@@ -13896,18 +13629,18 @@ Index: gcc/config/rs6000/rs6000.md
  
  (define_insn "*mov<mode>_softfloat32"
    [(set (match_operand:FMOVE64 0 "nonimmediate_operand" "=Y,r,r,r,r,r")
-@@ -8257,8 +8561,8 @@
+@@ -8267,8 +8571,8 @@
  ; ld/std require word-aligned displacements -> 'Y' constraint.
  ; List Y->r and r->Y before r->r for reload.
  (define_insn "*mov<mode>_hardfloat64"
 -  [(set (match_operand:FMOVE64 0 "nonimmediate_operand" "=m,d,d,<f64_av>,Z,<f64_vsx>,<f64_vsx>,!r,Y,r,!r,*c*l,!r,*h,r,wg,r,<f64_dm>")
--	(match_operand:FMOVE64 1 "input_operand" "d,m,d,Z,<f64_av>,<f64_vsx>,j,j,r,Y,r,r,h,0,wg,r,<f64_dm>,r"))]
+-	(match_operand:FMOVE64 1 "input_operand" "d,m,d,Z,<f64_av>,<f64_vsx>,<zero_fp>,<zero_fp>,r,Y,r,r,h,0,wg,r,<f64_dm>,r"))]
 +  [(set (match_operand:FMOVE64 0 "nonimmediate_operand" "=m,d,d,<f64_p9>,o,<f64_av>,Z,<f64_vsx>,<f64_vsx>,!r,Y,r,!r,*c*l,!r,*h,r,wg,r,<f64_dm>")
-+	(match_operand:FMOVE64 1 "input_operand" "d,m,d,o,<f64_p9>,Z,<f64_av>,<f64_vsx>,j,j,r,Y,r,r,h,0,wg,r,<f64_dm>,r"))]
++	(match_operand:FMOVE64 1 "input_operand" "d,m,d,o,<f64_p9>,Z,<f64_av>,<f64_vsx>,<zero_fp>,<zero_fp>,r,Y,r,r,h,0,wg,r,<f64_dm>,r"))]
    "TARGET_POWERPC64 && TARGET_HARD_FLOAT && TARGET_FPRS && TARGET_DOUBLE_FLOAT
     && (gpc_reg_operand (operands[0], <MODE>mode)
         || gpc_reg_operand (operands[1], <MODE>mode))"
-@@ -8266,6 +8570,8 @@
+@@ -8276,6 +8580,8 @@
     stfd%U0%X0 %1,%0
     lfd%U1%X1 %0,%1
     fmr %0,%1
@@ -13916,7 +13649,7 @@ Index: gcc/config/rs6000/rs6000.md
     lxsd%U1x %x0,%y1
     stxsd%U0x %x1,%y0
     xxlor %x0,%x1,%x1
-@@ -8281,7 +8587,7 @@
+@@ -8291,7 +8597,7 @@
     mffgpr %0,%1
     mfvsrd %0,%x1
     mtvsrd %x0,%1"
@@ -13925,36 +13658,27 @@ Index: gcc/config/rs6000/rs6000.md
     (set_attr "length" "4")])
  
  (define_insn "*mov<mode>_softfloat64"
-@@ -8318,9 +8624,10 @@
+@@ -8328,9 +8634,10 @@
  ;; problematical.  Don't allow direct move for this case.
  
  (define_insn_and_split "*mov<mode>_64bit_dm"
 -  [(set (match_operand:FMOVE128 0 "nonimmediate_operand" "=m,d,d,ws,Y,r,r,r,wm")
--	(match_operand:FMOVE128 1 "input_operand" "d,m,d,j,r,jY,r,wm,r"))]
+-	(match_operand:FMOVE128 1 "input_operand" "d,m,d,<zero_fp>,r,<zero_fp>Y,r,wm,r"))]
 +  [(set (match_operand:FMOVE128_FPR 0 "nonimmediate_operand" "=m,d,d,d,Y,r,r,r,wh")
-+	(match_operand:FMOVE128_FPR 1 "input_operand" "d,m,d,j,r,jY,r,wh,r"))]
++	(match_operand:FMOVE128_FPR 1 "input_operand" "d,m,d,<zero_fp>,r,<zero_fp>Y,r,wh,r"))]
    "TARGET_HARD_FLOAT && TARGET_FPRS && TARGET_POWERPC64
 +   && FLOAT128_2REG_P (<MODE>mode)
     && (<MODE>mode != TDmode || WORDS_BIG_ENDIAN)
     && (gpc_reg_operand (operands[0], <MODE>mode)
         || gpc_reg_operand (operands[1], <MODE>mode))"
-@@ -8331,7 +8638,7 @@
-   [(set_attr "length" "8,8,8,8,12,12,8,8,8")])
- 
- (define_insn_and_split "*movtd_64bit_nodm"
--  [(set (match_operand:TD 0 "nonimmediate_operand" "=m,d,d,ws,Y,r,r")
-+  [(set (match_operand:TD 0 "nonimmediate_operand" "=m,d,d,d,Y,r,r")
- 	(match_operand:TD 1 "input_operand" "d,m,d,j,r,jY,r"))]
-   "TARGET_HARD_FLOAT && TARGET_FPRS && TARGET_POWERPC64 && !WORDS_BIG_ENDIAN
-    && (gpc_reg_operand (operands[0], TDmode)
-@@ -8343,9 +8650,12 @@
-   [(set_attr "length" "8,8,8,8,12,12,8")])
+@@ -8353,9 +8660,12 @@
+   [(set_attr "length" "8,8,8,12,12,8")])
  
  (define_insn_and_split "*mov<mode>_32bit"
 -  [(set (match_operand:FMOVE128 0 "nonimmediate_operand" "=m,d,d,ws,Y,r,r")
--	(match_operand:FMOVE128 1 "input_operand" "d,m,d,j,r,jY,r"))]
+-	(match_operand:FMOVE128 1 "input_operand" "d,m,d,<zero_fp>,r,<zero_fp>Y,r"))]
 +  [(set (match_operand:FMOVE128_FPR 0 "nonimmediate_operand" "=m,d,d,d,Y,r,r")
-+	(match_operand:FMOVE128_FPR 1 "input_operand" "d,m,d,j,r,jY,r"))]
++	(match_operand:FMOVE128_FPR 1 "input_operand" "d,m,d,<zero_fp>,r,<zero_fp>Y,r"))]
    "TARGET_HARD_FLOAT && TARGET_FPRS && !TARGET_POWERPC64
 +   && (FLOAT128_2REG_P (<MODE>mode)
 +       || int_reg_operand_not_pseudo (operands[0], <MODE>mode)
@@ -13962,7 +13686,7 @@ Index: gcc/config/rs6000/rs6000.md
     && (gpc_reg_operand (operands[0], <MODE>mode)
         || gpc_reg_operand (operands[1], <MODE>mode))"
    "#"
-@@ -8366,34 +8676,51 @@
+@@ -8376,34 +8686,51 @@
  { rs6000_split_multireg_move (operands[0], operands[1]); DONE; }
    [(set_attr "length" "20,20,16")])
  
@@ -14029,7 +13753,7 @@ Index: gcc/config/rs6000/rs6000.md
    "#"
    "&& reload_completed"
    [(set (match_dup 3) (match_dup 1))
-@@ -8402,14 +8729,15 @@
+@@ -8412,14 +8739,15 @@
    const int lo_word = LONG_DOUBLE_LARGE_FIRST ? GET_MODE_SIZE (DFmode) : 0;
    const int hi_word = LONG_DOUBLE_LARGE_FIRST ? 0 : GET_MODE_SIZE (DFmode);
  
@@ -14051,7 +13775,7 @@ Index: gcc/config/rs6000/rs6000.md
    "#"
    "&& reload_completed"
    [(set (match_dup 2) (match_dup 1))
-@@ -8418,38 +8746,48 @@
+@@ -8428,38 +8756,48 @@
    const int lo_word = LONG_DOUBLE_LARGE_FIRST ? GET_MODE_SIZE (DFmode) : 0;
    const int hi_word = LONG_DOUBLE_LARGE_FIRST ? 0 : GET_MODE_SIZE (DFmode);
  
@@ -14118,7 +13842,7 @@ Index: gcc/config/rs6000/rs6000.md
     && TARGET_HARD_FLOAT && TARGET_FPRS && TARGET_LONG_DOUBLE_128"
    "@
     #
-@@ -8462,38 +8800,44 @@
+@@ -8472,38 +8810,44 @@
  }
    [(set_attr "type" "fp")])
  
@@ -14180,7 +13904,7 @@ Index: gcc/config/rs6000/rs6000.md
    "#"
    "&& reload_completed"
    [(set (match_dup 2)
-@@ -8502,54 +8846,69 @@
+@@ -8512,54 +8856,69 @@
  	(float_truncate:SF (match_dup 2)))]
    "")
  
@@ -14270,7 +13994,7 @@ Index: gcc/config/rs6000/rs6000.md
  {
    operands[2] = gen_reg_rtx (DFmode);
    operands[3] = gen_reg_rtx (DFmode);
-@@ -8557,21 +8916,21 @@
+@@ -8567,21 +8926,21 @@
    operands[5] = assign_stack_temp (DImode, GET_MODE_SIZE (DImode));
  })
  
@@ -14297,7 +14021,7 @@ Index: gcc/config/rs6000/rs6000.md
  
    gcc_assert (MEM_P (operands[5]));
    lowword = adjust_address (operands[5], SImode, WORDS_BIG_ENDIAN ? 4 : 0);
-@@ -8582,20 +8941,89 @@
+@@ -8592,20 +8951,89 @@
    DONE;
  })
  
@@ -14400,7 +14124,7 @@ Index: gcc/config/rs6000/rs6000.md
    "*
  {
    if (REGNO (operands[0]) == REGNO (operands[1]) + 1)
-@@ -8606,32 +9034,64 @@
+@@ -8616,32 +9044,64 @@
    [(set_attr "type" "fp")
     (set_attr "length" "8")])
  
@@ -14478,7 +14202,7 @@ Index: gcc/config/rs6000/rs6000.md
     (set (match_dup 3) (match_dup 5))
     (set (match_dup 5) (abs:DF (match_dup 5)))
     (set (match_dup 4) (compare:CCFP (match_dup 3) (match_dup 5)))
-@@ -8639,8 +9099,7 @@
+@@ -8649,8 +9109,7 @@
  			   (label_ref (match_operand 2 "" ""))
  			   (pc)))
     (set (match_dup 6) (neg:DF (match_dup 6)))]
@@ -14488,7 +14212,7 @@ Index: gcc/config/rs6000/rs6000.md
     && TARGET_LONG_DOUBLE_128"
    "
  {
-@@ -8648,10 +9107,196 @@
+@@ -8658,10 +9117,196 @@
    const int lo_word = LONG_DOUBLE_LARGE_FIRST ? GET_MODE_SIZE (DFmode) : 0;
    operands[3] = gen_reg_rtx (DFmode);
    operands[4] = gen_reg_rtx (CCFPmode);
@@ -14687,15 +14411,15 @@ Index: gcc/config/rs6000/rs6000.md
  ;; Reload helper functions used by rs6000_secondary_reload.  The patterns all
  ;; must have 3 arguments, and scratch register constraint must be a single
  ;; constraint.
-@@ -8829,6 +9474,7 @@
-   emit_insn (gen_p8_mtvsrd_1 (tmp, gpr_hi_reg));
-   emit_insn (gen_p8_mtvsrd_2 (tmp, gpr_lo_reg));
-   emit_insn (gen_p8_xxpermdi_<mode> (dest, tmp));
+@@ -8828,6 +9473,7 @@
+   emit_insn (gen_p8_mtvsrd_df (tmp_lo, gpr_lo_reg));
+   emit_insn (gen_p8_xxpermdi_<mode> (dest, tmp_hi, tmp_lo));
+   DONE;
 +  DONE;
  }
    [(set_attr "length" "12")
     (set_attr "type" "three")])
-@@ -8838,7 +9484,10 @@
+@@ -8837,7 +9483,10 @@
  	(match_operand:FMOVE128_GPR 1 "input_operand" ""))]
    "reload_completed
     && (int_reg_operand (operands[0], <MODE>mode)
@@ -14707,7 +14431,7 @@ Index: gcc/config/rs6000/rs6000.md
    [(pc)]
  { rs6000_split_multireg_move (operands[0], operands[1]); DONE; })
  
-@@ -8905,6 +9554,7 @@
+@@ -8907,6 +9556,7 @@
    emit_insn (gen_p8_mfvsrd_3_<mode> (gpr_hi_reg, src));
    emit_insn (gen_vsx_xxpermdi_<mode> (tmp, src, src, GEN_INT (3)));
    emit_insn (gen_p8_mfvsrd_3_<mode> (gpr_lo_reg, tmp));
@@ -14715,7 +14439,7 @@ Index: gcc/config/rs6000/rs6000.md
  }
    [(set_attr "length" "12")
     (set_attr "type" "three")])
-@@ -12069,20 +12719,20 @@
+@@ -12071,20 +12721,20 @@
     (set (match_dup 0) (plus:SI (match_dup 1) (match_dup 4)))])
  
  ;; Only need to compare second words if first words equal
@@ -14743,7 +14467,7 @@ Index: gcc/config/rs6000/rs6000.md
      (clobber (match_scratch:DF 3 "=d"))
      (clobber (match_scratch:DF 4 "=d"))
      (clobber (match_scratch:DF 5 "=d"))
-@@ -12092,7 +12742,7 @@
+@@ -12094,7 +12744,7 @@
      (clobber (match_scratch:DF 9 "=d"))
      (clobber (match_scratch:DF 10 "=d"))
      (clobber (match_scratch:GPR 11 "=b"))]
@@ -14752,7 +14476,7 @@ Index: gcc/config/rs6000/rs6000.md
     && TARGET_HARD_FLOAT && TARGET_FPRS && TARGET_DOUBLE_FLOAT && TARGET_LONG_DOUBLE_128"
    "#"
    "&& reload_completed"
-@@ -12116,10 +12766,10 @@
+@@ -12118,10 +12768,10 @@
    const int lo_word = LONG_DOUBLE_LARGE_FIRST ? GET_MODE_SIZE (DFmode) : 0;
    const int hi_word = LONG_DOUBLE_LARGE_FIRST ? 0 : GET_MODE_SIZE (DFmode);
  
@@ -14767,7 +14491,7 @@ Index: gcc/config/rs6000/rs6000.md
    operands[12] = gen_label_rtx ();
    operands[13] = gen_label_rtx ();
    real_inf (&rv);
-@@ -12921,7 +13571,7 @@
+@@ -12923,7 +13573,7 @@
    [(set_attr "type" "jmpreg")])
  
  (define_insn "nop"
@@ -14776,7 +14500,7 @@ Index: gcc/config/rs6000/rs6000.md
    ""
    "nop")
  
-@@ -13588,6 +14238,72 @@
+@@ -13590,6 +14240,72 @@
  }"
    [(set_attr "type" "load")])
  
@@ -14849,7 +14573,7 @@ Index: gcc/config/rs6000/rs6000.md
  (define_insn "bpermd_<mode>"
    [(set (match_operand:P 0 "gpc_reg_operand" "=r")
  	(unspec:P [(match_operand:P 1 "gpc_reg_operand" "r")
-@@ -13808,6 +14524,66 @@
+@@ -13810,6 +14526,66 @@
  ;; a GPR.  The addis instruction must be adjacent to the load, and use the same
  ;; register that is being loaded.  The fused ops must be physically adjacent.
  
@@ -14916,7 +14640,7 @@ Index: gcc/config/rs6000/rs6000.md
  ;; Find cases where the addis that feeds into a load instruction is either used
  ;; once or is the same as the target register, and replace it with the fusion
  ;; insn
-@@ -13831,7 +14607,7 @@
+@@ -13833,7 +14609,7 @@
  
  (define_insn "fusion_gpr_load_<mode>"
    [(set (match_operand:INT1 0 "base_reg_operand" "=&b")
@@ -14925,7 +14649,7 @@ Index: gcc/config/rs6000/rs6000.md
  		     UNSPEC_FUSION_GPR))]
    "TARGET_P8_FUSION"
  {
-@@ -13841,6 +14617,133 @@
+@@ -13843,6 +14619,133 @@
     (set_attr "length" "8")])
  
  
@@ -15059,7 +14783,7 @@ Index: gcc/config/rs6000/rs6000.md
  ;; Miscellaneous ISA 2.06 (power7) instructions
  (define_insn "addg6s"
    [(set (match_operand:SI 0 "register_operand" "=r")
-@@ -13894,7 +14797,10 @@
+@@ -13896,7 +14799,10 @@
  ;; Pack/unpack 128-bit floating point types that take 2 scalar registers
  
  ; Type of the 64-bit part when packing/unpacking 128-bit floating point types
@@ -15071,7 +14795,7 @@ Index: gcc/config/rs6000/rs6000.md
  
  (define_expand "unpack<mode>"
    [(set (match_operand:<FP128_64> 0 "nonimmediate_operand" "")
-@@ -13902,7 +14808,7 @@
+@@ -13904,7 +14810,7 @@
  	 [(match_operand:FMOVE128 1 "register_operand" "")
  	  (match_operand:QI 2 "const_0_to_1_operand" "")]
  	 UNSPEC_UNPACK_128BIT))]
@@ -15080,7 +14804,7 @@ Index: gcc/config/rs6000/rs6000.md
    "")
  
  (define_insn_and_split "unpack<mode>_dm"
-@@ -13911,7 +14817,7 @@
+@@ -13913,7 +14819,7 @@
  	 [(match_operand:FMOVE128 1 "register_operand" "d,d,r,d,r")
  	  (match_operand:QI 2 "const_0_to_1_operand" "i,i,i,i,i")]
  	 UNSPEC_UNPACK_128BIT))]
@@ -15089,7 +14813,7 @@ Index: gcc/config/rs6000/rs6000.md
    "#"
    "&& reload_completed"
    [(set (match_dup 0) (match_dup 3))]
-@@ -13935,7 +14841,7 @@
+@@ -13937,7 +14843,7 @@
  	 [(match_operand:FMOVE128 1 "register_operand" "d,d")
  	  (match_operand:QI 2 "const_0_to_1_operand" "i,i")]
  	 UNSPEC_UNPACK_128BIT))]
@@ -15098,7 +14822,7 @@ Index: gcc/config/rs6000/rs6000.md
    "#"
    "&& reload_completed"
    [(set (match_dup 0) (match_dup 3))]
-@@ -13959,7 +14865,7 @@
+@@ -13961,7 +14867,7 @@
  	 [(match_operand:<FP128_64> 1 "register_operand" "0,d")
  	  (match_operand:<FP128_64> 2 "register_operand" "d,d")]
  	 UNSPEC_PACK_128BIT))]
@@ -15107,7 +14831,7 @@ Index: gcc/config/rs6000/rs6000.md
    "@
     fmr %L0,%2
     #"
-@@ -13979,12 +14885,12 @@
+@@ -13981,12 +14887,12 @@
    [(set_attr "type" "fp,fp")
     (set_attr "length" "4,8")])
  
@@ -15123,7 +14847,7 @@ Index: gcc/config/rs6000/rs6000.md
  {
    if (REGNO (operands[0]) == REGNO (operands[1]) && INTVAL (operands[2]) == 0)
      return ASM_COMMENT_START " xxpermdi to same register";
-@@ -13992,22 +14898,405 @@
+@@ -13994,22 +14900,405 @@
    operands[3] = GEN_INT (INTVAL (operands[2]) == 0 ? 0 : 3);
    return "xxpermdi %x0,%x1,%x1,%3";
  }
@@ -15644,17 +15368,3 @@ Index: libgo/configure.ac
  
  AC_CACHE_CHECK([whether compiler is llgo],
  [libgo_cv_c_goc_is_llgo],
-Index: .
-===================================================================
---- a/src/.	(.../gcc-5-branch)
-+++ b/src/.	(.../ibm/gcc-5-branch)
-
-Property changes on: .
-___________________________________________________________________
-Modified: svn:mergeinfo
-## -0,0 +0,1 ##
-   Merged /branches/gcc-5-branch:r222422-234186
-Added: svnmerge-integrated
-## -0,0 +1 ##
-+/branches/gcc-5-branch:1-234186
-\ No newline at end of property

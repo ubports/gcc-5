@@ -1,3 +1,29 @@
+gcc-5 (5.3.1-14) unstable; urgency=medium
+
+  * Update to SVN 20160409 (r234858, 5.3.1) from the gcc-5-branch.
+    - Fix PR c++/69826, PR c++/69797, PR target/70421, PR target/70329,
+      PR rtl-optimization/70429, PR target/70296, PR rtl-optimization/70222,
+      PR tree-optimization/70169, PR tree-optimization/70152, PR target/70062,
+      PR target/69888, PR target/70028, PR target/69969, PR debug/69705,
+      PR rtl-optimization/69891, PR middle-end/69838, PR target/69875,
+      PR tree-optimization/69802, PR rtl-optimization/69764, PR ipa/68672,
+      PR rtl-optimization/69771, PR rtl-optimization/69764, PR target/70052,
+      PR rtl-optimization/69771, PR target/70406, PR target/70319,
+      PR c++/70272, PR c++/67767, PR fortran/70397, PR target/70296,
+      PR target/69614, PR c++/70393, PR target/70453, PR rtl-optimization/69307,
+      PR rtl-optimization/69102, PR rtl-optimization/69032, PR target/66660,
+      PR target/64411, PR rtl-optimization/70460, PR target/68973,
+      PR middle-end/70457 (LP: #1563134), PR rtl-optimization/68236,
+      PR target/67896 (AArch64), PR fortran/66911, PR fortran/65795,
+      PR target/67172 (MingW), PR target/70525 (x86), PR libgfortran/70235,
+      PR tree-optimization/70177, PR middle-end/69760, PR middle-end/68963,
+      PR tree-optimization/69983, PR middle-end/70022, PR middle-end/70424,
+      PR tree-optimization/70115, PR middle-end/70450, PR middle-end/70333,
+      PR rtl-optimization/70484, PR target/70510 (x86), PR c++/70430.
+  * Fix PR target/70496 (ARM32), taken from the trunk.
+
+ -- Matthias Klose <doko@debian.org>  Sat, 09 Apr 2016 18:40:05 +0200
+
 gcc-5 (5.3.1-13) unstable; urgency=medium
 
   * Update to SVN 20160323 (r234424, 5.3.1) from the gcc-5-branch.

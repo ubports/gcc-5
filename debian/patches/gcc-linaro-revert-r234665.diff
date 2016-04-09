@@ -1,0 +1,37 @@
+Index: gcc/testsuite/gcc.target/aarch64/simd/pr67896.C
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/aarch64/simd/pr67896.C	(revision 234665)
++++ b/src/gcc/testsuite/gcc.target/aarch64/simd/pr67896.C	(nonexistent)
+@@ -1,7 +0,0 @@
+-typedef __Poly8_t A;
+-typedef __Poly16_t A; /* { dg-error "conflicting declaration" } */
+-typedef __Poly64_t A; /* { dg-error "conflicting declaration" } */
+-typedef __Poly128_t A; /* { dg-error "conflicting declaration" } */
+-
+-typedef __Poly8x8_t B;
+-typedef __Poly16x8_t B; /* { dg-error "conflicting declaration" } */ 
+Index: gcc/config/aarch64/aarch64-builtins.c
+===================================================================
+--- a/src/gcc/config/aarch64/aarch64-builtins.c	(revision 234665)
++++ b/src/gcc/config/aarch64/aarch64-builtins.c	(revision 234660)
+@@ -629,16 +629,14 @@
+       enum machine_mode mode = aarch64_simd_types[i].mode;
+ 
+       if (aarch64_simd_types[i].itype == NULL)
+-	{
+-	  aarch64_simd_types[i].itype
+-	    = build_distinct_type_copy
+-	      (build_vector_type (eltype, GET_MODE_NUNITS (mode)));
+-	  SET_TYPE_STRUCTURAL_EQUALITY (aarch64_simd_types[i].itype);
+-	}
++	aarch64_simd_types[i].itype =
++	  build_distinct_type_copy
++	    (build_vector_type (eltype, GET_MODE_NUNITS (mode)));
+ 
+       tdecl = add_builtin_type (aarch64_simd_types[i].name,
+ 				aarch64_simd_types[i].itype);
+       TYPE_NAME (aarch64_simd_types[i].itype) = tdecl;
++      SET_TYPE_STRUCTURAL_EQUALITY (aarch64_simd_types[i].itype);
+     }
+ 
+ #define AARCH64_BUILD_SIGNED_TYPE(mode)  \
