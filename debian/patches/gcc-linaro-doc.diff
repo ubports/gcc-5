@@ -1,4 +1,4 @@
-# DP: Changes for the Linaro 5-2016.03 snapshot (documentation).
+# DP: Changes for the Linaro 5-2016.04 snapshot (documentation).
 
 --- a/src/gcc/doc/extend.texi
 +++ b/src/gcc/doc/extend.texi
@@ -7011,7 +7011,7 @@
  @item -mfix-cortex-a53-835769
  @itemx -mno-fix-cortex-a53-835769
  @opindex mfix-cortex-a53-835769
-@@ -12328,34 +12336,50 @@ corresponding flag to the linker.
+@@ -12328,34 +12336,51 @@ corresponding flag to the linker.
  
  @item -march=@var{name}
  @opindex march
@@ -7058,9 +7058,11 @@
  @opindex mtune
  Specify the name of the target processor for which GCC should tune the
  performance of the code.  Permissible values for this option are:
- @samp{generic}, @samp{cortex-a53}, @samp{cortex-a57}, @samp{cortex-a72},
+-@samp{generic}, @samp{cortex-a53}, @samp{cortex-a57}, @samp{cortex-a72},
 -@samp{exynos-m1}, @samp{thunderx}, @samp{xgene1}.
-+@samp{exynos-m1}, @samp{qdf24xx}, @samp{thunderx}, @samp{xgene1}.
++@samp{generic}, @samp{cortex-a35}, @samp{cortex-a53}, @samp{cortex-a57},
++@samp{cortex-a72}, @samp{exynos-m1}, @samp{qdf24xx}, @samp{thunderx},
++@samp{xgene1}.
  
  Additionally, this option can specify that GCC should tune the performance
  of the code for a big.LITTLE system.  Permissible values for this
@@ -7075,7 +7077,7 @@
  Where none of @option{-mtune=}, @option{-mcpu=} or @option{-march=}
  are specified, the code is tuned to perform well across a range
  of target processors.
-@@ -12364,45 +12388,78 @@ This option cannot be suffixed by feature modifiers.
+@@ -12364,45 +12389,78 @@ This option cannot be suffixed by feature modifiers.
  
  @item -mcpu=@var{name}
  @opindex mcpu
@@ -7175,7 +7177,7 @@
  @node Adapteva Epiphany Options
  @subsection Adapteva Epiphany Options
  
-@@ -13173,10 +13230,10 @@ of the @option{-mcpu=} option.  Permissible names are: @samp{armv2},
+@@ -13173,10 +13231,10 @@ of the @option{-mcpu=} option.  Permissible names are: @samp{armv2},
  @samp{armv2a}, @samp{armv3}, @samp{armv3m}, @samp{armv4}, @samp{armv4t},
  @samp{armv5}, @samp{armv5t}, @samp{armv5e}, @samp{armv5te},
  @samp{armv6}, @samp{armv6j},
@@ -7189,20 +7191,25 @@
  
  @option{-march=armv7ve} is the armv7-a architecture with virtualization
  extensions.
-@@ -13212,9 +13269,9 @@ Permissible names are: @samp{arm2}, @samp{arm250},
+@@ -13212,11 +13270,12 @@ Permissible names are: @samp{arm2}, @samp{arm250},
  @samp{arm10e}, @samp{arm1020e}, @samp{arm1022e},
  @samp{arm1136j-s}, @samp{arm1136jf-s}, @samp{mpcore}, @samp{mpcorenovfp},
  @samp{arm1156t2-s}, @samp{arm1156t2f-s}, @samp{arm1176jz-s}, @samp{arm1176jzf-s},
 -@samp{cortex-a5}, @samp{cortex-a7}, @samp{cortex-a8}, @samp{cortex-a9},
 -@samp{cortex-a12}, @samp{cortex-a15}, @samp{cortex-a53},
 -@samp{cortex-a57}, @samp{cortex-a72},
+-@samp{cortex-r4},
+-@samp{cortex-r4f}, @samp{cortex-r5}, @samp{cortex-r7}, @samp{cortex-m7},
 +@samp{generic-armv7-a}, @samp{cortex-a5}, @samp{cortex-a7}, @samp{cortex-a8},
 +@samp{cortex-a9}, @samp{cortex-a12}, @samp{cortex-a15}, @samp{cortex-a17},
-+@samp{cortex-a53}, @samp{cortex-a57}, @samp{cortex-a72},
- @samp{cortex-r4},
- @samp{cortex-r4f}, @samp{cortex-r5}, @samp{cortex-r7}, @samp{cortex-m7},
++@samp{cortex-a32}, @samp{cortex-a35}, @samp{cortex-a53}, @samp{cortex-a57},
++@samp{cortex-a72}, @samp{cortex-r4},
++@samp{cortex-r4f}, @samp{cortex-r5}, @samp{cortex-r7}, @samp{cortex-r8},
++@samp{cortex-m7},
  @samp{cortex-m4},
-@@ -13226,6 +13283,7 @@ Permissible names are: @samp{arm2}, @samp{arm250},
+ @samp{cortex-m3},
+ @samp{cortex-m1},
+@@ -13226,6 +13285,7 @@ Permissible names are: @samp{arm2}, @samp{arm250},
  @samp{cortex-m0.small-multiply},
  @samp{cortex-m0plus.small-multiply},
  @samp{exynos-m1},
@@ -7210,7 +7217,7 @@
  @samp{marvell-pj4},
  @samp{xscale}, @samp{iwmmxt}, @samp{iwmmxt2}, @samp{ep9312},
  @samp{fa526}, @samp{fa626},
-@@ -13234,8 +13292,8 @@ Permissible names are: @samp{arm2}, @samp{arm250},
+@@ -13234,8 +13294,8 @@ Permissible names are: @samp{arm2}, @samp{arm250},
  
  Additionally, this option can specify that GCC should tune the performance
  of the code for a big.LITTLE system.  Permissible names are:
@@ -7221,7 +7228,7 @@
  
  @option{-mtune=generic-@var{arch}} specifies that GCC should tune the
  performance for a blend of processors within architecture @var{arch}.
-@@ -13278,7 +13336,7 @@ available on the target.  Permissible names are: @samp{vfp}, @samp{vfpv3},
+@@ -13278,7 +13338,7 @@ available on the target.  Permissible names are: @samp{vfp}, @samp{vfpv3},
  @samp{vfpv3xd-fp16}, @samp{neon}, @samp{neon-fp16}, @samp{vfpv4},
  @samp{vfpv4-d16}, @samp{fpv4-sp-d16}, @samp{neon-vfpv4},
  @samp{fpv5-d16}, @samp{fpv5-sp-d16},
@@ -7230,7 +7237,7 @@
  
  If @option{-msoft-float} is specified this specifies the format of
  floating-point values.
-@@ -13401,6 +13459,10 @@ that executes in ARM state, but the default can be changed by
+@@ -13401,6 +13461,10 @@ that executes in ARM state, but the default can be changed by
  configuring GCC with the @option{--with-mode=}@var{state}
  configure option.
  
@@ -7241,7 +7248,7 @@
  @item -mtpcs-frame
  @opindex mtpcs-frame
  Generate a stack frame that is compliant with the Thumb Procedure Call
-@@ -13498,10 +13560,9 @@ off by default.
+@@ -13498,10 +13562,9 @@ off by default.
  @item -masm-syntax-unified
  @opindex masm-syntax-unified
  Assume inline assembler is using unified asm syntax.  The default is
@@ -7255,7 +7262,7 @@
  
  @item -mrestrict-it
  @opindex mrestrict-it
-@@ -15329,13 +15390,19 @@ These @samp{-m} options are defined for GNU/Linux targets:
+@@ -15329,13 +15392,19 @@ These @samp{-m} options are defined for GNU/Linux targets:
  @item -mglibc
  @opindex mglibc
  Use the GNU C library.  This is the default except
@@ -7276,7 +7283,7 @@
  @item -mbionic
  @opindex mbionic
  Use Bionic C library.  This is the default on
-@@ -23596,7 +23663,7 @@ loader is not part of GCC; it is part of the operating system).  If
+@@ -23596,7 +23665,7 @@ loader is not part of GCC; it is part of the operating system).  If
  the GOT size for the linked executable exceeds a machine-specific
  maximum size, you get an error message from the linker indicating that
  @option{-fpic} does not work; in that case, recompile with @option{-fPIC}
@@ -7285,7 +7292,7 @@
  on the m68k and RS/6000.  The x86 has no such limit.)
  
  Position-independent code requires special support, and therefore works
-@@ -23611,7 +23678,7 @@ are defined to 1.
+@@ -23611,7 +23680,7 @@ are defined to 1.
  @opindex fPIC
  If supported for the target machine, emit position-independent code,
  suitable for dynamic linking and avoiding any limit on the size of the
@@ -7294,7 +7301,7 @@
  PowerPC and SPARC@.
  
  Position-independent code requires special support, and therefore works
-@@ -23633,6 +23700,24 @@ used during linking.
+@@ -23633,6 +23702,24 @@ used during linking.
  @code{__pie__} and @code{__PIE__}.  The macros have the value 1
  for @option{-fpie} and 2 for @option{-fPIE}.
  
@@ -7384,7 +7391,7 @@
  
  @item arm_thumb1_ok
  ARM target generates Thumb-1 code for @code{-mthumb}.
-@@ -1574,12 +1579,40 @@ Some multilibs may be incompatible with these options.
+@@ -1574,12 +1579,43 @@ Some multilibs may be incompatible with these options.
  ARM target supports @code{-mfpu=neon-fp-armv8 -mfloat-abi=softfp}.
  Some multilibs may be incompatible with these options.
  
@@ -7406,6 +7413,9 @@
 +@subsubsection AArch64-specific attributes
 +
 +@table @code
++@item aarch64_asm_<ext>_ok
++AArch64 assembler supports the architecture extension @code{ext} via the
++@code{.arch_extension} pseudo-op.
 +@item aarch64_tiny
 +AArch64 target which generates instruction sequences for tiny memory model.
 +@item aarch64_small
@@ -7425,7 +7435,7 @@
  @subsubsection MIPS-specific attributes
  
  @table @code
-@@ -1695,6 +1728,9 @@ Target supports FPU instructions.
+@@ -1695,6 +1731,9 @@ Target supports FPU instructions.
  @item non_strict_align
  Target does not require strict alignment.
  
@@ -7435,7 +7445,7 @@
  @item sse
  Target supports compiling @code{sse} instructions.
  
-@@ -2013,7 +2049,7 @@ keyword}.
+@@ -2013,7 +2052,7 @@ keyword}.
  @item arm_neon_fp16
  NEON and half-precision floating point support.  Only ARM targets
  support this feature, and only then in certain modes; see
@@ -7444,7 +7454,7 @@
  
  @item arm_vfp3
  arm vfp3 floating point support; see
-@@ -2210,13 +2246,17 @@ Check branch and/or call counts, in addition to line counts, in
+@@ -2210,13 +2249,17 @@ Check branch and/or call counts, in addition to line counts, in
  
  @subsubsection Clean up generated test files
  
@@ -7465,7 +7475,7 @@
  @item cleanup-modules "@var{list-of-extra-modules}"
  Removes Fortran module files generated for this test, excluding the
  module names listed in keep-modules.
-@@ -2251,21 +2291,23 @@ end module keep2
+@@ -2251,21 +2294,23 @@ end module keep2
  ! @{ dg-final @{ keep-modules "" @} @} ! keep all
  @end smallexample
  

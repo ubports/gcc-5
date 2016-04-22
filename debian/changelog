@@ -1,3 +1,28 @@
+gcc-5 (5.3.1-15) unstable; urgency=medium
+
+  * Update to SVN 20160421 (r235347, 5.3.1) from the gcc-5-branch.
+    - Fix PR target/70566 (ARM, wrong-code), PR target/70117 (PPC, wrong-code),
+      PR target/70630 (sparc), PR target/70107 (PPC, wrong-code),
+      PR c++/70096 (wrong code), PR libstdc++/69478, PR libstdc++/70503,
+      PR libstdc++/69464, PR c/70297, PR target/70674 (390x, LP: #1572613),
+      PR target/70662 (x86), PR target/70044 (AArch64), PR c++/67164.
+
+  [ Matthias Klose ]
+  * Fix ice on ARM32. Revert r234641 for gcc-linaro, which removed support
+    for %( and %) output modifiers.
+  * Update the Linaro support to the 5-2016.04 snapshot.
+  * Fix PR target/69148 (s390x), taken from the trunk.
+  * Strip the lto1 binary again to save some disk space. Addresses: #783876.
+
+  [ Aurelien Jarno ]
+  * Apply proposed patch for PR target/68273 (Wrong code on mips/mipsel due to
+    (invalid?) peeking at alignments in function_arg) on mips and mipsel.
+
+  [ Samuel Thibault ]
+  * patches/hurd-gprof.diff: Cherry-pick trunk fix for gprof.
+
+ -- Matthias Klose <doko@debian.org>  Fri, 22 Apr 2016 12:34:43 +0200
+
 gcc-5 (5.3.1-14) unstable; urgency=medium
 
   * Update to SVN 20160409 (r234858, 5.3.1) from the gcc-5-branch.

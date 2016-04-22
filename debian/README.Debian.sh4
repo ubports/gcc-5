@@ -1,0 +1,348 @@
+               The Debian GNU Compiler Collection setup
+               ========================================
+
+Please see the README.Debian in /usr/share/doc/gcc, contained in the
+gcc package for a description of the setup of the different compiler
+versions.
+
+For general discussion about the Debian toolchain (GCC, glibc, binutils)
+please use the mailing list debian-toolchain@lists.debian.org; for GCC
+specific things, please use debian-gcc@lists.debian.org.  When in doubt
+use the debian-toolchain ML.
+
+
+Maintainers of these packages
+-----------------------------
+
+Matthias Klose <doko@debian.org>
+Ludovic Brenta <ludovic@ludovic-brenta.org>	(gnat)
+Iain Buclaw <ibuclaw@ubuntu.com>		(gdc)
+Aurelien Jarno <aurel32@debian.org>		(mips*-linux)
+Aurelien Jarno <aurel32@debian.org>		(s390X*-linux)
+
+The following ports lack maintenance in Debian: powerpc, ppc64,
+sparc, sparc64 (unmentioned ports are usually handled by the Debian
+porters).
+
+Former and/or inactive maintainers of these packages
+----------------------------------------------------
+
+Falk Hueffner <falk@debian.org>			(alpha-linux)
+Ray Dassen <jdassen@debian.org>
+Jeff Bailey <jbailey@nisa.net>			(hurd-i386)
+Joel Baker <fenton@debian.org>			(netbsd-i386)
+Randolph Chung <tausq@debian.org>		(ia64-linux)
+Philip Blundell <pb@debian.org>			(arm-linux)
+Ben Collins <bcollins@debian.org>		(sparc-linux)
+Dan Jacobowitz <dan@debian.org>			(powerpc-linux)
+Thiemo Seufer <ths@networkno.de>		(mips*-linux)
+Matt Taggart <taggart@carmen.fc.hp.com>		(hppa-linux)
+Gerhard Tonn <GerhardTonn@swol.de>		(s390-linux)
+Roman Zippel <zippel@linux-m68k.org>		(m68k-linux)
+Arthur Loiret <arthur.loiret@gmail.com>		(gdc)
+
+===============================================================================
+
+
+svn-updates:
+  updates from the 5 branch upto 20151216 (r231675).
+
+gcc-gfdl-build:
+  Build a dummy s-tm-texi without access to the texinfo sources
+
+gcc-textdomain:
+  Set gettext's domain and textdomain to the versioned package name.
+
+gcc-driver-extra-langs:
+  Add options and specs for languages that are not built from a source
+  (but built from separate sources).
+
+gcc-hash-style-gnu:
+  Link using --hash-style=gnu (aarch64, alpha, amd64, armel, armhf, ia64,
+  i386, powerpc, ppc64, s390, sparc)
+
+libstdc++-pic:
+  Build and install libstdc++_pic.a library.
+
+libstdc++-doclink:
+  adjust hrefs to point to the local documentation
+
+libstdc++-man-3cxx:
+  Install libstdc++ man pages with suffix .3cxx instead of .3
+
+libstdc++-test-installed:
+  Add support to run the libstdc++-v3 testsuite using the
+  installed shared libraries.
+
+libjava-stacktrace:
+  libgcj: Lookup source file name and line number in separated
+  debug files found in /usr/lib/debug
+
+libjava-jnipath:
+  - Add /usr/lib/jni and /usr/lib/<multiarch>/jni to java.library.path.
+  - When running the i386 binaries on amd64, look in
+  - /usr/lib32/gcj-x.y and /usr/lib32/jni instead.
+
+libjava-sjlj:
+  Don't try to use _Unwind_Backtrace on SJLJ targets.
+  See bug #387875, #388505, GCC PR 29206.
+
+libjava-disable-plugin:
+  Don't build the gcjwebplugin, even when configured with --enable-plugin
+
+alpha-no-ev4-directive:
+  never emit .ev4 directive.
+
+boehm-gc-getnprocs:
+  boehm-gc/pthread_support.c (GC_get_nprocs): Use sysconf as fallback.
+
+note-gnu-stack:
+  Add .note.GNU-stack sections for gcc's crt files, libffi and boehm-gc
+  Taken from FC.
+
+libgomp-omp_h-multilib:
+  Fix up omp.h for multilibs.
+
+sparc-force-cpu:
+  On sparc default to ultrasparc (v9a) in 32bit mode
+
+gccgo-version:
+  Omit the subminor number from the go libdir
+
+pr47818:
+  Fix PR ada/47818: Pragma Assert is rejected with No_Implementation_Pragmas restriction.
+
+gcc-base-version:
+  Set base version to 5, introduce full version 5.x.y.
+
+libgo-testsuite:
+  Only run the libgo testsuite for flags configured in RUNTESTFLAGS
+
+gcc-target-include-asm:
+  Search $(builddir)/sys-include for the asm header files
+
+libgo-revert-timeout-exp:
+
+libgo-setcontext-config:
+  libgo: Overwrite the setcontext_clobbers_tls check on mips*
+
+gcc-auto-build:
+  Fix cross building a native compiler.
+
+kfreebsd-unwind:
+  DWARF2 EH unwinding support for AMD x86-64 and x86 KFreeBSD.
+
+kfreebsd-boehm-gc:
+  boehm-gc: use mmap instead of brk also on kfreebsd-*.
+
+hurd-boehm-gc:
+
+libitm-no-fortify-source:
+  Build libitm with -U_FORTIFY_SOURCE on x86 and x86_64.
+
+sparc64-biarch-long-double-128:
+  Fix --with-long-double-128 for sparc32 when defaulting to 64-bit.
+
+gcc-ia64-bootstrap-ignore:
+  Ignore bootstrap comparison failure on ia64. Filed upstream as
+  PR middle-end/65874.
+
+gotools-configury:
+  Fix gotools cross build.
+
+go-escape-analysis:
+  
+
+go-escape-analysis2:
+  gccgo: Consider multi-result calls in escape analysis.
+  gccgo: Propagate escape info from closures to enclosed variables.
+  gccgo: Analyze function values and conversions.
+  gccgo: Use backend interface for stack allocation.
+
+go-escape-analysis3:
+  gccgo: Analyze escape information of interface parameters.
+
+go-escape-analysis4:
+  gccgo: If unary & does not escape, the var does not escape.
+
+go-escape-analysis5:
+  gccgo: escape: Analyze binary expressions.
+
+go-escape-analysis6:
+  escape: Analyze multiple result type assertions.
+
+pr66368:
+  PR go/66368, build libgo with -fno-stack-protector
+
+pr67508:
+  libgo: Fix PR go/67508, rewrite lfstack packing/unpacking
+  to look more like that in Go
+
+pr67590:
+  Fix PR67590, setting objdump macro.
+
+gcc-configure-pie:
+  Add --enable-default-pie option to GCC configure
+
+ada-gnattools-ldflags:
+  Link gnat tools with the defaults LDFLAGS
+
+libjit-ldflags:
+
+libstdc++-functexcept:
+  PR libstdc++/66145, std::ios_base::failure objects thrown from libstdc++.so use old ABI
+  Just build src/c++11/functexcept.cc using the new ABI. It will break
+  code, which will be handled in the archive by adding Breaks for the
+  affected packages.  Third party code using such code will need a rebuild.
+
+ada-arm:
+
+ada-hurd:
+
+ada-kfreebsd:
+  add support for GNU/kFreeBSD.
+
+ada-revert-pr63225:
+  Revert the changes made to allow bootstrapping with -fno-inline.
+  We allow inlining during bootstrap and this change breaks aliversion compatibility
+  with earlier uploads of libgnatvsn5.  This patch shall be removed in the next
+  major version of GNAT.
+
+ada-driver-check:
+  Simplify Ada driver check (we always build using the required
+  Ada version. Needed for warnings on alpha.
+
+ada-gcc-name:
+  use gcc-5 instead of gcc as the command name.
+
+ada-default-project-path:
+  - Change the default search path for project files to the one specified
+  by the Debian Policy for Ada: /usr/share/ada/adainclude.
+
+ada-library-project-files-soname:
+  - in project files, use the exact Library_Version provided, if any, as
+  the soname of libraries; do not strip minor version numbers
+  (PR ada/40025).
+
+ada-link-lib:
+  - Install the shared Ada libraries as '.so.1', not '.so' to conform
+  to the Debian policy.
+  - Don't include a runtime link path (-rpath), when linking binaries.
+  - Build the shared libraries on hppa-linux.
+  - Instead of building libada as a target library only, build it as
+  both a host and, if different, target library.
+  - Build the GNAT tools in their top-level directory; do not use
+  recursive makefiles.
+  - Link the GNAT tools dynamically.
+
+ada-libgnatvsn:
+  - Introduce a new shared library named libgnatvsn, containing
+  common components of GNAT under the GNAT-Modified GPL, for
+  use in GNAT tools, ASIS, GLADE and GPS.   Link the gnat tools
+  against this new library.
+
+ada-libgnatprj:
+  - Introduce a new shared library named libgnatprj, containing
+  the GNAT project file manager licensed under the pure GPL, for
+  use in GNAT tools, GLADE and GPS.  Link the GNAT tools against
+  this new library.
+
+ada-gnattools-cross:
+  - When building the native gnat, link the gnat tools against
+  the build tree (build/$(host_alias)/{libgnatvsn,libgnatprj}.)
+  - When building a cross gnat, link against the libgnatvsn-5-dev
+  and libgnatprj-5-dev packages.
+  This link will be done by /usr/bin/$(host_alias)-gnat*, thus
+  the native gnat with the same major version will be required.
+
+ada-acats:
+  - When running the ACATS, look for the gnat tools in their new
+  directory (build/gnattools), and for the shared libraries in
+  build/gcc/ada/rts, build/libgnatvsn and build/libgnatprj.
+
+libgnatprj-cross-hack:
+
+ada-sjlj:
+
+ada-link-shlib:
+  In gnatlink, pass the options and libraries after objects to the
+  linker to avoid link failures with --as-needed. Closes: #680292.
+
+gcc-d-lang:
+  Add D options and specs for the gcc driver.
+
+gcc-sysroot:
+  Allow building --with-sysroot=/
+
+sys-auxv-header:
+  Check for the sys/auxv.h header file.
+
+libcilkrts-targets:
+  Disable libcilkrts on KFreeBSD and the Hurd. See #734973.
+
+go-use-gold:
+  Pass -fuse-ld=gold to gccgo on targets supporting -fsplit-stack
+
+arm-multilib-defaults:
+  Set MULTILIB_DEFAULTS for ARM multilib builds
+
+gcc-ice-dump:
+  For ICEs, dump the preprocessed source file to stderr
+  when in a distro build environment.
+
+gcc-ice-apport:
+  Report an ICE to apport (if apport is available
+  and the environment variable GCC_NOAPPORT is not set)
+
+skip-bootstrap-multilib:
+  Skip non-default multilib and libstdc++-v3 debug builds in bootstrap builds
+
+libjava-fixed-symlinks:
+  Remove unneed '..' elements from symlinks in JAVA_HOME
+
+libffi-ro-eh_frame_sect:
+  PR libffi/47248, force a read only eh frame section.
+
+pr67899:
+  Proposed patch for PR sanitizer/67899
+
+gcc-multiarch:
+  - Remaining multiarch patches, not yet submitted upstream.
+  - Add MULTIARCH_DIRNAME definitions for multilib configurations,
+  which are used for the non-multilib builds.
+
+libjava-multiarch:
+  Install libjava libraries to multiarch location
+
+libjava-nobiarch-check:
+  For biarch builds, disable the testsuite for the non-default architecture
+  for runtime libraries, which are not built by default (libjava).
+
+config-ml:
+  - Disable some biarch libraries for biarch builds.
+  - Fix multilib builds on kernels which don't support all multilibs.
+
+g++-multiarch-incdir:
+  Use /usr/include/<multiarch>/c++/4.x as the include directory
+  for host dependent c++ header files.
+
+canonical-cpppath:
+  Don't use any relative path names for the standard include paths.
+
+gcc-multilib-multiarch:
+  Don't auto-detect multilib osdirnames.
+
+libgomp-kfreebsd-testsuite:
+  Disable lock-2.c test on kfreebsd-*
+
+go-testsuite:
+  Skip Go testcase on AArch64 which hangs on the buildds.
+
+ada-749574:
+
+ada-mips:
+  Improve support for mips.
+
+ada-bootstrap-compare:
+  For the bootstrap comparison, ignore gcc/ada/a-except.o on
+  mips and mipsel. See PR ada/65618.

@@ -1,6 +1,6 @@
-# DP: updates from the ibm/5 branch upto 20160404 (r234723).
+# DP: updates from the ibm/5 branch upto 20160412 (r234893).
 
-svn diff svn://gcc.gnu.org/svn/gcc/branches/gcc-5-branch@234658 svn://gcc.gnu.org/svn/gcc/branches/ibm/gcc-5-branch \
+svn diff svn://gcc.gnu.org/svn/gcc/branches/gcc-5-branch@234888 svn://gcc.gnu.org/svn/gcc/branches/ibm/gcc-5-branch \
 	| sed -r 's,^--- (\S+)\t(\S+)(.*)$,--- a/src/\1\t\2,;s,^\+\+\+ (\S+)\t(\S+)(.*)$,+++ b/src/\1\t\2,' \
 	| awk '/^Index:.*\.(class|texi)/ {skip=1; next} /^Index:/ { skip=0 } skip==0'
 
@@ -63,31 +63,35 @@ Index: libgcc/configure.ac
 ===================================================================
 --- a/src/libgcc/configure.ac	(.../gcc-5-branch)
 +++ b/src/libgcc/configure.ac	(.../ibm/gcc-5-branch)
-@@ -423,6 +423,37 @@
+@@ -423,6 +423,41 @@
  ;;
  esac
  
 +case ${host} in
++# At present, we cannot turn -mfloat128 on via #pragma GCC target,
++# so just check if we have VSX (ISA 2.06) support to build the
++# software libraries, and whether the assembler can handle xsaddqp
++# for hardware support.
 +powerpc*-*-linux*)
-+  AC_CACHE_CHECK([whether the PowerPC compiler can do __float128],
++  AC_CACHE_CHECK([for PowerPC ISA 2.06 to build __float128 libraries],
 +		 [libgcc_cv_powerpc_float128],
 +		 [AC_COMPILE_IFELSE(
-+    [#pragma GCC target ("vsx,float128")
-+     __float128 add (__float128 *a) { return *a + *(a+1); }],
++    [#pragma GCC target ("vsx")
++     vector double dadd (vector double a, vector double b) { return a + b; }],
 +    [libgcc_cv_powerpc_float128=yes],
 +    [libgcc_cv_powerpc_float128=no])])
 +
-+  AC_CACHE_CHECK([whether the PowerPC compiler can do hardware __float128],
++  AC_CACHE_CHECK([for PowerPC ISA 3.0 to build hardware __float128 libraries],
 +		 [libgcc_cv_powerpc_float128_hw],
 +		 [AC_COMPILE_IFELSE(
-+    [#pragma GCC target ("cpu=power9,float128,float128-hardware")
++    [#pragma GCC target ("vsx,power9-vector")
 +     #include <sys/auxv.h>
 +     #ifndef AT_PLATFORM
 +     #error "AT_PLATFORM is not defined"
 +     #endif
-+     __float128 add (__float128 a, __float128 b)
++     vector unsigned char (vector unsigned char a, vector unsigned char b)
 +     {
-+       __float128 ret;
++       vector unsigned char ret;
 +       __asm__ ("xsaddqp %0,%1,%2" : "=v" (ret) : "v" (a), "v" (b));
 +       return ret;
 +     }
@@ -2016,21 +2020,25 @@ Index: libgcc/configure
 ===================================================================
 --- a/src/libgcc/configure	(.../gcc-5-branch)
 +++ b/src/libgcc/configure	(.../ibm/gcc-5-branch)
-@@ -4805,6 +4805,61 @@
+@@ -4805,6 +4805,65 @@
  ;;
  esac
  
 +case ${host} in
++# At present, we cannot turn -mfloat128 on via #pragma GCC target,
++# so just check if we have VSX (ISA 2.06) support to build the
++# software libraries, and whether the assembler can handle xsaddqp
++# for hardware support.
 +powerpc*-*-linux*)
-+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the PowerPC compiler can do __float128" >&5
-+$as_echo_n "checking whether the PowerPC compiler can do __float128... " >&6; }
++  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PowerPC ISA 2.06 to build __float128 libraries" >&5
++$as_echo_n "checking for PowerPC ISA 2.06 to build __float128 libraries... " >&6; }
 +if test "${libgcc_cv_powerpc_float128+set}" = set; then :
 +  $as_echo_n "(cached) " >&6
 +else
 +  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 +/* end confdefs.h.  */
-+#pragma GCC target ("vsx,float128")
-+     __float128 add (__float128 *a) { return *a + *(a+1); }
++#pragma GCC target ("vsx")
++     vector double dadd (vector double a, vector double b) { return a + b; }
 +_ACEOF
 +if ac_fn_c_try_compile "$LINENO"; then :
 +  libgcc_cv_powerpc_float128=yes
@@ -2042,21 +2050,21 @@ Index: libgcc/configure
 +{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $libgcc_cv_powerpc_float128" >&5
 +$as_echo "$libgcc_cv_powerpc_float128" >&6; }
 +
-+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the PowerPC compiler can do hardware __float128" >&5
-+$as_echo_n "checking whether the PowerPC compiler can do hardware __float128... " >&6; }
++  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PowerPC ISA 3.0 to build hardware __float128 libraries" >&5
++$as_echo_n "checking for PowerPC ISA 3.0 to build hardware __float128 libraries... " >&6; }
 +if test "${libgcc_cv_powerpc_float128_hw+set}" = set; then :
 +  $as_echo_n "(cached) " >&6
 +else
 +  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 +/* end confdefs.h.  */
-+#pragma GCC target ("cpu=power9,float128,float128-hardware")
++#pragma GCC target ("vsx,power9-vector")
 +     #include <sys/auxv.h>
 +     #ifndef AT_PLATFORM
 +     #error "AT_PLATFORM is not defined"
 +     #endif
-+     __float128 add (__float128 a, __float128 b)
++     vector unsigned char (vector unsigned char a, vector unsigned char b)
 +     {
-+       __float128 ret;
++       vector unsigned char ret;
 +       __asm__ ("xsaddqp %0,%1,%2" : "=v" (ret) : "v" (a), "v" (b));
 +       return ret;
 +     }
@@ -2082,7 +2090,20 @@ Index: libgcc/ChangeLog.ibm
 ===================================================================
 --- a/src/libgcc/ChangeLog.ibm	(.../gcc-5-branch)
 +++ b/src/libgcc/ChangeLog.ibm	(.../ibm/gcc-5-branch)
-@@ -0,0 +1,114 @@
+@@ -0,0 +1,127 @@
++2016-04-11  Michael Meissner  <meissner@linux.vnet.ibm.com>
++
++	Merge up to branches/gcc-5-branch, subversion id 234888.
++
++	Back port from mainline
++	2016-04-11  Michael Meissner  <meissner@linux.vnet.ibm.com>
++
++	PR target/70381
++	* configure.ac (powerpc*-*-linux*): Rework tests to build
++	__float128 emulation routines to not depend on using #pragma GCC
++	target to enable -mfloat128.
++	* configure: Regnerate.
++
 +2016-03-24  Michael Meissner  <meissner@linux.vnet.ibm.com>
 +
 +	Merge up to 234461.
@@ -3889,7 +3910,23 @@ Index: gcc/testsuite/ChangeLog.ibm
 ===================================================================
 --- a/src/gcc/testsuite/ChangeLog.ibm	(.../gcc-5-branch)
 +++ b/src/gcc/testsuite/ChangeLog.ibm	(.../ibm/gcc-5-branch)
-@@ -0,0 +1,145 @@
+@@ -0,0 +1,155 @@
++2016-04-11  Michael Meissner  <meissner@linux.vnet.ibm.com>
++
++	Merge up to branches/gcc-5-branch, subversion id 234888.
++
++	Backport from mainline
++	2016-04-11  Michael Meissner  <meissner@linux.vnet.ibm.com>
++
++	PR target/70381
++	* gcc.target/powerpc/float128-1.c: New tests to make sure the
++	__float128 emulator is built and runs.
++	* gcc.target/powerpc/float128-1.c: Likewise.
++
++	* lib/target-supports.exp (check_ppc_float128_sw_available):
++	Rework tests for __float128 software and hardware
++	availability. Fix exit condition to return 0 on success.
++
 +2016-03-24  Michael Meissner  <meissner@linux.vnet.ibm.com>
 +
 +	Merge up to 234461.
@@ -3916,12 +3953,6 @@ Index: gcc/testsuite/ChangeLog.ibm
 +
 +	PR target/69667
 +	* g++.dg/pr69667.C: New file.
-+
-+2016-01-22   Michael Meissner  <meissner@linux.vnet.ibm.com>
-+
-+	* gcc.target/powerpc/float128-1.c: New test for IEEE 128-bit
-+	floating point support.
-+	* gcc.target/powerpc/float128-2.c: Likewise.
 +
 +2016-01-22  Michael Meissner  <meissner@linux.vnet.ibm.com>
 +
@@ -4124,7 +4155,7 @@ Index: gcc/testsuite/lib/target-supports.exp
 +		int main()
 +		{
 +		    __float128 z = x + y;
-+		    return (z == 3.0q);
++		    return (z != 3.0q);
 +		}
 +	    } $options
 +	}
@@ -4143,7 +4174,7 @@ Index: gcc/testsuite/lib/target-supports.exp
 +	     || [istarget *-*-darwin*]} {
 +	    expr 0
 +	} else {
-+	    set options "-mfloat128-hardware"
++	    set options "-mfloat128 -mvsx -mfloat128-hardware -mpower9-vector"
 +	    check_runtime_nocache ppc_float128_hw_available {
 +		volatile __float128 x = 1.0q;
 +		volatile __float128 y = 2.0q;
@@ -4153,7 +4184,7 @@ Index: gcc/testsuite/lib/target-supports.exp
 +		    __float128 w = -1.0q;
 +
 +		    __asm__ ("xsaddqp %0,%1,%2" : "+v" (w) : "v" (x), "v" (y));
-+		    return ((z == 3.0q) && (z == w);
++		    return ((z != 3.0q) || (z != w);
 +		}
 +	    } $options
 +	}
@@ -4814,7 +4845,28 @@ Index: gcc/ChangeLog.ibm
 ===================================================================
 --- a/src/gcc/ChangeLog.ibm	(.../gcc-5-branch)
 +++ b/src/gcc/ChangeLog.ibm	(.../ibm/gcc-5-branch)
-@@ -0,0 +1,1140 @@
+@@ -0,0 +1,1161 @@
++2016-04-11  Michael Meissner  <meissner@linux.vnet.ibm.com>
++
++	Merge up to branches/gcc-5-branch, subversion id 234888.
++	* REVISION: Update subversion id.
++
++	Back port from mainline
++	2016-04-11  Michael Meissner  <meissner@linux.vnet.ibm.com>
++
++	PR target/70381
++	* config/rs6000/rs6000.c (rs6000_opt_masks): Disable using the
++	target attribute and pragma from changing the -mfloat128
++	and -mfloat128-hardware options.
++
++	* doc/extend.texi (Additional Floating Types): Document PowerPC
++	__float128 restrictions.
++
++2016-04-04  Peter Bergner  <bergner@vnet.ibm.com>
++
++	Merge up to 234723.
++	* REVISION: Update subversion id.
++
 +2016-03-31  Peter Bergner  <bergner@vnet.ibm.com>
 +
 +	Merge up to 234658.
@@ -10523,8 +10575,8 @@ Index: gcc/config/rs6000/rs6000.c
    { "dlmzb",			OPTION_MASK_DLMZB,		false, true  },
    { "efficient-unaligned-vsx",	OPTION_MASK_EFFICIENT_UNALIGNED_VSX,
  								false, true  },
-+  { "float128",			OPTION_MASK_FLOAT128,		false, true  },
-+  { "float128-hardware",	OPTION_MASK_FLOAT128_HW,	false, true  },
++  { "float128",			OPTION_MASK_FLOAT128,		false, false },
++  { "float128-hardware",	OPTION_MASK_FLOAT128_HW,	false, false },
    { "fprnd",			OPTION_MASK_FPRND,		false, true  },
    { "hard-dfp",			OPTION_MASK_DFP,		false, true  },
    { "htm",			OPTION_MASK_HTM,		false, true  },
@@ -15368,3 +15420,17 @@ Index: libgo/configure.ac
  
  AC_CACHE_CHECK([whether compiler is llgo],
  [libgo_cv_c_goc_is_llgo],
+Index: .
+===================================================================
+--- a/src/.	(.../gcc-5-branch)
++++ b/src/.	(.../ibm/gcc-5-branch)
+
+Property changes on: .
+___________________________________________________________________
+Modified: svn:mergeinfo
+## -0,0 +0,1 ##
+   Merged /branches/gcc-5-branch:r222422-234888
+Added: svnmerge-integrated
+## -0,0 +1 ##
++/branches/gcc-5-branch:1-234888
+\ No newline at end of property

@@ -1,10 +1,10 @@
-# DP: updates from the 5 branch upto 20160409 (r234858).
+# DP: updates from the 5 branch upto 20160421 (r235347).
 
 last_update()
 {
 	cat > ${dir}LAST_UPDATED <EOF
-Sat Apr  9 18:39:31 CEST 2016
-Sat Apr  9 16:39:31 UTC 2016 (revision 234858)
+Thu Apr 21 19:07:26 CEST 2016
+Thu Apr 21 17:07:26 UTC 2016 (revision 235347)
 EOF
 }
 
@@ -921,6 +921,31 @@ Index: libstdc++-v3/src/c++11/futex.cc
  	_GLIBCXX_DEBUG_ASSERT(ret == 0 || errno == EINTR || errno == EAGAIN);
  	return true;
        }
+Index: libstdc++-v3/src/c++11/thread.cc
+===================================================================
+--- a/src/libstdc++-v3/src/c++11/thread.cc	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/src/c++11/thread.cc	(.../branches/gcc-5-branch)
+@@ -70,9 +70,9 @@
+ 
+ namespace std _GLIBCXX_VISIBILITY(default)
+ {
+-  namespace
++  extern "C"
+   {
+-    extern "C" void*
++    static void*
+     execute_native_thread_routine(void* __p)
+     {
+       thread::_Impl_base* __t = static_cast<thread::_Impl_base*>(__p);
+@@ -94,7 +94,7 @@
+ 
+       return nullptr;
+     }
+-  }
++  } // extern "C"
+ 
+ _GLIBCXX_BEGIN_NAMESPACE_VERSION
+ 
 Index: libstdc++-v3/doc/xml/manual/abi.xml
 ===================================================================
 --- a/src/libstdc++-v3/doc/xml/manual/abi.xml	(.../tags/gcc_5_3_0_release)
@@ -1643,6 +1668,18 @@ Index: libstdc++-v3/doc/doxygen/user.cfg.in
                           PB_DS_DATA_TRUE_INDICATOR \
                           PB_DS_STATIC_ASSERT=// \
                           "_GLIBCXX_BEGIN_NAMESPACE_ALGO= " \
+Index: libstdc++-v3/include/Makefile.in
+===================================================================
+--- a/src/libstdc++-v3/include/Makefile.in	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/include/Makefile.in	(.../branches/gcc-5-branch)
+@@ -468,6 +468,7 @@
+ 	${bits_srcdir}/stl_vector.h \
+ 	${bits_srcdir}/streambuf.tcc \
+ 	${bits_srcdir}/stringfwd.h \
++	${bits_srcdir}/uniform_int_dist.h \
+ 	${bits_srcdir}/unique_ptr.h \
+ 	${bits_srcdir}/unordered_map.h \
+ 	${bits_srcdir}/unordered_set.h \
 Index: libstdc++-v3/include/debug/vector
 ===================================================================
 --- a/src/libstdc++-v3/include/debug/vector	(.../tags/gcc_5_3_0_release)
@@ -2046,6 +2083,412 @@ Index: libstdc++-v3/include/bits/shared_ptr.h
    /**
     *  @brief  Create an object that is owned by a shared_ptr.
     *  @param  __a     An allocator.
+Index: libstdc++-v3/include/bits/stl_algobase.h
+===================================================================
+--- a/src/libstdc++-v3/include/bits/stl_algobase.h	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/include/bits/stl_algobase.h	(.../branches/gcc-5-branch)
+@@ -373,9 +373,11 @@
+         __copy_m(const _Tp* __first, const _Tp* __last, _Tp* __result)
+         {
+ #if __cplusplus >= 201103L
++	  using __assignable = conditional<_IsMove,
++					   is_move_assignable<_Tp>,
++					   is_copy_assignable<_Tp>>;
+ 	  // trivial types can have deleted assignment
+-	  static_assert( is_copy_assignable<_Tp>::value,
+-	                 "type is not assignable" );
++	  static_assert( __assignable::type::value, "type is not assignable" );
+ #endif
+ 	  const ptrdiff_t _Num = __last - __first;
+ 	  if (_Num)
+@@ -573,9 +575,11 @@
+         __copy_move_b(const _Tp* __first, const _Tp* __last, _Tp* __result)
+         {
+ #if __cplusplus >= 201103L
++	  using __assignable = conditional<_IsMove,
++					   is_move_assignable<_Tp>,
++					   is_copy_assignable<_Tp>>;
+ 	  // trivial types can have deleted assignment
+-	  static_assert( is_copy_assignable<_Tp>::value,
+-	                 "type is not assignable" );
++	  static_assert( __assignable::type::value, "type is not assignable" );
+ #endif
+ 	  const ptrdiff_t _Num = __last - __first;
+ 	  if (_Num)
+Index: libstdc++-v3/include/bits/uniform_int_dist.h
+===================================================================
+--- a/src/libstdc++-v3/include/bits/uniform_int_dist.h	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/include/bits/uniform_int_dist.h	(.../branches/gcc-5-branch)
+@@ -0,0 +1,369 @@
++// Class template uniform_int_distribution -*- C++ -*-
++
++// Copyright (C) 2009-2016 Free Software Foundation, Inc.
++//
++// This file is part of the GNU ISO C++ Library.  This library is free
++// software; you can redistribute it and/or modify it under the
++// terms of the GNU General Public License as published by the
++// Free Software Foundation; either version 3, or (at your option)
++// any later version.
++
++// This library is distributed in the hope that it will be useful,
++// but WITHOUT ANY WARRANTY; without even the implied warranty of
++// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++// GNU General Public License for more details.
++
++// Under Section 7 of GPL version 3, you are granted additional
++// permissions described in the GCC Runtime Library Exception, version
++// 3.1, as published by the Free Software Foundation.
++
++// You should have received a copy of the GNU General Public License and
++// a copy of the GCC Runtime Library Exception along with this program;
++// see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
++// <http://www.gnu.org/licenses/>.
++
++/**
++ * @file bits/uniform_int_dist.h
++ *  This is an internal header file, included by other library headers.
++ *  Do not attempt to use it directly. @headername{random}
++ */
++
++#ifndef _GLIBCXX_BITS_UNIFORM_INT_DIST_H
++#define _GLIBCXX_BITS_UNIFORM_INT_DIST_H
++
++#include <type_traits>
++#include <limits>
++
++namespace std _GLIBCXX_VISIBILITY(default)
++{
++_GLIBCXX_BEGIN_NAMESPACE_VERSION
++
++  namespace __detail
++  {
++    /* Determine whether number is a power of 2.  */
++    template<typename _Tp>
++      inline bool
++      _Power_of_2(_Tp __x)
++      {
++	return ((__x - 1) & __x) == 0;
++      };
++  }
++
++  /**
++   * @brief Uniform discrete distribution for random numbers.
++   *
++   * A discrete random distribution on the range @f$[min, max]@f$ with equal
++   * probability throughout the range.
++   *
++   * @ingroup random_distributions_uniform
++   */
++  template<typename _IntType = int>
++    class uniform_int_distribution
++    {
++      static_assert(std::is_integral<_IntType>::value,
++		    "template argument not an integral type");
++
++    public:
++      /** The type of the range of the distribution. */
++      typedef _IntType result_type;
++      /** Parameter type. */
++      struct param_type
++      {
++	typedef uniform_int_distribution<_IntType> distribution_type;
++
++	explicit
++	param_type(_IntType __a = 0,
++		   _IntType __b = std::numeric_limits<_IntType>::max())
++	: _M_a(__a), _M_b(__b)
++	{
++	  _GLIBCXX_DEBUG_ASSERT(_M_a <= _M_b);
++	}
++
++	result_type
++	a() const
++	{ return _M_a; }
++
++	result_type
++	b() const
++	{ return _M_b; }
++
++	friend bool
++	operator==(const param_type& __p1, const param_type& __p2)
++	{ return __p1._M_a == __p2._M_a && __p1._M_b == __p2._M_b; }
++
++      private:
++	_IntType _M_a;
++	_IntType _M_b;
++      };
++
++    public:
++      /**
++       * @brief Constructs a uniform distribution object.
++       */
++      explicit
++      uniform_int_distribution(_IntType __a = 0,
++			   _IntType __b = std::numeric_limits<_IntType>::max())
++      : _M_param(__a, __b)
++      { }
++
++      explicit
++      uniform_int_distribution(const param_type& __p)
++      : _M_param(__p)
++      { }
++
++      /**
++       * @brief Resets the distribution state.
++       *
++       * Does nothing for the uniform integer distribution.
++       */
++      void
++      reset() { }
++
++      result_type
++      a() const
++      { return _M_param.a(); }
++
++      result_type
++      b() const
++      { return _M_param.b(); }
++
++      /**
++       * @brief Returns the parameter set of the distribution.
++       */
++      param_type
++      param() const
++      { return _M_param; }
++
++      /**
++       * @brief Sets the parameter set of the distribution.
++       * @param __param The new parameter set of the distribution.
++       */
++      void
++      param(const param_type& __param)
++      { _M_param = __param; }
++
++      /**
++       * @brief Returns the inclusive lower bound of the distribution range.
++       */
++      result_type
++      min() const
++      { return this->a(); }
++
++      /**
++       * @brief Returns the inclusive upper bound of the distribution range.
++       */
++      result_type
++      max() const
++      { return this->b(); }
++
++      /**
++       * @brief Generating functions.
++       */
++      template<typename _UniformRandomNumberGenerator>
++	result_type
++	operator()(_UniformRandomNumberGenerator& __urng)
++        { return this->operator()(__urng, _M_param); }
++
++      template<typename _UniformRandomNumberGenerator>
++	result_type
++	operator()(_UniformRandomNumberGenerator& __urng,
++		   const param_type& __p);
++
++      template<typename _ForwardIterator,
++	       typename _UniformRandomNumberGenerator>
++	void
++	__generate(_ForwardIterator __f, _ForwardIterator __t,
++		   _UniformRandomNumberGenerator& __urng)
++	{ this->__generate(__f, __t, __urng, _M_param); }
++
++      template<typename _ForwardIterator,
++	       typename _UniformRandomNumberGenerator>
++	void
++	__generate(_ForwardIterator __f, _ForwardIterator __t,
++		   _UniformRandomNumberGenerator& __urng,
++		   const param_type& __p)
++	{ this->__generate_impl(__f, __t, __urng, __p); }
++
++      template<typename _UniformRandomNumberGenerator>
++	void
++	__generate(result_type* __f, result_type* __t,
++		   _UniformRandomNumberGenerator& __urng,
++		   const param_type& __p)
++	{ this->__generate_impl(__f, __t, __urng, __p); }
++
++      /**
++       * @brief Return true if two uniform integer distributions have
++       *        the same parameters.
++       */
++      friend bool
++      operator==(const uniform_int_distribution& __d1,
++		 const uniform_int_distribution& __d2)
++      { return __d1._M_param == __d2._M_param; }
++
++    private:
++      template<typename _ForwardIterator,
++	       typename _UniformRandomNumberGenerator>
++	void
++	__generate_impl(_ForwardIterator __f, _ForwardIterator __t,
++			_UniformRandomNumberGenerator& __urng,
++			const param_type& __p);
++
++      param_type _M_param;
++    };
++
++  template<typename _IntType>
++    template<typename _UniformRandomNumberGenerator>
++      typename uniform_int_distribution<_IntType>::result_type
++      uniform_int_distribution<_IntType>::
++      operator()(_UniformRandomNumberGenerator& __urng,
++		 const param_type& __param)
++      {
++	typedef typename _UniformRandomNumberGenerator::result_type
++	  _Gresult_type;
++	typedef typename std::make_unsigned<result_type>::type __utype;
++	typedef typename std::common_type<_Gresult_type, __utype>::type
++	  __uctype;
++
++	const __uctype __urngmin = __urng.min();
++	const __uctype __urngmax = __urng.max();
++	const __uctype __urngrange = __urngmax - __urngmin;
++	const __uctype __urange
++	  = __uctype(__param.b()) - __uctype(__param.a());
++
++	__uctype __ret;
++
++	if (__urngrange > __urange)
++	  {
++	    // downscaling
++	    const __uctype __uerange = __urange + 1; // __urange can be zero
++	    const __uctype __scaling = __urngrange / __uerange;
++	    const __uctype __past = __uerange * __scaling;
++	    do
++	      __ret = __uctype(__urng()) - __urngmin;
++	    while (__ret >= __past);
++	    __ret /= __scaling;
++	  }
++	else if (__urngrange < __urange)
++	  {
++	    // upscaling
++	    /*
++	      Note that every value in [0, urange]
++	      can be written uniquely as
++
++	      (urngrange + 1) * high + low
++
++	      where
++
++	      high in [0, urange / (urngrange + 1)]
++
++	      and
++
++	      low in [0, urngrange].
++	    */
++	    __uctype __tmp; // wraparound control
++	    do
++	      {
++		const __uctype __uerngrange = __urngrange + 1;
++		__tmp = (__uerngrange * operator()
++			 (__urng, param_type(0, __urange / __uerngrange)));
++		__ret = __tmp + (__uctype(__urng()) - __urngmin);
++	      }
++	    while (__ret > __urange || __ret < __tmp);
++	  }
++	else
++	  __ret = __uctype(__urng()) - __urngmin;
++
++	return __ret + __param.a();
++      }
++
++
++  template<typename _IntType>
++    template<typename _ForwardIterator,
++	     typename _UniformRandomNumberGenerator>
++      void
++      uniform_int_distribution<_IntType>::
++      __generate_impl(_ForwardIterator __f, _ForwardIterator __t,
++		      _UniformRandomNumberGenerator& __urng,
++		      const param_type& __param)
++      {
++	__glibcxx_function_requires(_ForwardIteratorConcept<_ForwardIterator>)
++	typedef typename _UniformRandomNumberGenerator::result_type
++	  _Gresult_type;
++	typedef typename std::make_unsigned<result_type>::type __utype;
++	typedef typename std::common_type<_Gresult_type, __utype>::type
++	  __uctype;
++
++	const __uctype __urngmin = __urng.min();
++	const __uctype __urngmax = __urng.max();
++	const __uctype __urngrange = __urngmax - __urngmin;
++	const __uctype __urange
++	  = __uctype(__param.b()) - __uctype(__param.a());
++
++	__uctype __ret;
++
++	if (__urngrange > __urange)
++	  {
++	    if (__detail::_Power_of_2(__urngrange + 1)
++		&& __detail::_Power_of_2(__urange + 1))
++	      {
++		while (__f != __t)
++		  {
++		    __ret = __uctype(__urng()) - __urngmin;
++		    *__f++ = (__ret & __urange) + __param.a();
++		  }
++	      }
++	    else
++	      {
++		// downscaling
++		const __uctype __uerange = __urange + 1; // __urange can be zero
++		const __uctype __scaling = __urngrange / __uerange;
++		const __uctype __past = __uerange * __scaling;
++		while (__f != __t)
++		  {
++		    do
++		      __ret = __uctype(__urng()) - __urngmin;
++		    while (__ret >= __past);
++		    *__f++ = __ret / __scaling + __param.a();
++		  }
++	      }
++	  }
++	else if (__urngrange < __urange)
++	  {
++	    // upscaling
++	    /*
++	      Note that every value in [0, urange]
++	      can be written uniquely as
++
++	      (urngrange + 1) * high + low
++
++	      where
++
++	      high in [0, urange / (urngrange + 1)]
++
++	      and
++
++	      low in [0, urngrange].
++	    */
++	    __uctype __tmp; // wraparound control
++	    while (__f != __t)
++	      {
++		do
++		  {
++		    const __uctype __uerngrange = __urngrange + 1;
++		    __tmp = (__uerngrange * operator()
++			     (__urng, param_type(0, __urange / __uerngrange)));
++		    __ret = __tmp + (__uctype(__urng()) - __urngmin);
++		  }
++		while (__ret > __urange || __ret < __tmp);
++		*__f++ = __ret;
++	      }
++	  }
++	else
++	  while (__f != __t)
++	    *__f++ = __uctype(__urng()) - __urngmin + __param.a();
++      }
++
++_GLIBCXX_END_NAMESPACE_VERSION
++} // namespace std
++
++#endif
 Index: libstdc++-v3/include/bits/regex_scanner.h
 ===================================================================
 --- a/src/libstdc++-v3/include/bits/regex_scanner.h	(.../tags/gcc_5_3_0_release)
@@ -2148,6 +2591,19 @@ Index: libstdc++-v3/include/bits/basic_string.h
          {
  	  for (; __k1 != __k2; ++__k1, ++__p)
  	    traits_type::assign(*__p, *__k1); // These types are off.
+Index: libstdc++-v3/include/bits/stl_algo.h
+===================================================================
+--- a/src/libstdc++-v3/include/bits/stl_algo.h	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/include/bits/stl_algo.h	(.../branches/gcc-5-branch)
+@@ -63,7 +63,7 @@
+ #include <bits/predefined_ops.h>
+ 
+ #if __cplusplus >= 201103L
+-#include <random>     // for std::uniform_int_distribution
++#include <bits/uniform_int_dist.h>
+ #endif
+ 
+ // See concept_check.h for the __glibcxx_*_requires macros.
 Index: libstdc++-v3/include/bits/regex_scanner.tcc
 ===================================================================
 --- a/src/libstdc++-v3/include/bits/regex_scanner.tcc	(.../tags/gcc_5_3_0_release)
@@ -2244,6 +2700,169 @@ Index: libstdc++-v3/include/bits/shared_ptr_base.h
  
    template<typename _Tp, _Lock_policy _Lp, typename _Alloc, typename... _Args>
      inline __shared_ptr<_Tp, _Lp>
+Index: libstdc++-v3/include/bits/random.tcc
+===================================================================
+--- a/src/libstdc++-v3/include/bits/random.tcc	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/include/bits/random.tcc	(.../branches/gcc-5-branch)
+@@ -872,158 +872,6 @@
+     }
+ 
+ 
+-  template<typename _IntType>
+-    template<typename _UniformRandomNumberGenerator>
+-      typename uniform_int_distribution<_IntType>::result_type
+-      uniform_int_distribution<_IntType>::
+-      operator()(_UniformRandomNumberGenerator& __urng,
+-		 const param_type& __param)
+-      {
+-	typedef typename _UniformRandomNumberGenerator::result_type
+-	  _Gresult_type;
+-	typedef typename std::make_unsigned<result_type>::type __utype;
+-	typedef typename std::common_type<_Gresult_type, __utype>::type
+-	  __uctype;
+-
+-	const __uctype __urngmin = __urng.min();
+-	const __uctype __urngmax = __urng.max();
+-	const __uctype __urngrange = __urngmax - __urngmin;
+-	const __uctype __urange
+-	  = __uctype(__param.b()) - __uctype(__param.a());
+-
+-	__uctype __ret;
+-
+-	if (__urngrange > __urange)
+-	  {
+-	    // downscaling
+-	    const __uctype __uerange = __urange + 1; // __urange can be zero
+-	    const __uctype __scaling = __urngrange / __uerange;
+-	    const __uctype __past = __uerange * __scaling;
+-	    do
+-	      __ret = __uctype(__urng()) - __urngmin;
+-	    while (__ret >= __past);
+-	    __ret /= __scaling;
+-	  }
+-	else if (__urngrange < __urange)
+-	  {
+-	    // upscaling
+-	    /*
+-	      Note that every value in [0, urange]
+-	      can be written uniquely as
+-
+-	      (urngrange + 1) * high + low
+-
+-	      where
+-
+-	      high in [0, urange / (urngrange + 1)]
+-
+-	      and
+-	
+-	      low in [0, urngrange].
+-	    */
+-	    __uctype __tmp; // wraparound control
+-	    do
+-	      {
+-		const __uctype __uerngrange = __urngrange + 1;
+-		__tmp = (__uerngrange * operator()
+-			 (__urng, param_type(0, __urange / __uerngrange)));
+-		__ret = __tmp + (__uctype(__urng()) - __urngmin);
+-	      }
+-	    while (__ret > __urange || __ret < __tmp);
+-	  }
+-	else
+-	  __ret = __uctype(__urng()) - __urngmin;
+-
+-	return __ret + __param.a();
+-      }
+-
+-
+-  template<typename _IntType>
+-    template<typename _ForwardIterator,
+-	     typename _UniformRandomNumberGenerator>
+-      void
+-      uniform_int_distribution<_IntType>::
+-      __generate_impl(_ForwardIterator __f, _ForwardIterator __t,
+-		      _UniformRandomNumberGenerator& __urng,
+-		      const param_type& __param)
+-      {
+-	__glibcxx_function_requires(_ForwardIteratorConcept<_ForwardIterator>)
+-	typedef typename _UniformRandomNumberGenerator::result_type
+-	  _Gresult_type;
+-	typedef typename std::make_unsigned<result_type>::type __utype;
+-	typedef typename std::common_type<_Gresult_type, __utype>::type
+-	  __uctype;
+-
+-	const __uctype __urngmin = __urng.min();
+-	const __uctype __urngmax = __urng.max();
+-	const __uctype __urngrange = __urngmax - __urngmin;
+-	const __uctype __urange
+-	  = __uctype(__param.b()) - __uctype(__param.a());
+-
+-	__uctype __ret;
+-
+-	if (__urngrange > __urange)
+-	  {
+-	    if (__detail::_Power_of_2(__urngrange + 1)
+-		&& __detail::_Power_of_2(__urange + 1))
+-	      {
+-		while (__f != __t)
+-		  {
+-		    __ret = __uctype(__urng()) - __urngmin;
+-		    *__f++ = (__ret & __urange) + __param.a();
+-		  }
+-	      }
+-	    else
+-	      {
+-		// downscaling
+-		const __uctype __uerange = __urange + 1; // __urange can be zero
+-		const __uctype __scaling = __urngrange / __uerange;
+-		const __uctype __past = __uerange * __scaling;
+-		while (__f != __t)
+-		  {
+-		    do
+-		      __ret = __uctype(__urng()) - __urngmin;
+-		    while (__ret >= __past);
+-		    *__f++ = __ret / __scaling + __param.a();
+-		  }
+-	      }
+-	  }
+-	else if (__urngrange < __urange)
+-	  {
+-	    // upscaling
+-	    /*
+-	      Note that every value in [0, urange]
+-	      can be written uniquely as
+-
+-	      (urngrange + 1) * high + low
+-
+-	      where
+-
+-	      high in [0, urange / (urngrange + 1)]
+-
+-	      and
+-
+-	      low in [0, urngrange].
+-	    */
+-	    __uctype __tmp; // wraparound control
+-	    while (__f != __t)
+-	      {
+-		do
+-		  {
+-		    const __uctype __uerngrange = __urngrange + 1;
+-		    __tmp = (__uerngrange * operator()
+-			     (__urng, param_type(0, __urange / __uerngrange)));
+-		    __ret = __tmp + (__uctype(__urng()) - __urngmin);
+-		  }
+-		while (__ret > __urange || __ret < __tmp);
+-		*__f++ = __ret;
+-	      }
+-	  }
+-	else
+-	  while (__f != __t)
+-	    *__f++ = __uctype(__urng()) - __urngmin + __param.a();
+-      }
+-
+   template<typename _IntType, typename _CharT, typename _Traits>
+     std::basic_ostream<_CharT, _Traits>&
+     operator<<(std::basic_ostream<_CharT, _Traits>& __os,
 Index: libstdc++-v3/include/bits/valarray_before.h
 ===================================================================
 --- a/src/libstdc++-v3/include/bits/valarray_before.h	(.../tags/gcc_5_3_0_release)
@@ -2275,6 +2894,200 @@ Index: libstdc++-v3/include/bits/valarray_before.h
      };
  
    // several specializations for relational operators.
+Index: libstdc++-v3/include/bits/random.h
+===================================================================
+--- a/src/libstdc++-v3/include/bits/random.h	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/include/bits/random.h	(.../branches/gcc-5-branch)
+@@ -32,6 +32,7 @@
+ #define _RANDOM_H 1
+ 
+ #include <vector>
++#include <bits/uniform_int_dist.h>
+ 
+ namespace std _GLIBCXX_VISIBILITY(default)
+ {
+@@ -149,14 +150,6 @@
+       __mod(_Tp __x)
+       { return _Mod<_Tp, __m, __a, __c>::__calc(__x); }
+ 
+-    /* Determine whether number is a power of 2.  */
+-    template<typename _Tp>
+-      inline bool
+-      _Power_of_2(_Tp __x)
+-      {
+-	return ((__x - 1) & __x) == 0;
+-      };
+-
+     /*
+      * An adaptor class for converting the output of any Generator into
+      * the input for a specific Distribution.
+@@ -1656,165 +1649,8 @@
+    * @{
+    */
+ 
+-  /**
+-   * @brief Uniform discrete distribution for random numbers.
+-   * A discrete random distribution on the range @f$[min, max]@f$ with equal
+-   * probability throughout the range.
+-   */
+-  template<typename _IntType = int>
+-    class uniform_int_distribution
+-    {
+-      static_assert(std::is_integral<_IntType>::value,
+-		    "template argument not an integral type");
++  // std::uniform_int_distribution is defined in <bits/uniform_int_dist.h>
+ 
+-    public:
+-      /** The type of the range of the distribution. */
+-      typedef _IntType result_type;
+-      /** Parameter type. */
+-      struct param_type
+-      {
+-	typedef uniform_int_distribution<_IntType> distribution_type;
+-
+-	explicit
+-	param_type(_IntType __a = 0,
+-		   _IntType __b = std::numeric_limits<_IntType>::max())
+-	: _M_a(__a), _M_b(__b)
+-	{
+-	  _GLIBCXX_DEBUG_ASSERT(_M_a <= _M_b);
+-	}
+-
+-	result_type
+-	a() const
+-	{ return _M_a; }
+-
+-	result_type
+-	b() const
+-	{ return _M_b; }
+-
+-	friend bool
+-	operator==(const param_type& __p1, const param_type& __p2)
+-	{ return __p1._M_a == __p2._M_a && __p1._M_b == __p2._M_b; }
+-
+-      private:
+-	_IntType _M_a;
+-	_IntType _M_b;
+-      };
+-
+-    public:
+-      /**
+-       * @brief Constructs a uniform distribution object.
+-       */
+-      explicit
+-      uniform_int_distribution(_IntType __a = 0,
+-			   _IntType __b = std::numeric_limits<_IntType>::max())
+-      : _M_param(__a, __b)
+-      { }
+-
+-      explicit
+-      uniform_int_distribution(const param_type& __p)
+-      : _M_param(__p)
+-      { }
+-
+-      /**
+-       * @brief Resets the distribution state.
+-       *
+-       * Does nothing for the uniform integer distribution.
+-       */
+-      void
+-      reset() { }
+-
+-      result_type
+-      a() const
+-      { return _M_param.a(); }
+-
+-      result_type
+-      b() const
+-      { return _M_param.b(); }
+-
+-      /**
+-       * @brief Returns the parameter set of the distribution.
+-       */
+-      param_type
+-      param() const
+-      { return _M_param; }
+-
+-      /**
+-       * @brief Sets the parameter set of the distribution.
+-       * @param __param The new parameter set of the distribution.
+-       */
+-      void
+-      param(const param_type& __param)
+-      { _M_param = __param; }
+-
+-      /**
+-       * @brief Returns the inclusive lower bound of the distribution range.
+-       */
+-      result_type
+-      min() const
+-      { return this->a(); }
+-
+-      /**
+-       * @brief Returns the inclusive upper bound of the distribution range.
+-       */
+-      result_type
+-      max() const
+-      { return this->b(); }
+-
+-      /**
+-       * @brief Generating functions.
+-       */
+-      template<typename _UniformRandomNumberGenerator>
+-	result_type
+-	operator()(_UniformRandomNumberGenerator& __urng)
+-        { return this->operator()(__urng, _M_param); }
+-
+-      template<typename _UniformRandomNumberGenerator>
+-	result_type
+-	operator()(_UniformRandomNumberGenerator& __urng,
+-		   const param_type& __p);
+-
+-      template<typename _ForwardIterator,
+-	       typename _UniformRandomNumberGenerator>
+-	void
+-	__generate(_ForwardIterator __f, _ForwardIterator __t,
+-		   _UniformRandomNumberGenerator& __urng)
+-	{ this->__generate(__f, __t, __urng, _M_param); }
+-
+-      template<typename _ForwardIterator,
+-	       typename _UniformRandomNumberGenerator>
+-	void
+-	__generate(_ForwardIterator __f, _ForwardIterator __t,
+-		   _UniformRandomNumberGenerator& __urng,
+-		   const param_type& __p)
+-	{ this->__generate_impl(__f, __t, __urng, __p); }
+-
+-      template<typename _UniformRandomNumberGenerator>
+-	void
+-	__generate(result_type* __f, result_type* __t,
+-		   _UniformRandomNumberGenerator& __urng,
+-		   const param_type& __p)
+-	{ this->__generate_impl(__f, __t, __urng, __p); }
+-
+-      /**
+-       * @brief Return true if two uniform integer distributions have
+-       *        the same parameters.
+-       */
+-      friend bool
+-      operator==(const uniform_int_distribution& __d1,
+-		 const uniform_int_distribution& __d2)
+-      { return __d1._M_param == __d2._M_param; }
+-
+-    private:
+-      template<typename _ForwardIterator,
+-	       typename _UniformRandomNumberGenerator>
+-	void
+-	__generate_impl(_ForwardIterator __f, _ForwardIterator __t,
+-			_UniformRandomNumberGenerator& __urng,
+-			const param_type& __p);
+-
+-      param_type _M_param;
+-    };
+-
+   /**
+    * @brief Return true if two uniform integer distributions have
+    *        different parameters.
 Index: libstdc++-v3/include/bits/alloc_traits.h
 ===================================================================
 --- a/src/libstdc++-v3/include/bits/alloc_traits.h	(.../tags/gcc_5_3_0_release)
@@ -2463,6 +3276,18 @@ Index: libstdc++-v3/include/tr2/dynamic_bitset
         *  @throw  std::out_of_range  If @p __pos is bigger the size of @p __str.
         *  @throw  std::invalid_argument  If a character appears in the string
         *                                 which is neither '0' nor '1'.
+Index: libstdc++-v3/include/Makefile.am
+===================================================================
+--- a/src/libstdc++-v3/include/Makefile.am	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/include/Makefile.am	(.../branches/gcc-5-branch)
+@@ -178,6 +178,7 @@
+ 	${bits_srcdir}/stl_vector.h \
+ 	${bits_srcdir}/streambuf.tcc \
+ 	${bits_srcdir}/stringfwd.h \
++	${bits_srcdir}/uniform_int_dist.h \
+ 	${bits_srcdir}/unique_ptr.h \
+ 	${bits_srcdir}/unordered_map.h \
+ 	${bits_srcdir}/unordered_set.h \
 Index: libstdc++-v3/include/backward/strstream
 ===================================================================
 --- a/src/libstdc++-v3/include/backward/strstream	(.../tags/gcc_5_3_0_release)
@@ -2483,7 +3308,52 @@ Index: libstdc++-v3/ChangeLog
 ===================================================================
 --- a/src/libstdc++-v3/ChangeLog	(.../tags/gcc_5_3_0_release)
 +++ b/src/libstdc++-v3/ChangeLog	(.../branches/gcc-5-branch)
-@@ -1,3 +1,153 @@
+@@ -1,3 +1,198 @@
++2016-04-20  Jonathan Wakely  <jwakely@redhat.com>
++
++	Backport from mainline
++	2016-01-26  Jonathan Wakely  <jwakely@redhat.com>
++
++	PR libstdc++/69478
++	* include/bits/stl_algobase.h (__copy_move<_IsMove, true,
++	random_access_iterator_tag>): Check is_move_assignable when moving.
++	(__copy_move_backwards<_IsMove, true, random_access_iterator_tag>):
++	Likewise.
++	* testsuite/25_algorithms/copy/move_iterators/69478.cc: New.
++	* testsuite/25_algorithms/copy_backward/move_iterators/69478.cc: New.
++	* testsuite/25_algorithms/move/69478.cc: New.
++	* testsuite/25_algorithms/move_backward/69478.cc: New.
++
++	Backport from mainline
++	2016-04-05  Jonathan Wakely  <jwakely@redhat.com>
++
++	PR libstdc++/70503
++	* src/c++11/thread.cc (execute_native_thread_routine,
++	execute_native_thread_routine_compat): Give internal linkage.
++	* testsuite/30_threads/thread/70503.cc: New test.
++
++	Backport from mainline
++	2016-01-25  Jonathan Wakely  <jwakely@redhat.com>
++
++	PR libstdc++/69464
++	* include/Makefile.am: Add new header.
++	* include/Makefile.in: Regenerate.
++	* include/bits/random.h (uniform_int_distribution): Move to
++	bits/uniform_int_dist.h.
++	* include/bits/random.tcc (uniform_int_distribution::operator(),
++	uniform_int_distribution::__generate_impl): Likewise.
++	* include/bits/uniform_int_dist.h: New header.
++	* include/bits/stl_algo.h [__cplusplus >= 201103L]: Include
++	<bits/uniform_int_dist.h> instead of <random>.
++	* testsuite/20_util/specialized_algorithms/uninitialized_copy/
++	move_iterators/1.cc: Include correct header for uninitialized_copy.
++	* testsuite/20_util/specialized_algorithms/uninitialized_copy_n/
++	move_iterators/1.cc: Likewise.
++	* testsuite/25_algorithms/nth_element/58800.cc: Include correct
++	header for vector.
++	* testsuite/26_numerics/random/pr60037-neg.cc: Adjust dg-error lines.
++	* testsuite/libstdc++-prettyprinters/whatis.cc: Include <random>.
++
 +2016-04-06  Eric Botcazou  <ebotcazou@adacore.com>
 +
 +	* src/Makefile.am (libstdc++-symbols.ver): Remove useless /dev/null.
@@ -2637,6 +3507,198 @@ Index: libstdc++-v3/ChangeLog
  2015-12-04  Release Manager
  
  	* GCC 5.3.0 released.
+Index: libstdc++-v3/testsuite/25_algorithms/move_backward/69478.cc
+===================================================================
+--- a/src/libstdc++-v3/testsuite/25_algorithms/move_backward/69478.cc	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/testsuite/25_algorithms/move_backward/69478.cc	(.../branches/gcc-5-branch)
+@@ -0,0 +1,40 @@
++// { dg-options "-std=gnu++11" }
++// { dg-do compile }
++
++// Copyright (C) 2016 Free Software Foundation, Inc.
++//
++// This file is part of the GNU ISO C++ Library.  This library is free
++// software; you can redistribute it and/or modify it under the
++// terms of the GNU General Public License as published by the
++// Free Software Foundation; either version 3, or (at your option)
++// any later version.
++
++// This library is distributed in the hope that it will be useful,
++// but WITHOUT ANY WARRANTY; without even the implied warranty of
++// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++// GNU General Public License for more details.
++
++// You should have received a copy of the GNU General Public License along
++// with this library; see the file COPYING3.  If not see
++// <http://www.gnu.org/licenses/>.
++
++// PR libstdc++/69478
++
++#include <algorithm>
++#include <iterator>
++
++void
++test01()
++{
++  // A move-only type that is also a trivial class.
++  struct trivial_rvalstruct
++  {
++    trivial_rvalstruct() = default;
++    trivial_rvalstruct(trivial_rvalstruct&&) = default;
++    trivial_rvalstruct& operator=(trivial_rvalstruct&&) = default;
++  };
++  static_assert(std::is_trivial<trivial_rvalstruct>::value, "");
++
++  trivial_rvalstruct a[1], b[1];
++  std::move_backward(a, a + 1, b);
++}
+Index: libstdc++-v3/testsuite/25_algorithms/move/69478.cc
+===================================================================
+--- a/src/libstdc++-v3/testsuite/25_algorithms/move/69478.cc	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/testsuite/25_algorithms/move/69478.cc	(.../branches/gcc-5-branch)
+@@ -0,0 +1,40 @@
++// { dg-options "-std=gnu++11" }
++// { dg-do compile }
++
++// Copyright (C) 2016 Free Software Foundation, Inc.
++//
++// This file is part of the GNU ISO C++ Library.  This library is free
++// software; you can redistribute it and/or modify it under the
++// terms of the GNU General Public License as published by the
++// Free Software Foundation; either version 3, or (at your option)
++// any later version.
++
++// This library is distributed in the hope that it will be useful,
++// but WITHOUT ANY WARRANTY; without even the implied warranty of
++// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++// GNU General Public License for more details.
++
++// You should have received a copy of the GNU General Public License along
++// with this library; see the file COPYING3.  If not see
++// <http://www.gnu.org/licenses/>.
++
++// PR libstdc++/69478
++
++#include <algorithm>
++#include <iterator>
++
++void
++test01()
++{
++  // A move-only type that is also a trivial class.
++  struct trivial_rvalstruct
++  {
++    trivial_rvalstruct() = default;
++    trivial_rvalstruct(trivial_rvalstruct&&) = default;
++    trivial_rvalstruct& operator=(trivial_rvalstruct&&) = default;
++  };
++  static_assert(std::is_trivial<trivial_rvalstruct>::value, "");
++
++  trivial_rvalstruct a[1], b[1];
++  std::move(a, a + 1, b);
++}
+Index: libstdc++-v3/testsuite/25_algorithms/copy_backward/move_iterators/69478.cc
+===================================================================
+--- a/src/libstdc++-v3/testsuite/25_algorithms/copy_backward/move_iterators/69478.cc	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/testsuite/25_algorithms/copy_backward/move_iterators/69478.cc	(.../branches/gcc-5-branch)
+@@ -0,0 +1,40 @@
++// { dg-options "-std=gnu++11" }
++// { dg-do compile }
++
++// Copyright (C) 2016 Free Software Foundation, Inc.
++//
++// This file is part of the GNU ISO C++ Library.  This library is free
++// software; you can redistribute it and/or modify it under the
++// terms of the GNU General Public License as published by the
++// Free Software Foundation; either version 3, or (at your option)
++// any later version.
++
++// This library is distributed in the hope that it will be useful,
++// but WITHOUT ANY WARRANTY; without even the implied warranty of
++// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++// GNU General Public License for more details.
++
++// You should have received a copy of the GNU General Public License along
++// with this library; see the file COPYING3.  If not see
++// <http://www.gnu.org/licenses/>.
++
++// PR libstdc++/69478
++
++#include <algorithm>
++#include <iterator>
++
++void
++test01()
++{
++  // A move-only type that is also a trivial class.
++  struct trivial_rvalstruct
++  {
++    trivial_rvalstruct() = default;
++    trivial_rvalstruct(trivial_rvalstruct&&) = default;
++    trivial_rvalstruct& operator=(trivial_rvalstruct&&) = default;
++  };
++  static_assert(std::is_trivial<trivial_rvalstruct>::value, "");
++
++  trivial_rvalstruct a[1], b[1];
++  copy_backward(std::make_move_iterator(a), std::make_move_iterator(a+1), b);
++}
+Index: libstdc++-v3/testsuite/25_algorithms/copy/move_iterators/69478.cc
+===================================================================
+--- a/src/libstdc++-v3/testsuite/25_algorithms/copy/move_iterators/69478.cc	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/testsuite/25_algorithms/copy/move_iterators/69478.cc	(.../branches/gcc-5-branch)
+@@ -0,0 +1,40 @@
++// { dg-options "-std=gnu++11" }
++// { dg-do compile }
++
++// Copyright (C) 2016 Free Software Foundation, Inc.
++//
++// This file is part of the GNU ISO C++ Library.  This library is free
++// software; you can redistribute it and/or modify it under the
++// terms of the GNU General Public License as published by the
++// Free Software Foundation; either version 3, or (at your option)
++// any later version.
++
++// This library is distributed in the hope that it will be useful,
++// but WITHOUT ANY WARRANTY; without even the implied warranty of
++// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++// GNU General Public License for more details.
++
++// You should have received a copy of the GNU General Public License along
++// with this library; see the file COPYING3.  If not see
++// <http://www.gnu.org/licenses/>.
++
++// PR libstdc++/69478
++
++#include <algorithm>
++#include <iterator>
++
++void
++test01()
++{
++  // A move-only type that is also a trivial class.
++  struct trivial_rvalstruct
++  {
++    trivial_rvalstruct() = default;
++    trivial_rvalstruct(trivial_rvalstruct&&) = default;
++    trivial_rvalstruct& operator=(trivial_rvalstruct&&) = default;
++  };
++  static_assert(std::is_trivial<trivial_rvalstruct>::value, "");
++
++  trivial_rvalstruct a[1], b[1];
++  copy(std::make_move_iterator(a), std::make_move_iterator(a + 1), b);
++}
+Index: libstdc++-v3/testsuite/25_algorithms/nth_element/58800.cc
+===================================================================
+--- a/src/libstdc++-v3/testsuite/25_algorithms/nth_element/58800.cc	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/testsuite/25_algorithms/nth_element/58800.cc	(.../branches/gcc-5-branch)
+@@ -20,6 +20,7 @@
+ // { dg-options "-std=gnu++11" }
+ 
+ #include <algorithm>
++#include <vector>
+ #include <testsuite_hooks.h>
+ #include <testsuite_iterators.h>
+ 
 Index: libstdc++-v3/testsuite/28_regex/regression.cc
 ===================================================================
 --- a/src/libstdc++-v3/testsuite/28_regex/regression.cc	(.../tags/gcc_5_3_0_release)
@@ -2716,6 +3778,70 @@ Index: libstdc++-v3/testsuite/28_regex/algorithms/regex_match/ecma/char/68863.cc
 +  test01();
 +  return 0;
 +}
+Index: libstdc++-v3/testsuite/libstdc++-prettyprinters/whatis.cc
+===================================================================
+--- a/src/libstdc++-v3/testsuite/libstdc++-prettyprinters/whatis.cc	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/testsuite/libstdc++-prettyprinters/whatis.cc	(.../branches/gcc-5-branch)
+@@ -1,7 +1,7 @@
+ // { dg-do run }
+ // { dg-options "-g -O0 -std=gnu++11" }
+ 
+-// Copyright (C) 2011-2015 Free Software Foundation, Inc.
++// Copyright (C) 2011-2016 Free Software Foundation, Inc.
+ //
+ // This file is part of the GNU ISO C++ Library.  This library is free
+ // software; you can redistribute it and/or modify it under the
+@@ -33,6 +33,7 @@
+ #include <set>
+ #include <unordered_map>
+ #include <unordered_set>
++#include <random>
+ 
+ template<class T>
+ void
+Index: libstdc++-v3/testsuite/30_threads/thread/70503.cc
+===================================================================
+--- a/src/libstdc++-v3/testsuite/30_threads/thread/70503.cc	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/testsuite/30_threads/thread/70503.cc	(.../branches/gcc-5-branch)
+@@ -0,0 +1,38 @@
++// Copyright (C) 2016 Free Software Foundation, Inc.
++//
++// This file is part of the GNU ISO C++ Library.  This library is free
++// software; you can redistribute it and/or modify it under the
++// terms of the GNU General Public License as published by the
++// Free Software Foundation; either version 3, or (at your option)
++// any later version.
++
++// This library is distributed in the hope that it will be useful,
++// but WITHOUT ANY WARRANTY; without even the implied warranty of
++// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++// GNU General Public License for more details.
++
++// You should have received a copy of the GNU General Public License along
++// with this library; see the file COPYING3.  If not see
++// <http://www.gnu.org/licenses/>.
++
++// { dg-do link }
++// { dg-options "-std=gnu++11 -static" { target *-*-*gnu* } }
++// { dg-require-cstdint "" }
++// { dg-require-gthreads "" }
++// { dg-require-effective-target static }
++
++#include <thread>
++
++extern "C" {
++  // Should not get multiple definition errors from libstdc++.a(thread.o)
++  void execute_native_thread_routine(void) { }
++  void execute_native_thread_routine_compat(void) { }
++}
++
++int main()
++{
++  execute_native_thread_routine();
++  execute_native_thread_routine_compat();
++
++  std::thread{}.detach();  // ensure libstdc++.a(thread.o) is linked in
++}
 Index: libstdc++-v3/testsuite/21_strings/basic_string/cons/char/69092.cc
 ===================================================================
 --- a/src/libstdc++-v3/testsuite/21_strings/basic_string/cons/char/69092.cc	(.../tags/gcc_5_3_0_release)
@@ -2779,6 +3905,19 @@ Index: libstdc++-v3/testsuite/21_strings/basic_string/cons/char/69092.cc
 +  catch(int) {
 +  }
 +}
+Index: libstdc++-v3/testsuite/26_numerics/random/pr60037-neg.cc
+===================================================================
+--- a/src/libstdc++-v3/testsuite/26_numerics/random/pr60037-neg.cc	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/testsuite/26_numerics/random/pr60037-neg.cc	(.../branches/gcc-5-branch)
+@@ -10,6 +10,6 @@
+ auto x = std::generate_canonical<std::size_t,
+ 			std::numeric_limits<std::size_t>::digits>(urng);
+ 
+-// { dg-error "static assertion failed: template argument not a floating point type" "" { target *-*-* } 167 }
++// { dg-error "static assertion failed: template argument not a floating point type" "" { target *-*-* } 160 }
+ 
+-// { dg-error "static assertion failed: template argument not a floating point type" "" { target *-*-* } 3466 }
++// { dg-error "static assertion failed: template argument not a floating point type" "" { target *-*-* } 3314 }
 Index: libstdc++-v3/testsuite/26_numerics/valarray/69116.cc
 ===================================================================
 --- a/src/libstdc++-v3/testsuite/26_numerics/valarray/69116.cc	(.../tags/gcc_5_3_0_release)
@@ -3087,6 +4226,32 @@ Index: libstdc++-v3/testsuite/20_util/bind/68912.cc
 +  volatile const auto bound_cv = bound;
 +  D res_cv = bound_cv(1.0);
 +}
+Index: libstdc++-v3/testsuite/20_util/specialized_algorithms/uninitialized_copy_n/move_iterators/1.cc
+===================================================================
+--- a/src/libstdc++-v3/testsuite/20_util/specialized_algorithms/uninitialized_copy_n/move_iterators/1.cc	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/testsuite/20_util/specialized_algorithms/uninitialized_copy_n/move_iterators/1.cc	(.../branches/gcc-5-branch)
+@@ -21,7 +21,7 @@
+ 
+ #undef _GLIBCXX_CONCEPT_CHECKS
+ 
+-#include <algorithm>
++#include <memory>
+ #include <iterator>
+ #include <testsuite_hooks.h>
+ #include <testsuite_iterators.h>
+Index: libstdc++-v3/testsuite/20_util/specialized_algorithms/uninitialized_copy/move_iterators/1.cc
+===================================================================
+--- a/src/libstdc++-v3/testsuite/20_util/specialized_algorithms/uninitialized_copy/move_iterators/1.cc	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/testsuite/20_util/specialized_algorithms/uninitialized_copy/move_iterators/1.cc	(.../branches/gcc-5-branch)
+@@ -19,7 +19,7 @@
+ 
+ #undef _GLIBCXX_CONCEPT_CHECKS
+ 
+-#include <algorithm>
++#include <memory>
+ #include <iterator>
+ #include <testsuite_hooks.h>
+ #include <testsuite_iterators.h>
 Index: libstdc++-v3/config/abi/post/x86_64-linux-gnu/x32/baseline_symbols.txt
 ===================================================================
 --- a/src/libstdc++-v3/config/abi/post/x86_64-linux-gnu/x32/baseline_symbols.txt	(.../tags/gcc_5_3_0_release)
@@ -4077,7 +5242,15 @@ Index: gcc/c/ChangeLog
 ===================================================================
 --- a/src/gcc/c/ChangeLog	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/c/ChangeLog	(.../branches/gcc-5-branch)
-@@ -1,3 +1,62 @@
+@@ -1,3 +1,70 @@
++2016-04-18  Marek Polacek  <polacek@redhat.com>
++
++	Backport from mainline
++	2016-03-31  Marek Polacek  <polacek@redhat.com>
++
++	PR c/70297
++	* c-decl.c (merge_decls): Also set TYPE_ALIGN and TYPE_USER_ALIGN.
++
 +2016-02-17  Bernd Schmidt  <bschmidt@redhat.com>
 +
 +	Backport from mainline
@@ -4412,7 +5585,43 @@ Index: gcc/c/c-decl.c
 ===================================================================
 --- a/src/gcc/c/c-decl.c	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/c/c-decl.c	(.../branches/gcc-5-branch)
-@@ -5366,6 +5366,8 @@
+@@ -2376,6 +2376,35 @@
+   DECL_ATTRIBUTES (newdecl)
+     = targetm.merge_decl_attributes (olddecl, newdecl);
+ 
++  /* For typedefs use the old type, as the new type's DECL_NAME points
++     at newdecl, which will be ggc_freed.  */
++  if (TREE_CODE (newdecl) == TYPE_DECL)
++    {
++      /* But NEWTYPE might have an attribute, honor that.  */
++      tree tem = newtype;
++      newtype = oldtype;
++
++      if (TYPE_USER_ALIGN (tem))
++	{
++	  if (TYPE_ALIGN (tem) > TYPE_ALIGN (newtype))
++	    TYPE_ALIGN (newtype) = TYPE_ALIGN (tem);
++	  TYPE_USER_ALIGN (newtype) = true;
++	}
++
++      /* And remove the new type from the variants list.  */
++      if (TYPE_NAME (TREE_TYPE (newdecl)) == newdecl)
++	{
++	  tree remove = TREE_TYPE (newdecl);
++	  for (tree t = TYPE_MAIN_VARIANT (remove); ;
++	       t = TYPE_NEXT_VARIANT (t))
++	    if (TYPE_NEXT_VARIANT (t) == remove)
++	      {
++		TYPE_NEXT_VARIANT (t) = TYPE_NEXT_VARIANT (remove);
++		break;
++	      }
++	}
++    }
++
+   /* Merge the data types specified in the two decls.  */
+   TREE_TYPE (newdecl)
+     = TREE_TYPE (olddecl)
+@@ -5366,6 +5395,8 @@
    tree returned_attrs = NULL_TREE;
    bool bitfield = width != NULL;
    tree element_type;
@@ -4421,7 +5630,7 @@ Index: gcc/c/c-decl.c
    struct c_arg_info *arg_info = 0;
    addr_space_t as1, as2, address_space;
    location_t loc = UNKNOWN_LOCATION;
-@@ -5404,9 +5406,9 @@
+@@ -5404,9 +5435,9 @@
  	case cdk_function:
  	case cdk_pointer:
  	  funcdef_syntax = (decl->kind == cdk_function);
@@ -4432,7 +5641,7 @@ Index: gcc/c/c-decl.c
  	  break;
  
  	case cdk_attrs:
-@@ -5528,12 +5530,17 @@
+@@ -5528,12 +5559,17 @@
    if ((TREE_CODE (type) == ARRAY_TYPE
         || first_non_attr_kind == cdk_array)
        && TYPE_QUALS (element_type))
@@ -4451,7 +5660,7 @@ Index: gcc/c/c-decl.c
  
    /* Applying the _Atomic qualifier to an array type (through the use
       of typedefs or typeof) must be detected here.  If the qualifier
-@@ -6024,6 +6031,7 @@
+@@ -6024,6 +6060,7 @@
  		array_ptr_attrs = NULL_TREE;
  		array_parm_static = 0;
  	      }
@@ -4459,7 +5668,7 @@ Index: gcc/c/c-decl.c
  	    break;
  	  }
  	case cdk_function:
-@@ -6033,6 +6041,7 @@
+@@ -6033,6 +6070,7 @@
  	       attributes.  */
  	    bool really_funcdef = false;
  	    tree arg_types;
@@ -4467,7 +5676,7 @@ Index: gcc/c/c-decl.c
  	    if (funcdef_flag)
  	      {
  		const struct c_declarator *t = declarator->declarator;
-@@ -6133,7 +6142,9 @@
+@@ -6133,7 +6171,9 @@
  	      pedwarn (loc, OPT_Wpedantic,
  		       "ISO C forbids qualified function types");
  	    if (type_quals)
@@ -4478,7 +5687,7 @@ Index: gcc/c/c-decl.c
  	    size_varies = false;
  
  	    /* When the pointed-to type involves components of variable size,
-@@ -6331,7 +6342,8 @@
+@@ -6331,7 +6371,8 @@
  	pedwarn (loc, OPT_Wpedantic,
  		 "ISO C forbids qualified function types");
        if (type_quals)
@@ -4488,7 +5697,7 @@ Index: gcc/c/c-decl.c
        decl = build_decl (declarator->id_loc,
  			 TYPE_DECL, declarator->u.id, type);
        if (declspecs->explicit_signed_p)
-@@ -6384,7 +6396,8 @@
+@@ -6384,7 +6425,8 @@
  	pedwarn (loc, OPT_Wpedantic,
  		 "ISO C forbids const or volatile function types");
        if (type_quals)
@@ -4498,7 +5707,7 @@ Index: gcc/c/c-decl.c
        return type;
      }
  
-@@ -6431,8 +6444,16 @@
+@@ -6431,8 +6473,16 @@
  	  {
  	    /* Transfer const-ness of array into that of type pointed to.  */
  	    type = TREE_TYPE (type);
@@ -4516,7 +5725,7 @@ Index: gcc/c/c-decl.c
  	    type = c_build_pointer_type (type);
  	    type_quals = array_ptr_quals;
  	    if (type_quals)
-@@ -6523,7 +6544,8 @@
+@@ -6523,7 +6573,8 @@
  	    TYPE_DOMAIN (type) = build_range_type (sizetype, size_zero_node,
  						   NULL_TREE);
  	  }
@@ -4526,7 +5735,7 @@ Index: gcc/c/c-decl.c
  	decl = build_decl (declarator->id_loc,
  			   FIELD_DECL, declarator->u.id, type);
  	DECL_NONADDRESSABLE_P (decl) = bitfield;
-@@ -6635,7 +6657,8 @@
+@@ -6635,7 +6686,8 @@
  	/* An uninitialized decl with `extern' is a reference.  */
  	int extern_ref = !initialized && storage_class == csc_extern;
  
@@ -4536,7 +5745,7 @@ Index: gcc/c/c-decl.c
  
  	/* C99 6.2.2p7: It is invalid (compile-time undefined
  	   behavior) to create an 'extern' declaration for a
-@@ -7996,8 +8019,23 @@
+@@ -7996,8 +8048,23 @@
    precision = MAX (tree_int_cst_min_precision (minnode, sign),
  		   tree_int_cst_min_precision (maxnode, sign));
  
@@ -4561,7 +5770,7 @@ Index: gcc/c/c-decl.c
        tem = c_common_type_for_size (precision, sign == UNSIGNED ? 1 : 0);
        if (tem == NULL)
  	{
-@@ -8012,17 +8050,8 @@
+@@ -8012,17 +8079,8 @@
    TYPE_MAX_VALUE (enumtype) = TYPE_MAX_VALUE (tem);
    TYPE_UNSIGNED (enumtype) = TYPE_UNSIGNED (tem);
    TYPE_SIZE (enumtype) = 0;
@@ -4694,7 +5903,7 @@ Index: gcc/DATESTAMP
 +++ b/src/gcc/DATESTAMP	(.../branches/gcc-5-branch)
 @@ -1 +1 @@
 -20151204
-+20160409
++20160421
 Index: gcc/postreload.c
 ===================================================================
 --- a/src/gcc/postreload.c	(.../tags/gcc_5_3_0_release)
@@ -4992,6 +6201,153 @@ Index: gcc/builtins.c
  	}
        else
  	{
+@@ -9554,6 +9558,8 @@
+ 
+   mode = TYPE_MODE (TREE_TYPE (arg));
+ 
++  bool is_ibm_extended = MODE_COMPOSITE_P (mode);
++
+   /* If there is no optab, try generic code.  */
+   switch (DECL_FUNCTION_CODE (fndecl))
+     {
+@@ -9563,10 +9569,18 @@
+       {
+ 	/* isinf(x) -> isgreater(fabs(x),DBL_MAX).  */
+ 	tree const isgr_fn = builtin_decl_explicit (BUILT_IN_ISGREATER);
+-	tree const type = TREE_TYPE (arg);
++	tree type = TREE_TYPE (arg);
+ 	REAL_VALUE_TYPE r;
+ 	char buf[128];
+ 
++	if (is_ibm_extended)
++	  {
++	    /* NaN and Inf are encoded in the high-order double value
++	       only.  The low-order value is not significant.  */
++	    type = double_type_node;
++	    mode = DFmode;
++	    arg = fold_build1_loc (loc, NOP_EXPR, type, arg);
++	  }
+ 	get_max_float (REAL_MODE_FORMAT (mode), buf, sizeof (buf));
+ 	real_from_string (&r, buf);
+ 	result = build_call_expr (isgr_fn, 2,
+@@ -9579,10 +9593,18 @@
+       {
+ 	/* isfinite(x) -> islessequal(fabs(x),DBL_MAX).  */
+ 	tree const isle_fn = builtin_decl_explicit (BUILT_IN_ISLESSEQUAL);
+-	tree const type = TREE_TYPE (arg);
++	tree type = TREE_TYPE (arg);
+ 	REAL_VALUE_TYPE r;
+ 	char buf[128];
+ 
++	if (is_ibm_extended)
++	  {
++	    /* NaN and Inf are encoded in the high-order double value
++	       only.  The low-order value is not significant.  */
++	    type = double_type_node;
++	    mode = DFmode;
++	    arg = fold_build1_loc (loc, NOP_EXPR, type, arg);
++	  }
+ 	get_max_float (REAL_MODE_FORMAT (mode), buf, sizeof (buf));
+ 	real_from_string (&r, buf);
+ 	result = build_call_expr (isle_fn, 2,
+@@ -9602,21 +9624,72 @@
+ 	/* isnormal(x) -> isgreaterequal(fabs(x),DBL_MIN) &
+ 	   islessequal(fabs(x),DBL_MAX).  */
+ 	tree const isle_fn = builtin_decl_explicit (BUILT_IN_ISLESSEQUAL);
+-	tree const isge_fn = builtin_decl_explicit (BUILT_IN_ISGREATEREQUAL);
+-	tree const type = TREE_TYPE (arg);
++	tree type = TREE_TYPE (arg);
++	tree orig_arg, max_exp, min_exp;
++	machine_mode orig_mode = mode;
+ 	REAL_VALUE_TYPE rmax, rmin;
+ 	char buf[128];
+ 
++	orig_arg = arg = builtin_save_expr (arg);
++	if (is_ibm_extended)
++	  {
++	    /* Use double to test the normal range of IBM extended
++	       precision.  Emin for IBM extended precision is
++	       different to emin for IEEE double, being 53 higher
++	       since the low double exponent is at least 53 lower
++	       than the high double exponent.  */
++	    type = double_type_node;
++	    mode = DFmode;
++	    arg = fold_build1_loc (loc, NOP_EXPR, type, arg);
++	  }
++	arg = fold_build1_loc (loc, ABS_EXPR, type, arg);
++
+ 	get_max_float (REAL_MODE_FORMAT (mode), buf, sizeof (buf));
+ 	real_from_string (&rmax, buf);
+-	sprintf (buf, "0x1p%d", REAL_MODE_FORMAT (mode)->emin - 1);
++	sprintf (buf, "0x1p%d", REAL_MODE_FORMAT (orig_mode)->emin - 1);
+ 	real_from_string (&rmin, buf);
+-	arg = builtin_save_expr (fold_build1_loc (loc, ABS_EXPR, type, arg));
+-	result = build_call_expr (isle_fn, 2, arg,
+-				  build_real (type, rmax));
+-	result = fold_build2 (BIT_AND_EXPR, integer_type_node, result,
+-			      build_call_expr (isge_fn, 2, arg,
+-					       build_real (type, rmin)));
++	max_exp = build_real (type, rmax);
++	min_exp = build_real (type, rmin);
++
++	max_exp = build_call_expr (isle_fn, 2, arg, max_exp);
++	if (is_ibm_extended)
++	  {
++	    /* Testing the high end of the range is done just using
++	       the high double, using the same test as isfinite().
++	       For the subnormal end of the range we first test the
++	       high double, then if its magnitude is equal to the
++	       limit of 0x1p-969, we test whether the low double is
++	       non-zero and opposite sign to the high double.  */
++	    tree const islt_fn = builtin_decl_explicit (BUILT_IN_ISLESS);
++	    tree const isgt_fn = builtin_decl_explicit (BUILT_IN_ISGREATER);
++	    tree gt_min = build_call_expr (isgt_fn, 2, arg, min_exp);
++	    tree eq_min = fold_build2 (EQ_EXPR, integer_type_node,
++				       arg, min_exp);
++	    tree as_complex = build1 (VIEW_CONVERT_EXPR,
++				      complex_double_type_node, orig_arg);
++	    tree hi_dbl = build1 (REALPART_EXPR, type, as_complex);
++	    tree lo_dbl = build1 (IMAGPART_EXPR, type, as_complex);
++	    tree zero = build_real (type, dconst0);
++	    tree hilt = build_call_expr (islt_fn, 2, hi_dbl, zero);
++	    tree lolt = build_call_expr (islt_fn, 2, lo_dbl, zero);
++	    tree logt = build_call_expr (isgt_fn, 2, lo_dbl, zero);
++	    tree ok_lo = fold_build1 (TRUTH_NOT_EXPR, integer_type_node,
++				      fold_build3 (COND_EXPR,
++						   integer_type_node,
++						   hilt, logt, lolt));
++	    eq_min = fold_build2 (TRUTH_ANDIF_EXPR, integer_type_node,
++				  eq_min, ok_lo);
++	    min_exp = fold_build2 (TRUTH_ORIF_EXPR, integer_type_node,
++				   gt_min, eq_min);
++	  }
++	else
++	  {
++	    tree const isge_fn
++	      = builtin_decl_explicit (BUILT_IN_ISGREATEREQUAL);
++	    min_exp = build_call_expr (isge_fn, 2, arg, min_exp);
++	  }
++	result = fold_build2 (BIT_AND_EXPR, integer_type_node,
++			      max_exp, min_exp);
+ 	return result;
+       }
+     default:
+@@ -9711,6 +9784,15 @@
+ 	  return real_isnan (&r) ? integer_one_node : integer_zero_node;
+ 	}
+ 
++      {
++	bool is_ibm_extended = MODE_COMPOSITE_P (TYPE_MODE (TREE_TYPE (arg)));
++	if (is_ibm_extended)
++	  {
++	    /* NaN and Inf are encoded in the high-order double value
++	       only.  The low-order value is not significant.  */
++	    arg = fold_build1_loc (loc, NOP_EXPR, double_type_node, arg);
++	  }
++      }
+       arg = builtin_save_expr (arg);
+       return fold_build2_loc (loc, UNORDERED_EXPR, type, arg, arg);
+ 
 Index: gcc/fold-const.c
 ===================================================================
 --- a/src/gcc/fold-const.c	(.../tags/gcc_5_3_0_release)
@@ -5386,7 +6742,65 @@ Index: gcc/ChangeLog
 ===================================================================
 --- a/src/gcc/ChangeLog	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/ChangeLog	(.../branches/gcc-5-branch)
-@@ -1,3 +1,1748 @@
+@@ -1,3 +1,1806 @@
++2016-04-20  Andreas Krebbel  <krebbel@linux.vnet.ibm.com>
++
++	PR target/70674
++	* config/s390/s390.c (s390_restore_gprs_from_fprs): Pick the new
++	stack_restore_from_fpr pattern when restoring r15.
++	(s390_optimize_prologue): Strip away the memory barrier in the
++	parallel when trying to get rid of restore insns.
++	* config/s390/s390.md ("stack_restore_from_fpr"): New insn
++	definition for loading the stack pointer from an FPR.  Compared to
++	the normal move insn this pattern includes a full memory barrier.
++
++2016-04-15  Kirill Yukhin  <kirill.yukhin@intel.com>
++
++	PR target/70662
++	* config/i386/sse.md(define_insn "<avx512>_vec_dup<mode><mask_name>"):
++	Fix mode size check.
++
++2016-04-15  Kirill Yukhin  <kirill.yukhin@intel.com>
++
++	PR target/70662
++	* config/i386/sse.md(define_insn "<avx512>_vec_dup<mode><mask_name>"):
++	Use proper memory operand modifiers.
++
++2016-04-14  Nick Clifton  <nickc@redhat.com>
++            Kyrylo Tkachov  <kyrylo.tkachov@arm.com>
++
++	PR target/70044
++	* config/aarch64/aarch64.c
++	(aarch64_override_options_after_change): When forcing
++	flag_omit_frame_pointer to be true, use a special value that can
++	be detected if this function is called again, thus preventing
++	flag_omit_leaf_frame_pointer from being forced to be false.
++
++2016-04-12  Eric Botcazou  <ebotcazou@adacore.com>
++
++	PR target/70630
++	* config/sparc/sparc.c (sparc_compute_frame_size): Add parentheses.
++
++2016-04-12  Kyrylo Tkachov  <kyrylo.tkachov@arm.com>
++
++	Backport from mainline
++	2016-04-08  Kyrylo Tkachov  <kyrylo.tkachov@arm.com>
++
++	PR target/70566
++	* config/arm/thumb2.md (tst + branch-> lsls + branch
++	peephole below *orsi_not_shiftsi_si): Require that condition
++	register is dead after the peephole.
++	(second peephole after the above): Likewise.
++
++2016-04-11  Alan Modra  <amodra@gmail.com>
++
++	PR target/70117
++	* builtins.c (fold_builtin_classify): For IBM extended precision,
++	look at just the high-order double to test for NaN.
++	(fold_builtin_interclass_mathfn): Similarly for Inf.  For isnormal
++	test just the high double for Inf but both doubles for subnormal
++	limit.
++
 +2016-04-09  Oleg Endo  <olegendo@gcc.gnu.org>
 +
 +	Backport from mainline
@@ -7135,7 +8549,7 @@ Index: gcc/ChangeLog
  2015-12-04  Release Manager
  
  	* GCC 5.3.0 released.
-@@ -19,7 +1764,7 @@
+@@ -19,7 +1822,7 @@
  	Backport from mainline
  	2015-09-30  Bernd Edlinger  <bernd.edlinger@hotmail.de>
  
@@ -7144,7 +8558,7 @@ Index: gcc/ChangeLog
  	* lra-constraints.c (process_addr_reg): Use copy_rtx when necessary.
  
  2015-11-26  David Edelsohn  <dje.gcc@gmail.com>
-@@ -291,12 +2036,12 @@
+@@ -291,12 +2094,12 @@
  	(contains_type_p): Fix out of range check, clear dynamic flag.
  
  	2015-10-23  Jan Hubicka  <hubicka@ucw.cz>
@@ -7159,7 +8573,7 @@ Index: gcc/ChangeLog
  	2015-10-12  Richard Biener  <rguenther@suse.de>
  
  	PR ipa/67783
-@@ -305,7 +2050,7 @@
+@@ -305,7 +2108,7 @@
  	quadratic behavior.
  
  	2015-10-11  Jan Hubicka  <hubicka@ucw.cz>
@@ -7732,6 +9146,103 @@ Index: gcc/testsuite/gcc.target/powerpc/pr69969.c
 +
 +int bar (int x) { return x; }
 +__attribute__((__target__("no-vsx"))) int foo (int x) { return x; } /* { dg-bogus "-mallow-movmisalign requires -mvsx" } */
+Index: gcc/testsuite/gcc.target/powerpc/pr70117.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/powerpc/pr70117.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/powerpc/pr70117.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,92 @@
++/* { dg-do run { target { powerpc*-*-linux* powerpc*-*-darwin* powerpc*-*-aix* rs6000-*-* } } } */
++/* { dg-options "-std=c99 -mlong-double-128 -O2" } */
++
++#include <float.h>
++
++union gl_long_double_union
++{
++  struct { double hi; double lo; } dd;
++  long double ld;
++};
++
++/* This is gnulib's LDBL_MAX which, being 107 bits in precision, is
++   slightly larger than gcc's 106 bit precision LDBL_MAX.  */
++volatile union gl_long_double_union gl_LDBL_MAX =
++  { { DBL_MAX, DBL_MAX / (double)134217728UL / (double)134217728UL } };
++
++volatile double min_denorm = 0x1p-1074;
++volatile double ld_low = 0x1p-969;
++volatile double dinf = 1.0/0.0;
++volatile double dnan = 0.0/0.0;
++
++int
++main (void)
++{
++  long double ld;
++
++  ld = gl_LDBL_MAX.ld;
++  if (__builtin_isinfl (ld))
++    __builtin_abort ();
++  ld = -gl_LDBL_MAX.ld;
++  if (__builtin_isinfl (ld))
++    __builtin_abort ();
++
++  ld = gl_LDBL_MAX.ld;
++  if (!__builtin_isfinite (ld))
++    __builtin_abort ();
++  ld = -gl_LDBL_MAX.ld;
++  if (!__builtin_isfinite (ld))
++    __builtin_abort ();
++
++  ld = ld_low;
++  if (!__builtin_isnormal (ld))
++    __builtin_abort ();
++  ld = -ld_low;
++  if (!__builtin_isnormal (ld))
++    __builtin_abort ();
++
++  ld = -min_denorm;
++  ld += ld_low;
++  if (__builtin_isnormal (ld))
++    __builtin_abort ();
++  ld = min_denorm;
++  ld -= ld_low;
++  if (__builtin_isnormal (ld))
++    __builtin_abort ();
++
++  ld = 0.0;
++  if (__builtin_isnormal (ld))
++    __builtin_abort ();
++  ld = -0.0;
++  if (__builtin_isnormal (ld))
++    __builtin_abort ();
++
++  ld = LDBL_MAX;
++  if (!__builtin_isnormal (ld))
++    __builtin_abort ();
++  ld = -LDBL_MAX;
++  if (!__builtin_isnormal (ld))
++    __builtin_abort ();
++
++  ld = gl_LDBL_MAX.ld;
++  if (!__builtin_isnormal (ld))
++    __builtin_abort ();
++  ld = -gl_LDBL_MAX.ld;
++  if (!__builtin_isnormal (ld))
++    __builtin_abort ();
++
++  ld = dinf;
++  if (__builtin_isnormal (ld))
++    __builtin_abort ();
++  ld = -dinf;
++  if (__builtin_isnormal (ld))
++    __builtin_abort ();
++
++  ld = dnan;
++  if (__builtin_isnormal (ld))
++    __builtin_abort ();
++  ld = -dnan;
++  if (__builtin_isnormal (ld))
++    __builtin_abort ();
++  return 0;
++}
 Index: gcc/testsuite/gcc.target/arm/atomic_loaddi_7.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.target/arm/atomic_loaddi_7.c	(.../tags/gcc_5_3_0_release)
@@ -9662,6 +11173,25 @@ Index: gcc/testsuite/gcc.target/aarch64/c-output-template-4.c
 +}
 +
 +/* { dg-final { scan-assembler "@ test\\+4" } } */
+Index: gcc/testsuite/gcc.target/aarch64/pr70044.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/aarch64/pr70044.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/aarch64/pr70044.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,14 @@
++/* { dg-do link } */
++/* { dg-require-effective-target lto } */
++/* { dg-options "-flto -O --save-temps -fno-omit-frame-pointer" } */
++
++extern int atoi (const char *);
++
++int
++main (int argc, char **argv)
++{
++  return atoi (argv[0]) + 1;
++}
++
++/* Check that the frame pointer really is created.  */
++/* { dg-final { scan-lto-assembler "add	x29, sp," } } */
 Index: gcc/testsuite/gcc.target/i386/pr69140.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.target/i386/pr69140.c	(.../tags/gcc_5_3_0_release)
@@ -10254,6 +11784,30 @@ Index: gcc/testsuite/gcc.target/i386/chkp-stropt-5.c
  
  void test (int *buf1, int *buf2, size_t len)
  {
+Index: gcc/testsuite/gcc.target/i386/pr70662.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/i386/pr70662.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/i386/pr70662.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,19 @@
++/* { dg-do assemble { target { ! ia32 } } } */
++/* { dg-require-effective-target avx512vbmi } */
++/* { dg-require-effective-target masm_intel } */
++/* { dg-options "-Og -fschedule-insns -fno-tree-fre -mavx512vbmi --param=max-sched-ready-insns=1 -masm=intel" } */
++
++typedef char v64u8 __attribute__((vector_size(64)));
++typedef int v64u32 __attribute__((vector_size(64)));
++typedef long v64u64 __attribute__((vector_size(64)));
++typedef __int128 v64u128 __attribute__((vector_size(64)));
++
++v64u128
++foo(int u8_0, unsigned u128_0, v64u32 v64u32_1, v64u32 v64u32_0, v64u64 v64u64_0, v64u128 v64u128_0)
++{
++  v64u8 v64u8_0 = v64u8_0;
++  v64u32_0 = v64u32_0 >> (v64u32){0, 0, 0, 1, 0, ((v64u64)v64u64_0)[u8_0], ((v64u32)v64u128_0)[15], 0, 0, 0, 0, 4, ((v64u64)v64u64_0)[v64u32_0[0]] - 1};
++  v64u8_0 = v64u8_0 << ((v64u8)v64u32_1 & 1);
++  v64u64_0[0] >>= 0;
++  return u128_0 + (v64u128)v64u8_0 + (v64u128)v64u32_0 + (v64u128)v64u64_0;
++}
 Index: gcc/testsuite/gcc.target/i386/chkp-stropt-16.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.target/i386/chkp-stropt-16.c	(.../tags/gcc_5_3_0_release)
@@ -11940,6 +13494,24 @@ Index: gcc/testsuite/gcc.target/s390/gpr2fprsavecfi.c
 +/* { dg-final { scan-assembler-not "cfi_def_cfa_register" } } */
 +/* { dg-final { scan-assembler "cfi_register" } } */
 +/* { dg-final { scan-assembler "cfi_def_cfa_offset" } } */
+Index: gcc/testsuite/gcc.target/s390/pr70674.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/s390/pr70674.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/s390/pr70674.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,13 @@
++/* Test case for PR/70674.  */
++
++/* { dg-do compile { target s390x-*-* } } */
++/* { dg-options "-march=z10 -mtune=z196 -O2 -fno-omit-frame-pointer -fno-asynchronous-unwind-tables" } */
++
++void
++foo (void)
++{
++  volatile int a = 5;
++  (void) a;
++}
++
++/* { dg-final { scan-assembler-not "^.*lgdr.*\n.*\\(%r11\\)" } } */
 Index: gcc/testsuite/gcc.target/s390/md/movstr-1.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.target/s390/md/movstr-1.c	(.../tags/gcc_5_3_0_release)
@@ -14891,6 +16463,58 @@ Index: gcc/testsuite/gcc.c-torture/execute/pr70460.c
 +    __builtin_abort ();
 +  return 0;
 +}
+Index: gcc/testsuite/gcc.c-torture/execute/pr70566.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.c-torture/execute/pr70566.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.c-torture/execute/pr70566.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,47 @@
++/* PR target/70566.  */
++
++#define NULL 0
++
++struct mystruct
++{
++  unsigned int f1 : 1;
++  unsigned int f2 : 1;
++  unsigned int f3 : 1;
++};
++
++__attribute__ ((noinline)) void
++myfunc (int a, void *b)
++{
++}
++__attribute__ ((noinline)) int
++myfunc2 (void *a)
++{
++  return 0;
++}
++
++static void
++set_f2 (struct mystruct *user, int f2)
++{
++  if (user->f2 != f2)
++    myfunc (myfunc2 (NULL), NULL);
++  else
++    __builtin_abort ();
++}
++
++__attribute__ ((noinline)) void
++foo (void *data)
++{
++  struct mystruct *user = data;
++  if (!user->f2)
++    set_f2 (user, 1);
++}
++
++int
++main (void)
++{
++  struct mystruct a;
++  a.f1 = 1;
++  a.f2 = 0;
++  foo (&a);
++  return 0;
++}
 Index: gcc/testsuite/gcc.c-torture/execute/pr68648.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.c-torture/execute/pr68648.c	(.../tags/gcc_5_3_0_release)
@@ -15813,6 +17437,24 @@ Index: gcc/testsuite/gcc.dg/autopar/pr69110.c
 +
 +/* { dg-final { scan-tree-dump-times "SUCCESS: may be parallelized" 0 "parloops" } } */
 +/* { dg-final { scan-tree-dump-times "FAILED: data dependencies exist across iterations" 1 "parloops" } } */
+Index: gcc/testsuite/gcc.dg/typedef-redecl2.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/typedef-redecl2.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.dg/typedef-redecl2.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,13 @@
++/* PR c/70297 */
++/* { dg-do compile } */
++/* { dg-options "" } */
++
++#define N 64
++
++typedef int T;
++typedef int T __attribute__((aligned (N)));
++typedef int T __attribute__((aligned (N * 2)));
++typedef int T __attribute__((aligned (N)));
++typedef int T;
++
++_Static_assert (_Alignof (T) == N * 2, "N * 2");
 Index: gcc/testsuite/gcc.dg/pr70161-2.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.dg/pr70161-2.c	(.../tags/gcc_5_3_0_release)
@@ -17398,7 +19040,58 @@ Index: gcc/testsuite/ChangeLog
 ===================================================================
 --- a/src/gcc/testsuite/ChangeLog	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/testsuite/ChangeLog	(.../branches/gcc-5-branch)
-@@ -1,3 +1,1576 @@
+@@ -1,3 +1,1627 @@
++2016-04-20  Andreas Krebbel  <krebbel@linux.vnet.ibm.com>
++
++	PR target/70674
++	* gcc.target/s390/pr70674.c: New test.
++
++2016-04-18  Marek Polacek  <polacek@redhat.com>
++
++	Backport from mainline
++	2016-03-31  Marek Polacek  <polacek@redhat.com>
++
++	PR c/70297
++	* c-c++-common/pr70297.c: New test.
++	* g++.dg/cpp0x/typedef-redecl.C: New test.
++	* gcc.dg/typedef-redecl2.c: New test.
++
++2016-04-15  Kirill Yukhin  <kirill.yukhin@intel.com>
++
++	PR target/70662
++	* gcc.target/i386/pr70662.c: New test.
++
++2016-04-14  Kyrylo Tkachov  <kyrylo.tkachov@arm.com>
++
++	Backport from mainline
++	2016-03-31  Nick Clifton  <nickc@redhat.com>
++
++	PR target/70044
++	* gcc.target/aarch64/pr70044.c: New test.
++
++2016-04-13  Alan Modra  <amodra@gmail.com>
++
++	Backport from mainline
++	2016-03-31  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
++	* g++.dg/template/ptrmem30.C (read): Rename to data_read.
++	(Holder::foo): Reflect this.
++
++	2016-03-22  Patrick Palka  <ppalka@gcc.gnu.org>
++	PR c++/70096
++	* g++.dg/template/ptrmem30.C: New test.
++
++2016-04-11  Kyrylo Tkachov  <kyrylo.tkachov@arm.com>
++
++	Backport from mainline
++	2016-04-08  Kyrylo Tkachov  <kyrylo.tkachov@arm.com>
++
++	PR target/70566
++	* gcc.c-torture/execute/pr70566.c: New test.
++
++2016-04-11  Alan Modra  <amodra@gmail.com>
++
++	* gcc.target/powerpc/pr70117.c: New.
++
 +2016-04-09  Dominique d'Humieres  <dominiq@lps.ens.fr>
 +
 +	PR fortran/70592
@@ -18975,7 +20668,7 @@ Index: gcc/testsuite/ChangeLog
  2015-12-04  Release Manager
  
  	* GCC 5.3.0 released.
-@@ -328,7 +1901,7 @@
+@@ -328,7 +1952,7 @@
  2015-11-06  Vladimir Makarov  <vmakarov@redhat.com>
  
  	PR rtl-optimization/68106
@@ -18984,7 +20677,7 @@ Index: gcc/testsuite/ChangeLog
  
  2015-01-25  Paul Thomas  <pault@gcc.gnu.org>
  
-@@ -448,8 +2021,8 @@
+@@ -448,8 +2072,8 @@
  	Backport from mainline
  	2015-10-09  Martin Jambor  <mjambor@suse.cz>
  
@@ -18995,7 +20688,7 @@ Index: gcc/testsuite/ChangeLog
  
  2015-10-22  Paul Thomas  <pault@gcc.gnu.org>
  
-@@ -1254,10 +2827,6 @@
+@@ -1254,10 +2878,6 @@
  	PR fortran/66725
  	* gfortran.dg/pr66725.f90: New test.
  
@@ -19006,7 +20699,7 @@ Index: gcc/testsuite/ChangeLog
  2015-07-16  Marek Polacek  <polacek@redhat.com>
  
  	Backported from mainline
-@@ -3574,7 +5143,7 @@
+@@ -3574,7 +5194,7 @@
  
  2015-03-05  Martin Sebor  <msebor@redhat.com>
  
@@ -19468,6 +21161,40 @@ Index: gcc/testsuite/g++.dg/cpp0x/constexpr-empty10.C
 +struct empty { };
 +constexpr closure<empty> tup{};
 +constexpr empty first = tup.member;
+Index: gcc/testsuite/g++.dg/cpp0x/variadic-tuple2.C
+===================================================================
+--- a/src/gcc/testsuite/g++.dg/cpp0x/variadic-tuple2.C	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/g++.dg/cpp0x/variadic-tuple2.C	(.../branches/gcc-5-branch)
+@@ -0,0 +1,29 @@
++// PR c++/67164
++// { dg-do compile { target c++11 } }
++
++#include <type_traits>
++
++namespace detail {
++    template <bool ...b>
++    struct fast_and
++        : std::is_same<fast_and<b...>, fast_and<(b, true)...>>
++    { };
++}
++
++template <typename ...Xn>
++struct tuple {
++    tuple() { }
++
++    template <typename ...Yn, typename = typename std::enable_if<
++        detail::fast_and<std::is_constructible<Xn, Yn&&>::value...>::value
++    >::type>
++    tuple(Yn&& ...yn) { }
++
++    template <typename ...Yn, typename = typename std::enable_if<
++        detail::fast_and<std::is_constructible<Xn, Yn const&>::value...>::value
++    >::type>
++    tuple(tuple<Yn...> const& other) { }
++};
++
++tuple<tuple<>> t{};
++tuple<tuple<>> copy = t;
 Index: gcc/testsuite/g++.dg/cpp0x/constexpr-initlist9.C
 ===================================================================
 --- a/src/gcc/testsuite/g++.dg/cpp0x/constexpr-initlist9.C	(.../tags/gcc_5_3_0_release)
@@ -19514,6 +21241,23 @@ Index: gcc/testsuite/g++.dg/cpp0x/constexpr-initlist9.C
 +  constexpr auto positions = make_grid_positions(); // ok
 +  generate_sudoku(1);
 +}
+Index: gcc/testsuite/g++.dg/cpp0x/typedef-redecl.C
+===================================================================
+--- a/src/gcc/testsuite/g++.dg/cpp0x/typedef-redecl.C	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/g++.dg/cpp0x/typedef-redecl.C	(.../branches/gcc-5-branch)
+@@ -0,0 +1,12 @@
++// PR c/70297
++// { dg-do compile { target c++11 } }
++
++#define N 64
++
++typedef int T;
++typedef int T __attribute__((aligned (N)));
++typedef int T __attribute__((aligned (N * 2)));
++typedef int T __attribute__((aligned (N)));
++typedef int T;
++
++static_assert (alignof (T) == N * 2, "N * 2");
 Index: gcc/testsuite/g++.dg/cpp0x/sfinae56.C
 ===================================================================
 --- a/src/gcc/testsuite/g++.dg/cpp0x/sfinae56.C	(.../tags/gcc_5_3_0_release)
@@ -19940,6 +21684,23 @@ Index: gcc/testsuite/g++.dg/cpp1y/constexpr-copy2.C
 +
 +#define SA(X) static_assert((X),#X)
 +SA(g());
+Index: gcc/testsuite/g++.dg/cpp1y/lambda-generic-trailing1.C
+===================================================================
+--- a/src/gcc/testsuite/g++.dg/cpp1y/lambda-generic-trailing1.C	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/g++.dg/cpp1y/lambda-generic-trailing1.C	(.../branches/gcc-5-branch)
+@@ -0,0 +1,12 @@
++// { dg-do compile { target c++14 } }
++
++template <class T>
++void f()
++{
++  auto lam = [](auto a)->decltype(++a) { return a; };
++}
++
++int main()
++{
++  f<int>();
++}
 Index: gcc/testsuite/g++.dg/cpp1y/parameter-pack-1.C
 ===================================================================
 --- a/src/gcc/testsuite/g++.dg/cpp1y/parameter-pack-1.C	(.../tags/gcc_5_3_0_release)
@@ -20483,6 +22244,56 @@ Index: gcc/testsuite/g++.dg/template/pr67337.C
 +  C<int> a (0);
 +  a.m_fn2<B> (0);
 +}
+Index: gcc/testsuite/g++.dg/template/ptrmem30.C
+===================================================================
+--- a/src/gcc/testsuite/g++.dg/template/ptrmem30.C	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/g++.dg/template/ptrmem30.C	(.../branches/gcc-5-branch)
+@@ -0,0 +1,45 @@
++// PR c++/70096
++// { dg-do run }
++
++int data_read;
++
++struct Holder
++{
++  void foo () { data_read = data; }
++  int data;
++};
++
++void
++poison_stack ()
++{
++  volatile char a[256];
++  __builtin_memset ((void *)a, 0xa, sizeof a);
++}
++
++template <typename F>
++void test1 ()
++{
++  Holder h;
++  h.data = 42;
++  F Holder::*fptr = &Holder::foo;
++  (h.*fptr)();
++}
++
++template <typename F>
++void test2 ()
++{
++  Holder h;
++  h.data = 42;
++  F Holder::*fptr1 = &Holder::foo;
++  F Holder::*fptr2 = fptr1;
++  (h.*fptr2)();
++}
++
++
++int main ()
++{
++  poison_stack ();
++  test1<void()>();
++  poison_stack ();
++  test2<void()>();
++}
 Index: gcc/testsuite/g++.dg/template/typename21.C
 ===================================================================
 --- a/src/gcc/testsuite/g++.dg/template/typename21.C	(.../tags/gcc_5_3_0_release)
@@ -20543,6 +22354,20 @@ Index: gcc/testsuite/c-c++-common/pr67639.c
 +  register long x asm ("rhubarb") = p; /* { dg-error "register name" } */
 +  __asm ("" : "=r" (t), "=r" (t), "=r" (t), "=r" (x) : "0" (x));
 +}
+Index: gcc/testsuite/c-c++-common/pr70297.c
+===================================================================
+--- a/src/gcc/testsuite/c-c++-common/pr70297.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/c-c++-common/pr70297.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,9 @@
++/* PR c/70297 */
++/* { dg-do compile } */
++/* { dg-options "-g" } */
++
++typedef int T;
++typedef int T __attribute__((aligned (4)));
++struct S {
++  T *t;
++};
 Index: gcc/testsuite/c-c++-common/cilk-plus/CK/pr69826-1.c
 ===================================================================
 --- a/src/gcc/testsuite/c-c++-common/cilk-plus/CK/pr69826-1.c	(.../tags/gcc_5_3_0_release)
@@ -20905,7 +22730,40 @@ Index: gcc/cp/decl.c
 ===================================================================
 --- a/src/gcc/cp/decl.c	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/cp/decl.c	(.../branches/gcc-5-branch)
-@@ -6436,7 +6436,7 @@
+@@ -1991,7 +1991,31 @@
+       /* For typedefs use the old type, as the new type's DECL_NAME points
+ 	 at newdecl, which will be ggc_freed.  */
+       if (TREE_CODE (newdecl) == TYPE_DECL)
+-	newtype = oldtype;
++	{
++	  /* But NEWTYPE might have an attribute, honor that.  */
++	  tree tem = TREE_TYPE (newdecl);
++	  newtype = oldtype;
++
++	  if (TYPE_USER_ALIGN (tem))
++	    {
++	      if (TYPE_ALIGN (tem) > TYPE_ALIGN (newtype))
++		TYPE_ALIGN (newtype) = TYPE_ALIGN (tem);
++	      TYPE_USER_ALIGN (newtype) = true;
++	    }
++
++	  /* And remove the new type from the variants list.  */
++	  if (TYPE_NAME (TREE_TYPE (newdecl)) == newdecl)
++	    {
++	      tree remove = TREE_TYPE (newdecl);
++	      for (tree t = TYPE_MAIN_VARIANT (remove); ;
++		   t = TYPE_NEXT_VARIANT (t))
++		if (TYPE_NEXT_VARIANT (t) == remove)
++		  {
++		    TYPE_NEXT_VARIANT (t) = TYPE_NEXT_VARIANT (remove);
++		    break;
++		  }
++	    }
++	}
+       else
+ 	/* Merge the data types specified in the two decls.  */
+ 	newtype = merge_types (TREE_TYPE (newdecl), TREE_TYPE (olddecl));
+@@ -6436,7 +6460,7 @@
        if (TREE_CODE (d_init) == TREE_LIST)
  	d_init = build_x_compound_expr_from_list (d_init, ELK_INIT,
  						  tf_warning_or_error);
@@ -20914,7 +22772,7 @@ Index: gcc/cp/decl.c
        type = TREE_TYPE (decl) = do_auto_deduction (type, d_init,
  						   auto_node);
        if (type == error_mark_node)
-@@ -7360,7 +7360,8 @@
+@@ -7360,7 +7384,8 @@
  
    /* Don't get confused by a CONSTRUCTOR for some other type.  */
    if (initial_value && TREE_CODE (initial_value) == CONSTRUCTOR
@@ -20924,7 +22782,7 @@ Index: gcc/cp/decl.c
      return 1;
  
    if (initial_value)
-@@ -13937,7 +13938,9 @@
+@@ -13937,7 +13962,9 @@
        initialize_vtbl_ptrs (current_class_ptr);
        finish_compound_stmt (compound_stmt);
  
@@ -20935,7 +22793,7 @@ Index: gcc/cp/decl.c
  	{
  	  /* Insert a cleanup to let the back end know that the object is dead
  	     when we exit the destructor, either normally or via exception.  */
-@@ -14594,7 +14597,8 @@
+@@ -14594,7 +14621,8 @@
  	 ordinary FUNCTION_DECL.  */
        fn = lookup_name (id);
        arg = build_address (decl);
@@ -20945,7 +22803,7 @@ Index: gcc/cp/decl.c
        cleanup = cp_build_function_call_nary (fn, complain, arg, NULL_TREE);
        if (cleanup == error_mark_node)
  	return error_mark_node;
-@@ -14634,10 +14638,11 @@
+@@ -14634,10 +14662,11 @@
      SET_EXPR_LOCATION (cleanup, UNKNOWN_LOCATION);
  
    if (cleanup
@@ -21649,7 +23507,40 @@ Index: gcc/cp/ChangeLog
 ===================================================================
 --- a/src/gcc/cp/ChangeLog	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/cp/ChangeLog	(.../branches/gcc-5-branch)
-@@ -1,3 +1,284 @@
+@@ -1,3 +1,317 @@
++2016-04-18  Marek Polacek  <polacek@redhat.com>
++
++	Backport from mainline
++	2016-03-31  Marek Polacek  <polacek@redhat.com>
++
++	PR c/70297
++	* decl.c (duplicate_decls): Also set TYPE_ALIGN and TYPE_USER_ALIGN.
++
++2016-04-18  Marek Polacek  <polacek@redhat.com>
++
++	Backport from mainline
++	2015-11-11  Jason Merrill  <jason@redhat.com>
++
++	* decl.c (duplicate_decls): When combining typedefs, remove the
++	new type from the variants list.
++
++2016-04-15  Jason Merrill  <jason@redhat.com>
++
++	* pt.c (tsubst_copy_and_build) [LAMBDA_EXPR]: Get
++	LAMBDA_EXPR_RETURN_TYPE from the instantiated closure.
++
++	PR c++/67164
++	* pt.c (copy_template_args): New.
++	(tsubst_pack_expansion): Use it.
++
++2016-04-13  Alan Modra  <amodra@gmail.com>
++
++	Backport from mainline
++	2016-03-22  Patrick Palka  <ppalka@gcc.gnu.org>
++	PR target/70107
++	PR c++/70096
++	* pt.c (tsubst_decl): Clear the DECL_MODE of the new decl.
++
 +2016-04-06  Richard Biener  <rguenther@suse.de>
 +
 +	Backport from mainline
@@ -21938,7 +23829,15 @@ Index: gcc/cp/pt.c
 ===================================================================
 --- a/src/gcc/cp/pt.c	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/cp/pt.c	(.../branches/gcc-5-branch)
-@@ -9623,11 +9623,11 @@
+@@ -178,6 +178,7 @@
+ static void template_parm_level_and_index (tree, int*, int*);
+ static int unify_pack_expansion (tree, tree, tree,
+ 				 tree, unification_kind_t, bool, bool);
++static tree copy_template_args (tree);
+ static tree tsubst_template_arg (tree, tree, tsubst_flags_t, tree);
+ static tree tsubst_template_args (tree, tree, tsubst_flags_t, tree);
+ static tree tsubst_template_parms (tree, tree, tsubst_flags_t);
+@@ -9623,11 +9624,11 @@
  		       template <class U> friend class T::C;
  
  		     otherwise.  */
@@ -21953,7 +23852,7 @@ Index: gcc/cp/pt.c
  		  if (dependent_type_p (friend_type))
  		    adjust_processing_template_decl = true;
  		  --processing_template_decl;
-@@ -9998,7 +9998,8 @@
+@@ -9998,7 +9999,8 @@
  	  if (index == 0)
  	    {
  	      aps = make_argument_pack_select (arg_pack, index);
@@ -21963,7 +23862,7 @@ Index: gcc/cp/pt.c
  	      register_local_specialization (aps, parm);
  	    }
  	  else
-@@ -10095,12 +10096,16 @@
+@@ -10095,12 +10097,16 @@
  	  if (PACK_EXPANSION_LOCAL_P (t))
  	    arg_pack = retrieve_local_specialization (parm_pack);
  	  else
@@ -21985,7 +23884,7 @@ Index: gcc/cp/pt.c
  	      arg_pack = tsubst_decl (parm_pack, args, complain);
  	      if (arg_pack && DECL_PACK_P (arg_pack))
  		/* Partial instantiation of the parm_pack, we can't build
-@@ -10108,7 +10113,6 @@
+@@ -10108,7 +10114,6 @@
  		arg_pack = NULL_TREE;
  	      else
  		arg_pack = make_fnparm_pack (arg_pack);
@@ -21993,7 +23892,63 @@ Index: gcc/cp/pt.c
  	    }
  	}
        else if (TREE_CODE (parm_pack) == FIELD_DECL)
-@@ -12783,8 +12787,9 @@
+@@ -10233,11 +10238,12 @@
+   /* For each argument in each argument pack, substitute into the
+      pattern.  */
+   result = make_tree_vec (len);
++  tree elem_args = copy_template_args (args);
+   for (i = 0; i < len; ++i)
+     {
+       t = gen_elem_of_pack_expansion_instantiation (pattern, packs,
+ 						    i,
+-						    args, complain,
++						    elem_args, complain,
+ 						    in_decl);
+       TREE_VEC_ELT (result, i) = t;
+       if (t == error_mark_node)
+@@ -10313,6 +10319,32 @@
+   return patparm;
+ }
+ 
++/* Return an exact copy of template args T that can be modified
++   independently.  */
++
++static tree
++copy_template_args (tree t)
++{
++  if (t == error_mark_node)
++    return t;
++
++  int len = TREE_VEC_LENGTH (t);
++  tree new_vec = make_tree_vec (len);
++
++  for (int i = 0; i < len; ++i)
++    {
++      tree elt = TREE_VEC_ELT (t, i);
++      if (elt && TREE_CODE (elt) == TREE_VEC)
++	elt = copy_template_args (elt);
++      TREE_VEC_ELT (new_vec, i) = elt;
++    }
++
++  NON_DEFAULT_TEMPLATE_ARGS_COUNT (new_vec)
++    = NON_DEFAULT_TEMPLATE_ARGS_COUNT (t);
++
++  return new_vec;
++}
++
+ /* Substitute ARGS into the vector or list of template arguments T.  */
+ 
+ static tree
+@@ -11525,6 +11557,8 @@
+ 	/* The initializer must not be expanded until it is required;
+ 	   see [temp.inst].  */
+ 	DECL_INITIAL (r) = NULL_TREE;
++	if (VAR_P (r))
++	  DECL_MODE (r) = VOIDmode;
+ 	if (CODE_CONTAINS_STRUCT (TREE_CODE (t), TS_DECL_WRTL))
+ 	  SET_DECL_RTL (r, NULL);
+ 	DECL_SIZE (r) = DECL_SIZE_UNIT (r) = 0;
+@@ -12783,8 +12817,9 @@
         point.)  */
      if (BASELINK_P (baselink))
        fns = BASELINK_FUNCTIONS (baselink);
@@ -22005,7 +23960,7 @@ Index: gcc/cp/pt.c
  
      /* Add back the template arguments, if present.  */
      if (BASELINK_P (baselink) && template_id_p)
-@@ -12899,7 +12904,8 @@
+@@ -12899,7 +12934,8 @@
        check_accessibility_of_qualified_id (expr, /*object_type=*/NULL_TREE,
  					   scope);
        /* Remember that there was a reference to this entity.  */
@@ -22015,7 +23970,7 @@ Index: gcc/cp/pt.c
      }
  
    if (expr == error_mark_node || TREE_CODE (expr) == TREE_LIST)
-@@ -13009,7 +13015,8 @@
+@@ -13009,7 +13045,8 @@
        
        if (TREE_CODE (r) == ARGUMENT_PACK_SELECT)
  	r = ARGUMENT_PACK_SELECT_ARG (r);
@@ -22025,7 +23980,7 @@ Index: gcc/cp/pt.c
        return r;
  
      case CONST_DECL:
-@@ -13245,7 +13252,12 @@
+@@ -13245,7 +13282,12 @@
  	  --c_inhibit_evaluation_warnings;
  
  	  if (TREE_CODE (expanded) == TREE_VEC)
@@ -22039,7 +23994,7 @@ Index: gcc/cp/pt.c
  
  	  if (expanded == error_mark_node)
  	    return error_mark_node;
-@@ -13531,7 +13543,9 @@
+@@ -13531,7 +13573,9 @@
  	tree op1 = tsubst_copy (TREE_OPERAND (t, 1), args, complain, in_decl);
  	r = build2 (code, type, op0, op1);
  	PTRMEM_OK_P (r) = PTRMEM_OK_P (t);
@@ -22050,7 +24005,7 @@ Index: gcc/cp/pt.c
  	return r;
        }
  
-@@ -15092,8 +15106,9 @@
+@@ -15092,8 +15136,9 @@
        op1 = tsubst_non_call_postfix_expression (TREE_OPERAND (t, 0),
  						args, complain, in_decl);
        /* Remember that there was a reference to this entity.  */
@@ -22062,7 +24017,7 @@ Index: gcc/cp/pt.c
        RETURN (build_x_arrow (input_location, op1, complain));
  
      case NEW_EXPR:
-@@ -15344,8 +15359,9 @@
+@@ -15344,8 +15389,9 @@
  	  }
  
  	/* Remember that there was a reference to this entity.  */
@@ -22074,7 +24029,7 @@ Index: gcc/cp/pt.c
  
  	/* Put back tf_decltype for the actual call.  */
  	complain |= decltype_flag;
-@@ -15528,8 +15544,9 @@
+@@ -15528,8 +15574,9 @@
  	object = tsubst_non_call_postfix_expression (TREE_OPERAND (t, 0),
  						     args, complain, in_decl);
  	/* Remember that there was a reference to this entity.  */
@@ -22086,7 +24041,26 @@ Index: gcc/cp/pt.c
  	object_type = TREE_TYPE (object);
  
  	member = TREE_OPERAND (t, 1);
-@@ -17344,7 +17361,7 @@
+@@ -15854,8 +15901,6 @@
+ 	else
+ 	  scope = RECUR (scope);
+ 	LAMBDA_EXPR_EXTRA_SCOPE (r) = scope;
+-	LAMBDA_EXPR_RETURN_TYPE (r)
+-	  = tsubst (LAMBDA_EXPR_RETURN_TYPE (t), args, complain, in_decl);
+ 
+ 	gcc_assert (LAMBDA_EXPR_THIS_CAPTURE (t) == NULL_TREE
+ 		    && LAMBDA_EXPR_PENDING_PROXIES (t) == NULL);
+@@ -15866,6 +15911,9 @@
+ 	   declaration of the op() for later calls to lambda_function.  */
+ 	complete_type (type);
+ 
++	if (tree fn = lambda_function (type))
++	  LAMBDA_EXPR_RETURN_TYPE (r) = TREE_TYPE (TREE_TYPE (fn));
++
+ 	LAMBDA_EXPR_THIS_CAPTURE (r) = NULL_TREE;
+ 
+ 	insert_pending_capture_proxies ();
+@@ -17344,7 +17392,7 @@
     lvalue for the function template specialization.  */
  
  tree
@@ -22095,7 +24069,7 @@ Index: gcc/cp/pt.c
  {
    tree expr, offset, baselink;
    bool addr;
-@@ -17427,16 +17444,16 @@
+@@ -17427,16 +17475,16 @@
  	    {
  	      tree base
  		= TYPE_MAIN_VARIANT (TREE_TYPE (TREE_OPERAND (offset, 0)));
@@ -22116,7 +24090,7 @@ Index: gcc/cp/pt.c
      }
    return orig_expr;
  }
-@@ -19004,7 +19021,7 @@
+@@ -19004,7 +19052,7 @@
  
        if (TREE_CODE (arg1) == TYPE_PACK_EXPANSION)
          {
@@ -22125,7 +24099,7 @@ Index: gcc/cp/pt.c
            tree parmvec = make_tree_vec (1);
            tree argvec = make_tree_vec (len2);
            tree ta = args2;
-@@ -19028,7 +19045,7 @@
+@@ -19028,7 +19076,7 @@
          }
        else if (TREE_CODE (arg2) == TYPE_PACK_EXPANSION)
          {
@@ -22134,7 +24108,7 @@ Index: gcc/cp/pt.c
            tree parmvec = make_tree_vec (1);
            tree argvec = make_tree_vec (len1);
            tree ta = args1;
-@@ -19469,6 +19486,38 @@
+@@ -19469,6 +19517,38 @@
    return decl;
  }
  
@@ -22173,7 +24147,7 @@ Index: gcc/cp/pt.c
  /* Return the most specialized of the template partial specializations
     which can produce TARGET, a specialization of some class or variable
     template.  The value returned is actually a TREE_LIST; the TREE_VALUE is
-@@ -20283,7 +20332,7 @@
+@@ -20283,7 +20363,7 @@
      return d;
  
    gen_tmpl = most_general_template (tmpl);
@@ -22182,7 +24156,7 @@ Index: gcc/cp/pt.c
  
    if (tmpl != gen_tmpl)
      /* We should already have the extra args.  */
-@@ -22341,7 +22390,7 @@
+@@ -22341,7 +22421,7 @@
  	}
      }
  
@@ -35464,7 +37438,16 @@ Index: gcc/config/s390/s390.md
 ===================================================================
 --- a/src/gcc/config/s390/s390.md	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/config/s390/s390.md	(.../branches/gcc-5-branch)
-@@ -302,6 +302,8 @@
+@@ -289,6 +289,8 @@
+    (BASE_REGNUM			13)
+    ; Return address register.
+    (RETURN_REGNUM		14)
++   ; Stack pointer register.
++   (STACK_REGNUM		15)
+    ; Condition code register.
+    (CC_REGNUM			33)
+    ; Thread local storage pointer register.
+@@ -302,6 +304,8 @@
     ; General purpose registers
     (GPR0_REGNUM                  0)
     (GPR1_REGNUM                  1)
@@ -35473,7 +37456,7 @@ Index: gcc/config/s390/s390.md
     ; Floating point registers.
     (FPR0_REGNUM                 16)
     (FPR1_REGNUM                 20)
-@@ -500,6 +502,9 @@
+@@ -500,6 +504,9 @@
  ;; Pipeline description for zEC12
  (include "2827.md")
  
@@ -35483,7 +37466,7 @@ Index: gcc/config/s390/s390.md
  ;; Predicates
  (include "predicates.md")
  
-@@ -2923,9 +2928,17 @@
+@@ -2923,9 +2930,17 @@
       (clobber (reg:CC CC_REGNUM))])]
    ""
  {
@@ -35503,7 +37486,22 @@ Index: gcc/config/s390/s390.md
    emit_move_insn (addr1, force_operand (XEXP (operands[1], 0), NULL_RTX));
    emit_move_insn (addr2, force_operand (XEXP (operands[2], 0), NULL_RTX));
    operands[1] = replace_equiv_address_nv (operands[1], addr1);
-@@ -10742,9 +10755,9 @@
+@@ -10349,6 +10364,14 @@
+   [(set_attr "length" "0")])
+ 
+ 
++(define_insn "stack_restore_from_fpr"
++  [(set (reg:DI STACK_REGNUM)
++	(match_operand:DI 0 "register_operand" "f"))
++   (clobber (mem:BLK (scratch)))]
++  "TARGET_Z10"
++  "lgdr\t%%r15,%0"
++  [(set_attr "op_type"  "RRE")])
++
+ ;
+ ; Data prefetch patterns
+ ;
+@@ -10742,9 +10765,9 @@
  
  (define_insn "lcbb"
    [(set (match_operand:SI             0 "register_operand"  "=d")
@@ -37933,7 +39931,46 @@ Index: gcc/config/s390/s390.c
  	}
      }
  }
-@@ -10666,7 +10856,7 @@
+@@ -10143,19 +10333,25 @@
+ 
+   for (i = 6; i < 16; i++)
+     {
+-      if (FP_REGNO_P (cfun_gpr_save_slot (i)))
+-	{
+-	  rtx_insn *insn =
+-	    emit_move_insn (gen_rtx_REG (DImode, i),
+-			    gen_rtx_REG (DImode, cfun_gpr_save_slot (i)));
+-	  df_set_regs_ever_live (i, true);
+-	  add_reg_note (insn, REG_CFA_RESTORE, gen_rtx_REG (DImode, i));
+-	  if (i == STACK_POINTER_REGNUM)
+-	    add_reg_note (insn, REG_CFA_DEF_CFA,
+-			  plus_constant (Pmode, stack_pointer_rtx,
+-					 STACK_POINTER_OFFSET));
+-	  RTX_FRAME_RELATED_P (insn) = 1;
+-	}
++      rtx_insn *insn;
++
++      if (!FP_REGNO_P (cfun_gpr_save_slot (i)))
++	continue;
++
++      rtx fpr = gen_rtx_REG (DImode, cfun_gpr_save_slot (i));
++
++      if (i == STACK_POINTER_REGNUM)
++	insn = emit_insn (gen_stack_restore_from_fpr (fpr));
++      else
++	insn = emit_move_insn (gen_rtx_REG (DImode, i), fpr);
++
++      df_set_regs_ever_live (i, true);
++      add_reg_note (insn, REG_CFA_RESTORE, gen_rtx_REG (DImode, i));
++      if (i == STACK_POINTER_REGNUM)
++	add_reg_note (insn, REG_CFA_DEF_CFA,
++		      plus_constant (Pmode, stack_pointer_rtx,
++				     STACK_POINTER_OFFSET));
++      RTX_FRAME_RELATED_P (insn) = 1;
+     }
+ }
+ 
+@@ -10666,7 +10862,7 @@
  	     be in between two GPRs which need saving.)  Otherwise it
  	     would be difficult to take that decision back in
  	     s390_optimize_prologue.  */
@@ -37942,7 +39979,7 @@ Index: gcc/config/s390/s390.c
  	    {
  	      int return_regnum = find_unused_clobbered_reg();
  	      if (!return_regnum)
-@@ -10760,7 +10950,7 @@
+@@ -10760,7 +10956,7 @@
      return false;
  
    for (i = 0; i < 16; i++)
@@ -37951,7 +39988,7 @@ Index: gcc/config/s390/s390.c
        return false;
  
    /* For 31 bit this is not covered by the frame_size check below
-@@ -12245,7 +12435,7 @@
+@@ -12245,7 +12441,7 @@
           replace the symbol itself with the PLT stub.  */
        if (flag_pic && !SYMBOL_REF_LOCAL_P (addr_location))
          {
@@ -37960,19 +39997,79 @@ Index: gcc/config/s390/s390.c
  	    {
  	      addr_location = gen_rtx_UNSPEC (Pmode,
  					      gen_rtvec (1, addr_location),
-@@ -12452,9 +12642,9 @@
+@@ -12427,37 +12623,46 @@
  
- 	  /* It must not happen that what we once saved in an FPR now
- 	     needs a stack slot.  */
+       /* Remove ldgr/lgdr instructions used for saving and restore
+ 	 GPRs if possible.  */
+-      if (TARGET_Z10
+-	  && GET_CODE (pat) == SET
+-	  && GET_MODE (SET_SRC (pat)) == DImode
+-	  && REG_P (SET_SRC (pat))
+-	  && REG_P (SET_DEST (pat)))
++      if (TARGET_Z10)
+ 	{
+-	  int src_regno = REGNO (SET_SRC (pat));
+-	  int dest_regno = REGNO (SET_DEST (pat));
+-	  int gpr_regno;
+-	  int fpr_regno;
++	  rtx tmp_pat = pat;
+ 
+-	  if (!((GENERAL_REGNO_P (src_regno) && FP_REGNO_P (dest_regno))
+-		|| (FP_REGNO_P (src_regno) && GENERAL_REGNO_P (dest_regno))))
+-	    continue;
++	  if (INSN_CODE (insn) == CODE_FOR_stack_restore_from_fpr)
++	    tmp_pat = XVECEXP (pat, 0, 0);
+ 
+-	  gpr_regno = GENERAL_REGNO_P (src_regno) ? src_regno : dest_regno;
+-	  fpr_regno = FP_REGNO_P (src_regno) ? src_regno : dest_regno;
++	  if (GET_CODE (tmp_pat) == SET
++	      && GET_MODE (SET_SRC (tmp_pat)) == DImode
++	      && REG_P (SET_SRC (tmp_pat))
++	      && REG_P (SET_DEST (tmp_pat)))
++	    {
++	      int src_regno = REGNO (SET_SRC (tmp_pat));
++	      int dest_regno = REGNO (SET_DEST (tmp_pat));
++	      int gpr_regno;
++	      int fpr_regno;
+ 
+-	  /* GPR must be call-saved, FPR must be call-clobbered.  */
+-	  if (!call_really_used_regs[fpr_regno]
+-	      || call_really_used_regs[gpr_regno])
+-	    continue;
++	      if (!((GENERAL_REGNO_P (src_regno)
++		     && FP_REGNO_P (dest_regno))
++		    || (FP_REGNO_P (src_regno)
++			&& GENERAL_REGNO_P (dest_regno))))
++		continue;
+ 
+-	  /* It must not happen that what we once saved in an FPR now
+-	     needs a stack slot.  */
 -	  gcc_assert (cfun_gpr_save_slot (gpr_regno) != -1);
-+	  gcc_assert (cfun_gpr_save_slot (gpr_regno) != SAVE_SLOT_STACK);
++	      gpr_regno = GENERAL_REGNO_P (src_regno) ? src_regno : dest_regno;
++	      fpr_regno = FP_REGNO_P (src_regno) ? src_regno : dest_regno;
  
 -	  if (cfun_gpr_save_slot (gpr_regno) == 0)
-+	  if (cfun_gpr_save_slot (gpr_regno) == SAVE_SLOT_NONE)
- 	    {
- 	      remove_insn (insn);
- 	      continue;
-@@ -13100,13 +13290,13 @@
+-	    {
+-	      remove_insn (insn);
+-	      continue;
++	      /* GPR must be call-saved, FPR must be call-clobbered.  */
++	      if (!call_really_used_regs[fpr_regno]
++		  || call_really_used_regs[gpr_regno])
++		continue;
++
++	      /* It must not happen that what we once saved in an FPR now
++		 needs a stack slot.  */
++	      gcc_assert (cfun_gpr_save_slot (gpr_regno) != SAVE_SLOT_STACK);
++
++	      if (cfun_gpr_save_slot (gpr_regno) == SAVE_SLOT_NONE)
++		{
++		  remove_insn (insn);
++		  continue;
++		}
+ 	    }
+ 	}
+ 
+@@ -13100,13 +13305,13 @@
  
  static int s390_sched_state;
  
@@ -37992,7 +40089,7 @@ Index: gcc/config/s390/s390.c
  
  static unsigned int
  s390_get_sched_attrmask (rtx_insn *insn)
-@@ -13113,17 +13303,56 @@
+@@ -13113,17 +13318,56 @@
  {
    unsigned int mask = 0;
  
@@ -38057,7 +40154,7 @@ Index: gcc/config/s390/s390.c
  /* Return the scheduling score for INSN.  The higher the score the
     better.  The score is calculated from the OOO scheduling attributes
     of INSN and the scheduling state s390_sched_state.  */
-@@ -13138,48 +13367,66 @@
+@@ -13138,48 +13382,66 @@
      case 0:
        /* Try to put insns into the first slot which would otherwise
  	 break a group.  */
@@ -38142,7 +40239,7 @@ Index: gcc/config/s390/s390.c
    return score;
  }
  
-@@ -13235,12 +13482,12 @@
+@@ -13235,12 +13497,12 @@
  
  	      if (verbose > 5)
  		fprintf (file,
@@ -38157,7 +40254,7 @@ Index: gcc/config/s390/s390.c
  		     INSN_UID (ready[last_index]));
  	}
  
-@@ -13251,16 +13498,35 @@
+@@ -13251,16 +13513,35 @@
  
  	  for (i = last_index; i >= 0; i--)
  	    {
@@ -38202,7 +40299,7 @@ Index: gcc/config/s390/s390.c
  	      fprintf (file, "\n");
  	    }
  	}
-@@ -13286,12 +13552,12 @@
+@@ -13286,12 +13567,12 @@
      {
        unsigned int mask = s390_get_sched_attrmask (insn);
  
@@ -38221,7 +40318,7 @@ Index: gcc/config/s390/s390.c
        else
  	{
  	  /* Only normal insns are left (mask == 0).  */
-@@ -13300,30 +13566,73 @@
+@@ -13300,30 +13581,73 @@
  	    case 0:
  	    case 1:
  	    case 2:
@@ -38309,7 +40406,7 @@ Index: gcc/config/s390/s390.c
  	}
      }
  
-@@ -13340,6 +13649,7 @@
+@@ -13340,6 +13664,7 @@
  		 int max_ready ATTRIBUTE_UNUSED)
  {
    last_scheduled_insn = NULL;
@@ -39319,6 +41416,35 @@ Index: gcc/config/sparc/sparc.md
    [(set (match_operand:DI 0 "register_operand" "=r")
  	(not:DI (match_operand:DI 1 "arith_operand" "rI")))]
    "TARGET_ARCH64"
+Index: gcc/config/sparc/sparc.c
+===================================================================
+--- a/src/gcc/config/sparc/sparc.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/config/sparc/sparc.c	(.../branches/gcc-5-branch)
+@@ -5007,13 +5007,18 @@
+ 
+   /* Calculate space needed for global registers.  */
+   if (TARGET_ARCH64)
+-    for (i = 0; i < 8; i++)
+-      if (save_global_or_fp_reg_p (i, 0))
+-	n_global_fp_regs += 2;
++    {
++      for (i = 0; i < 8; i++)
++	if (save_global_or_fp_reg_p (i, 0))
++	  n_global_fp_regs += 2;
++    }
+   else
+-    for (i = 0; i < 8; i += 2)
+-      if (save_global_or_fp_reg_p (i, 0) || save_global_or_fp_reg_p (i + 1, 0))
+-	n_global_fp_regs += 2;
++    {
++      for (i = 0; i < 8; i += 2)
++	if (save_global_or_fp_reg_p (i, 0)
++	    || save_global_or_fp_reg_p (i + 1, 0))
++	  n_global_fp_regs += 2;
++    }
+ 
+   /* In the flat window model, find out which local and in registers need to
+      be saved.  We don't reserve space in the current frame for them as they
 Index: gcc/config/i386/i386.md
 ===================================================================
 --- a/src/gcc/config/i386/i386.md	(.../tags/gcc_5_3_0_release)
@@ -40003,7 +42129,26 @@ Index: gcc/config/i386/sse.md
    [(set_attr "type" "ssemov")
     (set_attr "prefix" "evex")
     (set_attr "mode" "<sseinsnmode>")])
-@@ -16901,26 +16801,28 @@
+@@ -16758,7 +16658,17 @@
+ 	    (match_operand:<ssexmmmode> 1 "nonimmediate_operand" "vm")
+ 	    (parallel [(const_int 0)]))))]
+   "TARGET_AVX512F"
+-  "v<sseintprefix>broadcast<bcstscalarsuff>\t{%1, %0<mask_operand2>|%0<mask_operand2>, %1}"
++{
++  /*  There is no DF broadcast (in AVX-512*) to 128b register.
++      Mimic it with integer variant.  */
++  if (<MODE>mode == V2DFmode)
++    return "vpbroadcastq\t{%1, %0<mask_operand2>|%0<mask_operand2>, %q1}";
++
++  if (GET_MODE_SIZE (GET_MODE_INNER (<MODE>mode)) == 4)
++    return "v<sseintprefix>broadcast<bcstscalarsuff>\t{%1, %0<mask_operand2>|%0<mask_operand2>, %k1}";
++   else
++    return "v<sseintprefix>broadcast<bcstscalarsuff>\t{%1, %0<mask_operand2>|%0<mask_operand2>, %q1}";
++}
+   [(set_attr "type" "ssemov")
+    (set_attr "prefix" "evex")
+    (set_attr "mode" "<sseinsnmode>")])
+@@ -16901,26 +16811,28 @@
     v<sseintprefix>broadcast<bcstscalarsuff>\t{%1, %0|%0, %1}
     v<sseintprefix>broadcast<bcstscalarsuff>\t{%x1, %0|%0, %x1}
     #"
@@ -40037,7 +42182,7 @@ Index: gcc/config/i386/sse.md
  
  (define_split
    [(set (match_operand:AVX2_VEC_DUP_MODE 0 "register_operand")
-@@ -18524,7 +18426,7 @@
+@@ -18524,7 +18436,7 @@
  	   (match_operand:SI 3 "const_0_to_15_operand")]
  	  UNSPEC_RANGE))]
    "TARGET_AVX512DQ && <round_saeonly_mode512bit_condition>"
@@ -40046,7 +42191,7 @@ Index: gcc/config/i386/sse.md
    [(set_attr "type" "sse")
     (set_attr "prefix" "evex")
     (set_attr "mode" "<MODE>")])
-@@ -18540,7 +18442,7 @@
+@@ -18540,7 +18452,7 @@
  	  (match_dup 1)
  	  (const_int 1)))]
    "TARGET_AVX512DQ"
@@ -41176,7 +43321,35 @@ Index: gcc/config/aarch64/aarch64.c
      default:
        return -1;
        break;
-@@ -10183,6 +10209,24 @@
+@@ -6891,10 +6917,26 @@
+ static void
+ aarch64_override_options_after_change (void)
+ {
++  /* The logic here is that if we are disabling all frame pointer generation
++     then we do not need to disable leaf frame pointer generation as a
++     separate operation.  But if we are *only* disabling leaf frame pointer
++     generation then we set flag_omit_frame_pointer to true, but in
++     aarch64_frame_pointer_required we return false only for leaf functions.
++
++     PR 70044: We have to be careful about being called multiple times for the
++     same function.  Once we have decided to set flag_omit_frame_pointer just
++     so that we can omit leaf frame pointers, we must then not interpret a
++     second call as meaning that all frame pointer generation should be
++     omitted.  We do this by setting flag_omit_frame_pointer to a special,
++     non-zero value.  */
++
++  if (flag_omit_frame_pointer == 2)
++    flag_omit_frame_pointer = 0;
++
+   if (flag_omit_frame_pointer)
+     flag_omit_leaf_frame_pointer = false;
+   else if (flag_omit_leaf_frame_pointer)
+-    flag_omit_frame_pointer = true;
++    flag_omit_frame_pointer = 2;
+ 
+   /* If not optimizing for size, set the default
+      alignment to what the target wants */
+@@ -10183,6 +10225,24 @@
    return ret;
  }
  
@@ -41810,6 +43983,26 @@ Index: gcc/config/arm/thumb2.md
    [(set_attr "conds" "use")
     (set_attr "length" "8")
     (set_attr "type" "multiple")]
+@@ -1517,7 +1529,8 @@
+ 		      (match_operand 5 "" "")
+ 		      (match_operand 6 "" "")))]
+   "TARGET_THUMB2
+-   && (INTVAL (operands[2]) >= 0 && INTVAL (operands[2]) < 32)"
++   && (INTVAL (operands[2]) >= 0 && INTVAL (operands[2]) < 32)
++   && peep2_reg_dead_p (2, operands[0])"
+   [(parallel [(set (match_dup 0)
+ 		   (compare:CC_NOOV (ashift:SI (match_dup 1) (match_dup 2))
+ 				    (const_int 0)))
+@@ -1545,7 +1558,8 @@
+ 		      (match_operand 5 "" "")
+ 		      (match_operand 6 "" "")))]
+   "TARGET_THUMB2
+-   && (INTVAL (operands[2]) > 0 && INTVAL (operands[2]) < 32)"
++   && (INTVAL (operands[2]) > 0 && INTVAL (operands[2]) < 32)
++   && peep2_reg_dead_p (2, operands[0])"
+   [(parallel [(set (match_dup 0)
+ 		   (compare:CC_NOOV (ashift:SI (match_dup 1) (match_dup 2))
+ 				    (const_int 0)))
 Index: gcc/config/arm/arm.c
 ===================================================================
 --- a/src/gcc/config/arm/arm.c	(.../tags/gcc_5_3_0_release)

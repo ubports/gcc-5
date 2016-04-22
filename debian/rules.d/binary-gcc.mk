@@ -181,7 +181,7 @@ endif
 
 	debian/dh_rmemptydirs -p$(p_gcc)
 	dh_strip -p$(p_gcc) \
-	  $(if $(unstripped_exe),-X/lto1)
+	  # save some disk space $(if $(unstripped_exe),-X/lto1)
 	dh_shlibdeps -p$(p_gcc)
 	echo $(p_gcc) >> debian/arch_binaries
 

@@ -1207,6 +1207,9 @@ ifeq ($(distribution),Ubuntu)
   ifeq (,$(filter $(distrelease),lucid precise trusty utopic vivid wily))
     pie_archs = s390x
   endif
+  ifeq (,$(filter $(distrelease),lucid precise trusty utopic vivid wily xenial))
+    pie_archs += amd64 ppc64el
+  endif
   ifneq (,$(filter $(DEB_TARGET_ARCH),$(pie_archs)))
     with_pie := yes
   endif
