@@ -397,9 +397,9 @@ unstripped_exe = yes
 # common things ---------------
 # build common packages, where package names don't differ in different
 # gcc versions (fixincludes, libgcj-common) ...
-with_common_pkgs := yes
+#with_common_pkgs := yes
 # ... and some libraries, which do not change (libgcc1, libssp0).
-with_common_libs := yes
+#with_common_libs := yes
 # XXX: should with_common_libs be "yes" only if this is the default compiler
 # version on the targeted arch?
 
@@ -550,11 +550,19 @@ ifneq (,$(findstring build-cross, $(build_type)))
   with_jit := disabled for cross builds
 endif
 
+ifeq ($(with_jit),yes)
+    ifeq ($(with_common_libs),yes)
+      with_libgccjit := yes
+    endif
+endif
+
 with_cc1 := yes
 with_cc1 := $(call envfilt, cc1, , , $(with_cc1))
 ifeq ($(with_cc1),yes)
   ifneq ($(DEB_CROSS),yes)
-    with_libcc1 := yes
+    ifeq ($(with_common_libs),yes)
+      with_libcc1 := yes
+    endif
   endif
 endif
 ifneq (,$(with_rtlibs))
@@ -871,9 +879,7 @@ with_go := $(call envfilt, go, , , $(with_go))
 # Build all packages needed for Go development
 ifneq (,$(findstring gcc, $(PKGSOURCE)))
   ifeq ($(with_go),yes)
-    ifeq ($(with_common_libs),yes)
-      with_libgo := yes
-    endif
+    with_libgo := yes
     enabled_languages += go
   endif
 endif
@@ -1342,7 +1348,7 @@ else
     ifeq ($(with_common_libs),yes)
       with_libgcc := yes
     endif
-    ifneq (,$(filter $(distrelease),xenial))
+    ifneq (,$(filter $(distrelease),xenial yakkety))
       ifneq (,$(filter $(build_type), build-native cross-build-native))
         # built from the gccgo-6 package, but not for cross builds
         with_libgcc :=

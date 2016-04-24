@@ -1,5 +1,7 @@
-ifneq ($(DEB_CROSS),yes)
-  arch_binaries  := $(arch_binaries) libcc1
+ifeq ($(with_libcc1),yes)
+  ifneq ($(DEB_CROSS),yes)
+    arch_binaries  := $(arch_binaries) libcc1
+  endif
 endif
 
 p_cc1	= libcc1-$(CC1_SONAME)

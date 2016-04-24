@@ -1,3 +1,13 @@
+gcc-5 (5.3.1-16) unstable; urgency=medium
+
+  * Update to SVN 20160424 (r235395, 5.3.1) from the gcc-5-branch.
+  * Stop building libcc1 and libgccjit0, when not building common libs.
+  * Stop building libraries built by GCC 6.
+  * Explicitly build-depend on libgraphite2-dev to work-around #822432.
+  * Bump standards version to 3.9.8.
+
+ -- Matthias Klose <doko@debian.org>  Sun, 24 Apr 2016 22:51:15 +0200
+
 gcc-5 (5.3.1-15) unstable; urgency=medium
 
   * Update to SVN 20160421 (r235347, 5.3.1) from the gcc-5-branch.

@@ -56,7 +56,7 @@ Uploaders: Iain Buclaw <ibuclaw@ubuntu.com>, Matthias Klose <doko@debian.org>
 ', `dnl
 Uploaders: Matthias Klose <doko@debian.org>
 ')dnl SRCNAME
-Standards-Version: 3.9.7
+Standards-Version: 3.9.8
 ifdef(`TARGET',`dnl cross
 Build-Depends: debhelper (>= 5.0.62), DPKG_BUILD_DEP
   LIBC_BUILD_DEP, LIBC_BIARCH_BUILD_DEP
@@ -3193,6 +3193,31 @@ Description: GCC just-in-time compilation (shared library)
  libgccjit provides an embeddable shared library with an API for adding
  compilation to existing programs using GCC.
 
+Package: libgccjit`'PV-dbg
+Section: debug
+Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
+ifdef(`MULTIARCH', `Multi-Arch: same
+Pre-Depends: ${misc:Pre-Depends}
+')`'dnl
+Priority: extra
+Depends: BASEDEP, libgccjit`'GCCJIT_SO (= ${gcc:Version}),
+ ${shlibs:Depends}, ${misc:Depends}
+BUILT_USING`'dnl
+Description: GCC just-in-time compilation (debug information)
+ libgccjit provides an embeddable shared library with an API for adding
+ compilation to existing programs using GCC.
+')`'dnl libjit
+
+ifenabled(`jit',`
+Package: libgccjit`'PV-doc
+Section: doc
+Architecture: all
+Priority: extra
+Depends: BASEDEP, ${misc:Depends}
+Description: GCC just-in-time compilation (documentation)
+ libgccjit provides an embeddable shared library with an API for adding
+ compilation to existing programs using GCC.
+
 Package: libgccjit`'PV-dev
 Section: ifdef(`TARGET',`devel',`libdevel')
 Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
@@ -3207,30 +3232,7 @@ Suggests: libgccjit`'PV-dbg
 Description: GCC just-in-time compilation (development files)
  libgccjit provides an embeddable shared library with an API for adding
  compilation to existing programs using GCC.
-
-Package: libgccjit`'PV-dbg
-Section: debug
-Architecture: ifdef(`TARGET',`CROSS_ARCH',`any')
-ifdef(`MULTIARCH', `Multi-Arch: same
-Pre-Depends: ${misc:Pre-Depends}
-')`'dnl
-Priority: extra
-Depends: BASEDEP, libgccjit`'GCCJIT_SO (= ${gcc:Version}),
- ${shlibs:Depends}, ${misc:Depends}
-BUILT_USING`'dnl
-Description: GCC just-in-time compilation (debug information)
- libgccjit provides an embeddable shared library with an API for adding
- compilation to existing programs using GCC.
-
-Package: libgccjit`'PV-doc
-Section: doc
-Architecture: all
-Priority: extra
-Depends: BASEDEP, ${misc:Depends}
-Description: GCC just-in-time compilation (documentation)
- libgccjit provides an embeddable shared library with an API for adding
- compilation to existing programs using GCC.
-')`'dnl libjit
+')`'dnl jit
 
 ifenabled(`objpp',`
 ifenabled(`objppdev',`
