@@ -58,7 +58,7 @@ Uploaders: Matthias Klose <doko@debian.org>
 ')dnl SRCNAME
 Standards-Version: 3.9.8
 ifdef(`TARGET',`dnl cross
-Build-Depends: debhelper (>= 5.0.62), DPKG_BUILD_DEP
+Build-Depends: debhelper (>= 9), DPKG_BUILD_DEP
   LIBC_BUILD_DEP, LIBC_BIARCH_BUILD_DEP
   kfreebsd-kernel-headers (>= 0.84) [kfreebsd-any], linux-libc-dev [m68k],
   LIBUNWIND_BUILD_DEP LIBATOMIC_OPS_BUILD_DEP AUTO_BUILD_DEP

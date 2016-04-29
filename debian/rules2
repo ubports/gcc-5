@@ -423,9 +423,7 @@ ifneq (,$(findstring powerpc64le-linux,$(DEB_TARGET_GNU_TYPE)))
     else
       CONFARGS += --with-cpu=power8
     endif
-    ifneq (,$(filter $(distrelease),jessie stretch sid trusty utopic vivid wily xenial))
-      CONFARGS += --enable-targets=powerpcle-linux
-    endif
+    CONFARGS += --enable-targets=powerpcle-linux
     CONFARGS += --disable-multilib
 endif
 
@@ -581,8 +579,10 @@ ifneq (,$(filter $(DEB_TARGET_ARCH), amd64 i386 kfreebsd-i386 kfreebsd-amd64))
   else # Debian
     ifneq (,$(filter $(distrelease),etch lenny))
       CONFARGS += --with-arch-32=i486
-    else
+    else ifneq (,$(filter $(distrelease),squeeze wheezy jessie))
       CONFARGS += --with-arch-32=i586
+    else
+      CONFARGS += --with-arch-32=i686
     endif
   endif
 endif
@@ -2468,6 +2468,15 @@ debian/arch_binaries.all: $(foreach i,$(arch_binaries),$(binary_stamp)-$(i))
 binary-arch: debian/arch_binaries.all
 	dh_compress $(foreach p,$(shell echo `cat debian/arch_binaries.all`),-p$(p)) \
 	  -X.log.xz -X.sum.xz -X.java -X.c -X.txt -X.tag -X.map -XREADME.Bugs
+ifeq ($(i586_symlinks),yes)
+	cd debian; \
+	for x in $$(find `cat arch_binaries` -type l -name 'i686-*'); do \
+	  link=$$(echo $$x | sed 's/i686-/i586-/'); \
+	  tgt=$$(basename $$x); \
+	  echo "Adding symlink: $$link -> $$tgt"; \
+	  rm -f $$link; cp -a $$x $$link; \
+	done
+endif
 	dh_fixperms $(foreach p,$(shell echo `cat debian/arch_binaries.all`),-p$(p))
 	dh_gencontrol $(foreach p,$(shell echo `cat debian/arch_binaries`),-p$(p)) \
 	  -- -v$(DEB_VERSION) $(common_substvars)

@@ -1,3 +1,19 @@
+gcc-5 (5.3.1-17) unstable; urgency=medium
+
+  * Update to SVN 20160429 (r235638, 5.3.1) from the gcc-5-branch.
+    - Fix PR java/70839, PR target/70858 (x86), PR driver/70132,
+      PR target/70098 (PPC), PR ada/70786.
+
+  * Always configure with --enable-targets=powerpcle-linux on ppc64el.
+  * Allow embedded timestamps by C/C++ macros to be set externally (Eduard
+    Sanou).
+  * Default the 32bit x86 architectures to i686, keep i585 symlinks.
+    See https://lists.debian.org/debian-devel/2015/09/msg00589.html
+  * Build-depend on debhelper (>= 9) and dpkg-dev (>= 1.17.14).
+  * Fix PR driver/70192, taken from the trunk.
+
+ -- Matthias Klose <doko@debian.org>  Fri, 29 Apr 2016 15:46:49 +0200
+
 gcc-5 (5.3.1-16) unstable; urgency=medium
 
   * Update to SVN 20160424 (r235395, 5.3.1) from the gcc-5-branch.

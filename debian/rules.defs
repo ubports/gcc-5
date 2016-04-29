@@ -75,13 +75,19 @@ ifeq ($(derivative),Ubuntu)
     endif
   endif
 else
-  ifeq (,$(filter $(distrelease),lenny etch squeeze wheezy))
+  ifneq (,$(filter $(distrelease),lenny etch squeeze wheezy))
+    # keep dpkg defaults
+  else ifneq (,$(filter $(distrelease),jessie))
     ifeq ($(DEB_BUILD_GNU_TYPE),i486-linux-gnu)
       DEB_BUILD_GNU_TYPE = i586-linux-gnu
     endif
     ifeq ($(DEB_HOST_GNU_TYPE),i486-linux-gnu)
       DEB_HOST_GNU_TYPE	= i586-linux-gnu
     endif
+  else
+    # stretch and newer ...
+    DEB_BUILD_GNU_TYPE := $(subst i586,i686,$(DEB_BUILD_GNU_TYPE))
+    DEB_HOST_GNU_TYPE := $(subst i586,i686,$(DEB_HOST_GNU_TYPE))
   endif
 endif
 
@@ -144,9 +150,16 @@ DEB_TARGET_GNU_TYPE	:= $(call vafilt,$(TARGET_VARS),DEB_HOST_GNU_TYPE)
 DEB_TARGET_GNU_SYSTEM	:= $(call vafilt,$(TARGET_VARS),DEB_HOST_GNU_SYSTEM)
 DEB_TARGET_MULTIARCH	:= $(call vafilt,$(TARGET_VARS),DEB_HOST_MULTIARCH)
 
-ifeq (,$(filter $(distrelease),dapper lucid))
-  ifeq ($(DEB_TARGET_GNU_TYPE),i486-linux-gnu)
-    DEB_TARGET_GNU_TYPE	= i586-linux-gnu
+ifeq ($(derivative),Ubuntu)
+  ifeq (,$(filter $(distrelease),dapper lucid))
+    ifeq ($(DEB_TARGET_GNU_TYPE),i486-linux-gnu)
+      DEB_TARGET_GNU_TYPE = i586-linux-gnu
+    endif
+  endif
+else
+  ifneq (,$(filter $(distrelease),stretch sid))
+    DEB_TARGET_GNU_TYPE := $(subst i586,i686,$(DEB_TARGET_GNU_TYPE))
+    i586_symlinks = $(if $(findstring i686,$(DEB_TARGET_GNU_TYPE)),yes)
   endif
 endif
 

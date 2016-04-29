@@ -1,0 +1,39 @@
+Index: gcc/config/arm/arm.c
+===================================================================
+--- a/src/gcc/config/arm/arm.c	(revision 235549)
++++ b/src/gcc/config/arm/arm.c	(revision 235548)
+@@ -17209,7 +17209,7 @@
+   FOR_EACH_BB_FN (bb, cfun)
+     {
+       rtx dest, src;
+-      rtx cmp, op0, op1, set = NULL;
++      rtx pat, op0, set = NULL;
+       rtx_insn *prev, *insn = BB_END (bb);
+       bool insn_clobbered = false;
+ 
+@@ -17222,14 +17222,9 @@
+ 	continue;
+ 
+       /* Get the register with which we are comparing.  */
+-      cmp = XEXP (SET_SRC (PATTERN (insn)), 0);
+-      op0 = XEXP (cmp, 0);
+-      op1 = XEXP (cmp, 1);
++      pat = PATTERN (insn);
++      op0 = XEXP (XEXP (SET_SRC (pat), 0), 0);
+ 
+-      /* Check that comparison is against ZERO.  */
+-      if (!CONST_INT_P (op1) || INTVAL (op1) != 0)
+-	continue;
+-
+       /* Find the first flag setting insn before INSN in basic block BB.  */
+       gcc_assert (insn != BB_HEAD (bb));
+       for (prev = PREV_INSN (insn);
+@@ -17268,7 +17263,7 @@
+ 	  PATTERN (prev) = gen_rtx_SET (VOIDmode, dest, src);
+ 	  INSN_CODE (prev) = -1;
+ 	  /* Set test register in INSN to dest.  */
+-	  XEXP (cmp, 0) = copy_rtx (dest);
++	  XEXP (XEXP (SET_SRC (pat), 0), 0) = copy_rtx (dest);
+ 	  INSN_CODE (insn) = -1;
+ 	}
+     }

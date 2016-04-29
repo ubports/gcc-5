@@ -1,0 +1,23 @@
+Index: gcc/config/arm/driver-arm.c
+===================================================================
+--- a/src/gcc/config/arm/driver-arm.c	(revision 235573)
++++ b/src/gcc/config/arm/driver-arm.c	(revision 235556)
+@@ -125,12 +125,13 @@
+ 	}
+     }
+ 
+-  if (val)
+-    {
+-      fclose (f);
+-      return concat ("-m", argv[0], "=", val, NULL);
+-     }
++  fclose (f);
+ 
++  if (val == NULL)
++    goto not_found;
++
++  return concat ("-m", argv[0], "=", val, NULL);
++
+ not_found:
+   {
+     unsigned int i;
