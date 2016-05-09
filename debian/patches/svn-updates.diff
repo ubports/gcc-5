@@ -1,10 +1,10 @@
-# DP: updates from the 5 branch upto 20160429 (r235638).
+# DP: updates from the 5 branch upto 20160509 (r236033).
 
 last_update()
 {
 	cat > ${dir}LAST_UPDATED <EOF
-Fri Apr 29 15:11:44 CEST 2016
-Fri Apr 29 13:11:44 UTC 2016 (revision 235638)
+Mon May  9 15:34:12 CEST 2016
+Mon May  9 13:34:12 UTC 2016 (revision 236033)
 EOF
 }
 
@@ -5982,7 +5982,7 @@ Index: gcc/DATESTAMP
 +++ b/src/gcc/DATESTAMP	(.../branches/gcc-5-branch)
 @@ -1 +1 @@
 -20151204
-+20160429
++20160509
 Index: gcc/postreload.c
 ===================================================================
 --- a/src/gcc/postreload.c	(.../tags/gcc_5_3_0_release)
@@ -6821,7 +6821,16 @@ Index: gcc/ChangeLog
 ===================================================================
 --- a/src/gcc/ChangeLog	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/ChangeLog	(.../branches/gcc-5-branch)
-@@ -1,3 +1,1858 @@
+@@ -1,3 +1,1867 @@
++2016-05-02  Richard Biener  <rguenther@suse.de>
++
++	Backport from mainline
++	2016-04-05  Richard Biener  <rguenther@suse.de>
++
++	PR tree-optimization/70526
++	* tree-sra.c (build_ref_for_offset): Use prev_base to
++	extract the alias pointer type.
++
 +2016-04-28  Jakub Jelinek  <jakub@redhat.com>
 +
 +	PR target/70858
@@ -8680,7 +8689,7 @@ Index: gcc/ChangeLog
  2015-12-04  Release Manager
  
  	* GCC 5.3.0 released.
-@@ -19,7 +1874,7 @@
+@@ -19,7 +1883,7 @@
  	Backport from mainline
  	2015-09-30  Bernd Edlinger  <bernd.edlinger@hotmail.de>
  
@@ -8689,7 +8698,7 @@ Index: gcc/ChangeLog
  	* lra-constraints.c (process_addr_reg): Use copy_rtx when necessary.
  
  2015-11-26  David Edelsohn  <dje.gcc@gmail.com>
-@@ -291,12 +2146,12 @@
+@@ -291,12 +2155,12 @@
  	(contains_type_p): Fix out of range check, clear dynamic flag.
  
  	2015-10-23  Jan Hubicka  <hubicka@ucw.cz>
@@ -8704,7 +8713,7 @@ Index: gcc/ChangeLog
  	2015-10-12  Richard Biener  <rguenther@suse.de>
  
  	PR ipa/67783
-@@ -305,7 +2160,7 @@
+@@ -305,7 +2169,7 @@
  	quadratic behavior.
  
  	2015-10-11  Jan Hubicka  <hubicka@ucw.cz>
@@ -14839,6 +14848,36 @@ Index: gcc/testsuite/gfortran.dg/deferred_character_15.f90
 +    if (test .ne. "test") call abort
 +  end function test2
 +end program tester
+Index: gcc/testsuite/gfortran.dg/list_read_14.f90
+===================================================================
+--- a/src/gcc/testsuite/gfortran.dg/list_read_14.f90	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gfortran.dg/list_read_14.f90	(.../branches/gcc-5-branch)
+@@ -0,0 +1,25 @@
++! { dg-do run }
++! PR70684 incorrect reading of values from file on Windows
++program test
++implicit none
++integer,parameter :: isize=12
++integer,parameter :: funit=12
++integer :: i
++character(1), parameter :: cr=char(13)
++double precision, dimension(isize) :: a, res
++res= (/ 1.0000000000000000, 2.0000000000000000, 3.0000000000000000, &
++        4.0000000000000000, 5.0000000000000000, 6.0000000000000000, &
++        7.0000000000000000, 8.0000000000000000, 9.0000000000000000, &
++        10.000000000000000, 11.000000000000000, 12.000000000000000 /)
++do i=1,isize
++ a(i)=dble(i)
++enddo
++open(funit,status="scratch")
++write(funit,'(1x,6(f25.20,'',''),a)') (a(i),i=1,6), cr
++write(funit,'(1x,6(f25.20,'',''),a)') (a(i),i=7,12), cr
++rewind(funit)
++a=0d0
++read(funit,*) (a(i),i=1,isize)
++close(funit)
++if (any(a /= res)) call abort
++end
 Index: gcc/testsuite/gfortran.dg/deferred_character_6.f90
 ===================================================================
 --- a/src/gcc/testsuite/gfortran.dg/deferred_character_6.f90	(.../tags/gcc_5_3_0_release)
@@ -19241,7 +19280,26 @@ Index: gcc/testsuite/ChangeLog
 ===================================================================
 --- a/src/gcc/testsuite/ChangeLog	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/testsuite/ChangeLog	(.../branches/gcc-5-branch)
-@@ -1,3 +1,1642 @@
+@@ -1,3 +1,1661 @@
++2016-05-03  Paolo Carlini  <paolo.carlini@oracle.com>
++
++	PR c++/70635
++	* g++.dg/parse/pr70635.C: New.
++
++2016-05-02  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
++
++	Backport from mainline
++	PR libgfortran/70684
++	* gfortran.dg/list_read_14.f90: New test.
++
++2016-05-02  Richard Biener  <rguenther@suse.de>
++
++	Backport from mainline
++	2016-04-05  Richard Biener  <rguenther@suse.de>
++
++	PR tree-optimization/70526
++	* g++.dg/torture/pr70526.C: New testcase.
++
 +2016-04-28  Jakub Jelinek  <jakub@redhat.com>
 +
 +	PR target/70858
@@ -20884,7 +20942,7 @@ Index: gcc/testsuite/ChangeLog
  2015-12-04  Release Manager
  
  	* GCC 5.3.0 released.
-@@ -328,7 +1967,7 @@
+@@ -328,7 +1986,7 @@
  2015-11-06  Vladimir Makarov  <vmakarov@redhat.com>
  
  	PR rtl-optimization/68106
@@ -20893,7 +20951,7 @@ Index: gcc/testsuite/ChangeLog
  
  2015-01-25  Paul Thomas  <pault@gcc.gnu.org>
  
-@@ -448,8 +2087,8 @@
+@@ -448,8 +2106,8 @@
  	Backport from mainline
  	2015-10-09  Martin Jambor  <mjambor@suse.cz>
  
@@ -20904,7 +20962,7 @@ Index: gcc/testsuite/ChangeLog
  
  2015-10-22  Paul Thomas  <pault@gcc.gnu.org>
  
-@@ -1254,10 +2893,6 @@
+@@ -1254,10 +2912,6 @@
  	PR fortran/66725
  	* gfortran.dg/pr66725.f90: New test.
  
@@ -20915,7 +20973,7 @@ Index: gcc/testsuite/ChangeLog
  2015-07-16  Marek Polacek  <polacek@redhat.com>
  
  	Backported from mainline
-@@ -3574,7 +5209,7 @@
+@@ -3574,7 +5228,7 @@
  
  2015-03-05  Martin Sebor  <msebor@redhat.com>
  
@@ -21042,6 +21100,36 @@ Index: gcc/testsuite/g++.dg/pr68449.C
 +{
 +  return __extension__ ({ int b; b; }) < 0;
 +}
+Index: gcc/testsuite/g++.dg/parse/pr70635.C
+===================================================================
+--- a/src/gcc/testsuite/g++.dg/parse/pr70635.C	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/g++.dg/parse/pr70635.C	(.../branches/gcc-5-branch)
+@@ -0,0 +1,25 @@
++// PR c++/70635
++// { dg-options "-fpermissive -w" }
++
++template < typename T > 
++struct A
++{
++  struct B;
++  typedef typename B::type type;
++};
++
++template < typename T > 
++struct A < T >::B
++{
++  typedef typename A < type >::type type;  // { dg-error "type" }
++  type Foo ();
++};
++
++template < typename T > 
++typename A < T >::B::type
++A < T >::B::Foo ()
++{
++  return 0;
++}
++
++template class A<int>;
 Index: gcc/testsuite/g++.dg/pr63995-1.C
 ===================================================================
 --- a/src/gcc/testsuite/g++.dg/pr63995-1.C	(.../tags/gcc_5_3_0_release)
@@ -21528,6 +21616,46 @@ Index: gcc/testsuite/g++.dg/cpp0x/constexpr-value5.C
 +  int px_;
 +};
 +FixedVector<1> a;
+Index: gcc/testsuite/g++.dg/torture/pr70526.C
+===================================================================
+--- a/src/gcc/testsuite/g++.dg/torture/pr70526.C	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/g++.dg/torture/pr70526.C	(.../branches/gcc-5-branch)
+@@ -0,0 +1,35 @@
++// { dg-do run }
++
++typedef unsigned uint32_t;
++
++template<typename T>
++struct AlignedStorage2
++{
++  char mBytes[sizeof(T)];
++
++  const T* addr() const { return reinterpret_cast<const T*>(mBytes); }
++  T* addr() { return reinterpret_cast<T*>(mBytes); }
++};
++
++struct Register {
++    uint32_t reg_;
++};
++
++class TypedOrValueRegister
++{
++  AlignedStorage2<Register> typed;
++  __attribute__((noinline)) Register& dataTyped() { return *typed.addr(); }
++public:
++  TypedOrValueRegister(Register reg)
++    {
++      dataTyped() = reg;
++    }
++  Register typedReg() const { return *typed.addr(); }
++};
++
++int main() {
++    Register reg = { 10u };
++    if (TypedOrValueRegister(reg).typedReg().reg_ != 10)
++      __builtin_abort();
++    return 0;
++}
 Index: gcc/testsuite/g++.dg/torture/pr68184.C
 ===================================================================
 --- a/src/gcc/testsuite/g++.dg/torture/pr68184.C	(.../tags/gcc_5_3_0_release)
@@ -23819,7 +23947,13 @@ Index: gcc/cp/ChangeLog
 ===================================================================
 --- a/src/gcc/cp/ChangeLog	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/cp/ChangeLog	(.../branches/gcc-5-branch)
-@@ -1,3 +1,317 @@
+@@ -1,3 +1,323 @@
++2016-05-03  Paolo Carlini  <paolo.carlini@oracle.com>
++
++	PR c++/70635
++	* pt.c (resolve_typename_type): Fix typos in infinite recursion
++	avoidance mechanism.
++
 +2016-04-18  Marek Polacek  <polacek@redhat.com>
 +
 +	Backport from mainline
@@ -24468,6 +24602,18 @@ Index: gcc/cp/pt.c
  
    if (tmpl != gen_tmpl)
      /* We should already have the extra args.  */
+@@ -22127,9 +22207,9 @@
+     {
+       /* Ill-formed programs can cause infinite recursion here, so we
+ 	 must catch that.  */
+-      TYPENAME_IS_RESOLVING_P (type) = 1;
++      TYPENAME_IS_RESOLVING_P (result) = 1;
+       result = resolve_typename_type (result, only_current_p);
+-      TYPENAME_IS_RESOLVING_P (type) = 0;
++      TYPENAME_IS_RESOLVING_P (result) = 0;
+     }
+   
+   /* Qualify the resulting type.  */
 @@ -22341,7 +22421,7 @@
  	}
      }
@@ -25580,7 +25726,24 @@ Index: gcc/ada/ChangeLog
 ===================================================================
 --- a/src/gcc/ada/ChangeLog	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/ada/ChangeLog	(.../branches/gcc-5-branch)
-@@ -1,3 +1,72 @@
+@@ -1,3 +1,89 @@
++2016-05-06  Eric Botcazou  <ebotcazou@adacore.com>
++
++	PR ada/70969
++	* system-darwin-ppc64.ads: Add pragma No_Elaboration_Code_All.
++	* system-linux-armeb.ads: Likewise.
++	* system-linux-mips64el.ads: Likewise.
++	* system-linux-mips.ads: Likewise.
++	* system-linux-mipsel.ads: Likewise.
++	* system-linux-ppc64.ads: Likewise.
++	* system-linux-sparcv9.ads: Likewise.
++	* system-rtems.ads: Likewise.
++
++2016-05-02  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
++
++	* gcc-interface/Makefile.in (install-gcc-specs): Use foreach.
++	Honor DESTDIR.
++
 +2016-04-28  Eric Botcazou  <ebotcazou@adacore.com>
 +
 +	PR ada/70786
@@ -25764,6 +25927,48 @@ Index: gcc/ada/s-osinte-rtems.ads
  
     type pthread_t is new rtems_id;
  
+Index: gcc/ada/system-linux-mipsel.ads
+===================================================================
+--- a/src/gcc/ada/system-linux-mipsel.ads	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/ada/system-linux-mipsel.ads	(.../branches/gcc-5-branch)
+@@ -40,6 +40,9 @@
+    --  this unit Pure instead of Preelaborable; see RM 13.7.1(15). In Ada
+    --  2005, this is Pure in any case (AI-362).
+ 
++   pragma No_Elaboration_Code_All;
++   --  Allow the use of that restriction in units that WITH this unit
++
+    type Name is (SYSTEM_NAME_GNAT);
+    System_Name : constant Name := SYSTEM_NAME_GNAT;
+ 
+Index: gcc/ada/system-linux-mips.ads
+===================================================================
+--- a/src/gcc/ada/system-linux-mips.ads	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/ada/system-linux-mips.ads	(.../branches/gcc-5-branch)
+@@ -40,6 +40,9 @@
+    --  this unit Pure instead of Preelaborable; see RM 13.7.1(15). In Ada
+    --  2005, this is Pure in any case (AI-362).
+ 
++   pragma No_Elaboration_Code_All;
++   --  Allow the use of that restriction in units that WITH this unit
++
+    type Name is (SYSTEM_NAME_GNAT);
+    System_Name : constant Name := SYSTEM_NAME_GNAT;
+ 
+Index: gcc/ada/system-linux-mips64el.ads
+===================================================================
+--- a/src/gcc/ada/system-linux-mips64el.ads	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/ada/system-linux-mips64el.ads	(.../branches/gcc-5-branch)
+@@ -40,6 +40,9 @@
+    --  this unit Pure instead of Preelaborable; see RM 13.7.1(15). In Ada
+    --  2005, this is Pure in any case (AI-362).
+ 
++   pragma No_Elaboration_Code_All;
++   --  Allow the use of that restriction in units that WITH this unit
++
+    type Name is (SYSTEM_NAME_GNAT);
+    System_Name : constant Name := SYSTEM_NAME_GNAT;
+ 
 Index: gcc/ada/a-textio.adb
 ===================================================================
 --- a/src/gcc/ada/a-textio.adb	(.../tags/gcc_5_3_0_release)
@@ -25803,6 +26008,20 @@ Index: gcc/ada/gcc-interface/Makefile.in
    s-taspri.ads<s-taspri-posix.ads \
    s-tpopsp.adb<s-tpopsp-posix-foreign.adb \
    system.ads<system-freebsd-x86_64.ads
+@@ -2557,10 +2553,9 @@
+ install-gcc-specs:
+ #	Install all the requested GCC spec files.
+ 
+-	for f in $(GCC_SPEC_FILES); do \
+-	    $(INSTALL_DATA_DATE) $(srcdir)/ada/$$f \
+-	    $(libsubdir)/$$(echo $$f|sed -e 's#_[a-zA-Z0-9]*##g'); \
+-	done
++	$(foreach f,$(GCC_SPEC_FILES), \
++	    $(INSTALL_DATA_DATE) $(srcdir)/ada/$(f) \
++	    $(DESTDIR)$(libsubdir)/$$(echo $(f)|sed -e 's#_[a-zA-Z0-9]*##g');)
+ 
+ install-gnatlib: ../stamp-gnatlib-$(RTSDIR) install-gcc-specs
+ #	Create the directory before deleting it, in case the directory is
 Index: gcc/ada/gcc-interface/decl.c
 ===================================================================
 --- a/src/gcc/ada/gcc-interface/decl.c	(.../tags/gcc_5_3_0_release)
@@ -25958,6 +26177,48 @@ Index: gcc/ada/s-osinte-freebsd.ads
  
     function Get_Stack_Base (thread : pthread_t) return Address;
     pragma Inline (Get_Stack_Base);
+Index: gcc/ada/system-darwin-ppc64.ads
+===================================================================
+--- a/src/gcc/ada/system-darwin-ppc64.ads	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/ada/system-darwin-ppc64.ads	(.../branches/gcc-5-branch)
+@@ -40,6 +40,9 @@
+    --  this unit Pure instead of Preelaborable; see RM 13.7.1(15). In Ada
+    --  2005, this is Pure in any case (AI-362).
+ 
++   pragma No_Elaboration_Code_All;
++   --  Allow the use of that restriction in units that WITH this unit
++
+    type Name is (SYSTEM_NAME_GNAT);
+    System_Name : constant Name := SYSTEM_NAME_GNAT;
+ 
+Index: gcc/ada/system-linux-armeb.ads
+===================================================================
+--- a/src/gcc/ada/system-linux-armeb.ads	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/ada/system-linux-armeb.ads	(.../branches/gcc-5-branch)
+@@ -40,6 +40,9 @@
+    --  this unit Pure instead of Preelaborable; see RM 13.7.1(15). In Ada
+    --  2005, this is Pure in any case (AI-362).
+ 
++   pragma No_Elaboration_Code_All;
++   --  Allow the use of that restriction in units that WITH this unit
++
+    type Name is (SYSTEM_NAME_GNAT);
+    System_Name : constant Name := SYSTEM_NAME_GNAT;
+ 
+Index: gcc/ada/system-rtems.ads
+===================================================================
+--- a/src/gcc/ada/system-rtems.ads	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/ada/system-rtems.ads	(.../branches/gcc-5-branch)
+@@ -44,6 +44,9 @@
+    --  this unit Pure instead of Preelaborable; see RM 13.7.1(15). In Ada
+    --  2005, this is Pure in any case (AI-362).
+ 
++   pragma No_Elaboration_Code_All;
++   --  Allow the use of that restriction in units that WITH this unit
++
+    type Name is (SYSTEM_NAME_GNAT);
+    System_Name : constant Name := SYSTEM_NAME_GNAT;
+ 
 Index: gcc/ada/exp_ch4.adb
 ===================================================================
 --- a/src/gcc/ada/exp_ch4.adb	(.../tags/gcc_5_3_0_release)
@@ -25981,6 +26242,34 @@ Index: gcc/ada/exp_ch4.adb
        then
           Activate_Atomic_Synchronization (N);
        end if;
+Index: gcc/ada/system-linux-sparcv9.ads
+===================================================================
+--- a/src/gcc/ada/system-linux-sparcv9.ads	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/ada/system-linux-sparcv9.ads	(.../branches/gcc-5-branch)
+@@ -40,6 +40,9 @@
+    --  this unit Pure instead of Preelaborable; see RM 13.7.1(15). In Ada
+    --  2005, this is Pure in any case (AI-362).
+ 
++   pragma No_Elaboration_Code_All;
++   --  Allow the use of that restriction in units that WITH this unit
++
+    type Name is (SYSTEM_NAME_GNAT);
+    System_Name : constant Name := SYSTEM_NAME_GNAT;
+ 
+Index: gcc/ada/system-linux-ppc64.ads
+===================================================================
+--- a/src/gcc/ada/system-linux-ppc64.ads	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/ada/system-linux-ppc64.ads	(.../branches/gcc-5-branch)
+@@ -40,6 +40,9 @@
+    --  this unit Pure instead of Preelaborable; see RM 13.7.1(15). In Ada
+    --  2005, this is Pure in any case (AI-362).
+ 
++   pragma No_Elaboration_Code_All;
++   --  Allow the use of that restriction in units that WITH this unit
++
+    type Name is (SYSTEM_NAME_GNAT);
+    System_Name : constant Name := SYSTEM_NAME_GNAT;
+ 
 Index: gcc/dse.c
 ===================================================================
 --- a/src/gcc/dse.c	(.../tags/gcc_5_3_0_release)
@@ -33915,6 +34204,15 @@ Index: gcc/tree-sra.c
 ===================================================================
 --- a/src/gcc/tree-sra.c	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/tree-sra.c	(.../branches/gcc-5-branch)
+@@ -1589,7 +1589,7 @@
+     }
+   else
+     {
+-      off = build_int_cst (reference_alias_ptr_type (base),
++      off = build_int_cst (reference_alias_ptr_type (prev_base),
+ 			   base_offset + offset / BITS_PER_UNIT);
+       base = build_fold_addr_expr (unshare_expr (base));
+     }
 @@ -2329,7 +2329,7 @@
  
        if (covered_to < limit)
@@ -45788,7 +46086,13 @@ Index: libgfortran/ChangeLog
 ===================================================================
 --- a/src/libgfortran/ChangeLog	(.../tags/gcc_5_3_0_release)
 +++ b/src/libgfortran/ChangeLog	(.../branches/gcc-5-branch)
-@@ -1,3 +1,51 @@
+@@ -1,3 +1,57 @@
++2016-05-02  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
++
++	Backport from trunk.
++	PR libgfortran/70684
++	* io/list_read (check_buffers): Add '\r' to check for end of line.
++
 +2016-04-05  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
 +	    Dominique d'Humieres  <dominiq@lps.ens.fr>
 +
@@ -45915,15 +46219,18 @@ Index: libgfortran/io/list_read.c
  static int
  check_buffers (st_parameter_dt *dtp)
  {
-@@ -200,7 +195,7 @@
+@@ -200,9 +195,9 @@
        dtp->u.p.line_buffer_pos = 0;
        dtp->u.p.line_buffer_enabled = 0;
      }
 -    
 +
  done:
-   dtp->u.p.at_eol = (c == '\n' || c == EOF);
+-  dtp->u.p.at_eol = (c == '\n' || c == EOF);
++  dtp->u.p.at_eol = (c == '\n' || c == '\r' || c == EOF);
    return c;
+ }
+ 
 @@ -254,7 +249,7 @@
  	  record = next_array_record (dtp, dtp->u.p.current_unit->ls,
  				      &finished);
@@ -46550,6 +46857,54 @@ Index: Makefile.def
  lang_env_dependencies = { module=libcilkrts; cxx=true; };
  lang_env_dependencies = { module=liboffloadmic; cxx=true; };
  lang_env_dependencies = { module=newlib; no_c=true; };
+Index: libcilkrts/Makefile.in
+===================================================================
+--- a/src/libcilkrts/Makefile.in	(.../tags/gcc_5_3_0_release)
++++ b/src/libcilkrts/Makefile.in	(.../branches/gcc-5-branch)
+@@ -343,9 +343,11 @@
+ # GENERAL_FLAGS += -D_Cilk_spawn="" -D_Cilk_sync="" -D_Cilk_for=for
+ 
+ # Enable Intel Cilk Plus extension
++
++# Always generate unwind tables
+ GENERAL_FLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/runtime \
+ 	-I$(top_srcdir)/runtime/config/$(config_dir) \
+-	-DIN_CILK_RUNTIME=1 -fcilkplus
++	-DIN_CILK_RUNTIME=1 -fcilkplus -funwind-tables
+ AM_CFLAGS = $(XCFLAGS) $(GENERAL_FLAGS) -std=c99
+ AM_CPPFLAGS = $(GENERAL_FLAGS)
+ AM_LDFLAGS = $(XLDFLAGS)
+Index: libcilkrts/ChangeLog
+===================================================================
+--- a/src/libcilkrts/ChangeLog	(.../tags/gcc_5_3_0_release)
++++ b/src/libcilkrts/ChangeLog	(.../branches/gcc-5-branch)
+@@ -1,3 +1,12 @@
++2016-05-08  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
++
++	Backport from mainline
++	2016-04-26  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
++
++	PR target/60290
++	* Makefile.am (GENERAL_FLAGS): Add -funwind-tables.
++	* Makefile.in: Regenerate.
++
+ 2015-12-04  Release Manager
+ 
+ 	* GCC 5.3.0 released.
+Index: libcilkrts/Makefile.am
+===================================================================
+--- a/src/libcilkrts/Makefile.am	(.../tags/gcc_5_3_0_release)
++++ b/src/libcilkrts/Makefile.am	(.../branches/gcc-5-branch)
+@@ -43,6 +43,9 @@
+ # Enable Intel Cilk Plus extension
+ GENERAL_FLAGS += -fcilkplus
+ 
++# Always generate unwind tables
++GENERAL_FLAGS += -funwind-tables
++
+ AM_CFLAGS = $(XCFLAGS) $(GENERAL_FLAGS) -std=c99
+ AM_CPPFLAGS = $(GENERAL_FLAGS)
+ AM_LDFLAGS = $(XLDFLAGS)
 Index: libcpp/macro.c
 ===================================================================
 --- a/src/libcpp/macro.c	(.../tags/gcc_5_3_0_release)

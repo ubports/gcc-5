@@ -516,17 +516,17 @@ endif
 
 	mkdir -p $(d_jrehl)/var/lib/gcj$(pkg_ver)
 
-	dh_makeshlibs -p$(p_jlib) -V '$(p_jlib) (>= $(DEB_GCJ_SOVERSION))'
+	dh_makeshlibs $(ldconfig_arg) -p$(p_jlib) -V '$(p_jlib) (>= $(DEB_GCJ_SOVERSION))'
 	echo "libgcj_bc 1 libgcj-bc (>= 4.2.2-1)" >> debian/$(p_jlib)/DEBIAN/shlibs
 	cat debian/$(p_jlib)/DEBIAN/shlibs >> debian/shlibs.local
 
-	dh_makeshlibs -p$(p_jlibx) -V '$(p_jlibx) (>= $(DEB_GCJ_SOVERSION))'
+	dh_makeshlibs $(ldconfig_arg) -p$(p_jlibx) -V '$(p_jlibx) (>= $(DEB_GCJ_SOVERSION))'
 
 #ifneq (,$(findstring gtk, $(java_awt_peers)))
-#	dh_makeshlibs -p$(p_jgtk) -V '$(p_jgtk) (>= $(DEB_GCJ_SOVERSION))'
+#	dh_makeshlibs $(ldconfig_arg) -p$(p_jgtk) -V '$(p_jgtk) (>= $(DEB_GCJ_SOVERSION))'
 #endif
 #ifneq (,$(findstring qt, $(java_awt_peers)))
-#	dh_makeshlibs -p$(p_jqt) -V '$(p_jqt) (>= $(DEB_GCJ_SOVERSION))'
+#	dh_makeshlibs $(ldconfig_arg) -p$(p_jqt) -V '$(p_jqt) (>= $(DEB_GCJ_SOVERSION))'
 #endif
 
 	dh_strip -X/bin/ --dbg-package=$(p_jdbg) \

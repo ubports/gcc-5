@@ -210,9 +210,9 @@ define __do_libstdcxx
 	dh_strip -p$(p_l) $(if $(filter rtlibs,$(DEB_STAGE)),,--dbg-package=$(1)-$(BASE_VERSION)-dbg$(cross_lib_arch))
 
 	$(if $(filter $(DEB_TARGET_ARCH), armel hppa sparc64), \
-	  -$(cross_makeshlibs) dh_makeshlibs -p$(p_l) \
+	  -$(cross_makeshlibs) dh_makeshlibs $(ldconfig_arg) -p$(p_l) \
 	  @echo "FIXME: libstdc++ not feature complete (https://gcc.gnu.org/ml/gcc/2014-07/msg00000.html)", \
-	  $(cross_makeshlibs) dh_makeshlibs -p$(p_l) \
+	  $(cross_makeshlibs) dh_makeshlibs $(ldconfig_arg) -p$(p_l) \
 	)
 
 	$(call cross_mangle_shlibs,$(p_l))

@@ -40,7 +40,7 @@ $(binary_stamp)-nof: $(install_stamp)
 	dh_strip -p$(p_nof)
 	dh_shlibdeps -p$(p_nof)
 
-	dh_makeshlibs -p$(p_nof)
+	dh_makeshlibs $(ldconfig_arg) -p$(p_nof)
 	: # Only keep the shlibs file for the libgcc_s_nof library
 	fgrep libgcc_s_nof debian/$(p_nof)/DEBIAN/shlibs \
 		> debian/$(p_nof)/DEBIAN/shlibs.tmp

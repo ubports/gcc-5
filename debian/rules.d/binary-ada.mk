@@ -117,7 +117,7 @@ $(binary_stamp)-libgnat: $(install_stamp)
 	    fi; \
 	  done; \
 	done
-	$(cross_makeshlibs) dh_makeshlibs -p$(p_lgnat) -V '$(p_lgnat) (>= $(DEB_VERSION))'
+	$(cross_makeshlibs) dh_makeshlibs $(ldconfig_arg) -p$(p_lgnat) -V '$(p_lgnat) (>= $(DEB_VERSION))'
 	$(call cross_mangle_shlibs,$(p_lgnat))
 
 ifneq (,$(filter $(build_type), build-native cross-build-native))
@@ -130,7 +130,8 @@ endif
 	$(cross_shlibdeps) dh_shlibdeps -p$(p_lgnat) \
 		$(call shlibdirs_to_search, \
 			$(subst gnat-$(GNAT_SONAME),gcc$(GCC_SONAME),$(p_lgnat)) \
-		,)
+		,) \
+		$(if $(filter yes, $(with_common_libs)),,-- -Ldebian/shlibs.common$(2))
 	$(call cross_mangle_substvars,$(p_lgnat))
 
 	: # $(p_lgnat_dbg)
@@ -171,7 +172,7 @@ endif
 	$(dh_compat2) dh_movefiles -p$(p_lgnatvsn) $(usr_lib)/libgnatvsn.so.$(GNAT_VERSION)
 	debian/dh_doclink -p$(p_lgnatvsn) $(p_glbase)
 	dh_strip -p$(p_lgnatvsn) --dbg-package=$(p_lgnatvsn_dbg)
-	$(cross_makeshlibs) dh_makeshlibs -p$(p_lgnatvsn) \
+	$(cross_makeshlibs) dh_makeshlibs $(ldconfig_arg) -p$(p_lgnatvsn) \
 		-V '$(p_lgnatvsn) (>= $(DEB_VERSION))'
 	$(call cross_mangle_shlibs,$(p_lgnatvsn))
 	cat debian/$(p_lgnatvsn)/DEBIAN/shlibs >> debian/shlibs.local
@@ -179,7 +180,8 @@ endif
 		$(call shlibdirs_to_search, \
 			$(subst gnatvsn$(GNAT_SONAME),gcc$(GCC_SONAME),$(p_lgnatvsn)) \
 			$(subst gnatvsn$(GNAT_SONAME),gnat-$(GNAT_SONAME),$(p_lgnatvsn)) \
-		,)
+		,) \
+		$(if $(filter yes, $(with_common_libs)),,-- -Ldebian/shlibs.common$(2))
 	$(call cross_mangle_substvars,$(p_lgnatvsn))
 
 	: # $(p_lgnatvsn_dbg)
@@ -218,7 +220,7 @@ endif
 	$(dh_compat2) dh_movefiles -p$(p_lgnatprj) $(usr_lib)/libgnatprj.so.$(GNAT_VERSION)
 	debian/dh_doclink -p$(p_lgnatprj) $(p_glbase)
 	dh_strip -p$(p_lgnatprj) --dbg-package=$(p_lgnatprj_dbg)
-	$(cross_makeshlibs) dh_makeshlibs -p$(p_lgnatprj) \
+	$(cross_makeshlibs) dh_makeshlibs $(ldconfig_arg) -p$(p_lgnatprj) \
 		-V '$(p_lgnatprj) (>= $(DEB_VERSION))'
 	$(call cross_mangle_shlibs,$(p_lgnatprj))
 	cat debian/$(p_lgnatprj)/DEBIAN/shlibs >> debian/shlibs.local
@@ -227,7 +229,8 @@ endif
 			$(subst gnatprj$(GNAT_SONAME),gcc$(GCC_SONAME),$(p_lgnatprj)) \
 			$(subst gnatprj$(GNAT_SONAME),gnat-$(GNAT_SONAME),$(p_lgnatprj)) \
 			$(subst gnatprj$(GNAT_SONAME),gnatvsn$(GNAT_SONAME),$(p_lgnatprj)) \
-		,)
+		,) \
+		$(if $(filter yes, $(with_common_libs)),,-- -Ldebian/shlibs.common$(2))
 	$(call cross_mangle_substvars,$(p_lgnatprj))
 
 	: # $(p_lgnatprj_dbg)

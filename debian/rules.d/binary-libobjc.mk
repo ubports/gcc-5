@@ -66,7 +66,7 @@ define __do_libobjc
 	debian/dh_doclink -p$(p_d) $(p_lbase)
 
 	dh_strip -p$(p_l) --dbg-package=$(p_d)
-	$(cross_makeshlibs) dh_makeshlibs -p$(p_l) -Xlibobjc_gc.so
+	$(cross_makeshlibs) dh_makeshlibs $(ldconfig_arg) -p$(p_l) -Xlibobjc_gc.so
 	$(call cross_mangle_shlibs,$(p_l))
 	$(ignshld)DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_l) \
 		$(call shlibdirs_to_search,$(subst objc$(OBJC_SONAME),gcc$(GCC_SONAME),$(p_l)),$(2))

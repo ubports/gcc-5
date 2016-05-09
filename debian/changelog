@@ -1,3 +1,21 @@
+gcc-5 (5.3.1-18) unstable; urgency=medium
+
+  * Update to SVN 20160509 (r236033, 5.3.1) from the gcc-5-branch.
+    - Fix PR tree-optimization/70526, PR c++/70635, PR ada/70969,
+      PR libgfortran/70684, PR target/60290 (Solaris).
+  * Call dh_makeshlibs with the --noscripts option when building a
+    cross compiler.
+  * Fix building cross gnat libs when not building the common libs.
+  * Fix building cross mips* multilibs when not building the common libs.
+  * Remove old go escape analysis code, removed upstream.
+  * Avoid empty architecture lists in build dependencies. Addresses: #823280.
+  * Tighten debhelper build dependency for cross build dependencies.
+  * Silence some lintian warnings for libstdc++-doc.
+  * Allow build dependencies for musl configurations (Helmut Grohne).
+    Addresses: #823769.
+
+ -- Matthias Klose <doko@debian.org>  Mon, 09 May 2016 16:15:30 +0200
+
 gcc-5 (5.3.1-17) unstable; urgency=medium
 
   * Update to SVN 20160429 (r235638, 5.3.1) from the gcc-5-branch.

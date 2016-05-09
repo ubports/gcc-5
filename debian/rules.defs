@@ -1472,6 +1472,10 @@ ifneq (,$(wildcard /usr/bin/localedef))
   locale_data = generate
 endif
 
+ifneq (,$(filter $(build_type), build-cross cross-build-cross))
+  ldconfig_arg = --noscripts
+endif
+
 all_enabled_languages := $(enabled_languages)
 languages_without_lang_opt := c++ objc obj-c++
 
@@ -2026,6 +2030,6 @@ _shlibdirs = \
 	$(if $(filter yes,$(biarchsf) $(biarchhf)), \
 	  $(with_build_sysroot)/usr/$(call mlib_to_march,$(2))/lib) \
 	$(if $(filter yes, $(with_common_libs)),, \
-	  $(CURDIR)/$(d)/usr/$(DEB_TARGET_GNU_TYPE)/lib$(2) \
+	  $(CURDIR)/$(d)/$(usr_lib$(2)) \
 	  $(CURDIR)/$(d)/usr/$(call mlib_to_march,$(2))/lib)
 shlibdirs_to_search = -l$(subst $(SPACE),:,$(foreach d,$(_shlibdirs),$(d)))

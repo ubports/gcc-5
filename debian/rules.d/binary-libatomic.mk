@@ -32,7 +32,7 @@ define __do_atomic
 
 	dh_strip -p$(p_l) --dbg-package=$(p_d)
 	ln -sf libatomic.symbols debian/$(p_l).symbols
-	$(cross_makeshlibs) dh_makeshlibs -p$(p_l)
+	$(cross_makeshlibs) dh_makeshlibs $(ldconfig_arg) -p$(p_l)
 	$(call cross_mangle_shlibs,$(p_l))
 	$(ignshld)DIRNAME=$(subst n,,$(2)) $(cross_shlibdeps) dh_shlibdeps -p$(p_l) \
 		$(call shlibdirs_to_search,,$(2))
