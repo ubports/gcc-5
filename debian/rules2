@@ -2360,13 +2360,9 @@ endif
 
 ifneq ($(with_common_libs),yes)
 # for native builds, the default ml libs are always available; no need for a placeholder
-  ifneq (,$(filter $(build_type),build-native))
-	rm -f debian/shlibs.common
-	touch debian/shlibs.common
-  else
+# apparently this changed with newer dpkg versions (1.18.7?) ...
 	echo 'libgcc_s $(GCC_SONAME) $(p_lgcc)' > debian/shlibs.common
 	echo 'libstdc++ $(CXX_SONAME) $(p_lib)' >> debian/shlibs.common
-  endif
 	$(foreach ml,32 64 n32 x32 hf sf, \
 	  echo 'libgcc_s $(GCC_SONAME) $(subst lib,lib$(ml),$(p_lgcc))' > debian/shlibs.common$(ml); \
 	  echo 'libstdc++ $(CXX_SONAME) $(subst lib,lib$(ml),$(p_lib))' >> debian/shlibs.common$(ml); \
