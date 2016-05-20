@@ -1,3 +1,15 @@
+gcc-5 (5.3.1-20) unstable; urgency=medium
+
+  * Update to SVN 20160519 (r236482, 5.3.1) from the gcc-5-branch.
+    - Fix PR sanitizer/71160, PR other/61321, PR other/61233, PR c++/70498,
+      PR c++/69687, PR c++/70492, PR c++/67394, PR c++/70481, PR target/71161,
+      PR ipa/70646, PR tree-optimization/69400, PR target/71145 (alpha),
+      PR c++/70353, PR target/70809 (AArch64), PR c++/70613,
+      PR target/70963 (PPC), PR c++/70505, PR c++/70494, PR c++/70648,
+      PR c++/70353, PR c++/70095, PR c++/70135, PR fortran/69603.
+
+ -- Matthias Klose <doko@debian.org>  Fri, 20 May 2016 09:13:30 +0200
+
 gcc-5 (5.3.1-19) unstable; urgency=medium
 
   * Fix dependency resolution for libraries not built anymore from
