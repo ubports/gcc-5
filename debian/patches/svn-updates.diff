@@ -1,10 +1,10 @@
-# DP: updates from the 5 branch upto 20160519 (r236482).
+# DP: updates from the 5 branch upto 20160528 (r236840).
 
 last_update()
 {
 	cat > ${dir}LAST_UPDATED <EOF
-Thu May 19 20:07:10 CEST 2016
-Thu May 19 18:07:10 UTC 2016 (revision 236482)
+Sat May 28 15:54:19 CEST 2016
+Sat May 28 13:54:19 UTC 2016 (revision 236847)
 EOF
 }
 
@@ -982,6 +982,205 @@ Index: libstdc++-v3/src/Makefile.in
  @ENABLE_SYMVERS_TRUE@	    cat $(port_specific_symbol_files) >> $@.tmp; \
  @ENABLE_SYMVERS_TRUE@	  else \
  @ENABLE_SYMVERS_TRUE@	    sed -n '1,/DO NOT DELETE/p' $@.tmp > tmp.top; \
+Index: libstdc++-v3/src/filesystem/ops.cc
+===================================================================
+--- a/src/libstdc++-v3/src/filesystem/ops.cc	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/src/filesystem/ops.cc	(.../branches/gcc-5-branch)
+@@ -220,8 +220,9 @@
+ {
+   error_code ec;
+   path can = canonical(p, base, ec);
+-  if (ec.value())
+-    _GLIBCXX_THROW_OR_ABORT(filesystem_error("cannot canonicalize", p, ec));
++  if (ec)
++    _GLIBCXX_THROW_OR_ABORT(filesystem_error("cannot canonicalize", p, base,
++					     ec));
+   return can;
+ }
+ 
+@@ -249,7 +250,7 @@
+   typedef struct ::stat stat_type;
+ 
+   inline fs::file_type
+-  make_file_type(const stat_type& st)
++  make_file_type(const stat_type& st) noexcept
+   {
+     using fs::file_type;
+ #ifdef _GLIBCXX_HAVE_S_ISREG
+@@ -273,7 +274,7 @@
+   }
+ 
+   inline fs::file_status
+-  make_file_status(const stat_type& st)
++  make_file_status(const stat_type& st) noexcept
+   {
+     return fs::file_status{
+ 	make_file_type(st),
+@@ -282,13 +283,13 @@
+   }
+ 
+   inline bool
+-  is_not_found_errno(int err)
++  is_not_found_errno(int err) noexcept
+   {
+     return err == ENOENT || err == ENOTDIR;
+   }
+ 
+   inline fs::file_time_type
+-  file_time(const stat_type& st)
++  file_time(const stat_type& st) noexcept
+   {
+     using namespace std::chrono;
+     return fs::file_time_type{
+@@ -300,6 +301,17 @@
+     };
+   }
+ 
++  // Returns true if the file descriptor was successfully closed,
++  // otherwise returns false and the reason will be in errno.
++  inline bool
++  close_fd(int fd)
++  {
++    while (::close(fd))
++      if (errno != EINTR)
++	return false;
++    return true;
++  }
++
+   bool
+   do_copy_file(const fs::path& from, const fs::path& to,
+ 	       fs::copy_options option,
+@@ -376,7 +388,8 @@
+       }
+ 
+     struct CloseFD {
+-      ~CloseFD() { if (fd != -1) ::close(fd); }
++      ~CloseFD() { if (fd != -1) close_fd(fd); }
++      bool close() { return close_fd(std::exchange(fd, -1)); }
+       int fd;
+     };
+ 
+@@ -401,34 +414,49 @@
+ 	return false;
+       }
+ 
++#ifdef _GLIBCXX_USE_FCHMOD
++    if (::fchmod(out.fd, from_st->st_mode))
++#elif _GLIBCXX_USE_FCHMODAT
++    if (::fchmodat(AT_FDCWD, to.c_str(), from_st->st_mode, 0))
++#else
++    if (::chmod(to.c_str(), from_st->st_mode))
++#endif
++      {
++	ec.assign(errno, std::generic_category());
++	return false;
++      }
++
+ #ifdef _GLIBCXX_USE_SENDFILE
+-    auto n = ::sendfile(out.fd, in.fd, nullptr, from_st->st_size);
++    const auto n = ::sendfile(out.fd, in.fd, nullptr, from_st->st_size);
+     if (n != from_st->st_size)
+       {
+ 	ec.assign(errno, std::generic_category());
+ 	return false;
+       }
++    if (!out.close() || !in.close())
++      {
++	ec.assign(errno, std::generic_category());
++	return false;
++      }
+ #else
+     __gnu_cxx::stdio_filebuf<char> sbin(in.fd, std::ios::in);
+     __gnu_cxx::stdio_filebuf<char> sbout(out.fd, std::ios::out);
+-    if ( !(std::ostream(&sbout) << &sbin) )
++    if (sbin.is_open())
++      in.fd = -1;
++    if (sbout.is_open())
++      out.fd = -1;
++    if (from_st->st_size && !(std::ostream(&sbout) << &sbin))
+       {
+ 	ec = std::make_error_code(std::errc::io_error);
+ 	return false;
+       }
+-#endif
+-
+-#ifdef _GLIBCXX_USE_FCHMOD
+-    if (::fchmod(out.fd, from_st->st_mode))
+-#elif _GLIBCXX_USE_FCHMODAT
+-    if (::fchmodat(AT_FDCWD, to.c_str(), from_st->st_mode, 0))
+-#else
+-    if (::chmod(to.c_str(), from_st->st_mode))
+-#endif
++    if (!sbout.close() || !sbin.close())
+       {
+ 	ec.assign(errno, std::generic_category());
+ 	return false;
+       }
++#endif
++
+     ec.clear();
+     return true;
+   }
+@@ -439,13 +467,15 @@
+ fs::copy(const path& from, const path& to, copy_options options,
+ 	 error_code& ec) noexcept
+ {
+-  bool skip_symlinks = is_set(options, copy_options::skip_symlinks);
+-  bool create_symlinks = is_set(options, copy_options::create_symlinks);
+-  bool use_lstat = create_symlinks || skip_symlinks;
++  const bool skip_symlinks = is_set(options, copy_options::skip_symlinks);
++  const bool create_symlinks = is_set(options, copy_options::create_symlinks);
++  const bool copy_symlinks = is_set(options, copy_options::copy_symlinks);
++  const bool use_lstat = create_symlinks || skip_symlinks;
+ 
+   file_status f, t;
+   stat_type from_st, to_st;
+-  if (use_lstat
++  // N4099 doesn't check copy_symlinks here, but I think that's a defect.
++  if (use_lstat || copy_symlinks
+       ? ::lstat(from.c_str(), &from_st)
+       : ::stat(from.c_str(), &from_st))
+     {
+@@ -488,7 +518,7 @@
+     {
+       if (skip_symlinks)
+ 	ec.clear();
+-      else if (!exists(t) && is_set(options, copy_options::copy_symlinks))
++      else if (!exists(t) && copy_symlinks)
+ 	copy_symlink(from, to, ec);
+       else
+ 	// Not clear what should be done here.
+@@ -630,22 +660,26 @@
+   bool
+   create_dir(const fs::path& p, fs::perms perm, std::error_code& ec)
+   {
++    bool created = false;
+ #ifdef _GLIBCXX_HAVE_SYS_STAT_H
+     ::mode_t mode = static_cast<std::underlying_type_t<fs::perms>>(perm);
+     if (::mkdir(p.c_str(), mode))
+       {
+-	ec.assign(errno, std::generic_category());
+-	return false;
++	const int err = errno;
++	if (err != EEXIST || !is_directory(p))
++	  ec.assign(err, std::generic_category());
++	else
++	  ec.clear();
+       }
+     else
+       {
+ 	ec.clear();
+-	return true;
++	created = true;
+       }
+ #else
+     ec = std::make_error_code(std::errc::not_supported);
+-    return false;
+ #endif
++    return created;
+   }
+ } // namespace
+ 
 Index: libstdc++-v3/src/Makefile.am
 ===================================================================
 --- a/src/libstdc++-v3/src/Makefile.am	(.../tags/gcc_5_3_0_release)
@@ -1033,6 +1232,32 @@ Index: libstdc++-v3/src/c++11/thread.cc
  
  _GLIBCXX_BEGIN_NAMESPACE_VERSION
  
+Index: libstdc++-v3/src/c++11/codecvt.cc
+===================================================================
+--- a/src/libstdc++-v3/src/c++11/codecvt.cc	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/src/c++11/codecvt.cc	(.../branches/gcc-5-branch)
+@@ -789,7 +789,11 @@
+ {
+   range<const char> from{ __from, __from_end };
+   range<char16_t> to{ __to, __to_end };
+-  auto res = ucs2_in(from, to, _M_maxcode, _M_mode);
++  codecvt_mode mode = codecvt_mode(_M_mode & (consume_header|generate_header));
++#if __BYTE_ORDER__ != __ORDER_BIG_ENDIAN__
++  mode = codecvt_mode(mode | little_endian);
++#endif
++  auto res = ucs2_in(from, to, _M_maxcode, mode);
+   __from_next = from.next;
+   __to_next = to.next;
+   return res;
+@@ -1264,7 +1268,7 @@
+ {
+   range<const char> from{ __from, __from_end };
+   range<char16_t> to{ __to, __to_end };
+-  codecvt_mode mode = codecvt_mode(_M_mode | (consume_header|generate_header));
++  codecvt_mode mode = codecvt_mode(_M_mode & (consume_header|generate_header));
+ #if __BYTE_ORDER__ != __ORDER_BIG_ENDIAN__
+   mode = codecvt_mode(mode | little_endian);
+ #endif
 Index: libstdc++-v3/doc/xml/manual/abi.xml
 ===================================================================
 --- a/src/libstdc++-v3/doc/xml/manual/abi.xml	(.../tags/gcc_5_3_0_release)
@@ -2023,6 +2248,135 @@ Index: libstdc++-v3/include/experimental/tuple
  
    template <typename _Fn, typename _Tuple>
      constexpr decltype(auto)
+Index: libstdc++-v3/include/experimental/fs_dir.h
+===================================================================
+--- a/src/libstdc++-v3/include/experimental/fs_dir.h	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/include/experimental/fs_dir.h	(.../branches/gcc-5-branch)
+@@ -153,8 +153,25 @@
+   };
+ 
+   struct _Dir;
++  class directory_iterator;
+   class recursive_directory_iterator;
+ 
++  struct __directory_iterator_proxy
++  {
++    const directory_entry& operator*() const& noexcept { return _M_entry; }
++
++    directory_entry operator*() && noexcept { return std::move(_M_entry); }
++
++  private:
++    friend class directory_iterator;
++    friend class recursive_directory_iterator;
++
++    explicit
++    __directory_iterator_proxy(const directory_entry& __e) : _M_entry(__e) { }
++
++    directory_entry _M_entry;
++  };
++
+   class directory_iterator
+   {
+   public:
+@@ -177,7 +194,8 @@
+     : directory_iterator(__p, directory_options::none, __ec) { }
+ 
+     directory_iterator(const path& __p,
+-      directory_options __options, error_code& __ec) noexcept
++		       directory_options __options,
++		       error_code& __ec) noexcept
+     : directory_iterator(__p, __options, &__ec) { }
+ 
+     directory_iterator(const directory_iterator& __rhs) = default;
+@@ -186,19 +204,22 @@
+ 
+     ~directory_iterator() = default;
+ 
+-    directory_iterator& operator=(const directory_iterator& __rhs) = default;
+-    directory_iterator& operator=(directory_iterator&& __rhs) noexcept = default;
++    directory_iterator&
++    operator=(const directory_iterator& __rhs) = default;
+ 
++    directory_iterator&
++    operator=(directory_iterator&& __rhs) noexcept = default;
++
+     const directory_entry& operator*() const;
+     const directory_entry* operator->() const { return &**this; }
+     directory_iterator&    operator++();
+     directory_iterator&    increment(error_code& __ec) noexcept;
+ 
+-    directory_iterator operator++(int)
++    __directory_iterator_proxy operator++(int)
+     {
+-      auto __tmp = *this;
++      __directory_iterator_proxy __pr{**this};
+       ++*this;
+-      return __tmp;
++      return __pr;
+     }
+ 
+   private:
+@@ -214,10 +235,12 @@
+   };
+ 
+   inline directory_iterator
+-  begin(directory_iterator __iter) { return __iter; }
++  begin(directory_iterator __iter) noexcept
++  { return __iter; }
+ 
+   inline directory_iterator
+-  end(directory_iterator) { return directory_iterator(); }
++  end(directory_iterator) noexcept
++  { return directory_iterator(); }
+ 
+   inline bool
+   operator==(const directory_iterator& __lhs, const directory_iterator& __rhs)
+@@ -274,18 +297,18 @@
+ 
+     // modifiers
+     recursive_directory_iterator&
+-      operator=(const recursive_directory_iterator& __rhs) noexcept;
++    operator=(const recursive_directory_iterator& __rhs) noexcept;
+     recursive_directory_iterator&
+-      operator=(recursive_directory_iterator&& __rhs) noexcept;
++    operator=(recursive_directory_iterator&& __rhs) noexcept;
+ 
+     recursive_directory_iterator& operator++();
+     recursive_directory_iterator& increment(error_code& __ec) noexcept;
+ 
+-    recursive_directory_iterator operator++(int)
++    __directory_iterator_proxy operator++(int)
+     {
+-      auto __tmp = *this;
++      __directory_iterator_proxy __pr{**this};
+       ++*this;
+-      return __tmp;
++      return __pr;
+     }
+ 
+     void pop();
+@@ -301,15 +324,17 @@
+ 
+     struct _Dir_stack;
+     std::shared_ptr<_Dir_stack> _M_dirs;
+-    directory_options _M_options;
+-    bool _M_pending;
++    directory_options _M_options = {};
++    bool _M_pending = false;
+   };
+ 
+   inline recursive_directory_iterator
+-  begin(recursive_directory_iterator __iter) { return __iter; }
++  begin(recursive_directory_iterator __iter) noexcept
++  { return __iter; }
+ 
+   inline recursive_directory_iterator
+-  end(recursive_directory_iterator) { return recursive_directory_iterator(); }
++  end(recursive_directory_iterator) noexcept
++  { return recursive_directory_iterator(); }
+ 
+   inline bool
+   operator==(const recursive_directory_iterator& __lhs,
 Index: libstdc++-v3/include/experimental/fs_fwd.h
 ===================================================================
 --- a/src/libstdc++-v3/include/experimental/fs_fwd.h	(.../tags/gcc_5_3_0_release)
@@ -2048,6 +2402,171 @@ Index: libstdc++-v3/include/experimental/fs_fwd.h
     * @ingroup experimental
     *
     * Utilities for performing operations on file systems and their components,
+@@ -92,7 +93,7 @@
+   };
+ 
+   constexpr copy_options
+-  operator&(copy_options __x, copy_options __y)
++  operator&(copy_options __x, copy_options __y) noexcept
+   {
+     using __utype = typename std::underlying_type<copy_options>::type;
+     return static_cast<copy_options>(
+@@ -100,7 +101,7 @@
+   }
+ 
+   constexpr copy_options
+-  operator|(copy_options __x, copy_options __y)
++  operator|(copy_options __x, copy_options __y) noexcept
+   {
+     using __utype = typename std::underlying_type<copy_options>::type;
+     return static_cast<copy_options>(
+@@ -108,7 +109,7 @@
+   }
+ 
+   constexpr copy_options
+-  operator^(copy_options __x, copy_options __y)
++  operator^(copy_options __x, copy_options __y) noexcept
+   {
+     using __utype = typename std::underlying_type<copy_options>::type;
+     return static_cast<copy_options>(
+@@ -116,7 +117,7 @@
+   }
+ 
+   constexpr copy_options
+-  operator~(copy_options __x)
++  operator~(copy_options __x) noexcept
+   {
+     using __utype = typename std::underlying_type<copy_options>::type;
+     return static_cast<copy_options>(~static_cast<__utype>(__x));
+@@ -123,15 +124,15 @@
+   }
+ 
+   inline copy_options&
+-  operator&=(copy_options& __x, copy_options __y)
++  operator&=(copy_options& __x, copy_options __y) noexcept
+   { return __x = __x & __y; }
+ 
+   inline copy_options&
+-  operator|=(copy_options& __x, copy_options __y)
++  operator|=(copy_options& __x, copy_options __y) noexcept
+   { return __x = __x | __y; }
+ 
+   inline copy_options&
+-  operator^=(copy_options& __x, copy_options __y)
++  operator^=(copy_options& __x, copy_options __y) noexcept
+   { return __x = __x ^ __y; }
+ 
+ 
+@@ -162,7 +163,7 @@
+   };
+ 
+   constexpr perms
+-  operator&(perms __x, perms __y)
++  operator&(perms __x, perms __y) noexcept
+   {
+     using __utype = typename std::underlying_type<perms>::type;
+     return static_cast<perms>(
+@@ -170,7 +171,7 @@
+   }
+ 
+   constexpr perms
+-  operator|(perms __x, perms __y)
++  operator|(perms __x, perms __y) noexcept
+   {
+     using __utype = typename std::underlying_type<perms>::type;
+     return static_cast<perms>(
+@@ -178,7 +179,7 @@
+   }
+ 
+   constexpr perms
+-  operator^(perms __x, perms __y)
++  operator^(perms __x, perms __y) noexcept
+   {
+     using __utype = typename std::underlying_type<perms>::type;
+     return static_cast<perms>(
+@@ -186,7 +187,7 @@
+   }
+ 
+   constexpr perms
+-  operator~(perms __x)
++  operator~(perms __x) noexcept
+   {
+     using __utype = typename std::underlying_type<perms>::type;
+     return static_cast<perms>(~static_cast<__utype>(__x));
+@@ -193,15 +194,15 @@
+   }
+ 
+   inline perms&
+-  operator&=(perms& __x, perms __y)
++  operator&=(perms& __x, perms __y) noexcept
+   { return __x = __x & __y; }
+ 
+   inline perms&
+-  operator|=(perms& __x, perms __y)
++  operator|=(perms& __x, perms __y) noexcept
+   { return __x = __x | __y; }
+ 
+   inline perms&
+-  operator^=(perms& __x, perms __y)
++  operator^=(perms& __x, perms __y) noexcept
+   { return __x = __x ^ __y; }
+ 
+   // Bitmask type
+@@ -210,7 +211,7 @@
+   };
+ 
+   constexpr directory_options
+-  operator&(directory_options __x, directory_options __y)
++  operator&(directory_options __x, directory_options __y) noexcept
+   {
+     using __utype = typename std::underlying_type<directory_options>::type;
+     return static_cast<directory_options>(
+@@ -218,7 +219,7 @@
+   }
+ 
+   constexpr directory_options
+-  operator|(directory_options __x, directory_options __y)
++  operator|(directory_options __x, directory_options __y) noexcept
+   {
+     using __utype = typename std::underlying_type<directory_options>::type;
+     return static_cast<directory_options>(
+@@ -226,7 +227,7 @@
+   }
+ 
+   constexpr directory_options
+-  operator^(directory_options __x, directory_options __y)
++  operator^(directory_options __x, directory_options __y) noexcept
+   {
+     using __utype = typename std::underlying_type<directory_options>::type;
+     return static_cast<directory_options>(
+@@ -234,7 +235,7 @@
+   }
+ 
+   constexpr directory_options
+-  operator~(directory_options __x)
++  operator~(directory_options __x) noexcept
+   {
+     using __utype = typename std::underlying_type<directory_options>::type;
+     return static_cast<directory_options>(~static_cast<__utype>(__x));
+@@ -241,15 +242,15 @@
+   }
+ 
+   inline directory_options&
+-  operator&=(directory_options& __x, directory_options __y)
++  operator&=(directory_options& __x, directory_options __y) noexcept
+   { return __x = __x & __y; }
+ 
+   inline directory_options&
+-  operator|=(directory_options& __x, directory_options __y)
++  operator|=(directory_options& __x, directory_options __y) noexcept
+   { return __x = __x | __y; }
+ 
+   inline directory_options&
+-  operator^=(directory_options& __x, directory_options __y)
++  operator^=(directory_options& __x, directory_options __y) noexcept
+   { return __x = __x ^ __y; }
+ 
+   typedef chrono::time_point<chrono::system_clock> file_time_type;
 Index: libstdc++-v3/include/experimental/string_view
 ===================================================================
 --- a/src/libstdc++-v3/include/experimental/string_view	(.../tags/gcc_5_3_0_release)
@@ -3395,7 +3914,139 @@ Index: libstdc++-v3/ChangeLog
 ===================================================================
 --- a/src/libstdc++-v3/ChangeLog	(.../tags/gcc_5_3_0_release)
 +++ b/src/libstdc++-v3/ChangeLog	(.../branches/gcc-5-branch)
-@@ -1,3 +1,198 @@
+@@ -1,3 +1,330 @@
++2016-05-26  Jonathan Wakely  <jwakely@redhat.com>
++
++	Backport from mainline
++	2016-04-24  Jonathan Wakely  <jwakely@redhat.com>
++
++	PR libstdc++/70762
++	* testsuite/util/testsuite_fs.h (__gnu_test::nonexistent_path): Use
++	static counter to return a different path on every call.
++
++	* testsuite/experimental/filesystem/path/native/string.cc: Add
++	dg-require-filesystem-ts directive.
++
++2016-05-25  Jonathan Wakely  <jwakely@redhat.com>
++
++	Backport from mainline
++	2016-04-20  Jonathan Wakely  <jwakely@redhat.com>
++
++	PR libstdc++/69703
++	* src/c++11/codecvt.cc (__codecvt_utf8_base<char16_t>::do_in,
++	__codecvt_utf8_utf16_base<char16_t>::do_in): Fix mask operations.
++
++	Backport from mainline
++	2016-04-19  Jonathan Wakely  <jwakely@redhat.com>
++
++	PR libstdc++/69703
++	* src/c++11/codecvt.cc (__codecvt_utf8_base<char16_t>::do_in)):
++	Override endianness bit in mode.
++	* testsuite/22_locale/codecvt/codecvt_utf8/69703.cc: New test.
++	* testsuite/22_locale/codecvt/codecvt_utf8_utf16/66855.cc: Test
++	that little_endian mode is ignored.
++	* testsuite/experimental/filesystem/path/native/string.cc: New test.
++
++2016-05-25  Jonathan Wakely  <jwakely@redhat.com>
++
++	Backport from mainline
++	2016-05-10  Jonathan Wakely  <jwakely@redhat.com>
++
++	* include/experimental/bits/fs_dir.h (begin, end): Add noexcept.
++	* testsuite/experimental/filesystem/iterators/directory_iterator.cc:
++	Test begin and end functions.
++	* testsuite/experimental/filesystem/iterators/
++	recursive_directory_iterator.cc: Likewise.
++
++2016-05-25  Jonathan Wakely  <jwakely@redhat.com>
++
++	Backport from mainline
++	2016-05-10  Jonathan Wakely  <jwakely@redhat.com>
++
++	PR libstdc++/71038
++	* src/filesystem/ops.cc (do_copy_file): Fix backwards conditions.
++	* testsuite/experimental/filesystem/operations/copy_file.cc: New test.
++
++2016-05-25  Jonathan Wakely  <jwakely@redhat.com>
++
++	Backport from mainline
++	2016-05-10  Jonathan Wakely  <jwakely@redhat.com>
++
++	* include/experimental/bits/fs_dir.h (__directory_iterator_proxy):
++	Overload operator* to move from rvalues.
++
++2016-05-25  Jonathan Wakely  <jwakely@redhat.com>
++
++	Backport from mainline
++	2016-05-10  Jonathan Wakely  <jwakely@redhat.com>
++
++	PR libstdc++/71036
++	* src/filesystem/ops.cc (create_dir): Handle EEXIST from mkdir.
++	* testsuite/experimental/filesystem/operations/create_directory.cc:
++	New test.
++
++2016-05-25  Jonathan Wakely  <jwakely@redhat.com>
++
++	Backport from mainline
++	2016-05-10  Jonathan Wakely  <jwakely@redhat.com>
++
++	PR libstdc++/71037
++	* src/filesystem/ops.cc (canonical(const path&, const path&)): Add
++	base path to exception.
++	* testsuite/experimental/filesystem/operations/canonical.cc: Test
++	paths contained in exception.
++
++2016-05-25  Jonathan Wakely  <jwakely@redhat.com>
++
++	Backport from mainline
++	2016-05-10  Jonathan Wakely  <jwakely@redhat.com>
++
++	PR libstdc++/71005
++	* include/experimental/bits/fs_dir.h (__directory_iterator_proxy):
++	New type.
++	(directory_iterator::operator++(int)): Return proxy.
++	(recursive_directory_iterator::operator++(int)): Likewise.
++	* testsuite/experimental/filesystem/iterators/directory_iterator.cc:
++	Test post-increment.
++	* testsuite/experimental/filesystem/iterators/
++	recursive_directory_iterator.cc: Likewise.
++
++2016-05-25  Jonathan Wakely  <jwakely@redhat.com>
++
++	Backport from mainline
++	2016-05-09  Jonathan Wakely  <jwakely@redhat.com>
++
++	PR libstdc++/71004
++	* include/experimental/bits/fs_dir.h (recursive_directory_iterator):
++	Initialize scalar member variables in default constructor.
++	* testsuite/experimental/filesystem/iterators/
++	recursive_directory_iterator.cc: Test default construction.
++
++2016-05-25  Jonathan Wakely  <jwakely@redhat.com>
++
++	Backport from mainline
++	2016-04-19  Jonathan Wakely  <jwakely@redhat.com>
++
++	PR libstdc++/70609
++	* src/filesystem/ops.cc (close_fd): New function.
++	(do_copy_file): Set permissions before copying file contents. Check
++	result of closing file descriptors. Don't copy streambuf when file
++	is empty.
++	(copy(const path&, const path&, copy_options, error_code&)): Use
++	lstat for source file when copy_symlinks is set.
++	* testsuite/experimental/filesystem/operations/copy.cc: Test copy().
++
++2016-05-25  Jonathan Wakely  <jwakely@redhat.com>
++
++	Backport from mainline
++	2016-04-19  Jonathan Wakely  <jwakely@redhat.com>
++
++	* include/experimental/bits/fs_fwd.h (operator&, operator|, operator^,
++	operator~ operator&=, operator|=, operator^=): Add noexcept to
++	overloaded operators for copy_options, perms and directory_options.
++	* src/filesystem/ops.cc (make_file_type, make_file_status,
++	is_not_found_errno, file_time): Add noexcept.
++
 +2016-04-20  Jonathan Wakely  <jwakely@redhat.com>
 +
 +	Backport from mainline
@@ -3929,6 +4580,154 @@ Index: libstdc++-v3/testsuite/30_threads/thread/70503.cc
 +
 +  std::thread{}.detach();  // ensure libstdc++.a(thread.o) is linked in
 +}
+Index: libstdc++-v3/testsuite/22_locale/codecvt/codecvt_utf8_utf16/66855.cc
+===================================================================
+--- a/src/libstdc++-v3/testsuite/22_locale/codecvt/codecvt_utf8_utf16/66855.cc	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/testsuite/22_locale/codecvt/codecvt_utf8_utf16/66855.cc	(.../branches/gcc-5-branch)
+@@ -45,8 +45,35 @@
+   VERIFY( buf[3] == utf16[3] );
+ }
+ 
++void
++test02()
++{
++  // Endianness flag should make no difference.
++  std::codecvt_utf8_utf16<char16_t, 0x10ffff, std::little_endian> cvt;
++  char16_t utf16[] = u"\ub098\ub294\ud0dc\uc624";
++  const char16_t* nf16;
++  char utf8[16];
++  char* nt8;
++  std::mbstate_t st{};
++  auto res = cvt.out(st, utf16, utf16+4, nf16, utf8, utf8+16, nt8);
++  VERIFY( res == std::codecvt_base::ok );
++
++  st = {};
++  char16_t buf[4] = {};
++  const char* nf8 = nt8;
++  char16_t* nt16;
++  res = cvt.in(st, utf8, nf8, nf8, buf, buf+4, nt16);
++  VERIFY( res == std::codecvt_base::ok );
++  VERIFY( nt16 == buf+4 );
++  VERIFY( buf[0] == utf16[0] );
++  VERIFY( buf[1] == utf16[1] );
++  VERIFY( buf[2] == utf16[2] );
++  VERIFY( buf[3] == utf16[3] );
++}
++
+ int
+ main()
+ {
+   test01();
++  test02();
+ }
+Index: libstdc++-v3/testsuite/22_locale/codecvt/codecvt_utf8/69703.cc
+===================================================================
+--- a/src/libstdc++-v3/testsuite/22_locale/codecvt/codecvt_utf8/69703.cc	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/testsuite/22_locale/codecvt/codecvt_utf8/69703.cc	(.../branches/gcc-5-branch)
+@@ -0,0 +1,103 @@
++// Copyright (C) 2016 Free Software Foundation, Inc.
++//
++// This file is part of the GNU ISO C++ Library.  This library is free
++// software; you can redistribute it and/or modify it under the
++// terms of the GNU General Public License as published by the
++// Free Software Foundation; either version 3, or (at your option)
++// any later version.
++
++// This library is distributed in the hope that it will be useful,
++// but WITHOUT ANY WARRANTY; without even the implied warranty of
++// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++// GNU General Public License for more details.
++
++// You should have received a copy of the GNU General Public License along
++// with this library; see the file COPYING3.  If not see
++// <http://www.gnu.org/licenses/>.
++
++// { dg-options "-std=gnu++11" }
++
++#include <codecvt>
++#include <testsuite_hooks.h>
++
++void
++test01()
++{
++  bool test __attribute__((unused)) = true;
++
++  const char out[] = "abc";
++  char16_t in[4];
++  std::codecvt_utf8<char16_t> cvt;
++  std::mbstate_t st;
++  const char* no;
++  char16_t* ni;
++  auto res = cvt.in(st, out, out+3, no, in, in+3, ni);
++  VERIFY( res == std::codecvt_base::ok );
++  VERIFY( in[0] == u'a' );
++  VERIFY( in[1] == u'b' );
++  VERIFY( in[2] == u'c' );
++}
++
++void
++test02()
++{
++  bool test __attribute__((unused)) = true;
++
++  const char out[] = "abc";
++  char16_t in[4];
++  std::codecvt_utf8<char16_t, 0x10ffff, std::little_endian> cvt;
++  std::mbstate_t st;
++  const char* no;
++  char16_t* ni;
++  auto res = cvt.in(st, out, out+3, no, in, in+3, ni);
++  VERIFY( res == std::codecvt_base::ok );
++  VERIFY( in[0] == u'a' );
++  VERIFY( in[1] == u'b' );
++  VERIFY( in[2] == u'c' );
++}
++
++void
++test03()
++{
++  bool test __attribute__((unused)) = true;
++
++  const char out[] = "abc";
++  char32_t in[4];
++  std::codecvt_utf8<char32_t> cvt;
++  std::mbstate_t st;
++  const char* no;
++  char32_t* ni;
++  auto res = cvt.in(st, out, out+3, no, in, in+3, ni);
++  VERIFY( res == std::codecvt_base::ok );
++  VERIFY( in[0] == U'a' );
++  VERIFY( in[1] == U'b' );
++  VERIFY( in[2] == U'c' );
++}
++
++
++void
++test04()
++{
++  bool test __attribute__((unused)) = true;
++
++  const char out[] = "abc";
++  char32_t in[4];
++  std::codecvt_utf8<char32_t, 0x10ffff, std::little_endian> cvt;
++  std::mbstate_t st;
++  const char* no;
++  char32_t* ni;
++  auto res = cvt.in(st, out, out+3, no, in, in+3, ni);
++  VERIFY( res == std::codecvt_base::ok );
++  VERIFY( in[0] == U'a' );
++  VERIFY( in[1] == U'b' );
++  VERIFY( in[2] == U'c' );
++}
++
++int
++main()
++{
++  test01();
++  test02();
++  test01();
++  test02();
++}
 Index: libstdc++-v3/testsuite/21_strings/basic_string/cons/char/69092.cc
 ===================================================================
 --- a/src/libstdc++-v3/testsuite/21_strings/basic_string/cons/char/69092.cc	(.../tags/gcc_5_3_0_release)
@@ -4103,6 +4902,611 @@ Index: libstdc++-v3/testsuite/26_numerics/headers/cmath/60637.cc
 +{
 +  test01();
 +}
+Index: libstdc++-v3/testsuite/experimental/filesystem/operations/canonical.cc
+===================================================================
+--- a/src/libstdc++-v3/testsuite/experimental/filesystem/operations/canonical.cc	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/testsuite/experimental/filesystem/operations/canonical.cc	(.../branches/gcc-5-branch)
+@@ -59,8 +59,28 @@
+   VERIFY( !ec );
+ }
+ 
++void
++test02()
++{
++#if __cpp_exceptions
++  bool test __attribute__((unused)) = false;
++
++  fs::path p = "rel", base = __gnu_test::nonexistent_path();
++  fs::path e1, e2;
++  try {
++    canonical(p, base);
++  } catch (const fs::filesystem_error& e) {
++    e1 = e.path1();
++    e2 = e.path2();
++  }
++  VERIFY( e1 == p );
++  VERIFY( e2 == base );
++#endif
++}
++
+ int
+ main()
+ {
+   test01();
++  test02();
+ }
+Index: libstdc++-v3/testsuite/experimental/filesystem/operations/create_directory.cc
+===================================================================
+--- a/src/libstdc++-v3/testsuite/experimental/filesystem/operations/create_directory.cc	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/testsuite/experimental/filesystem/operations/create_directory.cc	(.../branches/gcc-5-branch)
+@@ -0,0 +1,63 @@
++// Copyright (C) 2016 Free Software Foundation, Inc.
++//
++// This file is part of the GNU ISO C++ Library.  This library is free
++// software; you can redistribute it and/or modify it under the
++// terms of the GNU General Public License as published by the
++// Free Software Foundation; either version 3, or (at your option)
++// any later version.
++
++// This library is distributed in the hope that it will be useful,
++// but WITHOUT ANY WARRANTY; without even the implied warranty of
++// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++// GNU General Public License for more details.
++
++// You should have received a copy of the GNU General Public License along
++// with this library; see the file COPYING3.  If not see
++// <http://www.gnu.org/licenses/>.
++
++// { dg-options "-std=gnu++11 -lstdc++fs" }
++// { dg-require-filesystem-ts "" }
++
++#include <experimental/filesystem>
++#include <testsuite_hooks.h>
++#include <testsuite_fs.h>
++
++namespace fs = std::experimental::filesystem;
++
++void
++test01()
++{
++  bool test __attribute__((unused)) = false;
++  std::error_code ec;
++
++  // Test empty path.
++  fs::path p;
++  bool b = create_directory( p, ec );
++  VERIFY( ec );
++  VERIFY( !b );
++
++  // Test non-existent path
++  p = __gnu_test::nonexistent_path();
++  VERIFY( !exists(p) );
++
++  b = create_directory(p, ec); // create the directory once
++  VERIFY( !ec );
++  VERIFY( b );
++  VERIFY( exists(p) );
++
++  // Test existing path (libstdc++/71036).
++  b = create_directory(p, ec);
++  VERIFY( !ec );
++  VERIFY( !b );
++  b = create_directory(p);
++  VERIFY( !ec );
++  VERIFY( !b );
++
++  remove_all(p, ec);
++}
++
++int
++main()
++{
++  test01();
++}
+Index: libstdc++-v3/testsuite/experimental/filesystem/operations/copy_file.cc
+===================================================================
+--- a/src/libstdc++-v3/testsuite/experimental/filesystem/operations/copy_file.cc	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/testsuite/experimental/filesystem/operations/copy_file.cc	(.../branches/gcc-5-branch)
+@@ -0,0 +1,82 @@
++// Copyright (C) 2016 Free Software Foundation, Inc.
++//
++// This file is part of the GNU ISO C++ Library.  This library is free
++// software; you can redistribute it and/or modify it under the
++// terms of the GNU General Public License as published by the
++// Free Software Foundation; either version 3, or (at your option)
++// any later version.
++
++// This library is distributed in the hope that it will be useful,
++// but WITHOUT ANY WARRANTY; without even the implied warranty of
++// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++// GNU General Public License for more details.
++
++// You should have received a copy of the GNU General Public License along
++// with this library; see the file COPYING3.  If not see
++// <http://www.gnu.org/licenses/>.
++
++// { dg-options "-std=gnu++11 -lstdc++fs" }
++// { dg-require-filesystem-ts "" }
++
++// 15.4 Copy [fs.op.copy_file]
++
++#include <experimental/filesystem>
++#include <fstream>
++#include <testsuite_fs.h>
++#include <testsuite_hooks.h>
++
++void
++test01()
++{
++  bool test __attribute__((unused)) = false;
++  using std::experimental::filesystem::copy_options;
++  std::error_code ec;
++
++  auto from = __gnu_test::nonexistent_path();
++  auto to = __gnu_test::nonexistent_path();
++
++  // test non-existent file
++  bool b = copy_file(from, to, ec);
++  VERIFY( !b );
++  VERIFY( ec );
++  VERIFY( !exists(to) );
++
++  // test empty file
++  std::ofstream{from.native()};
++  VERIFY( exists(from) );
++  VERIFY( file_size(from) == 0 );
++
++  b = copy_file(from, to);
++  VERIFY( b );
++  VERIFY( exists(to) );
++  VERIFY( file_size(to) == 0 );
++  remove(to);
++  VERIFY( !exists(to) );
++  b = copy_file(from, to, copy_options::none, ec);
++  VERIFY( b );
++  VERIFY( !ec );
++  VERIFY( exists(to) );
++  VERIFY( file_size(to) == 0 );
++
++  std::ofstream{from.native()} << "Hello, filesystem!";
++  VERIFY( file_size(from) != 0 );
++  remove(to);
++  VERIFY( !exists(to) );
++  b = copy_file(from, to);
++  VERIFY( b );
++  VERIFY( exists(to) );
++  VERIFY( file_size(to) == file_size(from) );
++  remove(to);
++  VERIFY( !exists(to) );
++  b = copy_file(from, to);
++  VERIFY( b );
++  VERIFY( !ec );
++  VERIFY( exists(to) );
++  VERIFY( file_size(to) == file_size(from) );
++}
++
++int
++main()
++{
++  test01();
++}
+Index: libstdc++-v3/testsuite/experimental/filesystem/operations/copy.cc
+===================================================================
+--- a/src/libstdc++-v3/testsuite/experimental/filesystem/operations/copy.cc	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/testsuite/experimental/filesystem/operations/copy.cc	(.../branches/gcc-5-branch)
+@@ -21,39 +21,135 @@
+ // 15.3 Copy [fs.op.copy]
+ 
+ #include <experimental/filesystem>
++#include <fstream>
+ #include <testsuite_fs.h>
+ #include <testsuite_hooks.h>
+ 
+-using std::experimental::filesystem::path;
++namespace fs = std::experimental::filesystem;
+ 
++// Test error conditions.
+ void
+ test01()
+ {
+   bool test __attribute__((unused)) = false;
+ 
+-  for (const path& p : __gnu_test::test_paths)
+-    VERIFY( absolute(p).is_absolute() );
++  auto p = __gnu_test::nonexistent_path();
++  std::error_code ec;
++
++  VERIFY( !fs::exists(p) );
++  fs::copy(p, ".", fs::copy_options::none, ec);
++  VERIFY( ec );
++
++  ec.clear();
++  fs::copy(".", ".", fs::copy_options::none, ec);
++  VERIFY( ec );
++
++  std::ofstream{p.native()};
++  VERIFY( fs::is_directory(".") );
++  VERIFY( fs::is_regular_file(p) );
++  ec.clear();
++  fs::copy(".", p, fs::copy_options::none, ec);
++  VERIFY( ec );
++
++  remove(p, ec);
+ }
+ 
++// Test is_symlink(f) case.
+ void
+ test02()
+ {
+   bool test __attribute__((unused)) = false;
+ 
+-  path p1("/");
+-  VERIFY( absolute(p1) == p1 );
+-  VERIFY( absolute(p1, "/bar") == p1 );
+-  path p2("/foo");
+-  VERIFY( absolute(p2) == p2 );
+-  VERIFY( absolute(p2, "/bar") == p2 );
+-  path p3("foo");
+-  VERIFY( absolute(p3) != p3 );
+-  VERIFY( absolute(p3, "/bar") == "/bar/foo" );
++  auto from = __gnu_test::nonexistent_path();
++  auto to = __gnu_test::nonexistent_path();
++  std::error_code ec;
++
++  fs::create_symlink(".", from, ec);
++  VERIFY( !ec );
++  VERIFY( fs::exists(from) );
++
++  fs::copy(from, to, fs::copy_options::skip_symlinks, ec);
++  VERIFY( !ec );
++  VERIFY( !fs::exists(to) );
++
++  fs::copy(from, to, fs::copy_options::skip_symlinks, ec);
++  VERIFY( !ec );
++  VERIFY( !fs::exists(to) );
++
++  fs::copy(from, to,
++           fs::copy_options::skip_symlinks|fs::copy_options::copy_symlinks,
++           ec);
++  VERIFY( !ec );
++  VERIFY( !fs::exists(to) );
++
++  fs::copy(from, to, fs::copy_options::copy_symlinks, ec);
++  VERIFY( !ec );
++  VERIFY( fs::exists(to) );
++
++  fs::copy(from, to, fs::copy_options::copy_symlinks, ec);
++  VERIFY( ec );
++
++  remove(from, ec);
++  remove(to, ec);
+ }
+ 
++// Test is_regular_file(f) case.
++void
++test03()
++{
++  bool test __attribute__((unused)) = false;
++
++  auto from = __gnu_test::nonexistent_path();
++  auto to = __gnu_test::nonexistent_path();
++
++  // test empty file
++  std::ofstream{from.native()};
++  VERIFY( fs::exists(from) );
++  VERIFY( fs::file_size(from) == 0 );
++  fs::copy(from, to);
++  VERIFY( fs::exists(to) );
++  VERIFY( fs::file_size(to) == 0 );
++
++  remove(to);
++  VERIFY( !fs::exists(to) );
++  std::ofstream{from.native()} << "Hello, filesystem!";
++  VERIFY( fs::file_size(from) != 0 );
++  fs::copy(from, to);
++  VERIFY( fs::exists(to) );
++  VERIFY( fs::file_size(to) == fs::file_size(from) );
++}
++
++// Test is_directory(f) case.
++void
++test04()
++{
++  bool test __attribute__((unused)) = false;
++
++  auto from = __gnu_test::nonexistent_path();
++  auto to = __gnu_test::nonexistent_path();
++  std::error_code ec;
++
++}
++
++// Test no-op cases.
++void
++test05()
++{
++  bool test __attribute__((unused)) = false;
++
++  auto to = __gnu_test::nonexistent_path();
++  std::error_code ec;
++
++  fs::copy("/", to, fs::copy_options::create_symlinks, ec);
++  VERIFY( !ec );
++}
++
+ int
+ main()
+ {
+   test01();
+   test02();
++  test03();
++  test04();
++  test05();
+ }
+Index: libstdc++-v3/testsuite/experimental/filesystem/iterators/directory_iterator.cc
+===================================================================
+--- a/src/libstdc++-v3/testsuite/experimental/filesystem/iterators/directory_iterator.cc	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/testsuite/experimental/filesystem/iterators/directory_iterator.cc	(.../branches/gcc-5-branch)
+@@ -70,8 +70,79 @@
+   remove_all(p, ec);
+ }
+ 
++void
++test02()
++{
++  bool test __attribute__((unused)) = false;
++
++  std::error_code ec;
++  const auto p = __gnu_test::nonexistent_path();
++  create_directory(p, fs::current_path(), ec);
++  create_directory_symlink(p, p / "l", ec);
++  VERIFY( !ec );
++
++  // Test post-increment (libstdc++/71005)
++  auto iter = fs::directory_iterator(p, ec);
++  VERIFY( !ec );
++  VERIFY( iter != fs::directory_iterator() );
++  const auto entry1 = *iter;
++  const auto entry2 = *iter++;
++  VERIFY( entry1 == entry2 );
++  VERIFY( entry1.path() == p/"l" );
++  VERIFY( iter == fs::directory_iterator() );
++
++  remove_all(p, ec);
++}
++
++void
++test03()
++{
++  bool test __attribute__((unused)) = false;
++
++  std::error_code ec;
++  const auto p = __gnu_test::nonexistent_path();
++  create_directories(p / "longer_than_small_string_buffer", ec);
++  VERIFY( !ec );
++
++  // Test for no reallocation on each dereference (this is a GNU extension)
++  auto iter = fs::directory_iterator(p, ec);
++  const auto* s1 = iter->path().c_str();
++  const auto* s2 = iter->path().c_str();
++  VERIFY( s1 == s2 );
++
++  remove_all(p, ec);
++}
++
++void
++test04()
++{
++  bool test __attribute__((unused)) = false;
++
++  const fs::directory_iterator it;
++  VERIFY( it == fs::directory_iterator() );
++}
++
++void
++test05()
++{
++  bool test __attribute__((unused)) = false;
++
++  auto p = __gnu_test::nonexistent_path();
++  create_directory(p);
++  create_directory_symlink(p, p / "l");
++  fs::directory_iterator it(p), endit;
++  VERIFY( begin(it) == it );
++  static_assert( noexcept(begin(it)), "begin is noexcept" );
++  VERIFY( end(it) == endit );
++  static_assert( noexcept(end(it)), "end is noexcept" );
++}
++
+ int
+ main()
+ {
+   test01();
++  test02();
++  test03();
++  test04();
++  test05();
+ }
+Index: libstdc++-v3/testsuite/experimental/filesystem/iterators/recursive_directory_iterator.cc
+===================================================================
+--- a/src/libstdc++-v3/testsuite/experimental/filesystem/iterators/recursive_directory_iterator.cc	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/testsuite/experimental/filesystem/iterators/recursive_directory_iterator.cc	(.../branches/gcc-5-branch)
+@@ -97,8 +97,83 @@
+   remove_all(p, ec);
+ }
+ 
++void
++test02()
++{
++  bool test __attribute__((unused)) = false;
++
++  std::error_code ec;
++  const auto p = __gnu_test::nonexistent_path();
++  create_directories(p / "d1/d2", ec);
++  VERIFY( !ec );
++
++  // Test post-increment (libstdc++/71005)
++  auto iter = fs::recursive_directory_iterator(p, ec);
++  VERIFY( !ec );
++  VERIFY( iter != fs::recursive_directory_iterator() );
++  const auto entry1 = *iter;
++  const auto entry2 = *iter++;
++  VERIFY( entry1 == entry2 );
++  VERIFY( entry1.path() == p/"d1" );
++  const auto entry3 = *iter;
++  const auto entry4 = *iter++;
++  VERIFY( entry3 == entry4 );
++  VERIFY( entry3.path() == p/"d1/d2" );
++  VERIFY( iter == fs::recursive_directory_iterator() );
++
++  remove_all(p, ec);
++}
++
++void
++test03()
++{
++  bool test __attribute__((unused)) = false;
++
++  std::error_code ec;
++  const auto p = __gnu_test::nonexistent_path();
++  create_directories(p / "longer_than_small_string_buffer", ec);
++  VERIFY( !ec );
++
++  // Test for no reallocation on each dereference (this is a GNU extension)
++  auto iter = fs::recursive_directory_iterator(p, ec);
++  const auto* s1 = iter->path().c_str();
++  const auto* s2 = iter->path().c_str();
++  VERIFY( s1 == s2 );
++
++  remove_all(p, ec);
++}
++
++void
++test04()
++{
++  bool test __attribute__((unused)) = false;
++
++  // libstdc++/71004
++  const fs::recursive_directory_iterator it;
++  VERIFY( it == fs::recursive_directory_iterator() );
++}
++
++void
++test05()
++{
++  bool test __attribute__((unused)) = false;
++
++  auto p = __gnu_test::nonexistent_path();
++  create_directory(p);
++  create_directory_symlink(p, p / "l");
++  fs::recursive_directory_iterator it(p), endit;
++  VERIFY( begin(it) == it );
++  static_assert( noexcept(begin(it)), "begin is noexcept" );
++  VERIFY( end(it) == endit );
++  static_assert( noexcept(end(it)), "end is noexcept" );
++}
++
+ int
+ main()
+ {
+   test01();
++  test02();
++  test03();
++  test04();
++  test05();
+ }
+Index: libstdc++-v3/testsuite/experimental/filesystem/path/native/string.cc
+===================================================================
+--- a/src/libstdc++-v3/testsuite/experimental/filesystem/path/native/string.cc	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/testsuite/experimental/filesystem/path/native/string.cc	(.../branches/gcc-5-branch)
+@@ -0,0 +1,73 @@
++// Copyright (C) 2016 Free Software Foundation, Inc.
++//
++// This file is part of the GNU ISO C++ Library.  This library is free
++// software; you can redistribute it and/or modify it under the
++// terms of the GNU General Public License as published by the
++// Free Software Foundation; either version 3, or (at your option)
++// any later version.
++
++// This library is distributed in the hope that it will be useful,
++// but WITHOUT ANY WARRANTY; without even the implied warranty of
++// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++// GNU General Public License for more details.
++
++// You should have received a copy of the GNU General Public License along
++// with this library; see the file COPYING3.  If not see
++// <http://www.gnu.org/licenses/>.
++
++// { dg-options "-std=gnu++11 -lstdc++fs" }
++// { dg-require-filesystem-ts "" }
++
++#include <experimental/filesystem>
++#include <string>
++#include <testsuite_hooks.h>
++
++void
++test01()
++{
++  bool test __attribute__((unused)) = true;
++
++  using namespace std::experimental::filesystem;
++  const std::string s = "abc";
++  path p(s);
++
++  VERIFY( p.native() == s );
++  VERIFY( p.c_str() == s );
++  VERIFY( static_cast<std::string>(p) == s );
++
++  std::string s2 = p; // implicit conversion
++  VERIFY( s2 == p.native() );
++}
++
++void
++test02()
++{
++  bool test __attribute__((unused)) = true;
++
++  using namespace std::experimental::filesystem;
++  const char* s = "abc";
++  path p(s);
++
++  auto str = p.string<char>();
++  VERIFY( str == u"abc" );
++  VERIFY( str == p.string() );
++
++  auto strw = p.string<wchar_t>();
++  VERIFY( strw == L"abc" );
++  VERIFY( strw == p.wstring() );
++
++  auto str16 = p.string<char16_t>();
++  VERIFY( str16 == u"abc" );
++  VERIFY( str16 == p.u16string() );
++
++  auto str32 = p.string<char32_t>();
++  VERIFY( str32 == U"abc" );
++  VERIFY( str32 == p.u32string() );
++}
++
++int
++main()
++{
++  test01();
++  test02();
++}
+Index: libstdc++-v3/testsuite/util/testsuite_fs.h
+===================================================================
+--- a/src/libstdc++-v3/testsuite/util/testsuite_fs.h	(.../tags/gcc_5_3_0_release)
++++ b/src/libstdc++-v3/testsuite/util/testsuite_fs.h	(.../branches/gcc-5-branch)
+@@ -83,7 +83,9 @@
+     p = tmp;
+ #else
+     char buf[64];
+-    std::sprintf(buf, "test.%lu", (unsigned long)::getpid());
++    static int counter;
++    std::sprintf(buf, "filesystem-ts-test.%d.%lu", counter++,
++		 (unsigned long) ::getpid());
+     p = buf;
+ #endif
+     return p;
 Index: libstdc++-v3/testsuite/20_util/enable_shared_from_this/56383.cc
 ===================================================================
 --- a/src/libstdc++-v3/testsuite/20_util/enable_shared_from_this/56383.cc	(.../tags/gcc_5_3_0_release)
@@ -5751,6 +7155,19 @@ Index: gcc/targhooks.c
  
    return false;
  }
+Index: gcc/regstat.c
+===================================================================
+--- a/src/gcc/regstat.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/regstat.c	(.../branches/gcc-5-branch)
+@@ -458,7 +458,7 @@
+       struct df_insn_info *insn_info = DF_INSN_INFO_GET (insn);
+       unsigned int regno;
+ 
+-      if (!INSN_P (insn))
++      if (!NONDEBUG_INSN_P (insn))
+ 	continue;
+ 
+       /* Process the defs.  */
 Index: gcc/tree-ssa-uninit.c
 ===================================================================
 --- a/src/gcc/tree-ssa-uninit.c	(.../tags/gcc_5_3_0_release)
@@ -6175,6 +7592,28 @@ Index: gcc/c-family/c-pragma.c
      cpp_register_deferred_pragma (parse_in, "cilk", "grainsize",
  				  PRAGMA_CILK_GRAINSIZE, true, false);
  
+Index: gcc/ipa-polymorphic-call.c
+===================================================================
+--- a/src/gcc/ipa-polymorphic-call.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/ipa-polymorphic-call.c	(.../branches/gcc-5-branch)
+@@ -528,7 +528,7 @@
+ tree
+ inlined_polymorphic_ctor_dtor_block_p (tree block, bool check_clones)
+ {
+-  tree fn = BLOCK_ABSTRACT_ORIGIN (block);
++  tree fn = block_ultimate_origin (block);
+   if (fn == NULL || TREE_CODE (fn) != FUNCTION_DECL)
+     return NULL_TREE;
+ 
+@@ -1184,7 +1184,7 @@
+   for (tree block = gimple_block (stmt); block && TREE_CODE (block) == BLOCK;
+        block = BLOCK_SUPERCONTEXT (block))
+     if (BLOCK_ABSTRACT_ORIGIN (block)
+-	&& TREE_CODE (BLOCK_ABSTRACT_ORIGIN (block)) == FUNCTION_DECL)
++	&& TREE_CODE (block_ultimate_origin (block)) == FUNCTION_DECL)
+       return inlined_polymorphic_ctor_dtor_block_p (block, false);
+   return (TREE_CODE (TREE_TYPE (current_function_decl)) == METHOD_TYPE
+ 	  && (DECL_CXX_CONSTRUCTOR_P (current_function_decl)
 Index: gcc/java/decl.c
 ===================================================================
 --- a/src/gcc/java/decl.c	(.../tags/gcc_5_3_0_release)
@@ -6898,7 +8337,7 @@ Index: gcc/DATESTAMP
 +++ b/src/gcc/DATESTAMP	(.../branches/gcc-5-branch)
 @@ -1 +1 @@
 -20151204
-+20160519
++20160528
 Index: gcc/postreload.c
 ===================================================================
 --- a/src/gcc/postreload.c	(.../tags/gcc_5_3_0_release)
@@ -7178,6 +8617,79 @@ Index: gcc/tree-scalar-evolution.c
        break;
  
      CASE_CONVERT:
+Index: gcc/rtlanal.c
+===================================================================
+--- a/src/gcc/rtlanal.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/rtlanal.c	(.../branches/gcc-5-branch)
+@@ -1325,7 +1325,7 @@
+ 
+   if (GET_CODE (dst) == ZERO_EXTRACT)
+     return rtx_equal_p (XEXP (dst, 0), src)
+-	   && ! BYTES_BIG_ENDIAN && XEXP (dst, 2) == const0_rtx
++	   && !BITS_BIG_ENDIAN && XEXP (dst, 2) == const0_rtx
+ 	   && !side_effects_p (src);
+ 
+   if (GET_CODE (dst) == STRICT_LOW_PART)
+Index: gcc/configure
+===================================================================
+--- a/src/gcc/configure	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/configure	(.../branches/gcc-5-branch)
+@@ -16134,7 +16134,7 @@
+ 	if $NM -V 2>&1 | $GREP 'GNU' > /dev/null; then
+ 	  export_symbols_cmds='$NM -Bpg $libobjs $convenience | awk '\''{ if (((\$ 2 == "T") || (\$ 2 == "D") || (\$ 2 == "B") || (\$ 2 == "W")) && (substr(\$ 3,1,1) != ".")) { print \$ 3 } }'\'' | sort -u > $export_symbols'
+ 	else
+-	  export_symbols_cmds='$NM -BCpg $libobjs $convenience | awk '\''{ if (((\$ 2 == "T") || (\$ 2 == "D") || (\$ 2 == "B")) && (substr(\$ 3,1,1) != ".")) { print \$ 3 } }'\'' | sort -u > $export_symbols'
++	  export_symbols_cmds='$NM -BCpg $libobjs $convenience | awk '\''{ if (((\$ 2 == "T") || (\$ 2 == "D") || (\$ 2 == "B") || (\$ 2 == "L")) && (substr(\$ 3,1,1) != ".")) { print \$ 3 } }'\'' | sort -u > $export_symbols'
+ 	fi
+ 	aix_use_runtimelinking=no
+ 
+@@ -20620,7 +20620,7 @@
+     if $NM -V 2>&1 | $GREP 'GNU' > /dev/null; then
+       export_symbols_cmds_CXX='$NM -Bpg $libobjs $convenience | awk '\''{ if (((\$ 2 == "T") || (\$ 2 == "D") || (\$ 2 == "B") || (\$ 2 == "W")) && (substr(\$ 3,1,1) != ".")) { print \$ 3 } }'\'' | sort -u > $export_symbols'
+     else
+-      export_symbols_cmds_CXX='$NM -BCpg $libobjs $convenience | awk '\''{ if (((\$ 2 == "T") || (\$ 2 == "D") || (\$ 2 == "B")) && (substr(\$ 3,1,1) != ".")) { print \$ 3 } }'\'' | sort -u > $export_symbols'
++      export_symbols_cmds_CXX='$NM -BCpg $libobjs $convenience | awk '\''{ if (((\$ 2 == "T") || (\$ 2 == "D") || (\$ 2 == "B") || (\$ 2 == "L")) && (substr(\$ 3,1,1) != ".")) { print \$ 3 } }'\'' | sort -u > $export_symbols'
+     fi
+     ;;
+   pw32*)
+@@ -23180,6 +23180,37 @@
+ _ACEOF
+ 
+ 
++{ $as_echo "$as_me:${as_lineno-$LINENO}: checking assembler for stabs directive" >&5
++$as_echo_n "checking assembler for stabs directive... " >&6; }
++if test "${gcc_cv_as_stabs_directive+set}" = set; then :
++  $as_echo_n "(cached) " >&6
++else
++  gcc_cv_as_stabs_directive=no
++  if test x$gcc_cv_as != x; then
++    $as_echo '.stabs "gcc2_compiled.",60,0,0,0' > conftest.s
++    if { ac_try='$gcc_cv_as $gcc_cv_as_flags  -o conftest.o conftest.s >&5'
++  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
++  test $ac_status = 0; }; }
++    then
++	gcc_cv_as_stabs_directive=yes
++    else
++      echo "configure: failed program was" >&5
++      cat conftest.s >&5
++    fi
++    rm -f conftest.o conftest.s
++  fi
++fi
++{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $gcc_cv_as_stabs_directive" >&5
++$as_echo "$gcc_cv_as_stabs_directive" >&6; }
++if test $gcc_cv_as_stabs_directive = yes; then
++
++$as_echo "#define HAVE_AS_STABS_DIRECTIVE 1" >>confdefs.h
++
++fi
++
+ { $as_echo "$as_me:${as_lineno-$LINENO}: checking assembler for COMDAT group support (GNU as)" >&5
+ $as_echo_n "checking assembler for COMDAT group support (GNU as)... " >&6; }
+ if test "${gcc_cv_as_comdat_group+set}" = set; then :
 Index: gcc/builtins.c
 ===================================================================
 --- a/src/gcc/builtins.c	(.../tags/gcc_5_3_0_release)
@@ -7347,7 +8859,87 @@ Index: gcc/fold-const.c
 ===================================================================
 --- a/src/gcc/fold-const.c	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/fold-const.c	(.../branches/gcc-5-branch)
-@@ -6241,18 +6241,19 @@
+@@ -129,7 +129,8 @@
+ static bool negate_mathfn_p (enum built_in_function);
+ static bool negate_expr_p (tree);
+ static tree negate_expr (tree);
+-static tree split_tree (tree, enum tree_code, tree *, tree *, tree *, int);
++static tree split_tree (location_t, tree, tree, enum tree_code,
++			tree *, tree *, tree *, int);
+ static tree associate_trees (location_t, tree, tree, enum tree_code, tree);
+ static enum comparison_code comparison_to_compcode (enum tree_code);
+ static enum tree_code compcode_to_comparison (enum comparison_code);
+@@ -819,7 +820,10 @@
+    literal for which we use *MINUS_LITP instead.
+ 
+    If NEGATE_P is true, we are negating all of IN, again except a literal
+-   for which we use *MINUS_LITP instead.
++   for which we use *MINUS_LITP instead.  If a variable part is of pointer
++   type, it is negated after converting to TYPE.  This prevents us from
++   generating illegal MINUS pointer expression.  LOC is the location of
++   the converted variable part.
+ 
+    If IN is itself a literal or constant, return it as appropriate.
+ 
+@@ -827,8 +831,8 @@
+    same type as IN, but they will have the same signedness and mode.  */
+ 
+ static tree
+-split_tree (tree in, enum tree_code code, tree *conp, tree *litp,
+-	    tree *minus_litp, int negate_p)
++split_tree (location_t loc, tree in, tree type, enum tree_code code,
++	    tree *conp, tree *litp, tree *minus_litp, int negate_p)
+ {
+   tree var = 0;
+ 
+@@ -884,8 +888,12 @@
+ 	*minus_litp = *litp, *litp = 0;
+       if (neg_conp_p)
+ 	*conp = negate_expr (*conp);
+-      if (neg_var_p)
+-	var = negate_expr (var);
++      if (neg_var_p && var)
++	{
++	  /* Convert to TYPE before negating.  */
++	  var = fold_convert_loc (loc, type, var);
++	  var = negate_expr (var);
++	}
+     }
+   else if (TREE_CODE (in) == BIT_NOT_EXPR
+ 	   && code == PLUS_EXPR)
+@@ -906,7 +914,12 @@
+       else if (*minus_litp)
+ 	*litp = *minus_litp, *minus_litp = 0;
+       *conp = negate_expr (*conp);
+-      var = negate_expr (var);
++      if (var)
++	{
++	  /* Convert to TYPE before negating.  */
++	  var = fold_convert_loc (loc, type, var);
++	  var = negate_expr (var);
++	}
+     }
+ 
+   return var;
+@@ -5983,8 +5996,15 @@
+ 	 or (for divide and modulus) if it is a multiple of our constant.  */
+       if (code == MULT_EXPR
+ 	  || wi::multiple_of_p (t, c, TYPE_SIGN (type)))
+-	return const_binop (code, fold_convert (ctype, t),
+-			    fold_convert (ctype, c));
++	{
++	  tree tem = const_binop (code, fold_convert (ctype, t),
++				  fold_convert (ctype, c));
++	  /* If the multiplication overflowed, we lost information on it.
++	     See PR68142 and PR69845.  */
++	  if (TREE_OVERFLOW (tem))
++	    return NULL_TREE;
++	  return tem;
++	}
+       break;
+ 
+     CASE_CONVERT: case NON_LVALUE_EXPR:
+@@ -6241,18 +6261,19 @@
  	  bool overflow_p = false;
  	  bool overflow_mul_p;
  	  signop sign = TYPE_SIGN (ctype);
@@ -7374,7 +8966,7 @@ Index: gcc/fold-const.c
  	}
  
        /* If these operations "cancel" each other, we have the main
-@@ -8731,20 +8732,6 @@
+@@ -8731,20 +8752,6 @@
    return total.to_uhwi () > (unsigned HOST_WIDE_INT) size;
  }
  
@@ -7395,7 +8987,7 @@ Index: gcc/fold-const.c
  /* Subroutine of fold_binary.  This routine performs all of the
     transformations that are common to the equality/inequality
     operators (EQ_EXPR and NE_EXPR) and the ordering operators
-@@ -8889,18 +8876,29 @@
+@@ -8889,18 +8896,29 @@
  	  STRIP_SIGN_NOPS (base0);
  	  if (TREE_CODE (base0) == ADDR_EXPR)
  	    {
@@ -7434,7 +9026,7 @@ Index: gcc/fold-const.c
  		  offset0 = NULL_TREE;
  		}
  	    }
-@@ -8923,18 +8921,29 @@
+@@ -8923,18 +8941,29 @@
  	  STRIP_SIGN_NOPS (base1);
  	  if (TREE_CODE (base1) == ADDR_EXPR)
  	    {
@@ -7473,7 +9065,21 @@ Index: gcc/fold-const.c
  		  offset1 = NULL_TREE;
  		}
  	    }
-@@ -12375,14 +12384,29 @@
+@@ -10364,9 +10393,10 @@
+ 	     then the result with variables.  This increases the chances of
+ 	     literals being recombined later and of generating relocatable
+ 	     expressions for the sum of a constant and literal.  */
+-	  var0 = split_tree (arg0, code, &con0, &lit0, &minus_lit0, 0);
+-	  var1 = split_tree (arg1, code, &con1, &lit1, &minus_lit1,
+-			     code == MINUS_EXPR);
++	  var0 = split_tree (loc, arg0, type, code,
++			     &con0, &lit0, &minus_lit0, 0);
++	  var1 = split_tree (loc, arg1, type, code,
++			     &con1, &lit1, &minus_lit1, code == MINUS_EXPR);
+ 
+ 	  /* Recombine MINUS_EXPR operands by using PLUS_EXPR.  */
+ 	  if (code == MINUS_EXPR)
+@@ -12375,14 +12405,29 @@
  	      || POINTER_TYPE_P (TREE_TYPE (arg0))))
  	{
  	  tree val = TREE_OPERAND (arg0, 1);
@@ -7509,7 +9115,7 @@ Index: gcc/fold-const.c
        /* Transform comparisons of the form C - X CMP X if C % 2 == 1.  */
        if (TREE_CODE (arg0) == MINUS_EXPR
  	  && TREE_CODE (TREE_OPERAND (arg0, 0)) == INTEGER_CST
-@@ -12390,13 +12414,23 @@
+@@ -12390,13 +12435,23 @@
  									1)),
  			      arg1, 0)
  	  && wi::extract_uhwi (TREE_OPERAND (arg0, 0), 0, 1) == 1)
@@ -7825,7 +9431,167 @@ Index: gcc/ChangeLog
 ===================================================================
 --- a/src/gcc/ChangeLog	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/ChangeLog	(.../branches/gcc-5-branch)
-@@ -1,3 +1,1979 @@
+@@ -1,3 +1,2139 @@
++2016-05-25  Jakub Jelinek  <jakub@redhat.com>
++
++	* config/i386/i386.h (TARGET_AVOID_4BYTE_PREFIXES): Define.
++	* config/i386/constraints.md (Yr): Test TARGET_AVOID_4BYTE_PREFIXES
++	rather than X86_TUNE_AVOID_4BYTE_PREFIXES.  Use SSE_REGS instead
++	of ALL_SSE_REGS.  Return SSE_REGS also when TARGET_AVX.
++
++2016-05-23  Richard Biener  <rguenther@suse.de>
++
++	Backport from mainline
++	2016-02-11  Alexandre Oliva  <aoliva@redhat.com>
++
++	PR target/69634
++	* regstat.c (regstat_bb_compute_calls_crossed): Disregard
++	debug insns.
++
++	2015-10-30  Richard Biener  <rguenther@suse.de>
++
++	PR middle-end/68142
++	* fold-const.c (extract_muldiv_1): Avoid introducing undefined
++	overflow.
++
++	2016-03-24  Richard Henderson  <rth@redhat.com>
++
++        PR middle-end/69845
++	* fold-const.c (extract_muldiv_1): Correct test for multiplication
++	overflow.
++
++2016-05-23  Richard Biener  <rguenther@suse.de>
++
++	Backport from mainline
++	2015-12-11  Segher Boessenkool  <segher@kernel.crashing.org>
++
++	PR rtl-optimization/68814
++	* rtlanal.c (set_noop_p): Use BITS_BIG_ENDIAN instead of
++	BYTES_BIG_ENDIAN.
++
++	2016-01-12  Jan Hubicka  <hubicka@ucw.cz>
++
++	PR lto/69003
++	* lto-partition.c (rename_statics): Fix pasto.
++
++	2016-01-13  Jan Hubicka  <hubicka@ucw.cz>
++
++	PR ipa/66487
++	* ipa-polymorphic-call.c (inlined_polymorphic_ctor_dtor_block_p):
++	use block_ultimate_origin
++	(noncall-stmt_may_be_vtbl_ptr_store): Likewise.
++
++	2016-01-21  Roman Zhuykov  <zhroma@ispras.ru>
++
++	PR target/69252
++	* modulo-sched.c (optimize_sc):	Allow branch-scheduling to add a new
++	first stage.
++
++2016-05-21  Iain Sandoe  <iain@codesourcery.com>
++	    Dominique d'Humieres  <dominiq@lps.ens.fr>
++
++	Backport from mainline
++	2015-12-17  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
++
++	PR target/67973
++	* configure.ac (gcc_cv_as_stabs_directive): New test.
++	* configure: Regenerate.
++	* config.in: Regenerate.
++	* config/darwin.h (DBX_DEBUGGING_INFO): Wrap in
++	HAVE_AS_STABS_DIRECTIVE.
++	(PREFERRED_DEBUGGING_TYPE): Likewise.
++	* config/i386/darwin.h (PREFERRED_DEBUGGING_TYPE): Only include
++	DBX_DEBUG if HAVE_AS_STABS_DIRECTIVE.
++
++	* doc/sourcebuild.texi (Effective-Target Keywords, Environment
++	attributes): Document stabs.
++
++2016-05-21  Chung-Lin Tang  <cltang@codesourcery.com>
++
++	Backport from mainline
++	2015-06-29  Sandra Loosemore  <sandra@codesourcery.com>
++
++	* config/nios2/nios2.c (nios2_delegitimize_address): Make
++	assert less restrictive.
++
++2016-05-20  Eric Botcazou  <ebotcazou@adacore.com>
++
++	* config/arm/arm.c (arm_expand_prologue): Set the stack usage to 0
++	for naked functions.
++	(thumb1_expand_prologue): Likewise.
++
++2016-05-20  Uros Bizjak  <ubizjak@gmail.com>
++
++	* sched-deps.c (sched_analyze_2) <case TRAP_IF>: Also
++	force pending loads from memory.
++
++2016-05-20  Richard Biener  <rguenther@suse.de>
++
++	Backport from mainline
++	2016-03-02  Richard Biener  <rguenther@suse.de>
++
++	PR middle-end/67278
++	* tree-cfg.c (verify_expr): Adjust BIT_FIELD_REF case.
++
++	2016-03-02  Richard Biener  <rguenther@suse.de>
++		    Uros Bizjak  <ubizjak@gmail.com>
++
++	PR target/67278
++	* config/i386/i386.c (type_natural_mode): Handle XFmode vectors.
++
++2016-05-20  Richard Biener  <rguenther@suse.de>
++
++	Backport from mainline
++	2016-02-29  Richard Biener  <rguenther@suse.de>
++
++	PR tree-optimization/69720
++	* tree-vect-loop.c (get_initial_def_for_reduction): Avoid
++	the adjustment_def path for possibly vectorized defs.
++	(vect_create_epilog_for_reduction): Handle vectorized initial
++	defs properly.
++
++2016-05-20  Richard Biener  <rguenther@suse.de>
++
++	Backport from mainline
++	2016-02-01  Bin Cheng  <bin.cheng@arm.com>
++
++	PR tree-optimization/67921
++	* fold-const.c (split_tree): New parameters.  Convert pointer
++	type variable part to proper type before negating.
++	(fold_binary_loc): Pass new arguments to split_tree.
++
++	2016-05-06  Richard Biener  <rguenther@suse.de>
++
++	PR middle-end/70941
++	* fold-const.c (split_tree): Always convert to the original type
++	before negating.
++
++	2016-05-06  Richard Biener  <rguenther@suse.de>
++
++	PR middle-end/70931
++	* dwarf2out.c (native_encode_initializer): Skip zero-sized fields.
++
++	2016-04-14  Richard Biener  <rguenther@suse.de>
++
++	PR tree-optimization/70623
++	* tree-ssa-pre.c (changed_blocks): Make global ...
++	(compute_antic): ... local here.  Move and fix worklist
++	handling here.  Do not clear EDGE_DFS_BACK.
++	(compute_antic_aux): Add dumping for MAX assumed succs.  Remove
++	worklist handling, dump when ANTIC_IN changed.
++	(compute_partial_antic_aux): Remove worklist handling.
++	(init_pre): Do not compute post dominators.  Add a comment about
++	the CFG order chosen.
++	(fini_pre): Do not free post dominators.
++
++	2016-04-25  Richard Biener  <rguenther@suse.de>
++
++	PR tree-optimization/70780
++	* tree-ssa-pre.c (compute_antic_aux): Also return true if the block
++	wasn't visited yet.
++	(compute_antic): Mark blocks with abnormal preds as visited as
++	they have a final empty antic-in solution already.
++
 +2016-05-19  Martin Jambor  <mjambor@suse.cz>
 +
 +	PR ipa/70646
@@ -8023,7 +9789,7 @@ Index: gcc/ChangeLog
 +	Use proper memory operand modifiers.
 +
 +2016-04-14  Nick Clifton  <nickc@redhat.com>
-+            Kyrylo Tkachov  <kyrylo.tkachov@arm.com>
++	    Kyrylo Tkachov  <kyrylo.tkachov@arm.com>
 +
 +	PR target/70044
 +	* config/aarch64/aarch64.c
@@ -9805,7 +11571,7 @@ Index: gcc/ChangeLog
  2015-12-04  Release Manager
  
  	* GCC 5.3.0 released.
-@@ -19,7 +1995,7 @@
+@@ -19,7 +2155,7 @@
  	Backport from mainline
  	2015-09-30  Bernd Edlinger  <bernd.edlinger@hotmail.de>
  
@@ -9814,7 +11580,7 @@ Index: gcc/ChangeLog
  	* lra-constraints.c (process_addr_reg): Use copy_rtx when necessary.
  
  2015-11-26  David Edelsohn  <dje.gcc@gmail.com>
-@@ -291,12 +2267,12 @@
+@@ -291,12 +2427,12 @@
  	(contains_type_p): Fix out of range check, clear dynamic flag.
  
  	2015-10-23  Jan Hubicka  <hubicka@ucw.cz>
@@ -9829,7 +11595,7 @@ Index: gcc/ChangeLog
  	2015-10-12  Richard Biener  <rguenther@suse.de>
  
  	PR ipa/67783
-@@ -305,7 +2281,7 @@
+@@ -305,7 +2441,7 @@
  	quadratic behavior.
  
  	2015-10-11  Jan Hubicka  <hubicka@ucw.cz>
@@ -9922,6 +11688,39 @@ Index: gcc/testsuite/gcc.target/powerpc/pr70963.c
 +  check (vec_all_eq (c, y), "xvcvdpuxds");
 +  check (vec_all_eq (d, x), "vec_ctf unsigned");
 +}
+Index: gcc/testsuite/gcc.target/powerpc/pr69252.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/powerpc/pr69252.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.target/powerpc/pr69252.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,28 @@
++/* PR target/69252 - [4.9/5/6 Regression] gcc.dg/vect/vect-iv-9.c FAILs
++   with -Os -fmodulo-sched -fmodulo-sched-allow-regmoves -fsched-pressure  */
++/* { dg-do run } */
++/* { dg-options "-Os -fmodulo-sched -fmodulo-sched-allow-regmoves -fsched-pressure " } */
++#define N 26
++int a[N];
++__attribute__ ((noinline, noclone))
++     int main1 (int X)
++{
++  int s = X;
++  int i;
++  for (i = 0; i < N; i++)
++    s += (i + a[i]);
++  return s;
++}
++
++int
++main (void)
++{
++  int s, i;
++  for (i = 0; i < N; i++)
++    a[i] = 2 * i;
++  s = main1 (3);
++  if (s != 978)
++    __builtin_abort ();
++  return 0;
++}
++
 Index: gcc/testsuite/gcc.target/powerpc/ppc-round2.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.target/powerpc/ppc-round2.c	(.../tags/gcc_5_3_0_release)
@@ -15206,7 +17005,23 @@ Index: gcc/testsuite/lib/target-supports.exp
 ===================================================================
 --- a/src/gcc/testsuite/lib/target-supports.exp	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/testsuite/lib/target-supports.exp	(.../branches/gcc-5-branch)
-@@ -1509,6 +1509,19 @@
+@@ -881,6 +881,15 @@
+     } "-pthread"]
+ }
+ 
++# Return 1 if compilation with -gstabs is error-free for trivial
++# code, 0 otherwise.
++
++proc check_effective_target_stabs {} {
++    return [check_no_compiler_messages stabs object {
++	void foo (void) { }
++    } "-gstabs"]
++}
++
+ # Return 1 if compilation with -mpe-aligned-commons is error-free
+ # for trivial code, 0 otherwise.
+ 
+@@ -1509,6 +1518,19 @@
      return 0
  }
  
@@ -15226,7 +17041,7 @@ Index: gcc/testsuite/lib/target-supports.exp
  # Return 1 if the target supports executing power8 vector instructions, 0
  # otherwise.  Cache the result.
  
-@@ -2846,7 +2859,9 @@
+@@ -2846,7 +2868,9 @@
  # Creates a series of routines that return 1 if the given architecture
  # can be selected and a routine to give the flags to select that architecture
  # Note: Extra flags may be added to disable options from newer compilers
@@ -15237,7 +17052,7 @@ Index: gcc/testsuite/lib/target-supports.exp
  # Usage: /* { dg-require-effective-target arm_arch_v5_ok } */
  #        /* { dg-add-options arm_arch_v5 } */
  #	 /* { dg-require-effective-target arm_arch_v5_multilib } */
-@@ -2861,7 +2876,6 @@
+@@ -2861,7 +2885,6 @@
  				     v6z "-march=armv6z" __ARM_ARCH_6Z__
  				     v6m "-march=armv6-m -mthumb" __ARM_ARCH_6M__
  				     v7a "-march=armv7-a" __ARM_ARCH_7A__
@@ -15245,7 +17060,7 @@ Index: gcc/testsuite/lib/target-supports.exp
  				     v7r "-march=armv7-r" __ARM_ARCH_7R__
  				     v7m "-march=armv7-m -mthumb" __ARM_ARCH_7M__
  				     v7em "-march=armv7e-m -mthumb" __ARM_ARCH_7EM__
-@@ -2895,6 +2909,26 @@
+@@ -2895,6 +2918,26 @@
      }]
  }
  
@@ -15423,6 +17238,21 @@ Index: gcc/testsuite/gfortran.dg/read_bang4.f90
 +  if (str2.ne.str3) call abort
 +  close(15)
 +end program
+Index: gcc/testsuite/gfortran.dg/pr70931.f90
+===================================================================
+--- a/src/gcc/testsuite/gfortran.dg/pr70931.f90	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gfortran.dg/pr70931.f90	(.../branches/gcc-5-branch)
+@@ -0,0 +1,10 @@
++! { dg-do compile }
++! { dg-options "-g" }
++program p
++   type t
++      integer :: a
++      integer :: b(0)
++   end type
++   type(t), parameter :: z = t(1, [2])
++   print *, z
++end
 Index: gcc/testsuite/gfortran.dg/gomp/pr52531.f90
 ===================================================================
 --- a/src/gcc/testsuite/gfortran.dg/gomp/pr52531.f90	(.../tags/gcc_5_3_0_release)
@@ -15818,6 +17648,19 @@ Index: gcc/testsuite/gfortran.dg/coarray_allocate_3.f08
 +    deallocate(foobar)
 +  end program
 +
+Index: gcc/testsuite/gfortran.dg/unexpected_eof.f
+===================================================================
+--- a/src/gcc/testsuite/gfortran.dg/unexpected_eof.f	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gfortran.dg/unexpected_eof.f	(.../branches/gcc-5-branch)
+@@ -0,0 +1,8 @@
++! { dg-do compile }
++! PR66461  ICE on missing end program in fixed source
++      program p
++         integer x(2)
++         x = -1
++         if ( x(1) < 0 .or.
++     &        x(2) < 0 ) print *, x
++! { dg-error "Unexpected end of file" "" { target *-*-* } 0 }
 Index: gcc/testsuite/gfortran.dg/derived_constructor_comps_6.f90
 ===================================================================
 --- a/src/gcc/testsuite/gfortran.dg/derived_constructor_comps_6.f90	(.../tags/gcc_5_3_0_release)
@@ -17586,6 +19429,28 @@ Index: gcc/testsuite/gfortran.dg/pr60126.f90
 +
 +  R2D(-2:2,-3:3) => offset_ptr_R4(100)
 +end
+Index: gcc/testsuite/gfortran.dg/pr71204.f90
+===================================================================
+--- a/src/gcc/testsuite/gfortran.dg/pr71204.f90	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gfortran.dg/pr71204.f90	(.../branches/gcc-5-branch)
+@@ -0,0 +1,17 @@
++! PR fortran/71204
++! { dg-do compile }
++! { dg-options "-O0" }
++
++module pr71204
++  character(10), allocatable :: z(:)
++end module
++
++subroutine s1
++  use pr71204
++  z(2) = z(1)
++end
++
++subroutine s2
++  use pr71204
++  z(2) = z(1)
++end
 Index: gcc/testsuite/gfortran.dg/pr69055.f90
 ===================================================================
 --- a/src/gcc/testsuite/gfortran.dg/pr69055.f90	(.../tags/gcc_5_3_0_release)
@@ -18762,6 +20627,20 @@ Index: gcc/testsuite/gcc.dg/pr70152.c
 +{
 +  bar (a);
 +}
+Index: gcc/testsuite/gcc.dg/20040813-1.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/20040813-1.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.dg/20040813-1.c	(.../branches/gcc-5-branch)
+@@ -1,8 +1,7 @@
+ /* Test lang in N_SO stab.  */
+ /* Contributed by Devang Patel  <dpatel@apple.com>  */
+ 
+-/* { dg-do compile } */
+-/* { dg-skip-if "No stabs" { aarch64*-*-* mmix-*-* *-*-aix* alpha*-*-* hppa*64*-*-* ia64-*-* tile*-*-* nios2-*-* *-*-vxworks* nvptx-*-* } { "*" } { "" } } */
++/* { dg-do compile { target stabs } } */
+ /* { dg-options "-gstabs" } */
+ 
+ int
 Index: gcc/testsuite/gcc.dg/pr68162-1.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.dg/pr68162-1.c	(.../tags/gcc_5_3_0_release)
@@ -18773,6 +20652,19 @@ Index: gcc/testsuite/gcc.dg/pr68162-1.c
 +typedef const double cd;
 +void f (const double (*)[]);
 +void g (void) { f ((cd (*)[]) 0); }
+Index: gcc/testsuite/gcc.dg/darwin-20040809-2.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/darwin-20040809-2.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.dg/darwin-20040809-2.c	(.../branches/gcc-5-branch)
+@@ -1,7 +1,7 @@
+ /* Test dead code strip support.  */
+ /* Contributed by Devang Patel  <dpatel@apple.com>  */
+ 
+-/* { dg-do compile { target *-*-darwin* } } */
++/* { dg-do compile { target { *-*-darwin* && stabs } } } */
+ /* { dg-options "-gstabs+ -fno-eliminate-unused-debug-symbols" } */
+ 
+ int
 Index: gcc/testsuite/gcc.dg/pr70022.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.dg/pr70022.c	(.../tags/gcc_5_3_0_release)
@@ -18855,6 +20747,31 @@ Index: gcc/testsuite/gcc.dg/pr69015.c
 +  if (c)
 +    __builtin_trap ();
 +}
+Index: gcc/testsuite/gcc.dg/simd-7.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/simd-7.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.dg/simd-7.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,20 @@
++/* { dg-do compile { target x86_64-*-* i?86-*-* } } */
++/* { dg-options "-w -Wno-psabi" } */
++
++#if __SIZEOF_LONG_DOUBLE__ == 16 || __SIZEOF_LONG_DOUBLE__ == 8
++typedef long double a __attribute__((vector_size (16)));
++
++a __attribute__((noinline))
++sum (a first, a second)
++{
++    return first + second;
++}
++
++a
++foo (a x, a y, a z)
++{
++  return sum (x, y) + z;
++}
++#else
++int main() {}
++#endif
 Index: gcc/testsuite/gcc.dg/autopar/pr69426.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.dg/autopar/pr69426.c	(.../tags/gcc_5_3_0_release)
@@ -19211,6 +21128,52 @@ Index: gcc/testsuite/gcc.dg/torture/pr69941.c
 +    __builtin_abort ();
 +  return 0;
 +}
+Index: gcc/testsuite/gcc.dg/torture/pr70623-2.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/torture/pr70623-2.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.dg/torture/pr70623-2.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,41 @@
++/* { dg-do compile } */
++
++int b8, il, rc, nm;
++
++void
++h9(void)
++{
++  int *av = &b8;
++
++is:
++  for (;;) {
++      int vj, wk;
++      int *m9 = &b8;
++
++      if (*m9 == *av) {
++	  if (il == 0)
++	    goto is;
++
++di:
++	  continue;
++	  for (vj = 0; vj < 1; ++vj) {
++	      goto di;
++kz:
++	      ;
++	  }
++      }
++
++      for (rc = 0; rc < 2; ++rc) {
++	  int bc = rc ? rc : nm;
++	  int ud = bc ? (*av ? 0 : rc) : 1;
++
++	  if (ud != 0)
++	    if (*av != 0)
++	      goto kz;
++      }
++
++      for (wk = 0; wk < 3; ++wk)
++	++(*av);
++      av = 0;
++  }
++}
 Index: gcc/testsuite/gcc.dg/torture/pr69771.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.dg/torture/pr69771.c	(.../tags/gcc_5_3_0_release)
@@ -19504,6 +21467,43 @@ Index: gcc/testsuite/gcc.dg/torture/pr69546-2.c
 +    __builtin_abort ();
 +  return 0;
 +}
+Index: gcc/testsuite/gcc.dg/torture/pr70623.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/torture/pr70623.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.dg/torture/pr70623.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,32 @@
++/* { dg-do compile } */
++/* { dg-additional-options "-w" } */
++
++int nm;
++int *av;
++
++void
++h9(void)
++{
++  for (;;) {
++      int wk, rc;
++      int **ptr_10 = &av;
++      if (*av != 0) {
++      }
++u4:
++      wk = 0;
++      for (rc = 0; rc < 3; ++rc) {
++	  int bc = (rc ? rc : nm);
++	  int ud = bc ? (*av ? 0 : rc) : 1;
++	  if (ud != 0) {
++	      if (*av != 0)
++		goto u4;
++	      for (;;) {
++	      }
++	  }
++      }
++      while (wk < 3) {
++	  av = **ptr_10;
++	  ++wk;
++      }
++  }
++}
 Index: gcc/testsuite/gcc.dg/torture/pr69776.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.dg/torture/pr69776.c	(.../tags/gcc_5_3_0_release)
@@ -19588,6 +21588,8 @@ Index: gcc/testsuite/gcc.dg/torture/pr29119.c
 +   __asm__ ("" :: "m"(({unsigned __v; __v;})));	/* { dg-warning "memory input 0 is not directly addressable" } */
  }
 -
+Index: gcc/testsuite/gcc.dg/torture/pr69166.c
+===================================================================
 Index: gcc/testsuite/gcc.dg/torture/pr69542.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.dg/torture/pr69542.c	(.../tags/gcc_5_3_0_release)
@@ -19915,6 +21917,54 @@ Index: gcc/testsuite/gcc.dg/torture/pr70115.c
 +	;
 +    }
 +}
+Index: gcc/testsuite/gcc.dg/torture/pr70941.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/torture/pr70941.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.dg/torture/pr70941.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,12 @@
++/* { dg-do run } */
++/* { dg-require-effective-target int32plus } */
++
++signed char a = 0, b = 0, c = 0, d = 0;
++
++int main()
++{
++  a = -(b - 405418259) - ((d && c) ^ 2040097152);
++  if (a != (signed char) -1634678893)
++    __builtin_abort ();
++  return 0;
++}
+Index: gcc/testsuite/gcc.dg/torture/pr70780.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/torture/pr70780.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.dg/torture/pr70780.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,26 @@
++/* { dg-do run } */
++
++int a, b, c, *d, e;
++
++static int
++fn1 () 
++{
++  if (a)
++    goto l1;
++l2: while (b)
++      if (*d)
++	return c;
++    for (e = 0; e; e++)
++      {
++	goto l2;
++l1:;
++      }
++    return 0; 
++}
++
++int
++main ()
++{
++  fn1 ();
++  return 0; 
++}
 Index: gcc/testsuite/gcc.dg/torture/pr69760.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.dg/torture/pr69760.c	(.../tags/gcc_5_3_0_release)
@@ -20074,6 +22124,30 @@ Index: gcc/testsuite/gcc.dg/tree-ssa/pr69355.c
 +    __builtin_abort ();
 +  return 0;
 +}
+Index: gcc/testsuite/gcc.dg/tree-ssa/pr69845-1.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/tree-ssa/pr69845-1.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.dg/tree-ssa/pr69845-1.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,19 @@
++/* { dg-do compile } */
++/* { dg-require-effective-target int32 } */
++/* { dg-options "-O -fdump-tree-gimple -fdump-tree-optimized" } */
++
++int
++main ()
++{
++  struct S { char s; } v;
++  v.s = 47;
++  int a = (int) v.s;
++  int b = (27005061 + (a + 680455));
++  int c = ((1207142401 * (((8 * b) + 9483541) - 230968044)) + 469069442);
++  if (c != 1676211843)
++    __builtin_abort ();
++  return 0;
++}
++
++/* { dg-final { scan-tree-dump-times "b \\\* 8" 1 "gimple" } } */
++/* { dg-final { scan-tree-dump-not "abort" "optimized" } } */
 Index: gcc/testsuite/gcc.dg/tree-ssa/pr67755.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.dg/tree-ssa/pr67755.c	(.../tags/gcc_5_3_0_release)
@@ -20125,6 +22199,31 @@ Index: gcc/testsuite/gcc.dg/tree-ssa/pr69666.c
 +  d = e[d];
 +  memcpy(&c, e, sizeof(e));
 +}
+Index: gcc/testsuite/gcc.dg/tree-ssa/pr69845-2.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/tree-ssa/pr69845-2.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.dg/tree-ssa/pr69845-2.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,20 @@
++/* { dg-do compile } */
++/* { dg-require-effective-target int32 } */
++/* { dg-options "-O -fdump-tree-gimple -fdump-tree-optimized" } */
++
++int
++main ()
++{
++  struct S { char s; } v;
++  v.s = 47;
++  unsigned int a = (unsigned int) v.s;
++  unsigned int b = (27005061 + (a + 680455));
++  unsigned int c
++    = ((1207142401u * (((8u * b) + 9483541u) - 230968044u)) + 469069442u);
++  if (c != 1676211843u)
++    __builtin_abort ();
++  return 0;
++}
++
++/* { dg-final { scan-tree-dump-times "b \\\* 1067204616" 1 "gimple" } } */
++/* { dg-final { scan-tree-dump-not "abort" "optimized" } } */
 Index: gcc/testsuite/gcc.dg/pr68670-1.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.dg/pr68670-1.c	(.../tags/gcc_5_3_0_release)
@@ -20219,6 +22318,31 @@ Index: gcc/testsuite/gcc.dg/pr70161.c
 +foo (void)
 +{
 +}
+Index: gcc/testsuite/gcc.dg/simd-8.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/simd-8.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.dg/simd-8.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,20 @@
++/* { dg-do compile } */
++/* { dg-options "-w -Wno-psabi" } */
++
++#if __SIZEOF_LONG_DOUBLE__ == 16 || __SIZEOF_LONG_DOUBLE__ == 8
++typedef long double a __attribute__((vector_size (32)));
++
++a __attribute__((noinline))
++sum (a first, a second)
++{
++    return first + second;
++}
++
++a
++foo (a x, a y, a z)
++{
++  return sum (x, y) + z;
++}
++#else
++int main() {}
++#endif
 Index: gcc/testsuite/gcc.dg/pr68668.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.dg/pr68668.c	(.../tags/gcc_5_3_0_release)
@@ -20564,6 +22688,32 @@ Index: gcc/testsuite/gcc.dg/uninit-19.c
 -/* { dg-warning "may be used uninitialized" "" { target { ! nonpic } } 22 } */
 +/* { dg-warning "may be used uninitialized" "" { target { { nonpic } || { hppa*64*-*-* } } } 13 } */
 +/* { dg-warning "may be used uninitialized" "" { target { ! { { nonpic } || { hppa*64*-*-* } } } } 22 } */
+Index: gcc/testsuite/gcc.dg/pr69634.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/pr69634.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.dg/pr69634.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,21 @@
++/* { dg-do compile } */
++/* { dg-options "-O2 -fno-dce -fschedule-insns -fno-tree-vrp -fcompare-debug" } */
++/* { dg-additional-options "-Wno-psabi -mno-sse" { target i?86-*-* x86_64-*-* } } */
++
++typedef unsigned short u16;
++typedef short v16u16 __attribute__ ((vector_size (16)));
++typedef unsigned v16u32 __attribute__ ((vector_size (16)));
++typedef unsigned long long v16u64 __attribute__ ((vector_size (16)));
++
++u16
++foo(u16 u16_1, v16u16 v16u16_0, v16u32 v16u64_0, v16u16 v16u16_1, v16u32 v16u32_1, v16u64 v16u64_1)
++{
++  v16u64_1 /= (v16u64){~v16u32_1[1]};
++  u16_1 = 0;
++  u16_1 /= v16u32_1[2];
++  v16u64_1 -= (v16u64) v16u16_1;
++  u16_1 >>= 1;
++  u16_1 -= ~0;
++  v16u16_1 /= (v16u16){~u16_1, 1 - v16u64_0[0], 0xffb6};
++  return u16_1 + v16u16_0[1] + v16u16_1[3] + v16u64_1[0] + v16u64_1[1];
++}
 Index: gcc/testsuite/gcc.dg/vect/costmodel/ppc/costmodel-vect-31a.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.dg/vect/costmodel/ppc/costmodel-vect-31a.c	(.../tags/gcc_5_3_0_release)
@@ -20620,19 +22770,192 @@ Index: gcc/testsuite/gcc.dg/vect/pr69783.c
 +}
 +
 +/* { dg-final { scan-tree-dump "improved number of alias checks from \[0-9\]* to 2" "vect" } } */
+Index: gcc/testsuite/gcc.dg/vect/vect-outer-pr69720.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.dg/vect/vect-outer-pr69720.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/gcc.dg/vect/vect-outer-pr69720.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,28 @@
++extern void abort (void);
++
++int a[128];
++double b[128] = { 1., 2., 3., 4. };
++
++void __attribute__((noinline)) foo()
++{
++  int i;
++  for (i = 0; i < 128; ++i)
++    {
++      double tem1 = b[i];
++      for (int j = 0; j < 32; ++j)
++	tem1 += 1;
++      b[i] = tem1;
++      a[i] = i;
++    }
++}
++
++int main()
++{
++  foo ();
++  if (b[0] != 33. || b[1] != 34.
++      || b[2] != 35. || b[3] != 36.)
++    abort ();
++  return 0;
++}
++
++/* { dg-final { scan-tree-dump-times "OUTER LOOP VECTORIZED" 1 "vect" { target { vect_double && vect_int } } } } */
 Index: gcc/testsuite/ChangeLog
 ===================================================================
 --- a/src/gcc/testsuite/ChangeLog	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/testsuite/ChangeLog	(.../branches/gcc-5-branch)
-@@ -1,3 +1,1719 @@
+@@ -1,3 +1,1859 @@
++2016-05-26  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
++
++	Backport from trunk.
++	PR fortran/66461
++	* gfortran.dg/unexpected_eof.f: New test.
++
++2016-05-24  Richard Biener  <rguenther@suse.de>
++
++	PR testsuite/71254
++	* gcc.dg/simd-7.c: Compile on x86_64 and i?86 only.
++
++2016-05-23  Richard Biener  <rguenther@suse.de>
++
++	Backport from mainline
++	2016-02-11  Alexandre Oliva  <aoliva@redhat.com>
++
++	PR target/69634
++	* gcc.dg/pr69634.c: New.
++
++	2016-03-23  Patrick Palka  <ppalka@gcc.gnu.org>
++ 
++	PR c++/70347
++	* g++.dg/cpp1y/nsdmi-union1.C: New test.
++
++	2015-10-30  Richard Biener  <rguenther@suse.de>
++
++	PR middle-end/68142
++	* c-c++-common/ubsan/pr68142.c: New testcase.
++
++	2016-03-24  Richard Henderson  <rth@redhat.com>
++
++        PR middle-end/69845
++	* gcc.dg/tree-ssa/pr69845-1.c: New test.
++	* gcc.dg/tree-ssa/pr69845-2.c: New test.
++
++2016-05-23  Richard Biener  <rguenther@suse.de>
++
++	Backport from mainline
++	2016-02-08  Jakub Jelinek  <jakub@redhat.com>
++
++	PR ipa/69239
++	* g++.dg/ipa/pr69239.C: New test.
++
++	2016-01-21  Martin Sebor  <msebor@redhat.com>
++
++	PR target/69252
++	* gcc.target/powerpc/pr69252.c: New test.
++
++2016-05-21  Iain Sandoe  <iain@codesourcery.com>
++	    Dominique d'Humieres  <dominiq@lps.ens.fr>
++
++	Backport from mainline
++	2015-12-17  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
++
++	PR target/67973
++
++	* lib/target-supports.exp (check_effective_target_stabs): New proc.
++	* g++.dg/cpp0x/alias-decl-debug-0.C: Restrict to stabs targets.
++	* g++.dg/other/PR23205.C: Likewise.
++	* g++.dg/other/pr23205-2.C: Likewise.
++	* gcc.dg/20040813-1.c: Likewise.
++	* gcc.dg/darwin-20040809-2.c: Likewise.
++	* objc.dg/stabs-1.m: Likewise.
++
++2016-05-20  Paolo Carlini  <paolo.carlini@oracle.com>
++
++	PR c++/70466
++	* g++.dg/template/pr70466-1.C: New.
++	* g++.dg/template/pr70466-2.C: Likewise.
++
++2016-05-20  Jakub Jelinek  <jakub@redhat.com>
++
++	PR fortran/71204
++	* gfortran.dg/pr71204.f90: New test.
++
++2016-05-20  Richard Biener  <rguenther@suse.de>
++
++	Backport from mainline
++	2016-03-02  Richard Biener  <rguenther@suse.de>
++
++	PR middle-end/67278
++	* gcc.dg/simd-7.c: New testcase.
++
++	2016-03-02  Richard Biener  <rguenther@suse.de>
++		Uros Bizjak  <ubizjak@gmail.com>
++
++	PR target/67278
++	* gcc.dg/simd-8.c: New testcase.
++
++	2016-03-09  Jakub Jelinek  <jakub@redhat.com>
++
++	PR middle-end/67278
++	* gcc.dg/simd-7.c: Add -w -Wno-psabi to dg-options.
++
++ 	PR target/67278
++ 	* gcc.dg/simd-8.c: Add -w -Wno-psabi to dg-options.
++
++2016-05-20  Richard Biener  <rguenther@suse.de>
++
++	Backport from mainline
++	2016-02-29  Richard Biener  <rguenther@suse.de>
++
++	PR tree-optimization/69720
++	* gcc.dg/vect/vect-outer-pr69720.c: New testcase.
++
++2016-05-20  Richard Biener  <rguenther@suse.de>
++
++	Backport from mainline
++	2016-02-01  Bin Cheng  <bin.cheng@arm.com>
++
++	PR tree-optimization/67921
++	* c-c++-common/ubsan/pr67921.c: New test.
++
++	2016-05-06  Richard Biener  <rguenther@suse.de>
++
++	PR middle-end/70941
++	* gcc.dg/torture/pr70941.c: New testcase.
++
++	2016-05-06  Jakub Jelinek  <jakub@redhat.com>
++ 
++	PR middle-end/70941
++	* gcc.dg/torture/pr70941.c (abort): Remove prototype.
++	(a, b, c, d): Change type from char to signed char.
++	(main): Compare against (signed char) -1634678893 instead of
++	hardcoded -109.  Use __builtin_abort instead of abort.
++ 
++	2016-05-06  Richard Biener  <rguenther@suse.de>
++
++	PR middle-end/70931
++	* gfortran.dg/pr70931.f90: New testcase.
++
++	2016-04-14  Richard Biener  <rguenther@suse.de>
++
++	PR tree-optimization/70623
++	* gcc.dg/torture/pr70623.c: New testcase.
++	* gcc.dg/torture/pr70623-2.c: Likewise.
++
++	2016-04-25  Richard Biener  <rguenther@suse.de>
++
++	PR tree-optimization/70780
++	* gcc.dg/torture/pr70780.c: New testcase.
++
 +2016-05-19  Martin Jambor  <mjambor@suse.cz>
 +
 +	PR ipa/70646
 +	* gcc.dg/ipa/pr70646.c: New test.
 +
 +2016-05-19  Richard Sandiford  <richard.sandiford@arm.com>
-+
-+2016-01-26  Richard Sandiford  <richard.sandiford@arm.com>
 +
 +	PR tree-optimization/69400
 +	* gcc.dg/plugin/wide-int_plugin.c (test_wide_int_mod_trunc): New
@@ -22344,7 +24667,7 @@ Index: gcc/testsuite/ChangeLog
  2015-12-04  Release Manager
  
  	* GCC 5.3.0 released.
-@@ -328,7 +2044,7 @@
+@@ -328,7 +2184,7 @@
  2015-11-06  Vladimir Makarov  <vmakarov@redhat.com>
  
  	PR rtl-optimization/68106
@@ -22353,7 +24676,7 @@ Index: gcc/testsuite/ChangeLog
  
  2015-01-25  Paul Thomas  <pault@gcc.gnu.org>
  
-@@ -448,8 +2164,8 @@
+@@ -448,8 +2304,8 @@
  	Backport from mainline
  	2015-10-09  Martin Jambor  <mjambor@suse.cz>
  
@@ -22364,7 +24687,7 @@ Index: gcc/testsuite/ChangeLog
  
  2015-10-22  Paul Thomas  <pault@gcc.gnu.org>
  
-@@ -1254,10 +2970,6 @@
+@@ -1254,10 +3110,6 @@
  	PR fortran/66725
  	* gfortran.dg/pr66725.f90: New test.
  
@@ -22375,7 +24698,7 @@ Index: gcc/testsuite/ChangeLog
  2015-07-16  Marek Polacek  <polacek@redhat.com>
  
  	Backported from mainline
-@@ -3574,7 +5286,7 @@
+@@ -3574,7 +5426,7 @@
  
  2015-03-05  Martin Sebor  <msebor@redhat.com>
  
@@ -22628,6 +24951,18 @@ Index: gcc/testsuite/g++.dg/cpp0x/pr67767.C
 +{
 +  throw 1;
 +}
+Index: gcc/testsuite/g++.dg/cpp0x/alias-decl-debug-0.C
+===================================================================
+--- a/src/gcc/testsuite/g++.dg/cpp0x/alias-decl-debug-0.C	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/g++.dg/cpp0x/alias-decl-debug-0.C	(.../branches/gcc-5-branch)
+@@ -1,6 +1,5 @@
+ // Origin: PR c++/51032
+-// { dg-do compile { target c++11 } }
+-// { dg-skip-if "No stabs" { aarch64*-*-* mmix-*-* *-*-aix* alpha*-*-* hppa*64*-*-* ia64-*-* *-*-vxworks* nios2-*-* } { "*" } { "" } }
++// { dg-do compile { target { c++11 && stabs } } }
+ // { dg-options "-gstabs+" }
+ 
+ template <class C>
 Index: gcc/testsuite/g++.dg/cpp0x/variadic167.C
 ===================================================================
 --- a/src/gcc/testsuite/g++.dg/cpp0x/variadic167.C	(.../tags/gcc_5_3_0_release)
@@ -23295,6 +25630,82 @@ Index: gcc/testsuite/g++.dg/ipa/pr68672-3.C
 +{
 +  foo ();
 +}
+Index: gcc/testsuite/g++.dg/ipa/pr69239.C
+===================================================================
+--- a/src/gcc/testsuite/g++.dg/ipa/pr69239.C	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/g++.dg/ipa/pr69239.C	(.../branches/gcc-5-branch)
+@@ -0,0 +1,71 @@
++// PR ipa/69239
++// { dg-do run }
++// { dg-options "-O2 --param=early-inlining-insns=196" }
++// { dg-additional-options "-fPIC" { target fpic } }
++
++struct D
++{
++  float f;
++  D () {}
++  virtual float bar (float z);
++};
++
++struct A
++{
++  A ();
++  virtual int foo (int i);
++};
++
++struct B : public D, public A
++{
++  virtual int foo (int i);
++};
++
++float
++D::bar (float)
++{
++  return f / 2;
++}
++
++int
++A::foo (int i)
++{
++  return i + 1;
++}
++
++int
++B::foo (int i)
++{
++  return i + 2;
++}
++
++int __attribute__ ((noinline,noclone))
++baz ()
++{
++  return 1;
++}
++
++static int __attribute__ ((noinline))
++fn (A *obj, int i)
++{
++  return obj->foo (i);
++}
++
++inline __attribute__ ((always_inline))
++A::A ()
++{
++  if (fn (this, baz ()) != 2)
++    __builtin_abort ();
++}
++
++static void
++bah ()
++{
++  B b;
++}
++
++int
++main ()
++{
++  bah ();
++}
 Index: gcc/testsuite/g++.dg/ipa/pr68851.C
 ===================================================================
 --- a/src/gcc/testsuite/g++.dg/ipa/pr68851.C	(.../tags/gcc_5_3_0_release)
@@ -23638,6 +26049,44 @@ Index: gcc/testsuite/g++.dg/cpp1y/constexpr-copy2.C
 +
 +#define SA(X) static_assert((X),#X)
 +SA(g());
+Index: gcc/testsuite/g++.dg/cpp1y/nsdmi-union1.C
+===================================================================
+--- a/src/gcc/testsuite/g++.dg/cpp1y/nsdmi-union1.C	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/g++.dg/cpp1y/nsdmi-union1.C	(.../branches/gcc-5-branch)
+@@ -0,0 +1,33 @@
++// PR c++/70347
++// { dg-do run { target c++14 } }
++
++union A {
++  char a;
++  long b = -42;
++};
++
++struct B {
++  union {
++    char a = 10;
++    long b;
++  };
++};
++
++A c1{};
++A c2{4};
++B c3{};
++B c4{{9}};
++
++int main() {
++  if (c1.b != -42)
++    __builtin_abort ();
++
++  if (c2.a != 4)
++    __builtin_abort ();
++
++  if (c3.a != 10)
++    __builtin_abort ();
++
++  if (c4.a != 9)
++    __builtin_abort ();
++}
 Index: gcc/testsuite/g++.dg/cpp1y/lambda-generic-trailing1.C
 ===================================================================
 --- a/src/gcc/testsuite/g++.dg/cpp1y/lambda-generic-trailing1.C	(.../tags/gcc_5_3_0_release)
@@ -24229,6 +26678,28 @@ Index: gcc/testsuite/g++.dg/other/anon8.C
 +    unsigned operator[] (T i) const { return d[i]; }
 +  } c;
 +} A;
+Index: gcc/testsuite/g++.dg/other/pr23205-2.C
+===================================================================
+--- a/src/gcc/testsuite/g++.dg/other/pr23205-2.C	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/g++.dg/other/pr23205-2.C	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-skip-if "No stabs" { aarch64*-*-* mmix-*-* *-*-aix* alpha*-*-* hppa*64*-*-* ia64-*-* tile*-*-* nios2-*-* } { "*" } { "" } } */
++/* { dg-do compile { target stabs } } */
+ /* { dg-options "-gstabs+ -fno-eliminate-unused-debug-types -ftoplevel-reorder" } */
+ 
+ const int foobar = 4;
+Index: gcc/testsuite/g++.dg/other/PR23205.C
+===================================================================
+--- a/src/gcc/testsuite/g++.dg/other/PR23205.C	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/g++.dg/other/PR23205.C	(.../branches/gcc-5-branch)
+@@ -1,5 +1,4 @@
+-/* { dg-do compile } */
+-/* { dg-skip-if "No stabs" { aarch64*-*-* mmix-*-* *-*-aix* alpha*-*-* hppa*64*-*-* ia64-*-* nios2-*-* tile*-*-* *-*-vxworks } { "*" } { "" } } */
++/* { dg-do compile { target stabs } } */
+ /* { dg-options "-gstabs+ -fno-eliminate-unused-debug-types" } */
+ 
+ const int foobar = 4;
 Index: gcc/testsuite/g++.dg/tree-ssa/ehcleanup-1.C
 ===================================================================
 --- a/src/gcc/testsuite/g++.dg/tree-ssa/ehcleanup-1.C	(.../tags/gcc_5_3_0_release)
@@ -24287,6 +26758,36 @@ Index: gcc/testsuite/g++.dg/template/pr67337.C
 +{
 +  C<int> a (0);
 +  a.m_fn2<B> (0);
++}
+Index: gcc/testsuite/g++.dg/template/pr70466-2.C
+===================================================================
+--- a/src/gcc/testsuite/g++.dg/template/pr70466-2.C	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/g++.dg/template/pr70466-2.C	(.../branches/gcc-5-branch)
+@@ -0,0 +1,25 @@
++// PR c++/70466
++
++template < class T, class S >
++struct A
++{
++  explicit A (...) {}
++};
++
++template < class T, class S >
++A < T, S > foo (T (S::*f) ())
++{
++  return A < T, S > (f);
++}
++
++struct B
++{
++  void bar () {}
++};
++
++int
++main ()
++{
++  foo (&B::bar);
++  return 0;
 +}
 Index: gcc/testsuite/g++.dg/template/ptrmem30.C
 ===================================================================
@@ -24354,6 +26855,52 @@ Index: gcc/testsuite/g++.dg/template/typename21.C
 +};
 +
 +D<int> d;
+Index: gcc/testsuite/g++.dg/template/pr70466-1.C
+===================================================================
+--- a/src/gcc/testsuite/g++.dg/template/pr70466-1.C	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/g++.dg/template/pr70466-1.C	(.../branches/gcc-5-branch)
+@@ -0,0 +1,27 @@
++// PR c++/70466
++
++template < class T, class T >  // { dg-error "conflicting" }
++class A
++{
++public:
++  explicit A (T (S::*f) ()) {}  // { dg-error "expected" }
++};
++
++template < class T, class S > 
++A < T, S > foo (T (S::*f) ())
++{
++  return A < T, S > (f);
++}
++
++class B
++{
++public:
++  void bar () {}
++};
++
++int
++main ()
++{
++  foo (&B::bar);
++  return 0;
++}
+Index: gcc/testsuite/objc.dg/stabs-1.m
+===================================================================
+--- a/src/gcc/testsuite/objc.dg/stabs-1.m	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/objc.dg/stabs-1.m	(.../branches/gcc-5-branch)
+@@ -1,8 +1,7 @@
+ /* Check if the final SO STABS record goes into the .text section.  */
+ /* Contributed by Ziemowit Laski <zlaski@apple.com> */
+ 
+-/* { dg-do compile } */
+-/* { dg-skip-if "No stabs" { mmix-*-* *-*-aix* alpha*-*-* hppa*64*-*-* ia64-*-* } { "*" } { "" } } */
++/* { dg-do compile { target stabs } } */
+ /* { dg-options "-gstabs" } */
+ 
+ @interface MyClass
 Index: gcc/testsuite/c-c++-common/cpp/pr57580.c
 ===================================================================
 --- a/src/gcc/testsuite/c-c++-common/cpp/pr57580.c	(.../tags/gcc_5_3_0_release)
@@ -24385,6 +26932,70 @@ Index: gcc/testsuite/c-c++-common/tsan/pr65400-1.c
  extern void baz4 (int *);
  
  __attribute__((noinline, noclone)) int
+Index: gcc/testsuite/c-c++-common/ubsan/pr67921.c
+===================================================================
+--- a/src/gcc/testsuite/c-c++-common/ubsan/pr67921.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/c-c++-common/ubsan/pr67921.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,23 @@
++/* { dg-do compile } */
++/* { dg-options "-fsanitize=undefined" } */
++
++struct s
++{
++  int n;
++  int arr[][6];
++};
++void bar (int);
++void foo (struct s *ptr)
++{
++  int i;
++  for (; i < 2; i++)
++    for (; ptr->n;)
++      {
++	int *a = ptr->arr[i];
++	int b[66];
++	int j = 0;
++
++	for (; j < 56; j++)
++	  bar (a[j] - b[j]);
++    }
++}
+Index: gcc/testsuite/c-c++-common/ubsan/pr68142.c
+===================================================================
+--- a/src/gcc/testsuite/c-c++-common/ubsan/pr68142.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/testsuite/c-c++-common/ubsan/pr68142.c	(.../branches/gcc-5-branch)
+@@ -0,0 +1,31 @@
++/* { dg-do run } */
++/* { dg-options "-fsanitize=undefined -fsanitize-undefined-trap-on-error" } */
++
++int __attribute__((noinline,noclone))
++h(int a)
++{
++  return 2 * (a * (__INT_MAX__/2 + 1));
++}
++int __attribute__((noinline,noclone))
++i(int a)
++{
++  return (2 * a) * (__INT_MAX__/2 + 1);
++}
++int __attribute__((noinline,noclone))
++j(int a, int b)
++{
++  return (b * a) * (__INT_MAX__/2 + 1);
++}
++int __attribute__((noinline,noclone))
++k(int a, int b)
++{
++  return (2 * a) * b;
++}
++int main()
++{
++  volatile int tem = h(-1);
++  tem = i(-1);
++  tem = j(-1, 2);
++  tem = k(-1, __INT_MAX__/2 + 1);
++  return 0;
++}
 Index: gcc/testsuite/c-c++-common/pr67639.c
 ===================================================================
 --- a/src/gcc/testsuite/c-c++-common/pr67639.c	(.../tags/gcc_5_3_0_release)
@@ -25699,7 +28310,22 @@ Index: gcc/cp/ChangeLog
 ===================================================================
 --- a/src/gcc/cp/ChangeLog	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/cp/ChangeLog	(.../branches/gcc-5-branch)
-@@ -1,3 +1,357 @@
+@@ -1,3 +1,372 @@
++2016-05-23  Richard Biener  <rguenther@suse.de>
++
++	Backport from mainline
++	2016-03-23  Patrick Palka  <ppalka@gcc.gnu.org>
++ 
++	PR c++/70347
++	* typeck.c (process_init_constructor_union): If the initializer
++	is empty, use the union's NSDMI if it has one.
++
++2016-05-20  Paolo Carlini  <paolo.carlini@oracle.com>
++
++	PR c++/70466
++	* call.c (convert_like_real): Check that we are actually converting
++	from an init list.
++
 +2016-05-18  Jason Merrill  <jason@redhat.com>
 +
 +	PR c++/70505
@@ -26079,6 +28705,34 @@ Index: gcc/cp/typeck2.c
  		}
  
  	      num_split_elts++;
+@@ -1487,10 +1482,25 @@
+   constructor_elt *ce;
+   int len;
+ 
+-  /* If the initializer was empty, use default zero initialization.  */
++  /* If the initializer was empty, use the union's NSDMI if it has one.
++     Otherwise use default zero initialization.  */
+   if (vec_safe_is_empty (CONSTRUCTOR_ELTS (init)))
+-    return 0;
++    {
++      for (tree field = TYPE_FIELDS (type); field; field = TREE_CHAIN (field))
++	{
++	  if (DECL_INITIAL (field))
++	    {
++	      CONSTRUCTOR_APPEND_ELT (CONSTRUCTOR_ELTS (init),
++				      field,
++				      get_nsdmi (field, /*in_ctor=*/false));
++	      break;
++	    }
++	}
+ 
++      if (vec_safe_is_empty (CONSTRUCTOR_ELTS (init)))
++	return 0;
++    }
++
+   len = CONSTRUCTOR_ELTS (init)->length ();
+   if (len > 1)
+     {
 Index: gcc/cp/pt.c
 ===================================================================
 --- a/src/gcc/cp/pt.c	(.../tags/gcc_5_3_0_release)
@@ -26645,7 +29299,18 @@ Index: gcc/cp/call.c
  	  return build_cxx_call (fn, nargs, argarray, complain);
  	}
        else
-@@ -7031,6 +7034,9 @@
+@@ -6247,8 +6250,9 @@
+ 	/* When converting from an init list we consider explicit
+ 	   constructors, but actually trying to call one is an error.  */
+ 	if (DECL_NONCONVERTING_P (convfn) && DECL_CONSTRUCTOR_P (convfn)
++	    && BRACE_ENCLOSED_INITIALIZER_P (expr)
+ 	    /* Unless this is for direct-list-initialization.  */
+-	    && !DIRECT_LIST_INIT_P (expr))
++	    && !CONSTRUCTOR_IS_DIRECT_INIT (expr))
+ 	  {
+ 	    if (!(complain & tf_error))
+ 	      return error_mark_node;
+@@ -7031,6 +7035,9 @@
        && resolves_to_fixed_type_p (target, NULL))
      return false;
    tree init = TARGET_EXPR_INITIAL (exp);
@@ -26655,7 +29320,7 @@ Index: gcc/cp/call.c
    return (TREE_CODE (init) == AGGR_INIT_EXPR
  	  && !AGGR_INIT_VIA_CTOR_P (init));
  }
-@@ -7435,7 +7441,8 @@
+@@ -7435,7 +7442,8 @@
  	 the implementation elided its use.  */
        if (!trivial || DECL_DELETED_FN (fn))
  	{
@@ -26822,6 +29487,38 @@ Index: gcc/cgraphclones.c
    new_thunk->thunk = thunk->thunk;
    new_thunk->unique_name = in_lto_p;
    new_thunk->former_clone_of = thunk->decl;
+Index: gcc/modulo-sched.c
+===================================================================
+--- a/src/gcc/modulo-sched.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/modulo-sched.c	(.../branches/gcc-5-branch)
+@@ -1023,7 +1023,7 @@
+       int row = SMODULO (branch_cycle, ps->ii);
+       int num_splits = 0;
+       sbitmap must_precede, must_follow, tmp_precede, tmp_follow;
+-      int c;
++      int min_cycle, c;
+ 
+       if (dump_file)
+ 	fprintf (dump_file, "\nTrying to schedule node %d "
+@@ -1078,6 +1078,7 @@
+ 	if (next_ps_i->id == g->closing_branch->cuid)
+ 	  break;
+ 
++      min_cycle = PS_MIN_CYCLE (ps) - SMODULO (PS_MIN_CYCLE (ps), ps->ii);
+       remove_node_from_ps (ps, next_ps_i);
+       success =
+ 	try_scheduling_node_in_cycle (ps, g->closing_branch->cuid, c,
+@@ -1117,6 +1118,10 @@
+ 	  ok = true;
+ 	}
+ 
++      /* This might have been added to a new first stage.  */
++      if (PS_MIN_CYCLE (ps) < min_cycle)
++	reset_sched_times (ps, 0);
++
+       free (must_precede);
+       free (must_follow);
+     }
 Index: gcc/tree-ssa-math-opts.c
 ===================================================================
 --- a/src/gcc/tree-ssa-math-opts.c	(.../tags/gcc_5_3_0_release)
@@ -27063,6 +29760,23 @@ Index: gcc/tree-ssa-alias.c
  				      tbaa_p);
  
    /* We really do not want to end up here, but returning true is safe.  */
+Index: gcc/config.in
+===================================================================
+--- a/src/gcc/config.in	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/config.in	(.../branches/gcc-5-branch)
+@@ -600,6 +600,12 @@
+ #endif
+ 
+ 
++/* Define if your assembler supports .stabs. */
++#ifndef USED_FOR_TARGET
++#undef HAVE_AS_STABS_DIRECTIVE
++#endif
++
++
+ /* Define if your assembler and linker support thread-local storage. */
+ #ifndef USED_FOR_TARGET
+ #undef HAVE_AS_TLS
 Index: gcc/ipa-inline.h
 ===================================================================
 --- a/src/gcc/ipa-inline.h	(.../tags/gcc_5_3_0_release)
@@ -27153,6 +29867,15 @@ Index: gcc/dwarf2out.c
 ===================================================================
 --- a/src/gcc/dwarf2out.c	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/dwarf2out.c	(.../branches/gcc-5-branch)
+@@ -16255,7 +16255,7 @@
+ 	      fieldsize = tree_to_shwi (DECL_SIZE_UNIT (field));
+ 	      pos = int_byte_position (field);
+ 	      gcc_assert (pos + fieldsize <= size);
+-	      if (val
++	      if (val && fieldsize != 0
+ 		  && !native_encode_initializer (val, array + pos, fieldsize))
+ 		return false;
+ 	    }
 @@ -19129,7 +19129,7 @@
  		 DW_TAG_common_block and DW_TAG_variable.  */
  	      loc = loc_list_from_tree (com_decl, 2, NULL);
@@ -29787,66 +32510,49 @@ Index: gcc/fortran/ChangeLog
 ===================================================================
 --- a/src/gcc/fortran/ChangeLog	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/fortran/ChangeLog	(.../branches/gcc-5-branch)
-@@ -1,1463 +1,319 @@
+@@ -1,1463 +1,332 @@
 -2015-12-04  Release Manager
-+2016-05-15  Harald Anlauf  <anlauf@gmx.de>
++2016-05-26  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
  
 -	* GCC 5.3.0 released.
-+	PR fortran/69603
-+	* interface.c (compare_parameter): Check for non-NULL pointer.
- 
+-
 -2015-11-27  Andre Vehreschild  <vehre@gcc.gnu.org>
-+2016-04-04  Andre Vehreschild  <vehre@gmx.de>
- 
+-
 -	PR fortran/68218
 -	* trans-array.c (gfc_array_init_size): Add gfc_evaluate_now() when
 -	array spec in allocate is a function call.
-+	PR fortran/66911
-+	* trans-stmt.c (gfc_trans_allocate): Get the deferred length of an
-+	expression by converting the expression when the length is not set
-+	in the symbol's ts.
- 
+-
 -2015-11-24  Paul Thomas  <pault@gcc.gnu.org>
-+2016-04-04  Andre Vehreschild  <vehre@gcc.gnu.org>
- 
--	Backport from trunk.
+-
+ 	Backport from trunk.
 -	PR fortran/68196
 -	* class.c (has_finalizer_component): Prevent infinite recursion
 -	through this function if the derived type and that of its
 -	component are the same.
 -	* trans-types.c (gfc_get_derived_type): Do the same for proc
 -	pointers by ignoring the explicit interface for the component.
-+	PR fortran/65795
-+	* trans-array.c (gfc_array_allocate): When the array is a coarray,
-+	do not nullyfing its allocatable components in array_allocate, because
-+	the nullify missed the array ref and nullifies the wrong component.
-+	Cosmetics.
++	PR fortran/66461
++	* scanner.c (gfc_next_char_literal): Clear end_flag when adjusting
++	current locus back to old_locus.
  
 -	PR fortran/66465
 -	* check.c (same_type_check): If either of the expressions is
 -	BT_PROCEDURE, use the typespec from the symbol, rather than the
 -	expression.
-+2016-03-28  Andre Vehreschild  <vehre@gcc.gnu.org>
++2016-05-20  Jakub Jelinek  <jakub@redhat.com>
  
 -2015-11-18  Dominique d'Humieres <dominiq@lps.ens.fr>
-+	PR fortran/70397
-+	* trans-expr.c (gfc_class_len_or_zero_get): Add function to return a
-+	constant zero tree, when the class to get the _len component from is
-+	not unlimited polymorphic.
-+	(gfc_copy_class_to_class): Use the new function.
-+	* trans.h: Added interface of new function gfc_class_len_or_zero_get.
++	PR fortran/71204
++	* frontend-passes.c (realloc_string_callback): Clear inserted_block
++	and changed_statement before calling create_var.
  
 -	PR fortran/65751
 -	* expr.c (gfc_check_pointer_assign): Fix error message.
-+2016-03-28  Alessandro Fanfarillo  <fanfarillo.gcc@gmail.com>
++2016-05-15  Harald Anlauf  <anlauf@gmx.de>
  
 -2015-11-16  Steven G. Kargl  <kargl@gcc.gnu.org>
-+	Backport from trunk.
-+	* trans-decl.c (gfc_build_builtin_function_decls):
-+	caf_stop_numeric and caf_stop_str definition.
-+	* trans-stmt.c (gfc_trans_stop): invoke external functions
-+	for stop and stop_str when coarrays are used.
-+	* trans.h: extern for new functions.
++	PR fortran/69603
++	* interface.c (compare_parameter): Check for non-NULL pointer.
  
 -	PR fortran/58027
 -	PR fortran/60993
@@ -29854,9 +32560,59 @@ Index: gcc/fortran/ChangeLog
 -	__convert_* function was inserted into an array constructor.
 -	(gfc_check_assign_symbol): Check for an initialization expression
 -	when a __convert_* was inserted.
-+2016-03-09  Paul Thomas  <pault@gcc.gnu.org>
++2016-04-04  Andre Vehreschild  <vehre@gmx.de>
  
 -2015-11-14  Steven G. Kargl  <kargl@gcc.gnu.org>
++	PR fortran/66911
++	* trans-stmt.c (gfc_trans_allocate): Get the deferred length of an
++	expression by converting the expression when the length is not set
++	in the symbol's ts.
+ 
+-	PR fortran/67803
+-	* array.c (gfc_match_array_constructor): If array constructor included
+-	a CHARACTER typespec, check array elements for compatible type.
++2016-04-04  Andre Vehreschild  <vehre@gcc.gnu.org>
+ 
+-2015-11-13  Steven G. Kargl  <kargl@gccc.gnu.org>
++	PR fortran/65795
++	* trans-array.c (gfc_array_allocate): When the array is a coarray,
++	do not nullyfing its allocatable components in array_allocate, because
++	the nullify missed the array ref and nullifies the wrong component.
++	Cosmetics.
+ 
+-	PR fortran/68319
+-	* decl.c (gfc_match_data, gfc_match_entry): Enforce F2008:C1206.
+-	* io.c (gfc_match_format): Ditto.
+-	* match.c (gfc_match_st_function): Ditto.
++2016-03-28  Andre Vehreschild  <vehre@gcc.gnu.org>
+ 
+-2015-11-12  Steven G. Kargl  <kargl@gcc.gnu.org>
++	PR fortran/70397
++	* trans-expr.c (gfc_class_len_or_zero_get): Add function to return a
++	constant zero tree, when the class to get the _len component from is
++	not unlimited polymorphic.
++	(gfc_copy_class_to_class): Use the new function.
++	* trans.h: Added interface of new function gfc_class_len_or_zero_get.
+ 
+-	PR fortran/68318
+-	* decl.c (get_proc_name): Increment reference count for ENTRY.
+-	While here, fix comment and use postfix ++ for consistency.
++2016-03-28  Alessandro Fanfarillo  <fanfarillo.gcc@gmail.com>
+ 
+-2015-11-08  Steven g. Kargl  <kargl@gcc.gnu.org>
++	Backport from trunk.
++	* trans-decl.c (gfc_build_builtin_function_decls):
++	caf_stop_numeric and caf_stop_str definition.
++	* trans-stmt.c (gfc_trans_stop): invoke external functions
++	for stop and stop_str when coarrays are used.
++	* trans.h: extern for new functions.
+ 
+-	PR fortran/68053
+-	* decl.c (add_init_expr_to_sym):  Try to reduce initialization expression
+-	before testing for a constant value.
++2016-03-09  Paul Thomas  <pault@gcc.gnu.org>
+ 
+-2015-11-08  Steven G. Kargl  <kargl@gcc.gnu.org>
 +	Backport from trunk.
 +	PR fortran/69423
 +	* trans-decl.c (create_function_arglist): Deferred character
@@ -29870,21 +32626,19 @@ Index: gcc/fortran/ChangeLog
 +	results. Avoid using 'tmp' for anything other that a temporary
 +	tree by introducing 'type_of_array' for the arrayspec type.
  
--	PR fortran/67803
--	* array.c (gfc_match_array_constructor): If array constructor included
--	a CHARACTER typespec, check array elements for compatible type.
+-	PR fortran/68224
+-	* array.c (match_array_element_spec): Check of invalid NULL().
+-	While here, fix nearby comments.
 +2016-03-09  Paul Thomas  <pault@gcc.gnu.org>
  
--2015-11-13  Steven G. Kargl  <kargl@gccc.gnu.org>
+-2015-11-08  Steven G. Kargl  <kargl@gcc.gnu.org>
 +	Backport from trunk.
 +	PR fortran/64324
 +	* resolve.c (check_uop_procedure): Prevent deferred length
 +	characters from being trapped by assumed length error.
  
--	PR fortran/68319
--	* decl.c (gfc_match_data, gfc_match_entry): Enforce F2008:C1206.
--	* io.c (gfc_match_format): Ditto.
--	* match.c (gfc_match_st_function): Ditto.
+-	PR fortran/68153
+-	* check.c (gfc_check_reshape): Improve check for valid SHAPE argument.
 +	Backport from trunk.
 +	PR fortran/49630
 +	PR fortran/54070
@@ -29922,52 +32676,61 @@ Index: gcc/fortran/ChangeLog
 +	trans-types.c (gfc_get_character_type): If the character length
 +	is a pointer, use the indirect reference.
  
--2015-11-12  Steven G. Kargl  <kargl@gcc.gnu.org>
+-2015-11-08  Steven G. Kargl  <kargl@gcc.gnu.org>
 +2016-02-27  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
  
--	PR fortran/68318
--	* decl.c (get_proc_name): Increment reference count for ENTRY.
--	While here, fix comment and use postfix ++ for consistency.
+-	PR fortran/68151
+-	* match.c (match_case_selector):  Check for invalid type.
 +	Backported from mainline
 +	PR fortran/61156
 +	* scanner.c (add_path_to_list): If include path is not a directory,
 +	issue a fatal error.
  
--2015-11-08  Steven g. Kargl  <kargl@gcc.gnu.org>
+-2015-01-25  Paul Thomas  <pault@gcc.gnu.org>
 +2016-02-27  Alessandro Fanfarillo  <fanfarillo.gcc@gmail.com>
  
--	PR fortran/68053
--	* decl.c (add_init_expr_to_sym):  Try to reduce initialization expression
--	before testing for a constant value.
+-	Backported from trunk.
+-	PR fortran/67171
+-	* trans-array.c (structure_alloc_comps): On deallocation of
+-	class components, reset the vptr to the declared type vtable
+-	and reset the _len field of unlimited polymorphic components.
+-	*trans-expr.c (gfc_find_and_cut_at_last_class_ref): Bail out on
+-	allocatable component references to the right of part reference
+-	with non-zero rank and return NULL.
+-	(gfc_reset_vptr): Simplify this function by using the function
+-	gfc_get_vptr_from_expr. Return if the vptr is NULL_TREE.
+-	(gfc_reset_len): If gfc_find_and_cut_at_last_class_ref returns
+-	NULL return.
 +	Backported from mainline
 +	* trans.c (gfc_allocate_allocatable): size conversion
 +	from byte to number of elements for event variables.
 +	* trans-types.c (gfc_get_derived_type): event variables
 +	represented as a pointer (like lock variable).
  
--2015-11-08  Steven G. Kargl  <kargl@gcc.gnu.org>
+-2015-10-30  Steven G. Kargl  <kargl@gcc.gnu.org>
 +2016-02-23  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
  
--	PR fortran/68224
--	* array.c (match_array_element_spec): Check of invalid NULL().
--	While here, fix nearby comments.
+-	PR fortran/51993
+-	* decl.c (gfc_set_constant_character_len): Convert gcc_assert into an
+-	if-statement causing an early return leads to valid error message.
 +	Backported from mainline
 +	PR fortran/65996
 +	* error.c (gfc_error): Save the state of abort_on_error and set
 +	it to false for buffered errors to allow normal processing.
 +	Restore the state before leaving.
  
--2015-11-08  Steven G. Kargl  <kargl@gcc.gnu.org>
+-2015-10-30  Steven G. Kargl  <kargl@gcc.gnu.org>
 +2016-02-12  Tobias Burnus  <burnus@net-b.de>
 +	    Alessandro Fanfarillo  <fanfarillo.gcc@gmail.com>
  
--	PR fortran/68153
--	* check.c (gfc_check_reshape): Improve check for valid SHAPE argument.
+-	PR fortran/68154
+-	* decl.c (add_init_expr_to_sym): if the char length in the typespec
+-	is NULL, check for and use a constructor.
 +	Backported from mainline
 +	2015-12-02  Tobias Burnus  <burnus@net-b.de>
 +	Alessandro Fanfarillo  <fanfarillo.gcc@gmail.com>
  
--2015-11-08  Steven G. Kargl  <kargl@gcc.gnu.org>
+-2015-10-30  Steven G. Kargl  <kargl@gcc.gnu.org>
 +	* check.c (gfc_check_event_query): New function.
 +	* dump-parse-tree.c (show_code_node): Handle EXEC_EVENT_POST,
 +	EXEC_EVENT_WAIT.
@@ -30024,43 +32787,11 @@ Index: gcc/fortran/ChangeLog
 +	(gfor_fndecl_caf_event_post,gfor_fndecl_caf_event_wait,
 +	gfor_fndecl_caf_event_query): Declare them.
  
--	PR fortran/68151
--	* match.c (match_case_selector):  Check for invalid type.
-+2016-02-10  Jakub Jelinek  <jakub@redhat.com>
- 
--2015-01-25  Paul Thomas  <pault@gcc.gnu.org>
--
--	Backported from trunk.
--	PR fortran/67171
--	* trans-array.c (structure_alloc_comps): On deallocation of
--	class components, reset the vptr to the declared type vtable
--	and reset the _len field of unlimited polymorphic components.
--	*trans-expr.c (gfc_find_and_cut_at_last_class_ref): Bail out on
--	allocatable component references to the right of part reference
--	with non-zero rank and return NULL.
--	(gfc_reset_vptr): Simplify this function by using the function
--	gfc_get_vptr_from_expr. Return if the vptr is NULL_TREE.
--	(gfc_reset_len): If gfc_find_and_cut_at_last_class_ref returns
--	NULL return.
--
--2015-10-30  Steven G. Kargl  <kargl@gcc.gnu.org>
--
--	PR fortran/51993
--	* decl.c (gfc_set_constant_character_len): Convert gcc_assert into an
--	if-statement causing an early return leads to valid error message.
--
--2015-10-30  Steven G. Kargl  <kargl@gcc.gnu.org>
--
--	PR fortran/68154
--	* decl.c (add_init_expr_to_sym): if the char length in the typespec
--	is NULL, check for and use a constructor.
--
--2015-10-30  Steven G. Kargl  <kargl@gcc.gnu.org>
--
 -	PR fortran/36192
 -	* interface.c (get_expr_storage_size):  Check for INTEGER type before
 -	calling gmp routines.
--
++2016-02-10  Jakub Jelinek  <jakub@redhat.com>
+ 
 -2015-10-29  Steven G. Kargl  <kargl@gcc.gnu.org>
 -
 -	PR fortran/68055
@@ -32412,6 +35143,14 @@ Index: gcc/fortran/scanner.c
        return;
      }
  
+@@ -1499,6 +1499,7 @@
+ not_continuation:
+   c = '\n';
+   gfc_current_locus = old_loc;
++  end_flag = 0;
+ 
+ done:
+   if (c == '\n')
 Index: gcc/fortran/trans.h
 ===================================================================
 --- a/src/gcc/fortran/trans.h	(.../tags/gcc_5_3_0_release)
@@ -32465,6 +35204,22 @@ Index: gcc/fortran/trans.h
  extern int ompws_flags;
  
  #endif /* GFC_TRANS_H */
+Index: gcc/fortran/frontend-passes.c
+===================================================================
+--- a/src/gcc/fortran/frontend-passes.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/fortran/frontend-passes.c	(.../branches/gcc-5-branch)
+@@ -155,8 +155,10 @@
+ 
+   if (!gfc_check_dependency (expr1, expr2, true))
+     return 0;
+-  
++
+   current_code = c;
++  inserted_block = NULL;
++  changed_statement = NULL;
+   n = create_var (expr2);
+   co->expr2 = n;
+   return 0;
 Index: gcc/fortran/resolve.c
 ===================================================================
 --- a/src/gcc/fortran/resolve.c	(.../tags/gcc_5_3_0_release)
@@ -35453,6 +38208,22 @@ Index: gcc/ipa-devirt.c
        break;
  
      default:
+Index: gcc/configure.ac
+===================================================================
+--- a/src/gcc/configure.ac	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/configure.ac	(.../branches/gcc-5-branch)
+@@ -2831,6 +2831,11 @@
+   [`if test $gcc_cv_as_shf_merge = yes; then echo 1; else echo 0; fi`],
+ [Define 0/1 if your assembler supports marking sections with SHF_MERGE flag.])
+ 
++gcc_GAS_CHECK_FEATURE([stabs directive], gcc_cv_as_stabs_directive, ,,
++[.stabs "gcc2_compiled.",60,0,0,0],,
++[AC_DEFINE(HAVE_AS_STABS_DIRECTIVE, 1,
++  [Define if your assembler supports .stabs.])])
++
+ gcc_GAS_CHECK_FEATURE([COMDAT group support (GNU as)],
+  gcc_cv_as_comdat_group,
+  [elf,2,16,0], [--fatal-warnings],
 Index: gcc/BASE-VER
 ===================================================================
 --- a/src/gcc/BASE-VER	(.../tags/gcc_5_3_0_release)
@@ -35687,6 +38458,93 @@ Index: gcc/alias.c
 +}
  
  
+ 
+Index: gcc/tree-vect-loop.c
+===================================================================
+--- a/src/gcc/tree-vect-loop.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/tree-vect-loop.c	(.../branches/gcc-5-branch)
+@@ -3791,6 +3791,15 @@
+   else
+     init_value = init_val;
+ 
++  /* In case of a nested reduction do not use an adjustment def as
++     that case is not supported by the epilogue generation correctly
++     if ncopies is not one.  */
++  if (adjustment_def && nested_in_vect_loop)
++    {
++      *adjustment_def = NULL;
++      return vect_get_vec_def_for_operand (init_val, stmt, NULL);
++    }
++
+   switch (code)
+     {
+       case WIDEN_SUM_EXPR:
+@@ -3805,13 +3814,7 @@
+         /* ADJUSMENT_DEF is NULL when called from
+            vect_create_epilog_for_reduction to vectorize double reduction.  */
+         if (adjustment_def)
+-          {
+-            if (nested_in_vect_loop)
+-              *adjustment_def = vect_get_vec_def_for_operand (init_val, stmt,
+-                                                              NULL);
+-            else
+-              *adjustment_def = init_val;
+-          }
++	  *adjustment_def = init_val;
+ 
+         if (code == MULT_EXPR)
+           {
+@@ -4035,17 +4038,25 @@
+      (in case of SLP, do it for all the phis). */
+ 
+   /* Get the loop-entry arguments.  */
++  enum vect_def_type initial_def_dt = vect_unknown_def_type;
+   if (slp_node)
+     vect_get_vec_defs (reduction_op, NULL_TREE, stmt, &vec_initial_defs,
+                        NULL, slp_node, reduc_index);
+   else
+     {
+-      vec_initial_defs.create (1);
++      /* Get at the scalar def before the loop, that defines the initial value
++	 of the reduction variable.  */
++      gimple def_stmt = SSA_NAME_DEF_STMT (reduction_op);
++      tree initial_def = PHI_ARG_DEF_FROM_EDGE (def_stmt,
++						loop_preheader_edge (loop));
++      vect_is_simple_use (initial_def, NULL, loop_vinfo, NULL,
++			  &def_stmt, &initial_def, &initial_def_dt);
+      /* For the case of reduction, vect_get_vec_def_for_operand returns
+         the scalar def before the loop, that defines the initial value
+         of the reduction variable.  */
+       vec_initial_def = vect_get_vec_def_for_operand (reduction_op, stmt,
+                                                       &adjustment_def);
++      vec_initial_defs.create (1);
+       vec_initial_defs.quick_push (vec_initial_def);
+     }
+ 
+@@ -4060,6 +4071,15 @@
+       def = vect_defs[i];
+       for (j = 0; j < ncopies; j++)
+         {
++	  if (j != 0)
++	    {
++	      phi = STMT_VINFO_RELATED_STMT (vinfo_for_stmt (phi));
++	      if (nested_in_vect_loop)
++		vec_init_def
++		  = vect_get_vec_def_for_stmt_copy (initial_def_dt,
++						    vec_init_def);
++	    }
++
+           /* Set the loop-entry arg of the reduction-phi.  */
+           add_phi_arg (as_a <gphi *> (phi), vec_init_def,
+ 		       loop_preheader_edge (loop), UNKNOWN_LOCATION);
+@@ -4080,8 +4100,6 @@
+               dump_gimple_stmt (MSG_NOTE, TDF_SLIM, SSA_NAME_DEF_STMT (def), 0);
+               dump_printf (MSG_NOTE, "\n");
+             }
+-
+-          phi = STMT_VINFO_RELATED_STMT (vinfo_for_stmt (phi));
+         }
+     }
  
 Index: gcc/tree-data-ref.c
 ===================================================================
@@ -36416,7 +39274,201 @@ Index: gcc/tree-ssa-pre.c
 ===================================================================
 --- a/src/gcc/tree-ssa-pre.c	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/tree-ssa-pre.c	(.../branches/gcc-5-branch)
-@@ -3847,7 +3847,7 @@
+@@ -2112,11 +2112,6 @@
+ 
+ static sbitmap has_abnormal_preds;
+ 
+-/* List of blocks that may have changed during ANTIC computation and
+-   thus need to be iterated over.  */
+-
+-static sbitmap changed_blocks;
+-
+ /* Compute the ANTIC set for BLOCK.
+ 
+    If succs(BLOCK) > 1 then
+@@ -2136,6 +2131,7 @@
+   unsigned int bii;
+   edge e;
+   edge_iterator ei;
++  bool was_visited = BB_VISITED (block);
+ 
+   old = ANTIC_OUT = S = NULL;
+   BB_VISITED (block) = 1;
+@@ -2175,6 +2171,16 @@
+ 	    first = e->dest;
+ 	  else if (BB_VISITED (e->dest))
+ 	    worklist.quick_push (e->dest);
++	  else
++	    {
++	      /* Unvisited successors get their ANTIC_IN replaced by the
++		 maximal set to arrive at a maximum ANTIC_IN solution.
++		 We can ignore them in the intersection operation and thus
++		 need not explicitely represent that maximum solution.  */
++	      if (dump_file && (dump_flags & TDF_DETAILS))
++		fprintf (dump_file, "ANTIC_IN is MAX on %d->%d\n",
++			 e->src->index, e->dest->index);
++	    }
+ 	}
+ 
+       /* Of multiple successors we have to have visited one already
+@@ -2216,15 +2222,8 @@
+ 
+   clean (ANTIC_IN (block));
+ 
+-  if (!bitmap_set_equal (old, ANTIC_IN (block)))
+-    {
+-      changed = true;
+-      bitmap_set_bit (changed_blocks, block->index);
+-      FOR_EACH_EDGE (e, ei, block->preds)
+-	bitmap_set_bit (changed_blocks, e->src->index);
+-    }
+-  else
+-    bitmap_clear_bit (changed_blocks, block->index);
++  if (!was_visited || !bitmap_set_equal (old, ANTIC_IN (block)))
++    changed = true;
+ 
+  maybe_dump_sets:
+   if (dump_file && (dump_flags & TDF_DETAILS))
+@@ -2232,6 +2231,8 @@
+       if (ANTIC_OUT)
+ 	print_bitmap_set (dump_file, ANTIC_OUT, "ANTIC_OUT", block->index);
+ 
++      if (changed)
++	fprintf (dump_file, "[changed] ");
+       print_bitmap_set (dump_file, ANTIC_IN (block), "ANTIC_IN",
+ 			block->index);
+ 
+@@ -2363,14 +2364,7 @@
+   dependent_clean (PA_IN (block), ANTIC_IN (block));
+ 
+   if (!bitmap_set_equal (old_PA_IN, PA_IN (block)))
+-    {
+-      changed = true;
+-      bitmap_set_bit (changed_blocks, block->index);
+-      FOR_EACH_EDGE (e, ei, block->preds)
+-	bitmap_set_bit (changed_blocks, e->src->index);
+-    }
+-  else
+-    bitmap_clear_bit (changed_blocks, block->index);
++    changed = true;
+ 
+  maybe_dump_sets:
+   if (dump_file && (dump_flags & TDF_DETAILS))
+@@ -2396,6 +2390,8 @@
+   int num_iterations = 0;
+   basic_block block;
+   int i;
++  edge_iterator ei;
++  edge e;
+ 
+   /* If any predecessor edges are abnormal, we punt, so antic_in is empty.
+      We pre-build the map of blocks with incoming abnormal edges here.  */
+@@ -2404,20 +2400,17 @@
+ 
+   FOR_ALL_BB_FN (block, cfun)
+     {
+-      edge_iterator ei;
+-      edge e;
++      BB_VISITED (block) = 0;
+ 
+       FOR_EACH_EDGE (e, ei, block->preds)
+-	{
+-	  e->flags &= ~EDGE_DFS_BACK;
+-	  if (e->flags & EDGE_ABNORMAL)
+-	    {
+-	      bitmap_set_bit (has_abnormal_preds, block->index);
+-	      break;
+-	    }
+-	}
++	if (e->flags & EDGE_ABNORMAL)
++	  {
++	    bitmap_set_bit (has_abnormal_preds, block->index);
+ 
+-      BB_VISITED (block) = 0;
++	    /* We also anticipate nothing.  */
++	    BB_VISITED (block) = 1;
++	    break;
++	  }
+ 
+       /* While we are here, give empty ANTIC_IN sets to each block.  */
+       ANTIC_IN (block) = bitmap_set_new ();
+@@ -2427,8 +2420,8 @@
+   /* At the exit block we anticipate nothing.  */
+   BB_VISITED (EXIT_BLOCK_PTR_FOR_FN (cfun)) = 1;
+ 
+-  changed_blocks = sbitmap_alloc (last_basic_block_for_fn (cfun) + 1);
+-  bitmap_ones (changed_blocks);
++  sbitmap worklist = sbitmap_alloc (last_basic_block_for_fn (cfun) + 1);
++  bitmap_ones (worklist);
+   while (changed)
+     {
+       if (dump_file && (dump_flags & TDF_DETAILS))
+@@ -2441,12 +2434,18 @@
+       changed = false;
+       for (i = postorder_num - 1; i >= 0; i--)
+ 	{
+-	  if (bitmap_bit_p (changed_blocks, postorder[i]))
++	  if (bitmap_bit_p (worklist, postorder[i]))
+ 	    {
+ 	      basic_block block = BASIC_BLOCK_FOR_FN (cfun, postorder[i]);
+-	      changed |= compute_antic_aux (block,
+-					    bitmap_bit_p (has_abnormal_preds,
+-						      block->index));
++	      bitmap_clear_bit (worklist, block->index);
++	      if (compute_antic_aux (block,
++				     bitmap_bit_p (has_abnormal_preds,
++						   block->index)))
++		{
++		  FOR_EACH_EDGE (e, ei, block->preds)
++		    bitmap_set_bit (worklist, e->src->index);
++		  changed = true;
++		}
+ 	    }
+ 	}
+       /* Theoretically possible, but *highly* unlikely.  */
+@@ -2458,7 +2457,7 @@
+ 
+   if (do_partial_partial)
+     {
+-      bitmap_ones (changed_blocks);
++      bitmap_ones (worklist);
+       mark_dfs_back_edges ();
+       num_iterations = 0;
+       changed = true;
+@@ -2470,13 +2469,18 @@
+ 	  changed = false;
+ 	  for (i = postorder_num - 1 ; i >= 0; i--)
+ 	    {
+-	      if (bitmap_bit_p (changed_blocks, postorder[i]))
++	      if (bitmap_bit_p (worklist, postorder[i]))
+ 		{
+ 		  basic_block block = BASIC_BLOCK_FOR_FN (cfun, postorder[i]);
+-		  changed
+-		    |= compute_partial_antic_aux (block,
+-						  bitmap_bit_p (has_abnormal_preds,
+-							    block->index));
++		  bitmap_clear_bit (worklist, block->index);
++		  if (compute_partial_antic_aux (block,
++						 bitmap_bit_p (has_abnormal_preds,
++							       block->index)))
++		    {
++		      FOR_EACH_EDGE (e, ei, block->preds)
++			bitmap_set_bit (worklist, e->src->index);
++		      changed = true;
++		    }
+ 		}
+ 	    }
+ 	  /* Theoretically possible, but *highly* unlikely.  */
+@@ -2486,7 +2490,7 @@
+ 				  num_iterations);
+     }
+   sbitmap_free (has_abnormal_preds);
+-  sbitmap_free (changed_blocks);
++  sbitmap_free (worklist);
+ }
+ 
+ 
+@@ -3847,7 +3851,7 @@
  		      vn_reference_t ref;
  		      vn_reference_lookup (gimple_assign_rhs1 (stmt),
  					   gimple_vuse (stmt),
@@ -36425,7 +39477,7 @@ Index: gcc/tree-ssa-pre.c
  		      if (!ref)
  			continue;
  
-@@ -4308,7 +4308,7 @@
+@@ -4308,7 +4312,7 @@
            tree val;
  	  tree rhs = gimple_assign_rhs1 (stmt);
            val = vn_reference_lookup (gimple_assign_lhs (stmt),
@@ -36434,6 +39486,31 @@ Index: gcc/tree-ssa-pre.c
            if (TREE_CODE (rhs) == SSA_NAME)
              rhs = VN_INFO (rhs)->valnum;
            if (val
+@@ -4768,12 +4772,14 @@
+   connect_infinite_loops_to_exit ();
+   memset (&pre_stats, 0, sizeof (pre_stats));
+ 
++  /* For ANTIC computation we need a postorder that also guarantees that
++     a block with a single successor is visited after its successor.
++     RPO on the inverted CFG has this property.  */
+   postorder = XNEWVEC (int, n_basic_blocks_for_fn (cfun));
+   postorder_num = inverted_post_order_compute (postorder);
+ 
+   alloc_aux_for_blocks (sizeof (struct bb_bitmap_sets));
+ 
+-  calculate_dominance_info (CDI_POST_DOMINATORS);
+   calculate_dominance_info (CDI_DOMINATORS);
+ 
+   bitmap_obstack_initialize (&grand_bitmap_obstack);
+@@ -4811,8 +4817,6 @@
+   name_to_id.release ();
+ 
+   free_aux_for_blocks ();
+-
+-  free_dominance_info (CDI_POST_DOMINATORS);
+ }
+ 
+ namespace {
 Index: gcc/tree-sra.c
 ===================================================================
 --- a/src/gcc/tree-sra.c	(.../tags/gcc_5_3_0_release)
@@ -36660,6 +39737,21 @@ Index: gcc/ubsan.c
        /* Create the __ubsan_handle_float_cast_overflow fn call.  */
        tree data = ubsan_create_data ("__ubsan_float_cast_overflow_data", 0,
  				     NULL, ubsan_type_descriptor (expr_type),
+Index: gcc/lto/lto-partition.c
+===================================================================
+--- a/src/gcc/lto/lto-partition.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/lto/lto-partition.c	(.../branches/gcc-5-branch)
+@@ -1038,8 +1038,8 @@
+   for (s = symtab_node::get_for_asmname (name); s;)
+     if (!s->externally_visible
+ 	&& ((s->real_symbol_p ()
+-             && !DECL_EXTERNAL (node->decl)
+-	     && !TREE_PUBLIC (node->decl))
++             && !DECL_EXTERNAL (s->decl)
++	     && !TREE_PUBLIC (s->decl))
+  	    || may_need_named_section_p (encoder, s))
+ 	&& (!encoder
+ 	    || lto_symtab_encoder_lookup (encoder, s) != LCC_NOT_FOUND))
 Index: gcc/ipa-prop.c
 ===================================================================
 --- a/src/gcc/ipa-prop.c	(.../tags/gcc_5_3_0_release)
@@ -39754,7 +42846,22 @@ Index: gcc/sched-deps.c
 ===================================================================
 --- a/src/gcc/sched-deps.c	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/sched-deps.c	(.../branches/gcc-5-branch)
-@@ -2893,6 +2893,17 @@
+@@ -2742,9 +2742,12 @@
+ 	return;
+       }
+ 
+-    /* Force pending stores to memory in case a trap handler needs them.  */
++    /* Force pending stores to memory in case a trap handler needs them.
++       Also force pending loads from memory; loads and stores can segfault
++       and the signal handler won't be triggered if the trap insn was moved
++       above load or store insn.  */
+     case TRAP_IF:
+-      flush_pending_lists (deps, insn, true, false);
++      flush_pending_lists (deps, insn, true, true);
+       break;
+ 
+     case PREFETCH:
+@@ -2893,6 +2896,17 @@
  
  }
  
@@ -39772,7 +42879,7 @@ Index: gcc/sched-deps.c
  /* Analyze an INSN with pattern X to find all dependencies.  */
  static void
  sched_analyze_insn (struct deps_desc *deps, rtx x, rtx_insn *insn)
-@@ -2905,12 +2916,7 @@
+@@ -2905,12 +2919,7 @@
    if (! reload_completed)
      {
        HARD_REG_SET temp;
@@ -39786,7 +42893,7 @@ Index: gcc/sched-deps.c
        IOR_HARD_REG_SET (implicit_reg_pending_clobbers, temp);
      }
  
-@@ -3523,7 +3529,8 @@
+@@ -3523,7 +3532,8 @@
      {
        if (deps->last_args_size)
  	add_dependence (insn, deps->last_args_size, REG_DEP_OUTPUT);
@@ -40087,6 +43194,23 @@ Index: gcc/gimple-expr.c
  {
    enum gimple_rhs_class grhs_class;
  
+Index: gcc/tree-cfg.c
+===================================================================
+--- a/src/gcc/tree-cfg.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/tree-cfg.c	(.../branches/gcc-5-branch)
+@@ -2927,10 +2927,10 @@
+ 	    }
+ 	  else if (!INTEGRAL_TYPE_P (TREE_TYPE (t))
+ 		   && TYPE_MODE (TREE_TYPE (t)) != BLKmode
+-		   && (GET_MODE_PRECISION (TYPE_MODE (TREE_TYPE (t)))
++		   && (GET_MODE_BITSIZE (TYPE_MODE (TREE_TYPE (t)))
+ 		       != tree_to_uhwi (t1)))
+ 	    {
+-	      error ("mode precision of non-integral result does not "
++	      error ("mode size of non-integral result does not "
+ 		     "match field size of BIT_FIELD_REF");
+ 	      return t;
+ 	    }
 Index: gcc/passes.c
 ===================================================================
 --- a/src/gcc/passes.c	(.../tags/gcc_5_3_0_release)
@@ -44413,6 +47537,19 @@ Index: gcc/config/sparc/sparc.c
  
    /* In the flat window model, find out which local and in registers need to
       be saved.  We don't reserve space in the current frame for them as they
+Index: gcc/config/i386/i386.h
+===================================================================
+--- a/src/gcc/config/i386/i386.h	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/config/i386/i386.h	(.../branches/gcc-5-branch)
+@@ -454,6 +454,8 @@
+ 	ix86_tune_features[X86_TUNE_SLOW_PSHUFB]
+ #define TARGET_VECTOR_PARALLEL_EXECUTION \
+ 	ix86_tune_features[X86_TUNE_VECTOR_PARALLEL_EXECUTION]
++#define TARGET_AVOID_4BYTE_PREFIXES \
++	ix86_tune_features[X86_TUNE_AVOID_4BYTE_PREFIXES]
+ #define TARGET_FUSE_CMP_AND_BRANCH_32 \
+ 	ix86_tune_features[X86_TUNE_FUSE_CMP_AND_BRANCH_32]
+ #define TARGET_FUSE_CMP_AND_BRANCH_64 \
 Index: gcc/config/i386/i386.md
 ===================================================================
 --- a/src/gcc/config/i386/i386.md	(.../tags/gcc_5_3_0_release)
@@ -44534,7 +47671,21 @@ Index: gcc/config/i386/constraints.md
 ===================================================================
 --- a/src/gcc/config/i386/constraints.md	(.../tags/gcc_5_3_0_release)
 +++ b/src/gcc/config/i386/constraints.md	(.../branches/gcc-5-branch)
-@@ -149,6 +149,7 @@
+@@ -141,8 +141,12 @@
+  "(ix86_fpmath & FPMATH_387) ? FLOAT_REGS : NO_REGS"
+  "@internal Any x87 register when 80387 FP arithmetic is enabled.")
+ 
++;; Yr constraint is meant to be used in noavx contexts only, for VEX and EVEX
++;; the lower register numbers need the same instruction sizes as any other.
++;; In case Yr constraint is misused, try to limit the damage, by treating
++;; it as x constraint in avx mode, not v constraint.
+ (define_register_constraint "Yr"
+- "TARGET_SSE ? (X86_TUNE_AVOID_4BYTE_PREFIXES ? NO_REX_SSE_REGS : ALL_SSE_REGS) : NO_REGS"
++ "TARGET_SSE ? ((TARGET_AVOID_4BYTE_PREFIXES && !TARGET_AVX) ? NO_REX_SSE_REGS : SSE_REGS) : NO_REGS"
+  "@internal Lower SSE register when avoiding REX prefix and all SSE registers otherwise.")
+ 
+ ;; We use the B prefix to denote any number of internal operands:
+@@ -149,6 +153,7 @@
  ;;  s  Sibcall memory operand, not valid for TARGET_X32
  ;;  w  Call memory operand, not valid for TARGET_X32
  ;;  z  Constant call address operand.
@@ -44542,7 +47693,7 @@ Index: gcc/config/i386/constraints.md
  
  (define_constraint "Bs"
    "@internal Sibcall memory operand."
-@@ -164,6 +165,10 @@
+@@ -164,6 +169,10 @@
    "@internal Constant call address operand."
    (match_operand 0 "constant_call_address_operand"))
  
@@ -44553,7 +47704,7 @@ Index: gcc/config/i386/constraints.md
  ;; Integer constant constraints.
  (define_constraint "I"
    "Integer constant in the range 0 @dots{} 31, for 32-bit shifts."
-@@ -214,8 +219,8 @@
+@@ -214,8 +223,8 @@
  
  ;; This can theoretically be any mode's CONST0_RTX.
  (define_constraint "C"
@@ -45168,6 +48319,30 @@ Index: gcc/config/i386/sse.md
    [(set_attr "type" "sse")
     (set_attr "prefix" "evex")
     (set_attr "mode" "<MODE>")])
+Index: gcc/config/i386/darwin.h
+===================================================================
+--- a/src/gcc/config/i386/darwin.h	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/config/i386/darwin.h	(.../branches/gcc-5-branch)
+@@ -1,5 +1,5 @@
+ /* Target definitions for x86 running Darwin.
+-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
++   Copyright (C) 2001-2016 Free Software Foundation, Inc.
+    Contributed by Apple Computer Inc.
+ 
+ This file is part of GCC.
+@@ -236,8 +236,12 @@
+    compiles default to stabs+.  darwin9+ defaults to dwarf-2.  */
+ #ifndef DARWIN_PREFER_DWARF
+ #undef PREFERRED_DEBUGGING_TYPE
++#ifdef HAVE_AS_STABS_DIRECTIVE
+ #define PREFERRED_DEBUGGING_TYPE (TARGET_64BIT ? DWARF2_DEBUG : DBX_DEBUG)
++#else
++#define PREFERRED_DEBUGGING_TYPE DWARF2_DEBUG
+ #endif
++#endif
+ 
+ /* Darwin uses the standard DWARF register numbers but the default
+    register numbers for STABS.  Fortunately for 64-bit code the
 Index: gcc/config/i386/i386.c
 ===================================================================
 --- a/src/gcc/config/i386/i386.c	(.../tags/gcc_5_3_0_release)
@@ -45240,7 +48415,18 @@ Index: gcc/config/i386/i386.c
        else if (orig_tune_defaulted)
  	opts->x_ix86_tune_string = NULL;
  
-@@ -9677,6 +9691,10 @@
+@@ -6576,6 +6590,10 @@
+ 	{
+ 	  machine_mode innermode = TYPE_MODE (TREE_TYPE (type));
+ 
++	  /* There are no XFmode vector modes.  */
++	  if (innermode == XFmode)
++	    return mode;
++
+ 	  if (TREE_CODE (TREE_TYPE (type)) == REAL_TYPE)
+ 	    mode = MIN_MODE_VECTOR_FLOAT;
+ 	  else
+@@ -9677,6 +9695,10 @@
    if (TARGET_64BIT_MS_ABI && get_frame_size () > SEH_MAX_FRAME_SIZE)
      return true;
  
@@ -45251,7 +48437,7 @@ Index: gcc/config/i386/i386.c
    /* In ix86_option_override_internal, TARGET_OMIT_LEAF_FRAME_POINTER
       turns off the frame pointer by default.  Turn it back on now if
       we've not got a leaf function.  */
-@@ -10114,18 +10132,6 @@
+@@ -10114,18 +10136,6 @@
        crtl->preferred_stack_boundary = 128;
        crtl->stack_alignment_needed = 128;
      }
@@ -45270,7 +48456,7 @@ Index: gcc/config/i386/i386.c
  
    stack_alignment_needed = crtl->stack_alignment_needed / BITS_PER_UNIT;
    preferred_alignment = crtl->preferred_stack_boundary / BITS_PER_UNIT;
-@@ -10799,6 +10805,11 @@
+@@ -10799,6 +10809,11 @@
        && cfun->stdarg
        && crtl->stack_alignment_estimated < 128)
      crtl->stack_alignment_estimated = 128;
@@ -45282,7 +48468,7 @@ Index: gcc/config/i386/i386.c
  }
  
  /* Handle the TARGET_GET_DRAP_RTX hook.  Return NULL if no DRAP is
-@@ -11258,10 +11269,11 @@
+@@ -11258,10 +11273,11 @@
    unsigned int incoming_stack_boundary
      = (crtl->parm_stack_boundary > ix86_incoming_stack_boundary
         ? crtl->parm_stack_boundary : ix86_incoming_stack_boundary);
@@ -45298,7 +48484,7 @@ Index: gcc/config/i386/i386.c
  
    if (crtl->stack_realign_finalized)
      {
-@@ -24365,7 +24377,7 @@
+@@ -24365,7 +24381,7 @@
         if (DYNAMIC_CHECK)
  	 Round COUNT down to multiple of SIZE
         << optional caller supplied zero size guard is here >>
@@ -45307,7 +48493,7 @@ Index: gcc/config/i386/i386.c
         << caller supplied main copy loop is here >>
       }
     done_label:
-@@ -24539,8 +24551,8 @@
+@@ -24539,8 +24555,8 @@
        else
  	*min_size = 0;
  
@@ -45318,7 +48504,7 @@ Index: gcc/config/i386/i386.c
        if (dynamic_check)
  	*count = expand_simple_binop (GET_MODE (*count), AND, *count,
  				      GEN_INT (-size), *count, 1, OPTAB_DIRECT);
-@@ -24659,9 +24671,10 @@
+@@ -24659,9 +24675,10 @@
  static enum stringop_alg
  decide_alg (HOST_WIDE_INT count, HOST_WIDE_INT expected_size,
  	    unsigned HOST_WIDE_INT min_size, unsigned HOST_WIDE_INT max_size,
@@ -45331,7 +48517,7 @@ Index: gcc/config/i386/i386.c
    bool optimize_for_speed;
    int max = 0;
    const struct processor_costs *cost;
-@@ -24695,7 +24708,7 @@
+@@ -24695,7 +24712,7 @@
        any_alg_usable_p |= usable;
  
        if (candidate != libcall && candidate && usable)
@@ -45340,7 +48526,7 @@ Index: gcc/config/i386/i386.c
      }
  
    /* If expected size is not known but max size is small enough
-@@ -24705,7 +24718,7 @@
+@@ -24705,7 +24722,7 @@
        && expected_size == -1)
      expected_size = min_size / 2 + max_size / 2;
  
@@ -45349,7 +48535,7 @@ Index: gcc/config/i386/i386.c
    if (ix86_stringop_alg != no_stringop
        && alg_usable_p (ix86_stringop_alg, memset))
      return ix86_stringop_alg;
-@@ -24780,21 +24793,20 @@
+@@ -24780,21 +24797,20 @@
  	  || !alg_usable_p (algs->unknown_size, memset)))
      {
        enum stringop_alg alg;
@@ -45384,7 +48570,7 @@ Index: gcc/config/i386/i386.c
        gcc_assert (*dynamic_check == -1);
        if (TARGET_INLINE_STRINGOPS_DYNAMICALLY)
  	*dynamic_check = max;
-@@ -25050,7 +25062,7 @@
+@@ -25050,7 +25066,7 @@
    alg = decide_alg (count, expected_size, min_size, probable_max_size,
  		    issetmem,
  		    issetmem && val_exp == const0_rtx,
@@ -45393,7 +48579,7 @@ Index: gcc/config/i386/i386.c
    if (alg == libcall)
      return false;
    gcc_assert (alg != no_stringop);
-@@ -25118,6 +25130,13 @@
+@@ -25118,6 +25134,13 @@
    size_needed = GET_MODE_SIZE (move_mode) * unroll_factor;
    epilogue_size_needed = size_needed;
  
@@ -45407,7 +48593,7 @@ Index: gcc/config/i386/i386.c
    desired_align = decide_alignment (align, alg, expected_size, move_mode);
    if (!TARGET_ALIGN_STRINGOPS || noalign)
      align = desired_align;
-@@ -30800,6 +30819,14 @@
+@@ -30800,6 +30823,14 @@
      {
        ix86_builtins_isa[(int) code].isa = mask;
  
@@ -45422,7 +48608,7 @@ Index: gcc/config/i386/i386.c
        mask &= ~OPTION_MASK_ISA_64BIT;
        if (mask == 0
  	  || (mask & ix86_isa_flags) != 0
-@@ -31131,9 +31158,9 @@
+@@ -31131,9 +31162,9 @@
    { OPTION_MASK_ISA_LWP, CODE_FOR_lwp_llwpcb, "__builtin_ia32_llwpcb", IX86_BUILTIN_LLWPCB, UNKNOWN, (int) VOID_FTYPE_PVOID },
    { OPTION_MASK_ISA_LWP, CODE_FOR_lwp_slwpcb, "__builtin_ia32_slwpcb", IX86_BUILTIN_SLWPCB, UNKNOWN, (int) PVOID_FTYPE_VOID },
    { OPTION_MASK_ISA_LWP, CODE_FOR_lwp_lwpvalsi3, "__builtin_ia32_lwpval32", IX86_BUILTIN_LWPVAL32, UNKNOWN, (int) VOID_FTYPE_UINT_UINT_UINT },
@@ -45434,7 +48620,7 @@ Index: gcc/config/i386/i386.c
  
    /* FSGSBASE */
    { OPTION_MASK_ISA_FSGSBASE | OPTION_MASK_ISA_64BIT, CODE_FOR_rdfsbasesi, "__builtin_ia32_rdfsbase32", IX86_BUILTIN_RDFSBASE32, UNKNOWN, (int) UNSIGNED_FTYPE_VOID },
-@@ -32064,12 +32091,12 @@
+@@ -32064,12 +32095,12 @@
  
    /* BMI */
    { OPTION_MASK_ISA_BMI, CODE_FOR_bmi_bextr_si, "__builtin_ia32_bextr_u32", IX86_BUILTIN_BEXTR32, UNKNOWN, (int) UINT_FTYPE_UINT_UINT },
@@ -45449,7 +48635,7 @@ Index: gcc/config/i386/i386.c
  
    /* F16C */
    { OPTION_MASK_ISA_F16C, CODE_FOR_vcvtph2ps, "__builtin_ia32_vcvtph2ps", IX86_BUILTIN_CVTPH2PS, UNKNOWN, (int) V4SF_FTYPE_V8HI },
-@@ -32079,11 +32106,11 @@
+@@ -32079,11 +32110,11 @@
  
    /* BMI2 */
    { OPTION_MASK_ISA_BMI2, CODE_FOR_bmi2_bzhi_si3, "__builtin_ia32_bzhi_si", IX86_BUILTIN_BZHI32, UNKNOWN, (int) UINT_FTYPE_UINT_UINT },
@@ -45464,7 +48650,7 @@ Index: gcc/config/i386/i386.c
  
    /* AVX512F */
    { OPTION_MASK_ISA_AVX512F, CODE_FOR_avx512f_si512_256si, "__builtin_ia32_si512_256si", IX86_BUILTIN_SI512_SI256, UNKNOWN, (int) V16SI_FTYPE_V8SI },
-@@ -32461,9 +32488,9 @@
+@@ -32461,9 +32492,9 @@
    { OPTION_MASK_ISA_AVX512BW | OPTION_MASK_ISA_AVX512VL, CODE_FOR_avx512vl_permvarv16hi_mask, "__builtin_ia32_permvarhi256_mask", IX86_BUILTIN_VPERMVARHI256_MASK, UNKNOWN, (int) V16HI_FTYPE_V16HI_V16HI_V16HI_HI },
    { OPTION_MASK_ISA_AVX512BW | OPTION_MASK_ISA_AVX512VL, CODE_FOR_avx512vl_permvarv8hi_mask, "__builtin_ia32_permvarhi128_mask", IX86_BUILTIN_VPERMVARHI128_MASK, UNKNOWN, (int) V8HI_FTYPE_V8HI_V8HI_V8HI_QI },
    { OPTION_MASK_ISA_AVX512BW | OPTION_MASK_ISA_AVX512VL, CODE_FOR_avx512vl_vpermt2varv16hi3_mask, "__builtin_ia32_vpermt2varhi256_mask", IX86_BUILTIN_VPERMT2VARHI256, UNKNOWN, (int) V16HI_FTYPE_V16HI_V16HI_V16HI_HI },
@@ -45476,7 +48662,7 @@ Index: gcc/config/i386/i386.c
    { OPTION_MASK_ISA_AVX512BW | OPTION_MASK_ISA_AVX512VL, CODE_FOR_avx512vl_vpermi2varv16hi3_mask, "__builtin_ia32_vpermi2varhi256_mask", IX86_BUILTIN_VPERMI2VARHI256, UNKNOWN, (int) V16HI_FTYPE_V16HI_V16HI_V16HI_HI },
    { OPTION_MASK_ISA_AVX512BW | OPTION_MASK_ISA_AVX512VL, CODE_FOR_avx512vl_vpermi2varv8hi3_mask, "__builtin_ia32_vpermi2varhi128_mask", IX86_BUILTIN_VPERMI2VARHI128, UNKNOWN, (int) V8HI_FTYPE_V8HI_V8HI_V8HI_QI },
    { OPTION_MASK_ISA_AVX512VL, CODE_FOR_rcp14v4df_mask, "__builtin_ia32_rcp14pd256_mask", IX86_BUILTIN_RCP14PD256, UNKNOWN, (int) V4DF_FTYPE_V4DF_V4DF_QI },
-@@ -33178,9 +33205,9 @@
+@@ -33178,9 +33209,9 @@
    { OPTION_MASK_ISA_AVX512VBMI | OPTION_MASK_ISA_AVX512VL, CODE_FOR_avx512vl_permvarv32qi_mask, "__builtin_ia32_permvarqi256_mask", IX86_BUILTIN_VPERMVARQI256_MASK, UNKNOWN, (int) V32QI_FTYPE_V32QI_V32QI_V32QI_SI },
    { OPTION_MASK_ISA_AVX512VBMI | OPTION_MASK_ISA_AVX512VL, CODE_FOR_avx512vl_permvarv16qi_mask, "__builtin_ia32_permvarqi128_mask", IX86_BUILTIN_VPERMVARQI128_MASK, UNKNOWN, (int) V16QI_FTYPE_V16QI_V16QI_V16QI_HI },
    { OPTION_MASK_ISA_AVX512VBMI | OPTION_MASK_ISA_AVX512VL, CODE_FOR_avx512vl_vpermt2varv32qi3_mask, "__builtin_ia32_vpermt2varqi256_mask", IX86_BUILTIN_VPERMT2VARQI256, UNKNOWN, (int) V32QI_FTYPE_V32QI_V32QI_V32QI_SI },
@@ -45488,7 +48674,7 @@ Index: gcc/config/i386/i386.c
    { OPTION_MASK_ISA_AVX512VBMI | OPTION_MASK_ISA_AVX512VL, CODE_FOR_avx512vl_vpermi2varv32qi3_mask, "__builtin_ia32_vpermi2varqi256_mask", IX86_BUILTIN_VPERMI2VARQI256, UNKNOWN, (int) V32QI_FTYPE_V32QI_V32QI_V32QI_SI },
    { OPTION_MASK_ISA_AVX512VBMI | OPTION_MASK_ISA_AVX512VL, CODE_FOR_avx512vl_vpermi2varv16qi3_mask, "__builtin_ia32_vpermi2varqi128_mask", IX86_BUILTIN_VPERMI2VARQI128, UNKNOWN, (int) V16QI_FTYPE_V16QI_V16QI_V16QI_HI },
  };
-@@ -38246,7 +38273,11 @@
+@@ -38246,7 +38277,11 @@
        memory = 0;
        break;
      case VOID_FTYPE_PV8DF_V8DF_QI:
@@ -45500,7 +48686,7 @@ Index: gcc/config/i386/i386.c
      case VOID_FTYPE_PV8DI_V8DI_QI:
      case VOID_FTYPE_PV4DI_V4DI_QI:
      case VOID_FTYPE_PV2DI_V2DI_QI:
-@@ -38306,10 +38337,6 @@
+@@ -38306,10 +38341,6 @@
      case VOID_FTYPE_PV16QI_V16QI_HI:
      case VOID_FTYPE_PV32QI_V32QI_SI:
      case VOID_FTYPE_PV64QI_V64QI_DI:
@@ -45511,7 +48697,7 @@ Index: gcc/config/i386/i386.c
        nargs = 2;
        klass = store;
        /* Reserve memory operand for target.  */
-@@ -40246,13 +40273,12 @@
+@@ -40246,13 +40277,12 @@
  
        op0 = fixup_modeless_constant (op0, mode0);
  
@@ -45527,7 +48713,7 @@ Index: gcc/config/i386/i386.c
  	{
  	  op0 = copy_to_reg (op0);
  	  op0 = simplify_gen_subreg (mode0, op0, GET_MODE (op0), 0);
-@@ -45078,6 +45104,7 @@
+@@ -45078,6 +45108,7 @@
  	{
  	  /* For SSE1, we have to reuse the V4SF code.  */
  	  rtx t = gen_reg_rtx (V4SFmode);
@@ -45535,7 +48721,7 @@ Index: gcc/config/i386/i386.c
  	  ix86_expand_vector_set (false, t, gen_lowpart (SFmode, val), elt);
  	  emit_move_insn (target, gen_lowpart (mode, t));
  	}
-@@ -45208,7 +45235,12 @@
+@@ -45208,7 +45239,12 @@
        tmp = gen_reg_rtx (mode);
        emit_insn (gen_rtx_SET (VOIDmode, tmp,
  			      gen_rtx_VEC_DUPLICATE (mode, val)));
@@ -45549,7 +48735,7 @@ Index: gcc/config/i386/i386.c
  			     force_reg (mmode,
  					gen_int_mode (1 << elt, mmode))));
      }
-@@ -50025,7 +50057,7 @@
+@@ -50025,7 +50061,7 @@
      {
        /* For SSE2, we used an full interleave, so the desired
  	 results are in the even elements.  */
@@ -45558,7 +48744,7 @@ Index: gcc/config/i386/i386.c
  	d.perm[i] = i * 2;
      }
    else
-@@ -50032,9 +50064,17 @@
+@@ -50032,9 +50068,17 @@
      {
        /* For AVX, the interleave used above was not cross-lane.  So the
  	 extraction is evens but with the second and third quarter swapped.
@@ -45707,6 +48893,19 @@ Index: gcc/config/microblaze/rtems.h
 +  %{mbig-endian:-EB --oformat=elf32-microblaze} \
 +  %{mlittle-endian:-EL --oformat=elf32-microblazeel} \
 +  %{mxl-gp-opt:%{G*}} %{!mxl-gp-opt: -G 0}"
+Index: gcc/config/nios2/nios2.c
+===================================================================
+--- a/src/gcc/config/nios2/nios2.c	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/config/nios2/nios2.c	(.../branches/gcc-5-branch)
+@@ -1930,7 +1930,7 @@
+ 	case UNSPEC_LOAD_TLS_IE:
+ 	case UNSPEC_ADD_TLS_LE:
+ 	  x = XVECEXP (XEXP (x, 0), 0, 0);
+-	  gcc_assert (GET_CODE (x) == SYMBOL_REF);
++	  gcc_assert (CONSTANT_P (x));
+ 	  break;
+ 	}
+     }
 Index: gcc/config/ia64/predicates.md
 ===================================================================
 --- a/src/gcc/config/ia64/predicates.md	(.../tags/gcc_5_3_0_release)
@@ -47090,6 +50289,27 @@ Index: gcc/config/rs6000/rs6000.md
  	(plus:P (match_dup 1) (const_int -1)))
     (clobber (match_scratch:CC 3 ""))
     (clobber (match_scratch:P 4 ""))]
+Index: gcc/config/darwin.h
+===================================================================
+--- a/src/gcc/config/darwin.h	(.../tags/gcc_5_3_0_release)
++++ b/src/gcc/config/darwin.h	(.../branches/gcc-5-branch)
+@@ -393,12 +393,13 @@
+ 
+ #define ASM_DEBUG_SPEC  "%{g*:%{!g0:%{!gdwarf*:--gstabs}}}"
+ 
+-/* We still allow output of STABS.  */
+-
++/* We still allow output of STABS if the assembler supports it.  */
++#ifdef HAVE_AS_STABS_DIRECTIVE
+ #define DBX_DEBUGGING_INFO 1
++#define PREFERRED_DEBUGGING_TYPE DBX_DEBUG
++#endif
+ 
+ #define DWARF2_DEBUGGING_INFO 1
+-#define PREFERRED_DEBUGGING_TYPE DBX_DEBUG
+ 
+ #define DEBUG_FRAME_SECTION	"__DWARF,__debug_frame,regular,debug"
+ #define DEBUG_INFO_SECTION	"__DWARF,__debug_info,regular,debug"
 Index: gcc/config/arm/arm-builtins.c
 ===================================================================
 --- a/src/gcc/config/arm/arm-builtins.c	(.../tags/gcc_5_3_0_release)
@@ -47223,6 +50443,32 @@ Index: gcc/config/arm/arm.c
  	  INSN_CODE (insn) = -1;
  	}
      }
+@@ -21206,7 +21213,11 @@
+ 
+   /* Naked functions don't have prologues.  */
+   if (IS_NAKED (func_type))
+-    return;
++    {
++      if (flag_stack_usage_info)
++	current_function_static_stack_size = 0;
++      return;
++    }
+ 
+   /* Make a copy of c_f_p_a_s as we may need to modify it locally.  */
+   args_to_push = crtl->args.pretend_args_size;
+@@ -24451,7 +24462,11 @@
+ 
+   /* Naked functions don't have prologues.  */
+   if (IS_NAKED (func_type))
+-    return;
++    {
++      if (flag_stack_usage_info)
++	current_function_static_stack_size = 0;
++      return;
++    }
+ 
+   if (IS_INTERRUPT (func_type))
+     {
 Index: gcc/config/arm/arm.h
 ===================================================================
 --- a/src/gcc/config/arm/arm.h	(.../tags/gcc_5_3_0_release)
@@ -49298,6 +52544,52 @@ Index: Makefile.def
  lang_env_dependencies = { module=libcilkrts; cxx=true; };
  lang_env_dependencies = { module=liboffloadmic; cxx=true; };
  lang_env_dependencies = { module=newlib; no_c=true; };
+Index: libffi/ChangeLog
+===================================================================
+--- a/src/libffi/ChangeLog	(.../tags/gcc_5_3_0_release)
++++ b/src/libffi/ChangeLog	(.../branches/gcc-5-branch)
+@@ -1,3 +1,10 @@
++2016-05-23  Thomas Schwinge  <thomas@codesourcery.com>
++
++	Backport trunk r236594:
++
++	PR libffi/65567
++	* testsuite/lib/libffi.exp (libffi_feature_test): Fix, and simply.
++
+ 2015-12-04  Release Manager
+ 
+ 	* GCC 5.3.0 released.
+Index: libffi/testsuite/lib/libffi.exp
+===================================================================
+--- a/src/libffi/testsuite/lib/libffi.exp	(.../tags/gcc_5_3_0_release)
++++ b/src/libffi/testsuite/lib/libffi.exp	(.../branches/gcc-5-branch)
+@@ -227,20 +227,21 @@
+ 
+ # TEST should be a preprocessor condition.  Returns true if it holds.
+ proc libffi_feature_test { test } {
+-    set src "ffitest.c"
++    set src "ffitest[pid].c"
+ 
+     set f [open $src "w"]
+     puts $f "#include <ffi.h>"
+     puts $f $test
+-    puts $f "xyzzy"
++    puts $f "/* OK */"
++    puts $f "#else"
++    puts $f "# error Failed $test"
+     puts $f "#endif"
+     close $f
+ 
+-    set lines [libffi_target_compile $src "" "preprocess" ""]
++    set lines [libffi_target_compile $src /dev/null assembly ""]
+     file delete $src
+ 
+-    set last [lindex [split $lines] end]
+-    return [regexp -- "xyzzy" $last]
++    return [string match "" $lines]
+ }
+ 
+ # Utility routines.
 Index: libcilkrts/Makefile.in
 ===================================================================
 --- a/src/libcilkrts/Makefile.in	(.../tags/gcc_5_3_0_release)

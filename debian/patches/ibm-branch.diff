@@ -1,6 +1,6 @@
-# DP: updates from the ibm/5 branch upto 20160412 (r234893).
+# DP: updates from the ibm/5 branch upto 20160526 (r236756).
 
-svn diff svn://gcc.gnu.org/svn/gcc/branches/gcc-5-branch@234888 svn://gcc.gnu.org/svn/gcc/branches/ibm/gcc-5-branch \
+svn diff svn://gcc.gnu.org/svn/gcc/branches/gcc-5-branch@236741 svn://gcc.gnu.org/svn/gcc/branches/ibm/gcc-5-branch \
 	| sed -r 's,^--- (\S+)\t(\S+)(.*)$,--- a/src/\1\t\2,;s,^\+\+\+ (\S+)\t(\S+)(.*)$,+++ b/src/\1\t\2,' \
 	| awk '/^Index:.*\.(class|texi)/ {skip=1; next} /^Index:/ { skip=0 } skip==0'
 
@@ -8,7 +8,7 @@ Index: libgcc/config.host
 ===================================================================
 --- a/src/libgcc/config.host	(.../gcc-5-branch)
 +++ b/src/libgcc/config.host	(.../ibm/gcc-5-branch)
-@@ -1023,6 +1023,7 @@
+@@ -1018,6 +1018,7 @@
  	;;
  powerpc*-*-linux*)
  	tmake_file="${tmake_file} rs6000/t-ppccomm rs6000/t-savresfgpr rs6000/t-crtstuff rs6000/t-linux t-dfprules rs6000/t-ppc64-fp t-slibgcc-libgcc"
@@ -16,7 +16,7 @@ Index: libgcc/config.host
  	case $ppc_fp_type in
  	64)
  		;;
-@@ -1043,6 +1044,15 @@
+@@ -1038,6 +1039,15 @@
  		exit 1
  		;;
  	esac
@@ -2090,7 +2090,11 @@ Index: libgcc/ChangeLog.ibm
 ===================================================================
 --- a/src/libgcc/ChangeLog.ibm	(.../gcc-5-branch)
 +++ b/src/libgcc/ChangeLog.ibm	(.../ibm/gcc-5-branch)
-@@ -0,0 +1,127 @@
+@@ -0,0 +1,131 @@
++2016-04-12  Michael Meissner  <meissner@linux.vnet.ibm.com>
++
++	Merge up to branches/gcc-5-branch, subversion id 234917.
++
 +2016-04-11  Michael Meissner  <meissner@linux.vnet.ibm.com>
 +
 +	Merge up to branches/gcc-5-branch, subversion id 234888.
@@ -2222,24 +2226,6 @@ Index: gcc/configure
 ===================================================================
 --- a/src/gcc/configure	(.../gcc-5-branch)
 +++ b/src/gcc/configure	(.../ibm/gcc-5-branch)
-@@ -16134,7 +16134,7 @@
- 	if $NM -V 2>&1 | $GREP 'GNU' > /dev/null; then
- 	  export_symbols_cmds='$NM -Bpg $libobjs $convenience | awk '\''{ if (((\$ 2 == "T") || (\$ 2 == "D") || (\$ 2 == "B") || (\$ 2 == "W")) && (substr(\$ 3,1,1) != ".")) { print \$ 3 } }'\'' | sort -u > $export_symbols'
- 	else
--	  export_symbols_cmds='$NM -BCpg $libobjs $convenience | awk '\''{ if (((\$ 2 == "T") || (\$ 2 == "D") || (\$ 2 == "B")) && (substr(\$ 3,1,1) != ".")) { print \$ 3 } }'\'' | sort -u > $export_symbols'
-+	  export_symbols_cmds='$NM -BCpg $libobjs $convenience | awk '\''{ if (((\$ 2 == "T") || (\$ 2 == "D") || (\$ 2 == "B") || (\$ 2 == "L")) && (substr(\$ 3,1,1) != ".")) { print \$ 3 } }'\'' | sort -u > $export_symbols'
- 	fi
- 	aix_use_runtimelinking=no
- 
-@@ -20620,7 +20620,7 @@
-     if $NM -V 2>&1 | $GREP 'GNU' > /dev/null; then
-       export_symbols_cmds_CXX='$NM -Bpg $libobjs $convenience | awk '\''{ if (((\$ 2 == "T") || (\$ 2 == "D") || (\$ 2 == "B") || (\$ 2 == "W")) && (substr(\$ 3,1,1) != ".")) { print \$ 3 } }'\'' | sort -u > $export_symbols'
-     else
--      export_symbols_cmds_CXX='$NM -BCpg $libobjs $convenience | awk '\''{ if (((\$ 2 == "T") || (\$ 2 == "D") || (\$ 2 == "B")) && (substr(\$ 3,1,1) != ".")) { print \$ 3 } }'\'' | sort -u > $export_symbols'
-+      export_symbols_cmds_CXX='$NM -BCpg $libobjs $convenience | awk '\''{ if (((\$ 2 == "T") || (\$ 2 == "D") || (\$ 2 == "B") || (\$ 2 == "L")) && (substr(\$ 3,1,1) != ".")) { print \$ 3 } }'\'' | sort -u > $export_symbols'
-     fi
-     ;;
-   pw32*)
 @@ -21791,7 +21791,45 @@
  fi
  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ld_is_gold" >&5
@@ -2286,7 +2272,7 @@ Index: gcc/configure
  ORIGINAL_LD_FOR_TARGET=$gcc_cv_ld
  
  case "$ORIGINAL_LD_FOR_TARGET" in
-@@ -25997,6 +26035,48 @@
+@@ -26028,6 +26066,48 @@
  fi
  
      case $target in
@@ -2335,7 +2321,7 @@ Index: gcc/configure
        *-*-aix*) conftest_s='	.csect .text[PR]
  	lwsync';;
        *) conftest_s='	.text
-@@ -27617,6 +27697,82 @@
+@@ -27648,6 +27728,82 @@
  $as_echo "#define HAVE_LD_LARGE_TOC 1" >>confdefs.h
  
      fi
@@ -2418,7 +2404,7 @@ Index: gcc/configure
      ;;
  esac
  
-@@ -27905,6 +28061,24 @@
+@@ -27936,6 +28092,24 @@
  
  fi
  
@@ -3483,6 +3469,22 @@ Index: gcc/testsuite/gcc.target/powerpc/p9-lxvx-stxvx-2.c
 +  vector unsigned int u32 = vec_vsx_ld (1, (const unsigned int *)p);
 +  vec_ste (u32, 1, (unsigned int *)p);
 +}
+Index: gcc/testsuite/gcc.target/powerpc/pr70640.c
+===================================================================
+--- a/src/gcc/testsuite/gcc.target/powerpc/pr70640.c	(.../gcc-5-branch)
++++ b/src/gcc/testsuite/gcc.target/powerpc/pr70640.c	(.../ibm/gcc-5-branch)
+@@ -0,0 +1,11 @@
++/* { dg-do compile { target { powerpc*-*-linux* } } } */
++/* { dg-require-effective-target powerpc_float128_sw_ok } */
++/* { dg-skip-if "do not override -mcpu" { powerpc*-*-* } { "-mcpu=*" } { "-mcpu=power8" } } */
++/* { dg-options "-O2 -mcpu=power8 -mfloat128" } */
++
++__float128 foo (__float128 a) { return -a; }
++
++/* { dg-final { scan-assembler "xxlorc" } } */
++/* { dg-final { scan-assembler "xxlxor" } } */
++/* { dg-final { scan-assembler "vslb"   } } */
++/* { dg-final { scan-assembler "vsldoi" } } */
 Index: gcc/testsuite/gcc.target/powerpc/float128-hw.c
 ===================================================================
 --- a/src/gcc/testsuite/gcc.target/powerpc/float128-hw.c	(.../gcc-5-branch)
@@ -3910,7 +3912,19 @@ Index: gcc/testsuite/ChangeLog.ibm
 ===================================================================
 --- a/src/gcc/testsuite/ChangeLog.ibm	(.../gcc-5-branch)
 +++ b/src/gcc/testsuite/ChangeLog.ibm	(.../ibm/gcc-5-branch)
-@@ -0,0 +1,155 @@
+@@ -0,0 +1,167 @@
++2016-04-12  Michael Meissner  <meissner@linux.vnet.ibm.com>
++
++	Merge up to branches/gcc-5-branch, subversion id 234917.
++
++2016-04-12  Michael Meissner  <meissner@linux.vnet.ibm.com>
++
++	Backport from the trunk
++	2016-04-12  Michael Meissner  <meissner@linux.vnet.ibm.com>
++
++	PR target/70680
++	* gcc.target/powerpc/pr70640.c: New test.
++
 +2016-04-11  Michael Meissner  <meissner@linux.vnet.ibm.com>
 +
 +	Merge up to branches/gcc-5-branch, subversion id 234888.
@@ -4070,7 +4084,7 @@ Index: gcc/testsuite/lib/target-supports.exp
 ===================================================================
 --- a/src/gcc/testsuite/lib/target-supports.exp	(.../gcc-5-branch)
 +++ b/src/gcc/testsuite/lib/target-supports.exp	(.../ibm/gcc-5-branch)
-@@ -1516,7 +1516,9 @@
+@@ -1538,7 +1538,9 @@
      return [check_cached_effective_target p8vector_hw_available {
  	# Some simulators are known to not support VSX/power8 instructions.
  	# For now, disable on Darwin
@@ -4081,7 +4095,7 @@ Index: gcc/testsuite/lib/target-supports.exp
  	    expr 0
  	} else {
  	    set options "-mpower8-vector"
-@@ -1535,6 +1537,112 @@
+@@ -1557,6 +1559,112 @@
      }]
  }
  
@@ -4194,7 +4208,7 @@ Index: gcc/testsuite/lib/target-supports.exp
  # Return 1 if the target supports executing VSX instructions, 0
  # otherwise.  Cache the result.
  
-@@ -1542,7 +1650,9 @@
+@@ -1564,7 +1672,9 @@
      return [check_cached_effective_target vsx_hw_available {
  	# Some simulators are known to not support VSX instructions.
  	# For now, disable on Darwin
@@ -4205,7 +4219,7 @@ Index: gcc/testsuite/lib/target-supports.exp
  	    expr 0
  	} else {
  	    set options "-mvsx"
-@@ -3260,6 +3370,108 @@
+@@ -3282,6 +3392,108 @@
      }
  }
  
@@ -4314,7 +4328,7 @@ Index: gcc/testsuite/lib/target-supports.exp
  # Return 1 if this is a PowerPC target supporting -mvsx
  
  proc check_effective_target_powerpc_vsx_ok { } {
-@@ -5327,6 +5539,10 @@
+@@ -5349,6 +5561,10 @@
  	  "vmx_hw"         { set selected [check_vmx_hw_available] }
  	  "vsx_hw"         { set selected [check_vsx_hw_available] }
  	  "p8vector_hw"    { set selected [check_p8vector_hw_available] }
@@ -4325,7 +4339,7 @@ Index: gcc/testsuite/lib/target-supports.exp
  	  "ppc_recip_hw"   { set selected [check_ppc_recip_hw_available] }
  	  "dfp_hw"         { set selected [check_dfp_hw_available] }
  	  "htm_hw"         { set selected [check_htm_hw_available] }
-@@ -5351,6 +5567,10 @@
+@@ -5373,6 +5589,10 @@
  	  "vmx_hw"         { return 1 }
  	  "vsx_hw"         { return 1 }
  	  "p8vector_hw"    { return 1 }
@@ -4336,7 +4350,7 @@ Index: gcc/testsuite/lib/target-supports.exp
  	  "ppc_recip_hw"   { return 1 }
  	  "dfp_hw"         { return 1 }
  	  "htm_hw"         { return 1 }
-@@ -6025,7 +6245,9 @@
+@@ -6047,7 +6267,9 @@
          }
  
          lappend DEFAULT_VECTCFLAGS "-maltivec"
@@ -4474,7 +4488,7 @@ Index: gcc/config.in
  /* Define if your assembler supports .ref */
  #ifndef USED_FOR_TARGET
  #undef HAVE_AS_REF
-@@ -1277,6 +1283,13 @@
+@@ -1283,6 +1289,13 @@
  #endif
  
  
@@ -4488,7 +4502,7 @@ Index: gcc/config.in
  /* Define if you have the iconv() function. */
  #ifndef USED_FOR_TARGET
  #undef HAVE_ICONV
-@@ -1410,6 +1423,12 @@
+@@ -1416,6 +1429,12 @@
  #endif
  
  
@@ -4501,7 +4515,7 @@ Index: gcc/config.in
  /* Define if your PowerPC64 linker supports a large TOC. */
  #ifndef USED_FOR_TARGET
  #undef HAVE_LD_LARGE_TOC
-@@ -1922,6 +1941,12 @@
+@@ -1928,6 +1947,12 @@
  #endif
  
  
@@ -4514,7 +4528,7 @@ Index: gcc/config.in
  /* Define to PREFIX/include if cpp should also search that directory. */
  #ifndef USED_FOR_TARGET
  #undef PREFIX_INCLUDE_DIR
-@@ -1991,6 +2016,12 @@
+@@ -1997,6 +2022,12 @@
  #endif
  
  
@@ -4734,7 +4748,7 @@ Index: gcc/configure.ac
  ORIGINAL_LD_FOR_TARGET=$gcc_cv_ld
  AC_SUBST(ORIGINAL_LD_FOR_TARGET)
  case "$ORIGINAL_LD_FOR_TARGET" in
-@@ -4241,6 +4276,19 @@
+@@ -4246,6 +4281,19 @@
  	  [Define if your assembler supports POWER8 instructions.])])
  
      case $target in
@@ -4754,7 +4768,7 @@ Index: gcc/configure.ac
        *-*-aix*) conftest_s='	.csect .text[[PR]]
  	lwsync';;
        *) conftest_s='	.text
-@@ -5139,6 +5187,66 @@
+@@ -5144,6 +5192,66 @@
        AC_DEFINE(HAVE_LD_LARGE_TOC, 1,
      [Define if your PowerPC64 linker supports a large TOC.])
      fi
@@ -4821,7 +4835,7 @@ Index: gcc/configure.ac
      ;;
  esac
  
-@@ -5357,6 +5465,19 @@
+@@ -5362,6 +5470,19 @@
  	    [Define if TFmode long double should be the default])
  fi
  
@@ -4845,7 +4859,28 @@ Index: gcc/ChangeLog.ibm
 ===================================================================
 --- a/src/gcc/ChangeLog.ibm	(.../gcc-5-branch)
 +++ b/src/gcc/ChangeLog.ibm	(.../ibm/gcc-5-branch)
-@@ -0,0 +1,1161 @@
+@@ -0,0 +1,1182 @@
++2016-05-25  Peter Bergner  <bergner@vnet.ibm.com>
++
++	Merge up to 236741.
++	* REVISION: Update subversion id.
++
++2016-04-12  Michael Meissner  <meissner@linux.vnet.ibm.com>
++
++	Merge up to branches/gcc-5-branch, subversion id 234917.
++	* REVISION: Update subversion id.
++
++	Backport from the trunk
++	2016-04-12  Michael Meissner  <meissner@linux.vnet.ibm.com>
++
++	PR target/70680
++	* config/rs6000/rs6000.md (ieee_128bit_vsx_neg<mode>2_internal):
++	Do not use "=" constraint on an input constraint.
++	(ieee_128bit_vsx_abs<mode>2_internal): Likewise.
++	(ieee_128bit_vsx_nabs<mode>2_internal): Likewise.
++	(ieee_128bit_vsx_nabs<mode>2): Correct splitter so that it
++	generates (neg (abs ...)) instead of (abs ...).
++
 +2016-04-11  Michael Meissner  <meissner@linux.vnet.ibm.com>
 +
 +	Merge up to branches/gcc-5-branch, subversion id 234888.
@@ -12385,7 +12420,7 @@ Index: gcc/config/rs6000/vsx.md
  }"
    [(set_attr "type" "div")])
  
-@@ -1632,7 +1788,7 @@
+@@ -1642,7 +1798,7 @@
          (vec_select:VSX_LE
            (match_operand:VSX_LE 1 "memory_operand" "Z")
            (parallel [(const_int 1) (const_int 0)])))]
@@ -12394,7 +12429,7 @@ Index: gcc/config/rs6000/vsx.md
    "lxvd2x %x0,%y1"
    [(set_attr "type" "vecload")])
  
-@@ -1642,7 +1798,7 @@
+@@ -1652,7 +1808,7 @@
            (match_operand:VSX_W 1 "memory_operand" "Z")
            (parallel [(const_int 2) (const_int 3)
                       (const_int 0) (const_int 1)])))]
@@ -12403,7 +12438,7 @@ Index: gcc/config/rs6000/vsx.md
    "lxvd2x %x0,%y1"
    [(set_attr "type" "vecload")])
  
-@@ -1654,7 +1810,7 @@
+@@ -1664,7 +1820,7 @@
                       (const_int 6) (const_int 7)
                       (const_int 0) (const_int 1)
                       (const_int 2) (const_int 3)])))]
@@ -12412,7 +12447,7 @@ Index: gcc/config/rs6000/vsx.md
    "lxvd2x %x0,%y1"
    [(set_attr "type" "vecload")])
  
-@@ -1670,7 +1826,7 @@
+@@ -1680,7 +1836,7 @@
                       (const_int 2) (const_int 3)
                       (const_int 4) (const_int 5)
                       (const_int 6) (const_int 7)])))]
@@ -12421,7 +12456,7 @@ Index: gcc/config/rs6000/vsx.md
    "lxvd2x %x0,%y1"
    [(set_attr "type" "vecload")])
  
-@@ -1681,7 +1837,7 @@
+@@ -1691,7 +1847,7 @@
          (vec_select:VSX_LE
            (match_operand:VSX_LE 1 "vsx_register_operand" "<VSa>")
            (parallel [(const_int 1) (const_int 0)])))]
@@ -12430,7 +12465,7 @@ Index: gcc/config/rs6000/vsx.md
    "stxvd2x %x1,%y0"
    [(set_attr "type" "vecstore")])
  
-@@ -1691,7 +1847,7 @@
+@@ -1701,7 +1857,7 @@
            (match_operand:VSX_W 1 "vsx_register_operand" "<VSa>")
            (parallel [(const_int 2) (const_int 3)
                       (const_int 0) (const_int 1)])))]
@@ -12439,7 +12474,7 @@ Index: gcc/config/rs6000/vsx.md
    "stxvd2x %x1,%y0"
    [(set_attr "type" "vecstore")])
  
-@@ -1703,7 +1859,7 @@
+@@ -1713,7 +1869,7 @@
                       (const_int 6) (const_int 7)
                       (const_int 0) (const_int 1)
                       (const_int 2) (const_int 3)])))]
@@ -12448,7 +12483,7 @@ Index: gcc/config/rs6000/vsx.md
    "stxvd2x %x1,%y0"
    [(set_attr "type" "vecstore")])
  
-@@ -1719,7 +1875,7 @@
+@@ -1729,7 +1885,7 @@
                       (const_int 2) (const_int 3)
                       (const_int 4) (const_int 5)
                       (const_int 6) (const_int 7)])))]
@@ -12457,7 +12492,7 @@ Index: gcc/config/rs6000/vsx.md
    "stxvd2x %x1,%y0"
    [(set_attr "type" "vecstore")])
  
-@@ -1770,11 +1926,11 @@
+@@ -1780,11 +1936,11 @@
  ;; Optimize cases were we can do a simple or direct move.
  ;; Or see if we can avoid doing the move at all
  (define_insn "*vsx_extract_<mode>_internal1"
@@ -12472,7 +12507,7 @@ Index: gcc/config/rs6000/vsx.md
    "VECTOR_MEM_VSX_P (<MODE>mode) && TARGET_POWERPC64 && TARGET_DIRECT_MOVE"
  {
    int op0_regno = REGNO (operands[0]);
-@@ -1784,7 +1940,9 @@
+@@ -1794,7 +1950,9 @@
      return "nop";
  
    if (INT_REGNO_P (op0_regno))
@@ -12483,7 +12518,7 @@ Index: gcc/config/rs6000/vsx.md
  
    if (FP_REGNO_P (op0_regno) && FP_REGNO_P (op1_regno))
      return "fmr %0,%1";
-@@ -1791,7 +1949,7 @@
+@@ -1801,7 +1959,7 @@
  
    return "xxlor %x0,%x1,%x1";
  }
@@ -12492,7 +12527,7 @@ Index: gcc/config/rs6000/vsx.md
     (set_attr "length" "4")])
  
  (define_insn "*vsx_extract_<mode>_internal2"
-@@ -2305,7 +2463,7 @@
+@@ -2315,7 +2473,7 @@
     (set (match_operand:VSX_M2 2 "vsx_register_operand" "")
  	(mem:VSX_M2 (plus:P (match_dup 0)
  			    (match_operand:P 3 "int_reg_operand" ""))))]
@@ -12501,7 +12536,7 @@ Index: gcc/config/rs6000/vsx.md
    "li %0,%1\t\t\t# vector load fusion\;lx<VSX_M2:VSm>x %x2,%0,%3"  
    [(set_attr "length" "8")
     (set_attr "type" "vecload")])
-@@ -2316,7 +2474,7 @@
+@@ -2326,7 +2484,7 @@
     (set (match_operand:VSX_M2 2 "vsx_register_operand" "")
  	(mem:VSX_M2 (plus:P (match_operand:P 3 "int_reg_operand" "")
  			    (match_dup 0))))]
@@ -14326,7 +14361,7 @@ Index: gcc/config/rs6000/rs6000.md
 +(define_insn "*ieee_128bit_vsx_neg<mode>2_internal"
 +  [(set (match_operand:IEEE128 0 "register_operand" "=wa")
 +	(neg:IEEE128 (match_operand:IEEE128 1 "register_operand" "wa")))
-+   (use (match_operand:V16QI 2 "register_operand" "=v"))]
++   (use (match_operand:V16QI 2 "register_operand" "v"))]
 +  "TARGET_FLOAT128 && !TARGET_FLOAT128_HW"
 +  "xxlxor %x0,%x1,%x2"
 +  [(set_attr "type" "vecsimple")])
@@ -14355,7 +14390,7 @@ Index: gcc/config/rs6000/rs6000.md
 +(define_insn "*ieee_128bit_vsx_abs<mode>2_internal"
 +  [(set (match_operand:IEEE128 0 "register_operand" "=wa")
 +	(abs:IEEE128 (match_operand:IEEE128 1 "register_operand" "wa")))
-+   (use (match_operand:V16QI 2 "register_operand" "=v"))]
++   (use (match_operand:V16QI 2 "register_operand" "v"))]
 +  "TARGET_FLOAT128 && !TARGET_FLOAT128_HW"
 +  "xxlandc %x0,%x1,%x2"
 +  [(set_attr "type" "vecsimple")])
@@ -14371,7 +14406,7 @@ Index: gcc/config/rs6000/rs6000.md
 +  "#"
 +  "&& 1"
 +  [(parallel [(set (match_dup 0)
-+		   (abs:IEEE128 (match_dup 1)))
++		   (neg:IEEE128 (abs:IEEE128 (match_dup 1))))
 +	      (use (match_dup 2))])]
 +{
 +  if (GET_CODE (operands[2]) == SCRATCH)
@@ -14388,7 +14423,7 @@ Index: gcc/config/rs6000/rs6000.md
 +	(neg:IEEE128
 +	 (abs:IEEE128
 +	  (match_operand:IEEE128 1 "register_operand" "wa"))))
-+   (use (match_operand:V16QI 2 "register_operand" "=v"))]
++   (use (match_operand:V16QI 2 "register_operand" "v"))]
 +  "TARGET_FLOAT128 && !TARGET_FLOAT128_HW"
 +  "xxlor %x0,%x1,%x2"
 +  [(set_attr "type" "vecsimple")])
@@ -15420,17 +15455,3 @@ Index: libgo/configure.ac
  
  AC_CACHE_CHECK([whether compiler is llgo],
  [libgo_cv_c_goc_is_llgo],
-Index: .
-===================================================================
---- a/src/.	(.../gcc-5-branch)
-+++ b/src/.	(.../ibm/gcc-5-branch)
-
-Property changes on: .
-___________________________________________________________________
-Modified: svn:mergeinfo
-## -0,0 +0,1 ##
-   Merged /branches/gcc-5-branch:r222422-234888
-Added: svnmerge-integrated
-## -0,0 +1 ##
-+/branches/gcc-5-branch:1-234888
-\ No newline at end of property
