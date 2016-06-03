@@ -17,9 +17,11 @@ gcc/testsuite/ChangeLog:
  2 files changed, 19 insertions(+), 2 deletions(-)
  create mode 100644 gcc/testsuite/g++.dg/cpp0x/lambda/lambda-70218.C
 
+Index: b/src/gcc/cp/parser.c
+===================================================================
 --- a/src/gcc/cp/parser.c
 +++ b/src/gcc/cp/parser.c
-@@ -9781,8 +9781,6 @@ cp_parser_lambda_expression (cp_parser* parser)
+@@ -9112,8 +9112,6 @@ cp_parser_lambda_expression (cp_parser*
  	= auto_is_implicit_function_template_parm_p;
    }
  
@@ -28,7 +30,7 @@ gcc/testsuite/ChangeLog:
    /* This field is only used during parsing of the lambda.  */
    LAMBDA_EXPR_THIS_CAPTURE (lambda_expr) = NULL_TREE;
  
-@@ -9798,6 +9796,8 @@ cp_parser_lambda_expression (cp_parser* parser)
+@@ -9129,6 +9127,8 @@ cp_parser_lambda_expression (cp_parser*
  
    cp_parser_end_tentative_firewall (parser, start, lambda_expr);
  
@@ -37,6 +39,8 @@ gcc/testsuite/ChangeLog:
    return lambda_expr;
  }
  
+Index: b/src/gcc/testsuite/g++.dg/cpp0x/lambda/lambda-70218.C
+===================================================================
 --- /dev/null
 +++ b/src/gcc/testsuite/g++.dg/cpp0x/lambda/lambda-70218.C
 @@ -0,0 +1,17 @@

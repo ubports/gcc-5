@@ -89,7 +89,7 @@ Index: b/src/gcc/LINARO-VERSION
 --- a/src/gcc/LINARO-VERSION
 +++ /dev/null
 @@ -1,1 +0,0 @@
--Snapshot 5.3-2016.04
+-Snapshot 5.3-2016.05
 Index: b/src/gcc/configure.ac
 ===================================================================
 --- a/src/gcc/configure.ac

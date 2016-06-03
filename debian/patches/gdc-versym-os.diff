@@ -77,7 +77,7 @@ Index: b/src/gcc/config/darwin.h
 ===================================================================
 --- a/src/gcc/config/darwin.h
 +++ b/src/gcc/config/darwin.h
-@@ -923,4 +923,10 @@ extern void darwin_driver_init (unsigned
+@@ -924,4 +924,10 @@ extern void darwin_driver_init (unsigned
     providing an osx-version-min of this unless overridden by the User.  */
  #define DEF_MIN_OSX_VERSION "10.4"
  
@@ -110,7 +110,7 @@ Index: b/src/gcc/config/gnu.h
 ===================================================================
 --- a/src/gcc/config/gnu.h
 +++ b/src/gcc/config/gnu.h
-@@ -39,3 +39,11 @@ along with GCC.  If not, see <http://www
+@@ -31,3 +31,11 @@ along with GCC.  If not, see <http://www
  	builtin_assert ("system=unix");		\
  	builtin_assert ("system=posix");	\
      } while (0)

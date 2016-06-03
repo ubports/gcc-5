@@ -130,7 +130,7 @@ Index: b/src/gcc/config/i386/i386.h
 ===================================================================
 --- a/src/gcc/config/i386/i386.h
 +++ b/src/gcc/config/i386/i386.h
-@@ -647,6 +647,24 @@ extern const char *host_detect_local_cpu
+@@ -649,6 +649,24 @@ extern const char *host_detect_local_cpu
  /* Target CPU builtins.  */
  #define TARGET_CPU_CPP_BUILTINS() ix86_target_macros ()
  
@@ -261,7 +261,7 @@ Index: b/src/gcc/config/rs6000/rs6000.h
 ===================================================================
 --- a/src/gcc/config/rs6000/rs6000.h
 +++ b/src/gcc/config/rs6000/rs6000.h
-@@ -703,6 +703,28 @@ extern unsigned char rs6000_recip_bits[]
+@@ -704,6 +704,28 @@ extern unsigned char rs6000_recip_bits[]
  #define TARGET_CPU_CPP_BUILTINS() \
    rs6000_cpu_cpp_builtins (pfile)
  

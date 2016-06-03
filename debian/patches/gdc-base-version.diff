@@ -1,15 +1,15 @@
 # DP: Use the GCC base version for the D include dir name
 
-Index: b/src/libphobos/configure.ac
+Index: b/src/libphobos/m4/druntime.m4
 ===================================================================
---- a/src/libphobos/configure.ac
-+++ b/src/libphobos/configure.ac
-@@ -138,7 +138,7 @@ fi
- AC_SUBST(GDC)
+--- a/src/libphobos/m4/druntime.m4
++++ b/src/libphobos/m4/druntime.m4
+@@ -43,7 +43,7 @@ AC_DEFUN([DRUNTIME_INSTALL_DIRECTORIES],
+   AC_REQUIRE([AC_PROG_GDC])
  
- AC_MSG_CHECKING([D GCC version])
--d_gcc_ver=`$GDC -dumpversion`
-+d_gcc_ver=`$GDC -dumpversion | sed 's/^\(@<:@0-9@:>@*\).*/\1/'`
- AC_MSG_RESULT($d_gcc_ver)
- 
- phobos_toolexecdir=no
+   AC_MSG_CHECKING([D GCC version])
+-  d_gcc_ver=`$GDC -dumpversion`
++  d_gcc_ver=`$GDC -dumpversion | sed 's/^\(@<:@0-9@:>@*\).*/\1/'`
+   AC_MSG_RESULT($d_gcc_ver)
+   AC_ARG_WITH([cross-host],
+     AC_HELP_STRING([--with-cross-host=HOST],

@@ -1,3 +1,13 @@
+gcc-5 (5.4.0-1) unstable; urgency=medium
+
+  * GCC 5.4.0 release.
+    - Fix PR target/68696 (AArch64), PR fortran/70350.
+  * Update embedded timestamp setting patch, backported from the trunk.
+  * Update the Linaro support to the 5-2016.05 snapshot.
+  * Update gdc to the gcc-5 branch 20160603.
+
+ -- Matthias Klose <doko@debian.org>  Fri, 03 Jun 2016 17:00:13 +0200
+
 gcc-5 (5.3.1-21) unstable; urgency=medium
 
   * GCC 5.4.0 release candidate 1.

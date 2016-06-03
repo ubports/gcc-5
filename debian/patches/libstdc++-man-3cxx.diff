@@ -4,7 +4,7 @@ Index: b/src/libstdc++-v3/doc/doxygen/user.cfg.in
 ===================================================================
 --- a/src/libstdc++-v3/doc/doxygen/user.cfg.in
 +++ b/src/libstdc++-v3/doc/doxygen/user.cfg.in
-@@ -1936,7 +1936,7 @@ MAN_OUTPUT             = man
+@@ -1949,7 +1949,7 @@ MAN_OUTPUT             = man
  # The default value is: .3.
  # This tag requires that the tag GENERATE_MAN is set to YES.
  
@@ -54,7 +54,7 @@ Index: b/src/libstdc++-v3/scripts/run_doxygen
  for f in $problematic; do
      sed 's/Definition at line/\
  .PP\
-@@ -391,8 +394,8 @@ for f in ios streambuf istream ostream i
+@@ -408,8 +411,8 @@ for f in ios streambuf istream ostream i
  	 istringstream ostringstream stringstream filebuf ifstream \
  	 ofstream fstream string;
  do

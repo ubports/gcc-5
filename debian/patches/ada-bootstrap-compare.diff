@@ -5,7 +5,7 @@ Index: b/src/configure.ac
 ===================================================================
 --- a/src/configure.ac
 +++ b/src/configure.ac
-@@ -3560,6 +3560,9 @@ fi
+@@ -3565,6 +3565,9 @@ fi
  
  compare_exclusions="gcc/cc*-checksum\$(objext) | gcc/ada/*tools/*"
  case "$target" in

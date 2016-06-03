@@ -13,11 +13,8 @@ series_file	?= $(patchdir)/series
 # which patches should be applied?
 
 debian_patches = \
-	svn-updates \
+	$(if $(with_linaro_branch),gcc-linaro-revert-r236918) \
 	$(if $(with_linaro_branch),gcc-linaro-revert-r236444) \
-	$(if $(with_linaro_branch),gcc-linaro-revert-r235573) \
-	$(if $(with_linaro_branch),gcc-linaro-revert-r235549) \
-	$(if $(with_linaro_branch),gcc-linaro-revert-r234974) \
 	$(if $(with_linaro_branch),gcc-linaro) \
 	$(if $(with_linaro_branch),gcc-linaro-no-macros) \
 
@@ -34,6 +31,7 @@ ifneq ($(GFDL_INVARIANT_FREE),yes)
 	rename-info-files \
 	gcc-configure-pie-doc \
 	gcc-SOURCE_DATE_EPOCH-doc \
+	gcc-SOURCE_DATE_EPOCH-2-doc \
 
 #	svn-doc-updates \
 #	$(if $(with_linaro_branch),,svn-doc-updates) \
@@ -97,6 +95,7 @@ debian_patches += \
 	pr70218 \
 	pr69148 \
 	gcc-SOURCE_DATE_EPOCH \
+	gcc-SOURCE_DATE_EPOCH-2$(if $(with_linaro_branch),-linaro) \
 	pr70192 \
 
 # this is still needed on powerpc, e.g. firefox and insighttoolkit4 will ftbfs.
@@ -198,7 +197,6 @@ ifeq ($(with_d),yes)
 	gdc-frontend-posix \
 	gdc-base-version \
 	gdc-profiledbuild \
-	gdc-backport
 #	gdc-updates
 #	gdc-multiarch
   ifneq ($(GFDL_INVARIANT_FREE),yes)

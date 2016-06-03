@@ -220,9 +220,9 @@ Index: b/src/gcc/ada/s-osinte-kfreebsd-gnu.ads
  
     function clock_gettime
       (clock_id : clockid_t;
-@@ -216,6 +215,11 @@ package System.OS_Interface is
-       return int;
-    pragma Import (C, clock_gettime, "clock_gettime");
+@@ -221,6 +220,11 @@ package System.OS_Interface is
+       res      : access timespec) return int;
+    pragma Import (C, clock_getres, "clock_getres");
  
 +   function clock_getres
 +     (clock_id : clockid_t;
@@ -232,7 +232,7 @@ Index: b/src/gcc/ada/s-osinte-kfreebsd-gnu.ads
     function To_Duration (TS : timespec) return Duration;
     pragma Inline (To_Duration);
  
-@@ -437,31 +459,25 @@ package System.OS_Interface is
+@@ -442,31 +446,25 @@ package System.OS_Interface is
     PTHREAD_PRIO_PROTECT : constant := 2;
     PTHREAD_PRIO_INHERIT : constant := 1;
  
@@ -268,7 +268,7 @@ Index: b/src/gcc/ada/s-osinte-kfreebsd-gnu.ads
  
     type struct_sched_param is record
        sched_priority : int;  --  scheduling priority
-@@ -588,8 +604,8 @@ private
+@@ -593,8 +591,8 @@ private
     --  #define sa_handler __sigaction_u._handler
     --  #define sa_sigaction __sigaction_u._sigaction
  
@@ -279,7 +279,7 @@ Index: b/src/gcc/ada/s-osinte-kfreebsd-gnu.ads
     --  sigcontext type is opaque, so it is architecturally neutral.
     --  It is always passed as an access type, so define it as an empty record
     --  since the contents are not used anywhere.
-@@ -606,9 +622,6 @@ private
+@@ -611,9 +609,6 @@ private
     end record;
     pragma Convention (C, timespec);
  

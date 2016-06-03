@@ -15,7 +15,7 @@ Index: b/src/gcc/gcc.c
  		&& WEXITSTATUS (status) == ICE_EXIT_CODE
  		&& i == 0
  		&& (p = strrchr (commands[0].argv[0], DIR_SEPARATOR))
-@@ -6616,8 +6617,23 @@ do_report_bug (const char **new_argv, co
+@@ -6640,8 +6641,23 @@ do_report_bug (const char **new_argv, co
  
    if (status == ATTEMPT_STATUS_SUCCESS)
      {

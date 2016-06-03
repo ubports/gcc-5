@@ -5,6 +5,8 @@
 	* tree-ssanames.c (make_ssa_name_fn): Always use unqualified
 	types for anonymous SSA names.
 
+Index: b/src/gcc/testsuite/gcc.target/mips/pr68273.c
+===================================================================
 --- /dev/null
 +++ b/src/gcc/testsuite/gcc.target/mips/pr68273.c
 @@ -0,0 +1,79 @@
@@ -87,9 +89,11 @@
 +
 +/* { dg-final { scan-rtl-dump-times "\\\(set \\\(reg:SI 5 \\\$5\\\)" 2 "expand" } }  */
 +/* { dg-final { scan-rtl-dump-times "\\\(set \\\(reg:SI 6 \\\$6\\\)" 1 "expand" } }  */
+Index: b/src/gcc/tree-ssanames.c
+===================================================================
 --- a/src/gcc/tree-ssanames.c
 +++ b/src/gcc/tree-ssanames.c
-@@ -286,7 +286,7 @@ make_ssa_name_fn (struct function *fn, tree var, gimple *stmt)
+@@ -173,7 +173,7 @@ make_ssa_name_fn (struct function *fn, t
  
    if (TYPE_P (var))
      {

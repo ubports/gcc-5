@@ -7,7 +7,7 @@ Index: b/src/gcc/wide-int.h
 ===================================================================
 --- a/src/gcc/wide-int.h
 +++ b/src/gcc/wide-int.h
-@@ -3087,8 +3087,10 @@ namespace wi
+@@ -3089,8 +3089,10 @@ namespace wi
    wide_int from_buffer (const unsigned char *, unsigned int);
  
  #ifndef GENERATOR_FILE

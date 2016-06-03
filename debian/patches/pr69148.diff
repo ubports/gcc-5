@@ -15,7 +15,9 @@ gcc/testsuite/
 	PR target/69468
 	* gcc.target/s390/pr69148.c: New.
 
---- a/src/cc/testsuite/gcc.target/s390/pr69148.c
+Index: b/src/cc/testsuite/gcc.target/s390/pr69148.c
+===================================================================
+--- /dev/null
 +++ b/src/cc/testsuite/gcc.target/s390/pr69148.c
 @@ -0,0 +1,16 @@
 +/* { dg-do compile } */
@@ -34,9 +36,11 @@ gcc/testsuite/
 +  y.f = foo (z->b[x].f);
 +  z->a = y.r ? 4 : y.r;
 +}
+Index: b/src/gcc/lra-constraints.c
+===================================================================
 --- a/src/gcc/lra-constraints.c
 +++ b/src/gcc/lra-constraints.c
-@@ -3559,14 +3559,26 @@
+@@ -3533,14 +3533,26 @@ curr_insn_transform (bool check_only_p)
  
    if (use_sec_mem_p)
      {
@@ -68,7 +72,7 @@ gcc/testsuite/
        rld = (GET_MODE_SIZE (GET_MODE (dest)) <= GET_MODE_SIZE (GET_MODE (src))
  	     ? dest : src);
        rld_mode = GET_MODE (rld);
-@@ -3599,7 +3611,8 @@
+@@ -3573,14 +3585,16 @@ curr_insn_transform (bool check_only_p)
  	}
        else if (dest == rld)
          {
@@ -78,7 +82,6 @@ gcc/testsuite/
  	  after = emit_spill_move (false, new_reg, dest);
  	  lra_process_new_insns (curr_insn, NULL, after,
  				 "Inserting the sec. move");
-@@ -3606,7 +3619,8 @@
  	}
        else
  	{
