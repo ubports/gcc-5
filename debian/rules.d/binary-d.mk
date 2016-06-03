@@ -113,10 +113,10 @@ ifneq ($(DEB_CROSS),yes)
   endif
 endif
 
-# FIXME: object.di needs to go into a libgdc-dev Multi-Arch: same package
+# FIXME: __entrypoint.di needs to go into a libgdc-dev Multi-Arch: same package
 	# Always needed by gdc.
 	mkdir -p $(d_gdc)/$(gdc_include_dir)
-	cp $(srcdir)/libphobos/libdruntime/object.di \
+	cp $(srcdir)/libphobos/libdruntime/__entrypoint.di \
 	    $(d_gdc)/$(gdc_include_dir)/.
 #ifneq ($(DEB_CROSS),yes)
 #	dh_link -p$(p_gdc) \
@@ -166,7 +166,7 @@ $(binary_stamp)-libphobos: $(install_stamp)
 	$(dh_compat2) dh_movefiles -p$(p_libphobos) $(files_libphobos)
 
 	# included in gdc package
-	rm -f $(d_libphobos)/$(gdc_include_dir)/object.di
+	rm -f $(d_libphobos)/$(gdc_include_dir)/__entrypoint.di
 
 ifeq ($(with_separate_gdc),yes)
 	debian/dh_doclink -p$(p_libphobos) $(p_gdc)
@@ -200,7 +200,7 @@ define __do_libphobos_dev
 	)
 
 	: # included in gdc package
-	rm -f $(d_l)/$(gdc_include_dir)/object.di
+	rm -f $(d_l)/$(gdc_include_dir)/__entrypoint.di
 
 	debian/dh_doclink -p$(p_l) \
 		$(if $(filter yes,$(with_separate_gdc)),$(p_gdc),$(p_lbase))

@@ -1,7 +1,14 @@
+gcc-5 (5.4.0-2) unstable; urgency=medium
+
+  * Fix gdc packaging for architectures without libphobos support.
+
+ -- Matthias Klose <doko@debian.org>  Fri, 03 Jun 2016 22:46:28 +0200
+
 gcc-5 (5.4.0-1) unstable; urgency=medium
 
   * GCC 5.4.0 release.
-    - Fix PR target/68696 (AArch64), PR fortran/70350.
+    - Fix PR target/68696 (AArch64).
+    - Fix PR fortran/70350. Closes: #819367. LP: #1576212.
   * Update embedded timestamp setting patch, backported from the trunk.
   * Update the Linaro support to the 5-2016.05 snapshot.
   * Update gdc to the gcc-5 branch 20160603.
