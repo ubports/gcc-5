@@ -13,3 +13,15 @@ Index: b/src/libphobos/m4/druntime.m4
    AC_MSG_RESULT($d_gcc_ver)
    AC_ARG_WITH([cross-host],
      AC_HELP_STRING([--with-cross-host=HOST],
+Index: b/src/libphobos/configure.ac
+===================================================================
+--- a/src/libphobos/configure.ac
++++ b/src/libphobos/configure.ac
+@@ -53,6 +53,7 @@ m4_rename([_AC_ARG_VAR_PRECIOUS],[glibd_
+ m4_define([_AC_ARG_VAR_PRECIOUS],[])
+ AM_PROG_AS
+ AC_PROG_CC
++dnl dummy change to run autoreconf in this directory
+ AC_PROG_GDC
+ WITH_LOCAL_DRUNTIME([GDC_CHECK_COMPILE], [])
+ 
