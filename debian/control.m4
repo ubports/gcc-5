@@ -5061,7 +5061,8 @@ Architecture: any
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: SOFTBASEDEP, g++`'PV`'TS (>= ${gcc:SoftVersion}), ${dep:gdccross}, ${dep:phobosdev}, ${shlibs:Depends}, ${misc:Depends}
 Provides: gdc, d-compiler, d-v2-compiler
-Replaces: gdc (<< 4.4.6-5)
+Replaces: gdc (<< 4.4.6-5),
+  libphobos`'PV-dev`'LS (<< 5.4.0-1~)
 BUILT_USING`'dnl
 Description: GNU D compiler (version 2)`'ifdef(`TARGET)',` (cross compiler for TARGET architecture)', `')
  This is the GNU D compiler, which compiles D on platforms supported by gcc.
@@ -5075,6 +5076,12 @@ Architecture: any
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: SOFTBASEDEP, gdc`'PV`'TS (= ${gcc:Version}), gcc`'PV-multilib`'TS (= ${gcc:Version}), ${dep:libphobosbiarchdev}${shlibs:Depends}, ${misc:Depends}
 BUILT_USING`'dnl
+Replaces: lib32phobos`'PV-dev`'LS (<< 5.4.0-1~),
+  lib64phobos`'PV-dev`'LS (<< 5.4.0-1~),
+  libx32phobos`'PV-dev`'LS (<< 5.4.0-1~),
+  libhfphobos`'PV-dev`'LS (<< 5.4.0-1~),
+  libsfphobos`'PV-dev`'LS (<< 5.4.0-1~),
+  libn32phobos`'PV-dev`'LS (<< 5.4.0-1~),
 Description: GNU D compiler (version 2, multilib support)`'ifdef(`TARGET)',` (cross compiler for TARGET architecture)', `')
  This is the GNU D compiler, which compiles D on platforms supported by gcc.
  It uses the gcc backend to generate optimised code.

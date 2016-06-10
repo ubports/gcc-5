@@ -1,3 +1,14 @@
+gcc-5 (5.4.0-4) unstable; urgency=medium
+
+  * gdc: Fix linking the runtime library. Closes: #826645.
+  * gdc: Fix updates from 5.3.x. Closes: #826583.
+  * Update the Linaro support to the 5-2016.06 snapshot.
+  * Avoid storing -fdebug-prefix-map in DW_AT_producer (for better
+    reproducibility). Taken from the trunk (Daniel Kahn Gillmor).
+    Closes: #819176.
+
+ -- Matthias Klose <doko@debian.org>  Fri, 10 Jun 2016 17:03:20 +0200
+
 gcc-5 (5.4.0-3) unstable; urgency=medium
 
   * Update Ada patch for KFreeBSD (Steven Chamberlain). Closes: #826332.

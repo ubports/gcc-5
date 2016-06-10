@@ -1,4 +1,4 @@
-# DP: Changes for the Linaro 5-2016.05 snapshot (documentation).
+# DP: Changes for the Linaro 5-2016.06 snapshot (documentation).
 
 --- a/src/gcc/doc/extend.texi
 +++ b/src/gcc/doc/extend.texi
@@ -6976,7 +6976,7 @@
  -fno-jump-tables @gol
  -frecord-gcc-switches @gol
  -freg-struct-return  -fshort-enums @gol
-@@ -7563,10 +7564,10 @@ that do not interfere with debugging. It should be the optimization
+@@ -7574,10 +7575,10 @@ that do not interfere with debugging. It should be the optimization
  level of choice for the standard edit-compile-debug cycle, offering
  a reasonable level of optimization while maintaining fast compilation
  and a good debugging experience.
@@ -6988,7 +6988,7 @@
  
  Options of the form @option{-f@var{flag}} specify machine-independent
  flags.  Most flags have both positive and negative forms; the negative
-@@ -12263,7 +12264,9 @@ Generate big-endian code.  This is the default when GCC is configured for an
+@@ -12274,7 +12275,9 @@ Generate big-endian code.  This is the default when GCC is configured for an
  
  @item -mgeneral-regs-only
  @opindex mgeneral-regs-only
@@ -6999,7 +6999,7 @@
  
  @item -mlittle-endian
  @opindex mlittle-endian
-@@ -12310,6 +12313,11 @@ of TLS variables.  This is the default.
+@@ -12321,6 +12324,11 @@ of TLS variables.  This is the default.
  Use traditional TLS as the thread-local storage mechanism for dynamic accesses
  of TLS variables.
  
@@ -7011,7 +7011,7 @@
  @item -mfix-cortex-a53-835769
  @itemx -mno-fix-cortex-a53-835769
  @opindex mfix-cortex-a53-835769
-@@ -12328,34 +12336,51 @@ corresponding flag to the linker.
+@@ -12339,34 +12347,51 @@ corresponding flag to the linker.
  
  @item -march=@var{name}
  @opindex march
@@ -7077,7 +7077,7 @@
  Where none of @option{-mtune=}, @option{-mcpu=} or @option{-march=}
  are specified, the code is tuned to perform well across a range
  of target processors.
-@@ -12364,45 +12389,78 @@ This option cannot be suffixed by feature modifiers.
+@@ -12375,45 +12400,78 @@ This option cannot be suffixed by feature modifiers.
  
  @item -mcpu=@var{name}
  @opindex mcpu
@@ -7177,7 +7177,7 @@
  @node Adapteva Epiphany Options
  @subsection Adapteva Epiphany Options
  
-@@ -13173,10 +13231,10 @@ of the @option{-mcpu=} option.  Permissible names are: @samp{armv2},
+@@ -13184,10 +13242,10 @@ of the @option{-mcpu=} option.  Permissible names are: @samp{armv2},
  @samp{armv2a}, @samp{armv3}, @samp{armv3m}, @samp{armv4}, @samp{armv4t},
  @samp{armv5}, @samp{armv5t}, @samp{armv5e}, @samp{armv5te},
  @samp{armv6}, @samp{armv6j},
@@ -7191,7 +7191,7 @@
  
  @option{-march=armv7ve} is the armv7-a architecture with virtualization
  extensions.
-@@ -13212,11 +13270,12 @@ Permissible names are: @samp{arm2}, @samp{arm250},
+@@ -13223,11 +13281,12 @@ Permissible names are: @samp{arm2}, @samp{arm250},
  @samp{arm10e}, @samp{arm1020e}, @samp{arm1022e},
  @samp{arm1136j-s}, @samp{arm1136jf-s}, @samp{mpcore}, @samp{mpcorenovfp},
  @samp{arm1156t2-s}, @samp{arm1156t2f-s}, @samp{arm1176jz-s}, @samp{arm1176jzf-s},
@@ -7209,7 +7209,7 @@
  @samp{cortex-m4},
  @samp{cortex-m3},
  @samp{cortex-m1},
-@@ -13226,6 +13285,7 @@ Permissible names are: @samp{arm2}, @samp{arm250},
+@@ -13237,6 +13296,7 @@ Permissible names are: @samp{arm2}, @samp{arm250},
  @samp{cortex-m0.small-multiply},
  @samp{cortex-m0plus.small-multiply},
  @samp{exynos-m1},
@@ -7217,7 +7217,7 @@
  @samp{marvell-pj4},
  @samp{xscale}, @samp{iwmmxt}, @samp{iwmmxt2}, @samp{ep9312},
  @samp{fa526}, @samp{fa626},
-@@ -13234,8 +13294,8 @@ Permissible names are: @samp{arm2}, @samp{arm250},
+@@ -13245,8 +13305,8 @@ Permissible names are: @samp{arm2}, @samp{arm250},
  
  Additionally, this option can specify that GCC should tune the performance
  of the code for a big.LITTLE system.  Permissible names are:
@@ -7228,7 +7228,7 @@
  
  @option{-mtune=generic-@var{arch}} specifies that GCC should tune the
  performance for a blend of processors within architecture @var{arch}.
-@@ -13278,7 +13338,7 @@ available on the target.  Permissible names are: @samp{vfp}, @samp{vfpv3},
+@@ -13289,7 +13349,7 @@ available on the target.  Permissible names are: @samp{vfp}, @samp{vfpv3},
  @samp{vfpv3xd-fp16}, @samp{neon}, @samp{neon-fp16}, @samp{vfpv4},
  @samp{vfpv4-d16}, @samp{fpv4-sp-d16}, @samp{neon-vfpv4},
  @samp{fpv5-d16}, @samp{fpv5-sp-d16},
@@ -7237,7 +7237,7 @@
  
  If @option{-msoft-float} is specified this specifies the format of
  floating-point values.
-@@ -13401,6 +13461,10 @@ that executes in ARM state, but the default can be changed by
+@@ -13412,6 +13472,10 @@ that executes in ARM state, but the default can be changed by
  configuring GCC with the @option{--with-mode=}@var{state}
  configure option.
  
@@ -7248,7 +7248,7 @@
  @item -mtpcs-frame
  @opindex mtpcs-frame
  Generate a stack frame that is compliant with the Thumb Procedure Call
-@@ -13498,10 +13562,9 @@ off by default.
+@@ -13509,10 +13573,9 @@ off by default.
  @item -masm-syntax-unified
  @opindex masm-syntax-unified
  Assume inline assembler is using unified asm syntax.  The default is
@@ -7262,7 +7262,7 @@
  
  @item -mrestrict-it
  @opindex mrestrict-it
-@@ -15329,13 +15392,19 @@ These @samp{-m} options are defined for GNU/Linux targets:
+@@ -15340,13 +15403,19 @@ These @samp{-m} options are defined for GNU/Linux targets:
  @item -mglibc
  @opindex mglibc
  Use the GNU C library.  This is the default except
@@ -7283,7 +7283,7 @@
  @item -mbionic
  @opindex mbionic
  Use Bionic C library.  This is the default on
-@@ -23596,7 +23665,7 @@ loader is not part of GCC; it is part of the operating system).  If
+@@ -23607,7 +23676,7 @@ loader is not part of GCC; it is part of the operating system).  If
  the GOT size for the linked executable exceeds a machine-specific
  maximum size, you get an error message from the linker indicating that
  @option{-fpic} does not work; in that case, recompile with @option{-fPIC}
@@ -7292,7 +7292,7 @@
  on the m68k and RS/6000.  The x86 has no such limit.)
  
  Position-independent code requires special support, and therefore works
-@@ -23611,7 +23680,7 @@ are defined to 1.
+@@ -23622,7 +23691,7 @@ are defined to 1.
  @opindex fPIC
  If supported for the target machine, emit position-independent code,
  suitable for dynamic linking and avoiding any limit on the size of the
@@ -7301,7 +7301,7 @@
  PowerPC and SPARC@.
  
  Position-independent code requires special support, and therefore works
-@@ -23633,6 +23702,24 @@ used during linking.
+@@ -23644,6 +23713,24 @@ used during linking.
  @code{__pie__} and @code{__PIE__}.  The macros have the value 1
  for @option{-fpie} and 2 for @option{-fPIE}.
  
@@ -7445,7 +7445,7 @@
  @item sse
  Target supports compiling @code{sse} instructions.
  
-@@ -2013,7 +2052,7 @@ keyword}.
+@@ -2016,7 +2055,7 @@ keyword}.
  @item arm_neon_fp16
  NEON and half-precision floating point support.  Only ARM targets
  support this feature, and only then in certain modes; see
@@ -7454,7 +7454,7 @@
  
  @item arm_vfp3
  arm vfp3 floating point support; see
-@@ -2210,13 +2249,17 @@ Check branch and/or call counts, in addition to line counts, in
+@@ -2213,13 +2252,17 @@ Check branch and/or call counts, in addition to line counts, in
  
  @subsubsection Clean up generated test files
  
@@ -7475,7 +7475,7 @@
  @item cleanup-modules "@var{list-of-extra-modules}"
  Removes Fortran module files generated for this test, excluding the
  module names listed in keep-modules.
-@@ -2251,21 +2294,23 @@ end module keep2
+@@ -2254,21 +2297,23 @@ end module keep2
  ! @{ dg-final @{ keep-modules "" @} @} ! keep all
  @end smallexample
  

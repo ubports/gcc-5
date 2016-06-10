@@ -1270,7 +1270,8 @@ Architecture: any
 Priority: optional
 Depends: gcc-5-base (>= ${gcc:SoftVersion}), g++-5 (>= ${gcc:SoftVersion}), ${dep:gdccross}, ${dep:phobosdev}, ${shlibs:Depends}, ${misc:Depends}
 Provides: gdc, d-compiler, d-v2-compiler
-Replaces: gdc (<< 4.4.6-5)
+Replaces: gdc (<< 4.4.6-5),
+  libphobos-5-dev (<< 5.4.0-1~)
 Description: GNU D compiler (version 2)
  This is the GNU D compiler, which compiles D on platforms supported by gcc.
  It uses the gcc backend to generate optimised code.
@@ -1281,6 +1282,12 @@ Package: gdc-5-multilib
 Architecture: any
 Priority: optional
 Depends: gcc-5-base (>= ${gcc:SoftVersion}), gdc-5 (= ${gcc:Version}), gcc-5-multilib (= ${gcc:Version}), ${dep:libphobosbiarchdev}${shlibs:Depends}, ${misc:Depends}
+Replaces: lib32phobos-5-dev (<< 5.4.0-1~),
+  lib64phobos-5-dev (<< 5.4.0-1~), 
+  libx32phobos-5-dev (<< 5.4.0-1~), 
+  libhfphobos-5-dev (<< 5.4.0-1~), 
+  libsfphobos-5-dev (<< 5.4.0-1~), 
+  libn32phobos-5-dev (<< 5.4.0-1~), 
 Description: GNU D compiler (version 2, multilib support)
  This is the GNU D compiler, which compiles D on platforms supported by gcc.
  It uses the gcc backend to generate optimised code.

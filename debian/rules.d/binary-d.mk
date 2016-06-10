@@ -161,9 +161,10 @@ $(binary_stamp)-libphobos: $(install_stamp)
 	rm -rf $(d_libphobos)
 	dh_installdirs -p$(p_libphobos) $(dirs_libphobos)
 
-	mv $(d)/$(usr_lib)/libgphobos2.a \
+	mv $(d)/$(usr_lib)/libg{druntime,phobos2}.a \
 		$(d)/$(gcc_lib_dir)/.
-	$(dh_compat2) dh_movefiles -p$(p_libphobos) $(files_libphobos)
+	$(dh_compat2) dh_movefiles -p$(p_libphobos) \
+		$(gcc_lib_dir)/libg{druntime,phobos2}.a
 
 	# included in gdc package
 	rm -f $(d_libphobos)/$(gdc_include_dir)/__entrypoint.di
@@ -190,10 +191,10 @@ define __do_libphobos_dev
 	rm -rf $(d_l)
 	dh_installdirs -p$(p_l) \
 		$(gcc_lib_dir$(2))
-	mv $(d)/$(usr_lib$(2))/libgphobos2.a \
+	mv $(d)/$(usr_lib$(2))/libg{druntime,phobos2}.a \
 		$(d)/$(gcc_lib_dir$(2))/.
 	$(dh_compat2) dh_movefiles -p$(p_l) \
-		$(gcc_lib_dir$(2))/libgphobos2.a
+		$(gcc_lib_dir$(2))/libg{druntime,phobos2}.a
 	$(if $(2),,
 	$(dh_compat2) dh_movefiles -p$(p_l) \
 		$(gdc_include_dir)
