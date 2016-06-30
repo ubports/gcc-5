@@ -716,6 +716,8 @@ Description: GCC support library (x32 development files)
 ifenabled(`cdev',`
 Package: gcc`'PV`'TS
 Architecture: any
+ifdef(`TARGET',`Multi-Arch: foreign
+')dnl
 Section: devel
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: cpp`'PV`'TS (= ${gcc:Version}),ifenabled(`gccbase',` BASEDEP,')
@@ -756,6 +758,8 @@ ifdef(`TARGET', `dnl
 ifenabled(`multilib',`
 Package: gcc`'PV-multilib`'TS
 Architecture: ifdef(`TARGET',`any',MULTILIB_ARCHS)
+ifdef(`TARGET',`Multi-Arch: foreign
+')dnl
 Section: devel
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASEDEP, gcc`'PV`'TS (= ${gcc:Version}), ${dep:libcbiarchdev}, ${dep:libgccbiarchdev}, ${shlibs:Depends}, ${misc:Depends}
@@ -783,6 +787,8 @@ Description: Test results for the GCC test suite
 ifenabled(`plugindev',`
 Package: gcc`'PV-plugin-dev`'TS
 Architecture: any
+ifdef(`TARGET',`Multi-Arch: foreign
+')dnl
 Section: devel
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASEDEP, gcc`'PV`'TS (= ${gcc:Version}), GMP_BUILD_DEP MPC_BUILD_DEP ${shlibs:Depends}, ${misc:Depends}
@@ -797,6 +803,8 @@ Description: Files for GNU GCC plugin development.
 ifenabled(`cdev',`
 Package: gcc`'PV-hppa64-linux-gnu
 Architecture: ifdef(`TARGET',`any',hppa amd64 i386 x32)
+ifdef(`TARGET',`Multi-Arch: foreign
+')dnl
 Section: devel
 Priority: PRI(optional)
 Depends: BASEDEP, ${shlibs:Depends}, ${misc:Depends}, binutils-hppa64-linux-gnu | binutils-hppa64
@@ -811,6 +819,8 @@ Description: GNU C compiler (cross compiler for hppa64)
 ifenabled(`cdev',`
 Package: cpp`'PV`'TS
 Architecture: any
+ifdef(`TARGET',`Multi-Arch: foreign
+')dnl
 Section: ifdef(`TARGET',`devel',`interpreters')
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASEDEP, ${shlibs:Depends}, ${misc:Depends}
@@ -860,6 +870,8 @@ ifenabled(`c++',`
 ifenabled(`c++dev',`
 Package: g++`'PV`'TS
 Architecture: any
+ifdef(`TARGET',`Multi-Arch: foreign
+')dnl
 Section: devel
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASEDEP, gcc`'PV`'TS (= ${gcc:Version}), libidevdep(stdc++`'PV-dev,,=), ${shlibs:Depends}, ${misc:Depends}
@@ -876,6 +888,8 @@ ifdef(`TARGET', `dnl
 ifenabled(`multilib',`
 Package: g++`'PV-multilib`'TS
 Architecture: ifdef(`TARGET',`any',MULTILIB_ARCHS)
+ifdef(`TARGET',`Multi-Arch: foreign
+')dnl
 Section: devel
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASEDEP, g++`'PV`'TS (= ${gcc:Version}), gcc`'PV-multilib`'TS (= ${gcc:Version}), ${dep:libcxxbiarchdev}, ${shlibs:Depends}, ${misc:Depends}
@@ -3238,6 +3252,8 @@ ifenabled(`objpp',`
 ifenabled(`objppdev',`
 Package: gobjc++`'PV`'TS
 Architecture: any
+ifdef(`TARGET',`Multi-Arch: foreign
+')dnl
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASEDEP, gobjc`'PV`'TS (= ${gcc:Version}), g++`'PV`'TS (= ${gcc:Version}), ${shlibs:Depends}, libidevdep(objc`'PV-dev,,=), ${misc:Depends}
 Suggests: ${gobjcxx:multilib}, gcc`'PV-doc (>= ${gcc:SoftVersion})
@@ -3252,6 +3268,8 @@ Description: GNU Objective-C++ compiler
 ifenabled(`multilib',`
 Package: gobjc++`'PV-multilib`'TS
 Architecture: ifdef(`TARGET',`any',MULTILIB_ARCHS)
+ifdef(`TARGET',`Multi-Arch: foreign
+')dnl
 Section: devel
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASEDEP, gobjc++`'PV`'TS (= ${gcc:Version}), g++`'PV-multilib`'TS (= ${gcc:Version}), gobjc`'PV-multilib`'TS (= ${gcc:Version}), ${shlibs:Depends}, ${misc:Depends}
@@ -3269,6 +3287,8 @@ ifenabled(`objc',`
 ifenabled(`objcdev',`
 Package: gobjc`'PV`'TS
 Architecture: any
+ifdef(`TARGET',`Multi-Arch: foreign
+')dnl
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASEDEP, gcc`'PV`'TS (= ${gcc:Version}), ${dep:libcdev}, ${shlibs:Depends}, libidevdep(objc`'PV-dev,,=), ${misc:Depends}
 Suggests: ${gobjc:multilib}, gcc`'PV-doc (>= ${gcc:SoftVersion}), libdbgdep(objc`'OBJC_SO-dbg,)
@@ -3283,6 +3303,8 @@ Description: GNU Objective-C compiler
 ifenabled(`multilib',`
 Package: gobjc`'PV-multilib`'TS
 Architecture: ifdef(`TARGET',`any',MULTILIB_ARCHS)
+ifdef(`TARGET',`Multi-Arch: foreign
+')dnl
 Section: devel
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASEDEP, gobjc`'PV`'TS (= ${gcc:Version}), gcc`'PV-multilib`'TS (= ${gcc:Version}), ${dep:libobjcbiarchdev}, ${shlibs:Depends}, ${misc:Depends}
@@ -3548,6 +3570,8 @@ ifenabled(`fortran',`
 ifenabled(`fdev',`
 Package: gfortran`'PV`'TS
 Architecture: any
+ifdef(`TARGET',`Multi-Arch: foreign
+')dnl
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASEDEP, gcc`'PV`'TS (= ${gcc:Version}), libidevdep(gfortran`'PV-dev,,=), ${dep:libcdev}, ${shlibs:Depends}, ${misc:Depends}
 Provides: fortran95-compiler, ${fortran:mod-version}
@@ -3561,6 +3585,8 @@ Description: GNU Fortran compiler
 ifenabled(`multilib',`
 Package: gfortran`'PV-multilib`'TS
 Architecture: ifdef(`TARGET',`any',MULTILIB_ARCHS)
+ifdef(`TARGET',`Multi-Arch: foreign
+')dnl
 Section: devel
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASEDEP, gfortran`'PV`'TS (= ${gcc:Version}), gcc`'PV-multilib`'TS (= ${gcc:Version}), ${dep:libgfortranbiarchdev}, ${shlibs:Depends}, ${misc:Depends}
@@ -3855,6 +3881,8 @@ ifenabled(`ggo',`
 ifenabled(`godev',`
 Package: gccgo`'PV`'TS
 Architecture: any
+ifdef(`TARGET',`Multi-Arch: foreign
+')dnl
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASEDEP, ifdef(`STANDALONEGO',`${dep:libcc1}, ',`gcc`'PV`'TS (= ${gcc:Version}), ')libidevdep(go`'GO_SO,,>=), ${dep:libcdev}, ${shlibs:Depends}, ${misc:Depends}
 Provides: go-compiler
@@ -3868,6 +3896,8 @@ Description: GNU Go compiler
 ifenabled(`multilib',`
 Package: gccgo`'PV-multilib`'TS
 Architecture: ifdef(`TARGET',`any',MULTILIB_ARCHS)
+ifdef(`TARGET',`Multi-Arch: foreign
+')dnl
 Section: devel
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASEDEP, gccgo`'PV`'TS (= ${gcc:Version}), ifdef(`STANDALONEGO',,`gcc`'PV-multilib`'TS (= ${gcc:Version}), ')${dep:libgobiarch}, ${shlibs:Depends}, ${misc:Depends}
@@ -4029,6 +4059,8 @@ ifenabled(`gcj',`
 Package: gcj`'PV`'TS
 Section: java
 Architecture: any
+ifdef(`TARGET',`Multi-Arch: foreign
+')dnl
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: BASEDEP, ${dep:gcj}, ${dep:gcjcross}, ${dep:libcdev}, ${dep:ecj}, ${shlibs:Depends}, dpkg (>= 1.15.4) | install-info, ${misc:Depends}
 Recommends: libecj-java-gcj
@@ -4804,6 +4836,8 @@ Description: GNU Standard C++ Library v3 (documentation files)
 ifenabled(`ada',`
 Package: gnat`'-GNAT_V`'TS
 Architecture: any
+ifdef(`TARGET',`Multi-Arch: foreign
+')dnl
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 ifdef(`MULTIARCH', `Pre-Depends: ${misc:Pre-Depends}
 ')`'dnl
@@ -4833,6 +4867,8 @@ Description: GNU Ada compiler
 ifenabled(`adasjlj',`
 Package: gnat`'-GNAT_V-sjlj`'TS
 Architecture: any
+ifdef(`TARGET',`Multi-Arch: foreign
+')dnl
 Priority: extra
 ifdef(`MULTIARCH', `Pre-Depends: ${misc:Pre-Depends}
 ')`'dnl
@@ -5058,6 +5094,8 @@ Description: GNU Ada compiler (documentation)
 ifenabled(`d ',`
 Package: gdc`'PV`'TS
 Architecture: any
+ifdef(`TARGET',`Multi-Arch: foreign
+')dnl
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: SOFTBASEDEP, g++`'PV`'TS (>= ${gcc:SoftVersion}), ${dep:gdccross}, ${dep:phobosdev}, ${shlibs:Depends}, ${misc:Depends}
 Provides: gdc, d-compiler, d-v2-compiler
@@ -5073,6 +5111,8 @@ Description: GNU D compiler (version 2)`'ifdef(`TARGET)',` (cross compiler for T
 ifenabled(`multilib',`
 Package: gdc`'PV-multilib`'TS
 Architecture: any
+ifdef(`TARGET',`Multi-Arch: foreign
+')dnl
 Priority: ifdef(`TARGET',`extra',`PRI(optional)')
 Depends: SOFTBASEDEP, gdc`'PV`'TS (= ${gcc:Version}), gcc`'PV-multilib`'TS (= ${gcc:Version}), ${dep:libphobosbiarchdev}${shlibs:Depends}, ${misc:Depends}
 BUILT_USING`'dnl

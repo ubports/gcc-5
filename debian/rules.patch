@@ -29,6 +29,7 @@ endif
 ifneq ($(GFDL_INVARIANT_FREE),yes)
   debian_patches += \
 	$(if $(with_linaro_branch),gcc-linaro-doc) \
+	$(if $(with_linaro_branch),vulcan-cpu-doc) \
 	rename-info-files \
 	gcc-configure-pie-doc \
 	gcc-SOURCE_DATE_EPOCH-doc \
@@ -52,6 +53,10 @@ ifneq (,$(filter $(distrelease),etch lenny squeeze wheezy dapper hardy intrepid 
   debian_patches += gcc-hash-style-both
 else
   debian_patches += gcc-hash-style-gnu
+endif
+
+ifneq (,$(filter $(distrelease),wily xenial))
+  debian_patches += libstdc++-random-incl
 endif
 
 debian_patches += \
@@ -99,6 +104,7 @@ debian_patches += \
 	gcc-SOURCE_DATE_EPOCH-2$(if $(with_linaro_branch),-linaro) \
 	pr70192 \
 	gcc-ignore-fdebug-prefix-map-in-producer-string \
+	vulcan-cpu$(if $(with_linaro_branch),-linaro) \
 
 # this is still needed on powerpc, e.g. firefox and insighttoolkit4 will ftbfs.
 ifneq (,$(filter $(DEB_TARGET_ARCH),powerpc))
@@ -242,6 +248,11 @@ ifeq ($(DEB_TARGET_ARCH),powerpcspe)
   debian_patches += powerpc_nofprs
 endif
 
+# Proposed patch to fix libjava on mips64el
+ifeq ($(DEB_TARGET_ARCH),mips64el)
+  debian_patches += libjava-mips64el-proposed
+endif
+
 #debian_patches += link-libs
 
 # all patches below this line are applied for gcc-snapshot builds as well
@@ -325,9 +336,6 @@ ifneq (,$(filter $(derivative),Ubuntu))
 else # Debian
     #debian_patches += gcc-as-needed
 endif
-ifeq ($(DEB_TARGET_ARCH),mipsel)
-  debian_patches += mips-fix-loongson2f-nop
-endif
 
 debian_patches += libgomp-kfreebsd-testsuite
 debian_patches += go-testsuite
@@ -344,7 +352,6 @@ ifeq ($(DEB_TARGET_ARCH),m68k)
     debian_patches += m68k-revert-pr45144
   endif
 endif
-
 
 # don't remove, this is regularly overwritten, see PR sanitizer/63958.
 #debian_patches += libasan-sparc

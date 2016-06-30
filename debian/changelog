@@ -1,8 +1,26 @@
+gcc-5 (5.4.0-5) unstable; urgency=medium
+
+  [ Matthias Klose ]
+  * Add AArch64 Vulcan cpu support, backport from trunk. LP: #1594452.
+  * Revert a libstdc++ header reorg done after the 5.3.0 release (only for
+    OS releases including a GCC 5 at release time).
+  * Enforce build using binutils 2.26.1 for unstable/development series.
+  * Mark cross compilers as M-A: foreign. Addresses: #827136.
+  * Remove the MIPS r6 support again, dak doesn't like unknown architectures.
+
+  [ Aurelien Jarno ]
+  * Drop support for loongson 2f (YunQiang Su). Closes: #827554. 
+  * Apply proposed patch from Matthew Fortune to fix libjava on mips64el.
+
+ -- Matthias Klose <doko@debian.org>  Thu, 30 Jun 2016 18:17:53 +0200
+
 gcc-5 (5.4.0-4) unstable; urgency=medium
 
   * gdc: Fix linking the runtime library. Closes: #826645.
   * gdc: Fix updates from 5.3.x. Closes: #826583.
   * Update the Linaro support to the 5-2016.06 snapshot.
+  * Add MIPS r6 support and bump mipsn32(el) ISA to r2 (YunQiang Su).
+    Closes: #824986.
   * Avoid storing -fdebug-prefix-map in DW_AT_producer (for better
     reproducibility). Taken from the trunk (Daniel Kahn Gillmor).
     Closes: #819176.

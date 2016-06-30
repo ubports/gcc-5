@@ -637,20 +637,20 @@ endif
 #FIXME: howto for mipsn32?
 ifneq (,$(findstring mips64el-linux-gnuabin32,$(DEB_TARGET_GNU_TYPE)))
   ifeq ($(multilib),yes)
-    ifeq ($(biarchn32)-$(biarch32),yes-yes)
+    ifeq ($(biarch64)-$(biarch32),yes-yes)
       CONFARGS += --enable-targets=all
-      CONFARGS += --with-arch-64=mips3 --with-tune-64=mips64
-      CONFARGS += --with-arch-32=mips2 --with-tune-32=mips32 --with-fp-32=xx
+      CONFARGS += --with-arch-64=mips64r2
+      CONFARGS += --with-arch-32=mips32r2 --with-fp-32=xx
     endif
   endif
 endif
 
 ifneq (,$(findstring mips64-linux-gnuabin32,$(DEB_TARGET_GNU_TYPE)))
   ifeq ($(multilib),yes)
-    ifeq ($(biarchn32)-$(biarch32),yes-yes)
+    ifeq ($(biarch64)-$(biarch32),yes-yes)
       CONFARGS += --enable-targets=all
-      CONFARGS += --with-arch-64=mips3 --with-tune-64=mips64
-      CONFARGS += --with-arch-32=mips2 --with-tune-32=mips32 --with-fp-32=xx
+      CONFARGS += --with-arch-64=mips64r2
+      CONFARGS += --with-arch-32=mips32r2 --with-fp-32=xx
     endif
   endif
 endif
@@ -673,6 +673,71 @@ ifneq (,$(findstring mips64-linux-gnuabi64,$(DEB_TARGET_GNU_TYPE)))
     ifeq ($(biarchn32)-$(biarch32),yes-yes)
       CONFARGS += --enable-targets=all
       CONFARGS += --with-arch-32=mips32r2 --with-fp-32=xx
+    endif
+  endif
+endif
+
+ifneq (,$(findstring mipsisa32r6-linux,$(DEB_TARGET_GNU_TYPE)))
+  CONFARGS += --with-arch-32=mips32r6 --with-tune-32=mips32r6
+  ifeq ($(multilib),yes)
+    ifeq ($(biarchn32)-$(biarch64),yes-yes)
+      CONFARGS += --enable-targets=all
+      CONFARGS += --with-arch-64=mips64r6 --with-tune-64=mips64r6
+    endif
+  endif
+endif
+
+ifneq (,$(findstring mipsisa32r6el-linux,$(DEB_TARGET_GNU_TYPE)))
+  CONFARGS += --with-arch-32=mips32r6 --with-tune-32=mips32r6
+  ifeq ($(multilib),yes)
+    ifeq ($(biarchn32)-$(biarch64),yes-yes)
+      CONFARGS += --enable-targets=all
+      CONFARGS += --with-arch-64=mips64r6 --with-tune-64=mips64r6
+    endif
+  endif
+endif
+
+#FIXME: howto for mipsn32?
+ifneq (,$(findstring mipsisa64r6el-linux-gnuabin32,$(DEB_TARGET_GNU_TYPE)))
+  CONFARGS += --with-mips-plt
+  ifeq ($(multilib),yes)
+    ifeq ($(biarch64)-$(biarch32),yes-yes)
+      CONFARGS += --enable-targets=all
+      CONFARGS += --with-arch-64=mips64r6
+      CONFARGS += --with-arch-32=mips32r6
+    endif
+  endif
+endif
+
+ifneq (,$(findstring mipsisa64r6-linux-gnuabin32,$(DEB_TARGET_GNU_TYPE)))
+  CONFARGS += --with-mips-plt
+  ifeq ($(multilib),yes)
+    ifeq ($(biarch64)-$(biarch32),yes-yes)
+      CONFARGS += --enable-targets=all
+      CONFARGS += --with-arch-64=mips64r6
+      CONFARGS += --with-arch-32=mips32r6
+    endif
+  endif
+endif
+
+ifneq (,$(findstring mipsisa64r6el-linux-gnuabi64,$(DEB_TARGET_GNU_TYPE)))
+  CONFARGS += --with-mips-plt
+  CONFARGS += --with-arch-64=mips64r6 --with-tune-64=mips64r6
+  ifeq ($(multilib),yes)
+    ifeq ($(biarchn32)-$(biarch32),yes-yes)
+      CONFARGS += --enable-targets=all
+      CONFARGS += --with-arch-32=mips32r6 --with-tune-32=mips32r6
+    endif
+  endif
+endif
+
+ifneq (,$(findstring mipsisa64r6-linux-gnuabi64,$(DEB_TARGET_GNU_TYPE)))
+  CONFARGS += --with-mips-plt
+  CONFARGS += --with-arch-64=mips64r6 --with-tune-64=mips64r6
+  ifeq ($(multilib),yes)
+    ifeq ($(biarchn32)-$(biarch32),yes-yes)
+      CONFARGS += --enable-targets=all
+      CONFARGS += --with-arch-32=mips32r6 --with-tune-32=mips32r6
     endif
   endif
 endif
@@ -1037,7 +1102,11 @@ ifeq ($(biarchn32)-$(biarch64),yes-yes)
 else ifeq ($(biarchn32)-$(biarch32),yes-yes)
 	@echo "Will build the triarch compilers (o32/n32/64, defaulting to 64)"
 else ifeq ($(biarch64)-$(biarch32),yes-yes)
+  ifneq (,$(findstring mips,$(DEB_TARGET_GNU_TYPE)))
+	@echo "Will build the triarch compilers (n32/64/32, defaulting to n32)"
+  else 
 	@echo "Will build the triarch compilers (x32/64/32, defaulting to x32)"
+  endif
 else ifeq ($(biarch64)-$(biarchx32),yes-yes)
 	@echo "Will build the triarch compilers (32/64/x32, defaulting to 32bit)"
 else ifeq ($(biarch32)-$(biarchx32),yes-yes)

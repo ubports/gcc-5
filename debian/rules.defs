@@ -451,6 +451,12 @@ multiarch_xarch_map = \
 	mipsn32el=mipsel-linux-gnu,mips64el-linux-gnuabi64 \
 	mips64=mips-linux-gnu,mips64-linux-gnuabin32 \
 	mips64el=mipsel-linux-gnu,mips64el-linux-gnuabin32 \
+	mipsr6=mipsisa64r6-linux-gnuabin32,mipsisa64r6-linux-gnuabi64 \
+	mipsr6el=mipsisa64r6el-linux-gnuabin32,mipsisa64r6el-linux-gnuabi64 \
+	mipsn32r6=mipsisa32r6-linux-gnu,mipsisa64r6-linux-gnuabi64 \
+	mipsn32r6el=mipsisa32r6el-linux-gnu,mipsisa64r6el-linux-gnuabi64 \
+	mips64r6=mipsisa32r6-linux-gnu,mipsisa64r6-linux-gnuabin32 \
+	mips64r6el=mipsisa32r6el-linux-gnu,mipsisa64r6el-linux-gnuabin32 \
 	x32=x86_64-linux-gnu,i386-linux-gnu \
 	kfreebsd-amd64=i386-kfreebsd-gnu
 xarch_multiarch_names = $(subst $(COMMA),$(SPACE),$(patsubst $(DEB_TARGET_ARCH)=%,%, \
@@ -482,6 +488,18 @@ multilib_multiarch_map = \
 	mips64/n32=mips64-linux-gnuabin32 \
 	mips64el/32=mipsel-linux-gnu \
 	mips64el/n32=mips64el-linux-gnuabin32 \
+	mipsr6/n32=mipsisa64r6-linux-gnuabin32 \
+	mipsr6/64=mipsisa64r6-linux-gnuabi64 \
+	mipsr6el/n32=mipsisa64r6el-linux-gnuabin32 \
+	mipsr6el/64=mipsisa64r6el-linux-gnuabi64 \
+	mipsn32r6/32=mipsisa32r6-linux-gnu \
+	mipsn32r6/64=mipsisa64r6-linux-gnuabi64 \
+	mipsn32r6el/32=mipsisa32r6el-linux-gnu \
+	mipsn32r6el/64=mipsisa64r6el-linux-gnuabi64 \
+	mips64r6/32=mipsisa32r6-linux-gnu \
+	mips64r6/n32=mipsisa64r6-linux-gnuabin32 \
+	mips64r6el/32=mipsisa32r6el-linux-gnu \
+	mips64r6el/n32=mipsisa64r6el-linux-gnuabin32 \
 	x32/32=i386-linux-gnu \
 	x32/64=x86_64-linux-gnu \
 	kfreebsd-amd64/32=i386-kfreebsd-gnu
@@ -795,6 +813,7 @@ ifeq ($(with_java),yes)
   java_cpu_map = armel=arm armhf=arm arm64=aarch64 hppa=parisc \
 	i686=i386 i586=i386 i486=i386 x32=x32 \
 	mipsel=mips mips64=mips mips64el=mips mipsn32=mips mipsn32el=mips \
+	mipsr6=mips mipsr6el=mips mips64r6=mips mips64r6el=mips mipsn32r6=mips mipsn32r6el=mips \
 	powerpc=ppc ppc64el=ppc64le sh4=sh x32=x32
   java_cpu = $(patsubst $(DEB_TARGET_ARCH_CPU)=%,%, \
                          $(filter $(DEB_TARGET_ARCH_CPU)=%,$(java_cpu_map)))
@@ -1484,8 +1503,9 @@ export debian_extra_langs
 
 # multilib
 biarch_map := i686=x86_64 powerpc=powerpc64 sparc=sparc64 sparc64=sparc s390=s390x s390x=s390 \
-		x86_64=i686 powerpc64=powerpc mips=mips64 mipsel=mips64el \
-		mips64=mips mips64el=mipsel mipsn32=mips mipsn32el=mipsel
+		x86_64=i686 powerpc64=powerpc \
+		mips=mips64 mipsel=mips64el mips64=mips mips64el=mipsel mipsn32=mips mipsn32el=mipsel \
+		# mipsr6=mips64r6 mipsr6el=mips64r6el mips64r6=mipsr6 mips64r6el=mipsr6el mipsn32r6=mipsr6 mipsn32r6el=mipsr6el
 ifneq (,$(filter $(derivative),Ubuntu))
   ifeq (,$(filter $(distrelease),dapper hardy jaunty karmic lucid))
     biarch_map := $(subst i686=,i486=,$(biarch_map))
@@ -1632,9 +1652,9 @@ define gen_biarch
     export TARGET64_MACHINE
   endif
 endef
-biarch32archs := /amd64/ppc64/kfreebsd-amd64/s390x/sparc64/x32/mipsn32/mipsn32el/mips64/mips64el/
-biarch64archs := /i386/powerpc/sparc/s390/mips/mipsel/mipsn32/mipsn32el/x32/
-biarchn32archs := /mips/mipsel/mips64/mips64el/
+biarch32archs := /amd64/ppc64/kfreebsd-amd64/s390x/sparc64/x32/mipsn32/mipsn32el/mips64/mips64el/ # mipsn32r6/mipsn32r6el/mips64r6/mips64r6el/
+biarch64archs := /i386/powerpc/sparc/s390/mips/mipsel/mipsn32/mipsn32el/x32/ # mipsr6/mipsr6el/mipsn32r6/mipsn32r6el/
+biarchn32archs := /mips/mipsel/mips64/mips64el/ # mipsr6/mipsr6el/mips64r6/mips64r6el/
 ifeq ($(derivative),Ubuntu)
   ifeq (,$(filter $(distrelease),dapper hardy jaunty karmic lucid maverick natty))
     biarchhfarchs := /armel/
