@@ -208,7 +208,7 @@ ifeq ($(with_d),yes)
 #	gdc-updates
 #	gdc-multiarch
   ifneq ($(GFDL_INVARIANT_FREE),yes)
-    debian_patches += gdc-5-doc
+#    debian_patches += gdc-5-doc
   else
     debian_patches += gdc-texinfo
   endif
