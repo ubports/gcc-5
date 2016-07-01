@@ -1,3 +1,11 @@
+gcc-5 (5.4.0-6) unstable; urgency=medium
+
+  * Fix gdc cross build.
+  * Disable the AArch64 Vulcan cpu support for FSF builds, needs a proper
+    back port.
+
+ -- Matthias Klose <doko@debian.org>  Fri, 01 Jul 2016 10:15:02 +0200
+
 gcc-5 (5.4.0-5) unstable; urgency=medium
 
   [ Matthias Klose ]
@@ -9,7 +17,7 @@ gcc-5 (5.4.0-5) unstable; urgency=medium
   * Remove the MIPS r6 support again, dak doesn't like unknown architectures.
 
   [ Aurelien Jarno ]
-  * Drop support for loongson 2f (YunQiang Su). Closes: #827554. 
+  * Drop support for loongson 2f (YunQiang Su). Closes: #827554.
   * Apply proposed patch from Matthew Fortune to fix libjava on mips64el.
 
  -- Matthias Klose <doko@debian.org>  Thu, 30 Jun 2016 18:17:53 +0200
