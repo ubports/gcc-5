@@ -1,3 +1,14 @@
+gcc-5 (5.4.0-6ubuntu1~16.04.1) xenial-proposed; urgency=medium
+
+  * SRU: LP: #1586673. Backport GCC 5.4 to 16.04 LTS.
+  * Revert a libstdc++ header reorg done after the 5.3.0 release.
+  * Add AArch64 Vulcan cpu support, backport from trunk. LP: #1594452.
+  * Revert a libstdc++ header reorg done after the 5.3.0 release (only for
+    OS releases including a GCC 5 at release time).
+  * Fixes C++ ICE. LP: #1593608.
+
+ -- Matthias Klose <doko@ubuntu.com>  Mon, 04 Jul 2016 15:14:45 +0200
+
 gcc-5 (5.4.0-6ubuntu1) yakkety; urgency=medium
 
   * Merge with Debian; remaining changes:
@@ -34,7 +45,7 @@ gcc-5 (5.4.0-5) unstable; urgency=medium
   * Drop support for loongson 2f (YunQiang Su). Closes: #827554.
   * Apply proposed patch from Matthew Fortune to fix libjava on mips64el.
 
- -- Matthias Klose <doko@debian.org>  Thu, 30 Jun 2016 12:20:55 +0200
+ -- Matthias Klose <doko@debian.org>  Thu, 30 Jun 2016 18:17:53 +0200
 
 gcc-5 (5.4.0-4ubuntu1) yakkety; urgency=medium
 
