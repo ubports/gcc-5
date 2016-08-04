@@ -1,3 +1,9 @@
+gcc-5 (5.4.0-6ubuntu1~16.04.2) xenial-security; urgency=medium
+
+  * No change rebuild for the security pocket.
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Thu, 04 Aug 2016 11:26:47 -0400
+
 gcc-5 (5.4.0-6ubuntu1~16.04.1) xenial-proposed; urgency=medium
 
   * SRU: LP: #1586673. Backport GCC 5.4 to 16.04 LTS.
