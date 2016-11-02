@@ -105,6 +105,8 @@ debian_patches += \
 	pr70192 \
 	gcc-ignore-fdebug-prefix-map-in-producer-string \
 	$(if $(with_linaro_branch),vulcan-cpu-linaro) \
+	pr71709 \
+	pr72863 \
 
 # this is still needed on powerpc, e.g. firefox and insighttoolkit4 will ftbfs.
 ifneq (,$(filter $(DEB_TARGET_ARCH),powerpc))

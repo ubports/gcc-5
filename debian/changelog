@@ -1,3 +1,12 @@
+gcc-5 (5.4.0-6ubuntu1~16.04.4) xenial-security; urgency=medium
+
+  * SRU
+    - Fix PR target/72863, redundant swaps when using vec_vsx_ld/st,
+      taken from the gcc-5 branch. LP: #1638055.
+    - Fix PR rtl-optimization/71709, taken from the gcc-5 branch. LP: #1628207.
+
+ -- Matthias Klose <doko@ubuntu.com>  Wed, 02 Nov 2016 19:23:52 +0100
+
 gcc-5 (5.4.0-6ubuntu1~16.04.2) xenial-security; urgency=medium
 
   * No change rebuild for the security pocket.
