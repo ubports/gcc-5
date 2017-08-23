@@ -16,6 +16,8 @@ debian_patches = \
 	svn-updates \
 	$(if $(with_linaro_branch),gcc-linaro) \
 	$(if $(with_linaro_branch),gcc-linaro-no-macros) \
+	$(if $(with_linaro_branch),mpc-relative-literal-loads-rename) \
+	$(if $(with_linaro_branch),lp1695093) \
 
 #	$(if $(with_linaro_branch),gcc-linaro-revert-r236918) \
 #	$(if $(with_linaro_branch),gcc-linaro-revert-r236444) \
@@ -107,6 +109,9 @@ debian_patches += \
 	$(if $(with_linaro_branch),vulcan-cpu-linaro) \
 	pr71709 \
 	pr72863 \
+	pr77267 \
+	sanitizer-Fix-a-crash-in-SizeClassAllocator32-with-a \
+	asan-Enable-48-bit-VMA-support-on-aarch64 \
 
 # this is still needed on powerpc, e.g. firefox and insighttoolkit4 will ftbfs.
 ifneq (,$(filter $(DEB_TARGET_ARCH),powerpc))

@@ -1,3 +1,14 @@
+gcc-5 (5.4.0-6ubuntu1~16.04.5) xenial-proposed; urgency=medium
+
+  * SRU
+  * Fix PR target/77267 (x86), taken from the trunk. LP: #1623418.
+  * Fix hangs w/ asan binaries on arm64 (Dann Frazier). LP: #1709727.
+  * Linaro branch only: Fix PR target/79041, aarch64 backend emitting
+    R_AARCH64_ADR_PREL_PG_HI21 relocation despite -mpc-relative-literal-loads
+    option being used (Dan Frazier). LP: #1695093.
+
+ -- Matthias Klose <doko@ubuntu.com>  Wed, 23 Aug 2017 11:35:00 +0200
+
 gcc-5 (5.4.0-6ubuntu1~16.04.4) xenial-security; urgency=medium
 
   * SRU
