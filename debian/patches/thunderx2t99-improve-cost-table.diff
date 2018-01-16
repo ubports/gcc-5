@@ -1,0 +1,22 @@
+Description: (thunderx2t99_addrcost_table): Improve cost table.
+ Backported to gcc-5 by dann frazier <dannf@ubuntu.com>
+Author: Andrew Pinski <apinski@cavium.com>
+Origin: https://gcc.gnu.org/viewcvs/gcc?view=revision&revision=244851
+Bug-Ubuntu: https://bugs.launchpad.net/bugs/1727540
+Applied-Upstream: svn://gcc.gnu.org/svn/gcc/trunk@244851
+
+--- a/src/gcc/config/aarch64/aarch64.c	2017-10-19 19:13:38.407610061 -0400
++++ b/src/gcc/config/aarch64/aarch64.c	2017-10-20 15:37:03.712619817 -0400
+@@ -270,9 +270,9 @@ static const struct cpu_addrcost_table x
+ static const struct cpu_addrcost_table thunderx2t99_addrcost_table =
+ {
+     {
+-      0, /* hi  */
+-      0, /* si  */
+-      0, /* di  */
++      1, /* hi  */
++      1, /* si  */
++      1, /* di  */
+       2, /* ti  */
+     },
+   0, /* pre_modify  */

@@ -112,6 +112,11 @@ debian_patches += \
 	pr77267 \
 	sanitizer-Fix-a-crash-in-SizeClassAllocator32-with-a \
 	asan-Enable-48-bit-VMA-support-on-aarch64 \
+	$(if $(with_linaro_branch),vulcan-costs) \
+	$(if $(with_linaro_branch),vulcan-to-thunderx2t99) \
+	$(if $(with_linaro_branch),thunderx2t99-improve-cost-table) \
+	$(if $(with_linaro_branch),thunderx2t99-scheduler) \
+	$(if $(with_linaro_branch),thunderx2t99p1)
 
 # this is still needed on powerpc, e.g. firefox and insighttoolkit4 will ftbfs.
 ifneq (,$(filter $(DEB_TARGET_ARCH),powerpc))

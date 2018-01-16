@@ -1,0 +1,48 @@
+Description: Change -mcpu=thunderx2t99 's -mcpu=native support
+ Hi,
+   When I implemented the -mcpu=thunderx2t99 I did not have the Cavium
+ partno for ThunderX CN99xx, only the original part no.  This patch
+ adds the new part no for the future versions of the chip.
+ .
+ OK?  Bootstrapped and tested on aarch64-linux-gnu with no regressions.
+ .
+ Thanks,
+ Andrew
+ .
+ ChangeLog:
+ * config/aarch64/aarch64-cores.def (thunderx2t99): Move to under 'C"
+ cores and change the partno/implementer to be correct.
+ (thunderx2t99p1): New core which replaces thunderx2t99 and still has
+ the 'B" as the implementer.
+ .
+ Backported to gcc-5 by dann frazier <dannf@ubuntu.com>
+Author: Andrew Pinski <apinski@cavium.com>
+Origin: https://gcc.gnu.org/viewcvs/gcc?view=revision&revision=245461
+Bug-Ubuntu: https://bugs.launchpad.net/bugs/1727540
+Applied-Upstream: svn://gcc.gnu.org/svn/gcc/trunk@245461
+
+--- a/src/gcc/config/aarch64/aarch64-cores.def	2017-10-20 18:10:47.523130202 -0400
++++ b/src/gcc/config/aarch64/aarch64-cores.def	2017-10-20 18:19:03.407936680 -0400
+@@ -48,10 +48,11 @@ AARCH64_CORE("exynos-m1",   exynosm1,  c
+ AARCH64_CORE("qdf24xx",     qdf24xx,   cortexa57, 8A,  AARCH64_FL_FOR_ARCH8 | AARCH64_FL_CRC | AARCH64_FL_CRYPTO, cortexa57, "0x51", "0x800")
+ AARCH64_CORE("thunderx",    thunderx,  thunderx,  8A,  AARCH64_FL_FOR_ARCH8 | AARCH64_FL_CRC | AARCH64_FL_CRYPTO, thunderx,  "0x43", "0x0a1")
+ AARCH64_CORE("xgene1",      xgene1,    xgene1,    8A,  AARCH64_FL_FOR_ARCH8, xgene1, "0x50", "0x000")
++AARCH64_CORE("thunderx2t99",  thunderx2t99,  thunderx2t99, 8_1A,  AARCH64_FL_FOR_ARCH8_1 | AARCH64_FL_CRYPTO, thunderx2t99, "0x43", "0x0af")
+ 
+ /* V8.1 Architecture Processors.  */
+ 
+-AARCH64_CORE("thunderx2t99",  thunderx2t99, thunderx2t99, 8_1A,  AARCH64_FL_FOR_ARCH8_1 | AARCH64_FL_CRYPTO, thunderx2t99, "0x42", "0x516")
++AARCH64_CORE("thunderx2t99p1",  thunderx2t99p1, thunderx2t99, 8_1A,  AARCH64_FL_FOR_ARCH8_1 | AARCH64_FL_CRYPTO, thunderx2t99, "0x42", "0x516")
+ AARCH64_CORE("vulcan",  vulcan, thunderx2t99, 8_1A,  AARCH64_FL_FOR_ARCH8_1 | AARCH64_FL_CRYPTO, thunderx2t99, "0x42", "0x516")
+ 
+ /* V8 big.LITTLE implementations.  */
+diff -urpN a/src/gcc/config/aarch64/aarch64-tune.md b/src/gcc/config/aarch64/aarch64-tune.md
+--- a/src/gcc/config/aarch64/aarch64-tune.md	2017-10-20 17:23:44.212332273 -0400
++++ b/src/gcc/config/aarch64/aarch64-tune.md	2017-10-20 18:19:42.484113735 -0400
+@@ -1,5 +1,5 @@
+ ;; -*- buffer-read-only: t -*-
+ ;; Generated automatically by gentune.sh from aarch64-cores.def
+ (define_attr "tune"
+-	"cortexa35,cortexa53,cortexa57,cortexa72,exynosm1,qdf24xx,thunderx,xgene1,thunderx2t99,vulcan,cortexa57cortexa53,cortexa72cortexa53"
++	"cortexa35,cortexa53,cortexa57,cortexa72,exynosm1,qdf24xx,thunderx,xgene1,thunderx2t99,thunderx2t99p1,vulcan,cortexa57cortexa53,cortexa72cortexa53"
+ 	(const (symbol_ref "((enum attr_tune) aarch64_tune)")))

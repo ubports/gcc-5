@@ -1,0 +1,129 @@
+Description: Add -mcpu=thunderx2t99 support
+ * config/aarch64/aarch64-cores.def: Add thunderx2t99.  Change vulcan
+ to reference thunderx2t99 for the tuning structure
+ * config/aarch64/aarch64-cost-tables.h (vulcan_extra_costs): Rename to ...
+ (thunderx2t99_extra_costs): This.
+ * config/aarch64/aarch64-tune.md: Regenerate.
+ * config/aarch64/aarch64.c (vulcan_addrcost_table): Rename to ...
+ (vulcan_addrcost_table): This.
+ (vulcan_regmove_cost): Rename to ...
+ (thunderx2t99_regmove_cost): This.
+ (vulcan_vector_cost): Rename to ...
+ (thunderx2t99_vector_cost): this.
+ (vulcan_branch_cost): Rename to ...
+ (thunderx2t99_branch_cost): This.
+ (vulcan_tunings): Rename to ...
+ (thunderx2t99_tunings): This and s/vulcan/thunderx2t99 .
+ * doc/invoke.texi (AARCH64/mtune): Add thunderx2t99.
+ .
+ Backported to gcc-5 by dann frazier <dannf@ubuntu.com>
+Author: Andrew Pinski <apinski@cavium.com>
+Origin: https://gcc.gnu.org/viewcvs/gcc?view=revision&revision=244235
+Bug-Ubuntu: https://bugs.launchpad.net/bugs/1727540
+Applied-Upstream: svn://gcc.gnu.org/svn/gcc/trunk@244235
+
+--- a/src/gcc/config/aarch64/aarch64.c	2017-10-20 17:04:37.205144993 -0400
++++ b/src/gcc/config/aarch64/aarch64.c	2017-10-20 17:19:39.650846958 -0400
+@@ -267,7 +267,7 @@ static const struct cpu_addrcost_table x
+   0, /* imm_offset  */
+ };
+ 
+-static const struct cpu_addrcost_table vulcan_addrcost_table =
++static const struct cpu_addrcost_table thunderx2t99_addrcost_table =
+ {
+     {
+       0, /* hi  */
+@@ -331,7 +331,7 @@ static const struct cpu_regmove_cost xge
+   2 /* FP2FP  */
+ };
+ 
+-static const struct cpu_regmove_cost vulcan_regmove_cost =
++static const struct cpu_regmove_cost thunderx2t99_regmove_cost =
+ {
+   1, /* GP2GP  */
+   /* Avoid the use of int<->fp moves for spilling.  */
+@@ -392,7 +392,7 @@ static const struct cpu_vector_cost xgen
+ };
+ 
+ /* Costs for vector insn classes for Vulcan.  */
+-static const struct cpu_vector_cost vulcan_vector_cost =
++static const struct cpu_vector_cost thunderx2t99_vector_cost =
+ {
+   6, /* scalar_stmt_cost  */
+   4, /* scalar_load_cost  */
+@@ -423,7 +423,7 @@ static const struct cpu_branch_cost cort
+ };
+ 
+ /* Branch costs for Vulcan.  */
+-static const struct cpu_branch_cost vulcan_branch_cost =
++static const struct cpu_branch_cost thunderx2t99_branch_cost =
+ {
+   1,  /* Predictable.  */
+   3   /* Unpredictable.  */
+@@ -601,13 +601,13 @@ static const struct tune_params xgene1_t
+   (AARCH64_EXTRA_TUNE_NONE)	/* tune_flags.  */
+ };
+ 
+-static const struct tune_params vulcan_tunings =
++static const struct tune_params thunderx2t99_tunings =
+ {
+-  &vulcan_extra_costs,
+-  &vulcan_addrcost_table,
+-  &vulcan_regmove_cost,
+-  &vulcan_vector_cost,
+-  &vulcan_branch_cost,
++  &thunderx2t99_extra_costs,
++  &thunderx2t99_addrcost_table,
++  &thunderx2t99_regmove_cost,
++  &thunderx2t99_vector_cost,
++  &thunderx2t99_branch_cost,
+   4, /* memmov_cost.  */
+   4, /* issue_rate.  */
+   AARCH64_FUSE_NOTHING, /* fuseable_ops.  */
+diff -urpN a/src/gcc/config/aarch64/aarch64-cores.def b/src/gcc/config/aarch64/aarch64-cores.def
+--- a/src/gcc/config/aarch64/aarch64-cores.def	2017-10-20 17:04:37.209145404 -0400
++++ b/src/gcc/config/aarch64/aarch64-cores.def	2017-10-20 17:19:39.650846958 -0400
+@@ -51,7 +51,8 @@ AARCH64_CORE("xgene1",      xgene1,    x
+ 
+ /* V8.1 Architecture Processors.  */
+ 
+-AARCH64_CORE("vulcan",  vulcan, cortexa57, 8_1A,  AARCH64_FL_FOR_ARCH8_1 | AARCH64_FL_CRYPTO, vulcan, "0x42", "0x516")
++AARCH64_CORE("thunderx2t99",  thunderx2t99, cortexa57, 8_1A,  AARCH64_FL_FOR_ARCH8_1 | AARCH64_FL_CRYPTO, thunderx2t99, "0x42", "0x516")
++AARCH64_CORE("vulcan",  vulcan, cortexa57, 8_1A,  AARCH64_FL_FOR_ARCH8_1 | AARCH64_FL_CRYPTO, thunderx2t99, "0x42", "0x516")
+ 
+ /* V8 big.LITTLE implementations.  */
+ 
+diff -urpN a/src/gcc/config/aarch64/aarch64-cost-tables.h b/src/gcc/config/aarch64/aarch64-cost-tables.h
+--- a/src/gcc/config/aarch64/aarch64-cost-tables.h	2017-10-20 17:04:37.209145404 -0400
++++ b/src/gcc/config/aarch64/aarch64-cost-tables.h	2017-10-20 17:19:39.650846958 -0400
+@@ -127,7 +127,7 @@ const struct cpu_cost_table thunderx_ext
+   }
+ };
+ 
+-const struct cpu_cost_table vulcan_extra_costs =
++const struct cpu_cost_table thunderx2t99_extra_costs =
+ {
+   /* ALU */
+   {
+diff -urpN a/src/gcc/config/aarch64/aarch64-tune.md b/src/gcc/config/aarch64/aarch64-tune.md
+--- a/src/gcc/config/aarch64/aarch64-tune.md	2017-10-20 17:04:37.173141710 -0400
++++ b/src/gcc/config/aarch64/aarch64-tune.md	2017-10-20 17:23:44.212332273 -0400
+@@ -1,5 +1,5 @@
+ ;; -*- buffer-read-only: t -*-
+ ;; Generated automatically by gentune.sh from aarch64-cores.def
+ (define_attr "tune"
+-	"cortexa35,cortexa53,cortexa57,cortexa72,exynosm1,qdf24xx,thunderx,xgene1,vulcan,cortexa57cortexa53,cortexa72cortexa53"
++	"cortexa35,cortexa53,cortexa57,cortexa72,exynosm1,qdf24xx,thunderx,xgene1,thunderx2t99,vulcan,cortexa57cortexa53,cortexa72cortexa53"
+ 	(const (symbol_ref "((enum attr_tune) aarch64_tune)")))
+diff -urpN a/src/gcc/doc/invoke.texi b/src/gcc/doc/invoke.texi
+--- a/src/gcc/doc/invoke.texi	2017-10-20 17:04:39.461376437 -0400
++++ b/src/gcc/doc/invoke.texi	2017-10-20 17:19:39.658847810 -0400
+@@ -12412,7 +12412,7 @@ Specify the name of the target processor
+ performance of the code.  Permissible values for this option are:
+ @samp{generic}, @samp{cortex-a35}, @samp{cortex-a53}, @samp{cortex-a57},
+ @samp{cortex-a72}, @samp{exynos-m1}, @samp{qdf24xx}, @samp{thunderx},
+-@samp{vulcan}, @samp{xgene1}.
++@samp{thunderx2t99}, @samp{vulcan}, @samp{xgene1}.
+ 
+ Additionally, this option can specify that GCC should tune the performance
+ of the code for a big.LITTLE system.  Permissible values for this
