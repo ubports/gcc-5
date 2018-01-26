@@ -1,0 +1,867 @@
+From d56301ce0da31950df7a9aaeffdf733162f1d304 Mon Sep 17 00:00:00 2001
+From: wschmidt <wschmidt@138bc75d-0d04-0410-961f-82ee72b054a4>
+Date: Thu, 18 Jan 2018 01:34:10 +0000
+Subject: [PATCH] [gcc]
+
+2018-01-17  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
+
+	Backport from mainline
+	2018-01-16  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
+
+	* config/rs6000/rs6000.c (rs6000_opt_vars): Add entry for
+	-mspeculate-indirect-jumps.
+	* config/rs6000/rs6000.md (*call_indirect_elfv2<mode>): Disable
+	for -mno-speculate-indirect-jumps.
+	(*call_indirect_elfv2<mode>_nospec): New define_insn.
+	(*call_value_indirect_elfv2<mode>): Disable for
+	-mno-speculate-indirect-jumps.
+	(*call_value_indirect_elfv2<mode>_nospec): New define_insn.
+	(indirect_jump): Emit different RTL for
+	-mno-speculate-indirect-jumps.
+	(*indirect_jump<mode>): Disable for
+	-mno-speculate-indirect-jumps.
+	(*indirect_jump<mode>_nospec): New define_insn.
+	(tablejump): Emit different RTL for
+	-mno-speculate-indirect-jumps.
+	(tablejumpsi): Disable for -mno-speculate-indirect-jumps.
+	(tablejumpsi_nospec): New define_expand.
+	(tablejumpdi): Disable for -mno-speculate-indirect-jumps.
+	(tablejumpdi_nospec): New define_expand.
+	(*tablejump<mode>_internal1): Disable for
+	-mno-speculate-indirect-jumps.
+	(*tablejump<mode>_internal1_nospec): New define_insn.
+	* config/rs6000/rs6000.opt (mspeculate-indirect-jumps): New
+	option.
+
+	Backport from mainline
+	2018-01-17  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
+
+	* config/rs6000/rs6000.md (*call_indirect_nonlocal_sysv<mode>):
+	Generate different code for -mno-speculate-indirect-jumps.
+	(*call_value_indirect_nonlocal_sysv<mode>): Likewise.
+	(*call_indirect_aix<mode>): Disable for
+	-mno-speculate-indirect-jumps.
+	(*call_indirect_aix<mode>_nospec): New define_insn.
+	(*call_value_indirect_aix<mode>): Disable for
+	-mno-speculate-indirect-jumps.
+	(*call_value_indirect_aix<mode>_nospec): New define_insn.
+	(*sibcall_nonlocal_sysv<mode>): Generate different code for
+	-mno-speculate-indirect-jumps.
+	(*sibcall_value_nonlocal_sysv<mode>): Likewise.
+
+[gcc/testsuite]
+
+2018-01-17  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
+
+	Backport from mainline
+	2018-01-16  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
+
+	* gcc.target/powerpc/safe-indirect-jump-1.c: New file.
+	* gcc.target/powerpc/safe-indirect-jump-2.c: New file.
+	* gcc.target/powerpc/safe-indirect-jump-3.c: New file.
+	* gcc.target/powerpc/safe-indirect-jump-4.c: New file.
+	* gcc.target/powerpc/safe-indirect-jump-5.c: New file.
+	* gcc.target/powerpc/safe-indirect-jump-6.c: New file.
+
+	Backport from mainline
+	2018-01-17  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
+
+	* gcc.target/powerpc/safe-indirect-jump-1.c: Remove endian
+	restriction, but still restrict to 64-bit.
+	* gcc.target/powerpc/safe-indirect-jump-7.c: New file.
+	* gcc.target/powerpc/safe-indirect-jump-8.c: New file.
+
+
+
+git-svn-id: svn+ssh://gcc.gnu.org/svn/gcc/branches/gcc-7-branch@256832 138bc75d-0d04-0410-961f-82ee72b054a4
+---
+ src/gcc/config/rs6000/rs6000.c                              |    3 
+ src/gcc/config/rs6000/rs6000.md                             |  263 +++++++++++-
+ src/gcc/config/rs6000/rs6000.opt                            |    5 
+ src/gcc/testsuite/gcc.target/powerpc/safe-indirect-jump-1.c |   14 
+ src/gcc/testsuite/gcc.target/powerpc/safe-indirect-jump-2.c |   33 +
+ src/gcc/testsuite/gcc.target/powerpc/safe-indirect-jump-3.c |   52 ++
+ src/gcc/testsuite/gcc.target/powerpc/safe-indirect-jump-4.c |   25 +
+ src/gcc/testsuite/gcc.target/powerpc/safe-indirect-jump-5.c |   55 ++
+ src/gcc/testsuite/gcc.target/powerpc/safe-indirect-jump-6.c |   80 +++
+ src/gcc/testsuite/gcc.target/powerpc/safe-indirect-jump-7.c |   14 
+ src/gcc/testsuite/gcc.target/powerpc/safe-indirect-jump-8.c |   15 
+ 11 files changed, 539 insertions(+), 20 deletions(-)
+ create mode 100644 gcc/testsuite/gcc.target/powerpc/safe-indirect-jump-1.c
+ create mode 100644 gcc/testsuite/gcc.target/powerpc/safe-indirect-jump-2.c
+ create mode 100644 gcc/testsuite/gcc.target/powerpc/safe-indirect-jump-3.c
+ create mode 100644 gcc/testsuite/gcc.target/powerpc/safe-indirect-jump-4.c
+ create mode 100644 gcc/testsuite/gcc.target/powerpc/safe-indirect-jump-5.c
+ create mode 100644 gcc/testsuite/gcc.target/powerpc/safe-indirect-jump-6.c
+ create mode 100644 gcc/testsuite/gcc.target/powerpc/safe-indirect-jump-7.c
+ create mode 100644 gcc/testsuite/gcc.target/powerpc/safe-indirect-jump-8.c
+
+Index: b/src/gcc/config/rs6000/rs6000.c
+===================================================================
+--- a/src/gcc/config/rs6000/rs6000.c
++++ b/src/gcc/config/rs6000/rs6000.c
+@@ -34227,6 +34227,9 @@ static struct rs6000_opt_var const rs600
+   { "sched-epilog",
+     offsetof (struct gcc_options, x_TARGET_SCHED_PROLOG),
+     offsetof (struct cl_target_option, x_TARGET_SCHED_PROLOG), },
++  { "speculate-indirect-jumps",
++    offsetof (struct gcc_options, x_rs6000_speculate_indirect_jumps),
++    offsetof (struct cl_target_option, x_rs6000_speculate_indirect_jumps), },
+   { "gen-cell-microcode",
+     offsetof (struct gcc_options, x_rs6000_gen_cell_microcode),
+     offsetof (struct cl_target_option, x_rs6000_gen_cell_microcode), },
+Index: b/src/gcc/config/rs6000/rs6000.md
+===================================================================
+--- a/src/gcc/config/rs6000/rs6000.md
++++ b/src/gcc/config/rs6000/rs6000.md
+@@ -11816,10 +11816,35 @@
+   else if (INTVAL (operands[2]) & CALL_V4_CLEAR_FP_ARGS)
+     output_asm_insn ("creqv 6,6,6", operands);
+ 
+-  return "b%T0l";
++  if (rs6000_speculate_indirect_jumps
++      || which_alternative == 1 || which_alternative == 3)
++    return "b%T0l";
++  else
++    return "crset eq\;beq%T0l-";
+ }
+   [(set_attr "type" "jmpreg,jmpreg,jmpreg,jmpreg")
+-   (set_attr "length" "4,4,8,8")])
++   (set (attr "length")
++	(cond [(and (eq (symbol_ref "which_alternative") (const_int 0))
++		    (eq (symbol_ref "rs6000_speculate_indirect_jumps")
++			(const_int 1)))
++		  (const_string "4")
++	       (and (eq (symbol_ref "which_alternative") (const_int 0))
++		    (eq (symbol_ref "rs6000_speculate_indirect_jumps")
++			(const_int 0)))
++		  (const_string "8")
++	       (eq (symbol_ref "which_alternative") (const_int 1))
++	          (const_string "4")
++	       (and (eq (symbol_ref "which_alternative") (const_int 2))
++		    (eq (symbol_ref "rs6000_speculate_indirect_jumps")
++			(const_int 1)))
++		  (const_string "8")
++	       (and (eq (symbol_ref "which_alternative") (const_int 2))
++		    (eq (symbol_ref "rs6000_speculate_indirect_jumps")
++			(const_int 0)))
++		  (const_string "12")
++	       (eq (symbol_ref "which_alternative") (const_int 3))
++		  (const_string "8")]
++	      (const_string "4")))])
+ 
+ (define_insn_and_split "*call_nonlocal_sysv<mode>"
+   [(call (mem:SI (match_operand:P 0 "symbol_ref_operand" "s,s"))
+@@ -11904,10 +11929,35 @@
+   else if (INTVAL (operands[3]) & CALL_V4_CLEAR_FP_ARGS)
+     output_asm_insn ("creqv 6,6,6", operands);
+ 
+-  return "b%T1l";
++  if (rs6000_speculate_indirect_jumps
++      || which_alternative == 1 || which_alternative == 3)
++    return "b%T1l";
++  else
++    return "crset eq\;beq%T1l-";
+ }
+   [(set_attr "type" "jmpreg,jmpreg,jmpreg,jmpreg")
+-   (set_attr "length" "4,4,8,8")])
++   (set (attr "length")
++	(cond [(and (eq (symbol_ref "which_alternative") (const_int 0))
++		    (eq (symbol_ref "rs6000_speculate_indirect_jumps")
++			(const_int 1)))
++		  (const_string "4")
++	       (and (eq (symbol_ref "which_alternative") (const_int 0))
++		    (eq (symbol_ref "rs6000_speculate_indirect_jumps")
++			(const_int 0)))
++		  (const_string "8")
++	       (eq (symbol_ref "which_alternative") (const_int 1))
++	          (const_string "4")
++	       (and (eq (symbol_ref "which_alternative") (const_int 2))
++		    (eq (symbol_ref "rs6000_speculate_indirect_jumps")
++			(const_int 1)))
++		  (const_string "8")
++	       (and (eq (symbol_ref "which_alternative") (const_int 2))
++		    (eq (symbol_ref "rs6000_speculate_indirect_jumps")
++			(const_int 0)))
++		  (const_string "12")
++	       (eq (symbol_ref "which_alternative") (const_int 3))
++		  (const_string "8")]
++	      (const_string "4")))])
+ 
+ (define_insn_and_split "*call_value_nonlocal_sysv<mode>"
+   [(set (match_operand 0 "" "")
+@@ -12032,11 +12082,22 @@
+    (use (match_operand:P 2 "memory_operand" "<ptrm>,<ptrm>"))
+    (set (reg:P TOC_REGNUM) (unspec [(match_operand:P 3 "const_int_operand" "n,n")] UNSPEC_TOCSLOT))
+    (clobber (reg:P LR_REGNO))]
+-  "DEFAULT_ABI == ABI_AIX"
++  "DEFAULT_ABI == ABI_AIX && rs6000_speculate_indirect_jumps"
+   "<ptrload> 2,%2\;b%T0l\;<ptrload> 2,%3(1)"
+   [(set_attr "type" "jmpreg")
+    (set_attr "length" "12")])
+ 
++(define_insn "*call_indirect_aix<mode>_nospec"
++  [(call (mem:SI (match_operand:P 0 "register_operand" "c,*l"))
++	 (match_operand 1 "" "g,g"))
++   (use (match_operand:P 2 "memory_operand" "<ptrm>,<ptrm>"))
++   (set (reg:P TOC_REGNUM) (unspec:P [(match_operand:P 3 "const_int_operand" "n,n")] UNSPEC_TOCSLOT))
++   (clobber (reg:P LR_REGNO))]
++  "DEFAULT_ABI == ABI_AIX && !rs6000_speculate_indirect_jumps"
++  "crset eq\;<ptrload> 2,%2\;beq%T0l-\;<ptrload> 2,%3(1)"
++  [(set_attr "type" "jmpreg")
++   (set_attr "length" "16")])
++
+ (define_insn "*call_value_indirect_aix<mode>"
+   [(set (match_operand 0 "" "")
+ 	(call (mem:SI (match_operand:P 1 "register_operand" "c,*l"))
+@@ -12044,11 +12105,23 @@
+    (use (match_operand:P 3 "memory_operand" "<ptrm>,<ptrm>"))
+    (set (reg:P TOC_REGNUM) (unspec [(match_operand:P 4 "const_int_operand" "n,n")] UNSPEC_TOCSLOT))
+    (clobber (reg:P LR_REGNO))]
+-  "DEFAULT_ABI == ABI_AIX"
++  "DEFAULT_ABI == ABI_AIX && rs6000_speculate_indirect_jumps"
+   "<ptrload> 2,%3\;b%T1l\;<ptrload> 2,%4(1)"
+   [(set_attr "type" "jmpreg")
+    (set_attr "length" "12")])
+ 
++(define_insn "*call_value_indirect_aix<mode>_nospec"
++  [(set (match_operand 0 "" "")
++	(call (mem:SI (match_operand:P 1 "register_operand" "c,*l"))
++	      (match_operand 2 "" "g,g")))
++   (use (match_operand:P 3 "memory_operand" "<ptrm>,<ptrm>"))
++   (set (reg:P TOC_REGNUM) (unspec:P [(match_operand:P 4 "const_int_operand" "n,n")] UNSPEC_TOCSLOT))
++   (clobber (reg:P LR_REGNO))]
++  "DEFAULT_ABI == ABI_AIX && !rs6000_speculate_indirect_jumps"
++  "crset eq\;<ptrload> 2,%3\;beq%T1l-\;<ptrload> 2,%4(1)"
++  [(set_attr "type" "jmpreg")
++   (set_attr "length" "16")])
++
+ ;; Call to indirect functions with the ELFv2 ABI.
+ ;; Operand0 is the addresss of the function to call
+ ;; Operand2 is the offset of the stack location holding the current TOC pointer
+@@ -12058,22 +12131,44 @@
+ 	 (match_operand 1 "" "g,g"))
+    (set (reg:P TOC_REGNUM) (unspec [(match_operand:P 2 "const_int_operand" "n,n")] UNSPEC_TOCSLOT))
+    (clobber (reg:P LR_REGNO))]
+-  "DEFAULT_ABI == ABI_ELFv2"
++  "DEFAULT_ABI == ABI_ELFv2 && rs6000_speculate_indirect_jumps"
+   "b%T0l\;<ptrload> 2,%2(1)"
+   [(set_attr "type" "jmpreg")
+    (set_attr "length" "8")])
+ 
++;; Variant with deliberate misprediction.
++(define_insn "*call_indirect_elfv2<mode>_nospec"
++  [(call (mem:SI (match_operand:P 0 "register_operand" "c,*l"))
++	 (match_operand 1 "" "g,g"))
++   (set (reg:P TOC_REGNUM) (unspec:P [(match_operand:P 2 "const_int_operand" "n,n")] UNSPEC_TOCSLOT))
++   (clobber (reg:P LR_REGNO))]
++  "DEFAULT_ABI == ABI_ELFv2 && !rs6000_speculate_indirect_jumps"
++  "crset eq\;beq%T0l-\;<ptrload> 2,%2(1)"
++  [(set_attr "type" "jmpreg")
++   (set_attr "length" "12")])
++
+ (define_insn "*call_value_indirect_elfv2<mode>"
+   [(set (match_operand 0 "" "")
+ 	(call (mem:SI (match_operand:P 1 "register_operand" "c,*l"))
+ 	      (match_operand 2 "" "g,g")))
+    (set (reg:P TOC_REGNUM) (unspec [(match_operand:P 3 "const_int_operand" "n,n")] UNSPEC_TOCSLOT))
+    (clobber (reg:P LR_REGNO))]
+-  "DEFAULT_ABI == ABI_ELFv2"
++  "DEFAULT_ABI == ABI_ELFv2 && rs6000_speculate_indirect_jumps"
+   "b%T1l\;<ptrload> 2,%3(1)"
+   [(set_attr "type" "jmpreg")
+    (set_attr "length" "8")])
+ 
++; Variant with deliberate misprediction.
++(define_insn "*call_value_indirect_elfv2<mode>_nospec"
++  [(set (match_operand 0 "" "")
++	(call (mem:SI (match_operand:P 1 "register_operand" "c,*l"))
++	      (match_operand 2 "" "g,g")))
++   (set (reg:P TOC_REGNUM) (unspec:P [(match_operand:P 3 "const_int_operand" "n,n")] UNSPEC_TOCSLOT))
++   (clobber (reg:P LR_REGNO))]
++  "DEFAULT_ABI == ABI_ELFv2 && !rs6000_speculate_indirect_jumps"
++  "crset eq\;beq%T1l-\;<ptrload> 2,%3(1)"
++  [(set_attr "type" "jmpreg")
++   (set_attr "length" "12")])
+ 
+ ;; Call subroutine returning any type.
+ (define_expand "untyped_call"
+@@ -12261,7 +12356,13 @@
+     output_asm_insn (\"creqv 6,6,6\", operands);
+ 
+   if (which_alternative >= 2)
+-    return \"b%T0\";
++    {
++      if (rs6000_speculate_indirect_jumps)
++	return \"b%T0\";
++      else
++	/* Can use CR0 since it is volatile across sibcalls.  */
++	return \"crset eq\;beq%T0-\;b .\";
++    }
+   else if (DEFAULT_ABI == ABI_V4 && flag_pic)
+     {
+       gcc_assert (!TARGET_SECURE_PLT);
+@@ -12271,7 +12372,28 @@
+     return \"b %z0\";
+ }"
+   [(set_attr "type" "branch")
+-   (set_attr "length" "4,8,4,8")])
++   (set (attr "length")
++	(cond [(eq (symbol_ref "which_alternative") (const_int 0))
++		  (const_string "4")
++	       (eq (symbol_ref "which_alternative") (const_int 1))
++		  (const_string "8")
++	       (and (eq (symbol_ref "which_alternative") (const_int 2))
++		    (eq (symbol_ref "rs6000_speculate_indirect_jumps")
++			(const_int 1)))
++		  (const_string "4")
++	       (and (eq (symbol_ref "which_alternative") (const_int 2))
++		    (eq (symbol_ref "rs6000_speculate_indirect_jumps")
++			(const_int 0)))
++		  (const_string "12")
++	       (and (eq (symbol_ref "which_alternative") (const_int 3))
++		    (eq (symbol_ref "rs6000_speculate_indirect_jumps")
++			(const_int 1)))
++		  (const_string "8")
++	       (and (eq (symbol_ref "which_alternative") (const_int 3))
++		    (eq (symbol_ref "rs6000_speculate_indirect_jumps")
++			(const_int 0)))
++		  (const_string "16")]
++	      (const_string "4")))])
+ 
+ (define_insn "*sibcall_value_nonlocal_sysv<mode>"
+   [(set (match_operand 0 "" "")
+@@ -12292,7 +12414,13 @@
+     output_asm_insn (\"creqv 6,6,6\", operands);
+ 
+   if (which_alternative >= 2)
+-    return \"b%T1\";
++    {
++      if (rs6000_speculate_indirect_jumps)
++	return \"b%T1\";
++      else
++	/* Can use CR0 since it is volatile across sibcalls.  */
++	return \"crset eq\;beq%T1-\;b .\";
++    }
+   else if (DEFAULT_ABI == ABI_V4 && flag_pic)
+     {
+       gcc_assert (!TARGET_SECURE_PLT);
+@@ -12302,7 +12430,28 @@
+     return \"b %z1\";
+ }"
+   [(set_attr "type" "branch")
+-   (set_attr "length" "4,8,4,8")])
++   (set (attr "length")
++	(cond [(eq (symbol_ref "which_alternative") (const_int 0))
++		  (const_string "4")
++	       (eq (symbol_ref "which_alternative") (const_int 1))
++		  (const_string "8")
++	       (and (eq (symbol_ref "which_alternative") (const_int 2))
++		    (eq (symbol_ref "rs6000_speculate_indirect_jumps")
++			(const_int 1)))
++		  (const_string "4")
++	       (and (eq (symbol_ref "which_alternative") (const_int 2))
++		    (eq (symbol_ref "rs6000_speculate_indirect_jumps")
++			(const_int 0)))
++		  (const_string "12")
++	       (and (eq (symbol_ref "which_alternative") (const_int 3))
++		    (eq (symbol_ref "rs6000_speculate_indirect_jumps")
++			(const_int 1)))
++		  (const_string "8")
++	       (and (eq (symbol_ref "which_alternative") (const_int 3))
++		    (eq (symbol_ref "rs6000_speculate_indirect_jumps")
++			(const_int 0)))
++		  (const_string "16")]
++	      (const_string "4")))])
+ 
+ ;; AIX ABI sibling call patterns.
+ 
+@@ -13510,16 +13659,35 @@
+   [(set_attr "type" "jmpreg")])
+ 
+ (define_expand "indirect_jump"
+-  [(set (pc) (match_operand 0 "register_operand" ""))])
++  [(set (pc) (match_operand 0 "register_operand"))]
++ ""
++{
++  if (!rs6000_speculate_indirect_jumps) {
++    rtx ccreg = gen_reg_rtx (CCmode);
++    if (Pmode == DImode)
++      emit_jump_insn (gen_indirect_jumpdi_nospec (operands[0], ccreg));
++    else
++      emit_jump_insn (gen_indirect_jumpsi_nospec (operands[0], ccreg));
++    DONE;
++  }
++})
+ 
+ (define_insn "*indirect_jump<mode>"
+   [(set (pc) (match_operand:P 0 "register_operand" "c,*l"))]
+-  ""
++  "rs6000_speculate_indirect_jumps"
+   "@
+    bctr
+    blr"
+   [(set_attr "type" "jmpreg")])
+ 
++(define_insn "indirect_jump<mode>_nospec"
++  [(set (pc) (match_operand:P 0 "register_operand" "c,*l"))
++   (clobber (match_operand:CC 1 "cc_reg_operand" "=y,y"))]
++  "!rs6000_speculate_indirect_jumps"
++  "crset %E1\;beq%T0- %1\;b ."
++  [(set_attr "type" "jmpreg")
++   (set_attr "length" "12")])
++
+ ;; Table jump for switch statements:
+ (define_expand "tablejump"
+   [(use (match_operand 0 "" ""))
+@@ -13527,10 +13695,23 @@
+   ""
+   "
+ {
+-  if (TARGET_32BIT)
+-    emit_jump_insn (gen_tablejumpsi (operands[0], operands[1]));
++  if (rs6000_speculate_indirect_jumps)
++    {
++      if (TARGET_32BIT)
++      	emit_jump_insn (gen_tablejumpsi (operands[0], operands[1]));
++      else
++	emit_jump_insn (gen_tablejumpdi (operands[0], operands[1]));
++    }
+   else
+-    emit_jump_insn (gen_tablejumpdi (operands[0], operands[1]));
++    {
++      rtx ccreg = gen_reg_rtx (CCmode);
++      rtx jump;
++      if (TARGET_32BIT)
++	jump = gen_tablejumpsi_nospec (operands[0], operands[1], ccreg);
++      else
++	jump = gen_tablejumpdi_nospec (operands[0], operands[1], ccreg);
++      emit_jump_insn (jump);
++    }
+   DONE;
+ }")
+ 
+@@ -13540,13 +13721,28 @@
+ 		 (match_dup 2)))
+    (parallel [(set (pc) (match_dup 3))
+ 	      (use (label_ref (match_operand 1 "" "")))])]
+-  "TARGET_32BIT"
++  "TARGET_32BIT && rs6000_speculate_indirect_jumps"
+   "
+ { operands[0] = force_reg (SImode, operands[0]);
+   operands[2] = force_reg (SImode, gen_rtx_LABEL_REF (SImode, operands[1]));
+   operands[3] = gen_reg_rtx (SImode);
+ }")
+ 
++(define_expand "tablejumpsi_nospec"
++  [(set (match_dup 4)
++	(plus:SI (match_operand:SI 0)
++		 (match_dup 3)))
++   (parallel [(set (pc)
++		   (match_dup 4))
++	      (use (label_ref (match_operand 1)))
++	      (clobber (match_operand 2))])]
++  "TARGET_32BIT && !rs6000_speculate_indirect_jumps"
++{
++  operands[0] = force_reg (SImode, operands[0]);
++  operands[3] = force_reg (SImode, gen_rtx_LABEL_REF (SImode, operands[1]));
++  operands[4] = gen_reg_rtx (SImode);
++})
++
+ (define_expand "tablejumpdi"
+   [(set (match_dup 4)
+         (sign_extend:DI (match_operand:SI 0 "lwa_operand" "")))
+@@ -13555,23 +13751,50 @@
+ 		 (match_dup 2)))
+    (parallel [(set (pc) (match_dup 3))
+ 	      (use (label_ref (match_operand 1 "" "")))])]
+-  "TARGET_64BIT"
++  "TARGET_64BIT && rs6000_speculate_indirect_jumps"
+   "
+ { operands[2] = force_reg (DImode, gen_rtx_LABEL_REF (DImode, operands[1]));
+   operands[3] = gen_reg_rtx (DImode);
+   operands[4] = gen_reg_rtx (DImode);
+ }")
+ 
++(define_expand "tablejumpdi_nospec"
++  [(set (match_dup 5)
++        (sign_extend:DI (match_operand:SI 0 "lwa_operand")))
++   (set (match_dup 4)
++	(plus:DI (match_dup 5)
++		 (match_dup 3)))
++   (parallel [(set (pc)
++		   (match_dup 4))
++	      (use (label_ref (match_operand 1)))
++	      (clobber (match_operand 2))])]
++  "TARGET_64BIT && !rs6000_speculate_indirect_jumps"
++{
++  operands[3] = force_reg (DImode, gen_rtx_LABEL_REF (DImode, operands[1]));
++  operands[4] = gen_reg_rtx (DImode);
++  operands[5] = gen_reg_rtx (DImode);
++})
++
+ (define_insn "*tablejump<mode>_internal1"
+   [(set (pc)
+ 	(match_operand:P 0 "register_operand" "c,*l"))
+    (use (label_ref (match_operand 1 "" "")))]
+-  ""
++  "rs6000_speculate_indirect_jumps"
+   "@
+    bctr
+    blr"
+   [(set_attr "type" "jmpreg")])
+ 
++(define_insn "*tablejump<mode>_internal1_nospec"
++  [(set (pc)
++	(match_operand:P 0 "register_operand" "c,*l"))
++   (use (label_ref (match_operand 1)))
++   (clobber (match_operand:CC 2 "cc_reg_operand" "=y,y"))]
++  "!rs6000_speculate_indirect_jumps"
++  "crset %E2\;beq%T0- %2\;b ."
++  [(set_attr "type" "jmpreg")
++   (set_attr "length" "12")])
++
+ (define_insn "nop"
+   [(unspec [(const_int 0)] UNSPEC_NOP)]
+   ""
+Index: b/src/gcc/config/rs6000/rs6000.opt
+===================================================================
+--- a/src/gcc/config/rs6000/rs6000.opt
++++ b/src/gcc/config/rs6000/rs6000.opt
+@@ -636,3 +636,8 @@ Enable/disable using IEEE 128-bit floati
+ mfloat128-convert
+ Target Undocumented Mask(FLOAT128_CVT) Var(rs6000_isa_flags)
+ Enable/disable default conversions between __float128 & long double.
++
++;; -mno-speculate-indirect-jumps adds deliberate misprediction to indirect
++;; branches via the CTR.
++mspeculate-indirect-jumps
++Target Undocumented Var(rs6000_speculate_indirect_jumps) Init(1) Save
+Index: b/src/gcc/testsuite/gcc.target/powerpc/safe-indirect-jump-1.c
+===================================================================
+--- /dev/null
++++ b/src/gcc/testsuite/gcc.target/powerpc/safe-indirect-jump-1.c
+@@ -0,0 +1,14 @@
++/* { dg-do compile { target { lp64 } } } */
++/* { dg-additional-options "-mno-speculate-indirect-jumps" } */
++
++/* Test for deliberate misprediction of indirect calls.  */
++
++extern int (*f)();
++
++int bar ()
++{
++  return (*f) ();
++}
++
++/* { dg-final { scan-assembler "crset eq" } } */
++/* { dg-final { scan-assembler "beqctrl-" } } */
+Index: b/src/gcc/testsuite/gcc.target/powerpc/safe-indirect-jump-2.c
+===================================================================
+--- /dev/null
++++ b/src/gcc/testsuite/gcc.target/powerpc/safe-indirect-jump-2.c
+@@ -0,0 +1,33 @@
++/* { dg-do compile } */
++/* { dg-options "-mno-speculate-indirect-jumps" } */
++
++/* Test for deliberate misprediction of computed goto.  */
++
++int bar (int);
++int baz (int);
++int spaz (int);
++
++int foo (int x)
++{
++  static void *labptr[] = { &&lab0, &&lab1, &&lab2 };
++
++  if (x < 0 || x > 2)
++    return -1;
++
++  goto *labptr[x];
++
++ lab0:
++  return bar (x);
++
++ lab1:
++  return baz (x) + 1;
++
++ lab2:
++  return spaz (x) / 2;
++}
++
++/* The following assumes CR7 as the first chosen volatile.  */
++
++/* { dg-final { scan-assembler "crset 30" } } */
++/* { dg-final { scan-assembler "beqctr- 7" } } */
++/* { dg-final { scan-assembler "b ." } } */
+Index: b/src/gcc/testsuite/gcc.target/powerpc/safe-indirect-jump-3.c
+===================================================================
+--- /dev/null
++++ b/src/gcc/testsuite/gcc.target/powerpc/safe-indirect-jump-3.c
+@@ -0,0 +1,52 @@
++/* { dg-do compile } */
++/* { dg-options "-mno-speculate-indirect-jumps" } */
++
++/* Test for deliberate misprediction of jump tables.  */
++
++void bar (void);
++
++int foo (int x)
++{
++  int a;
++  
++  switch (x)
++    {
++    default:
++      a = -1;
++      break;
++    case 0:
++      a = x * x;
++      break;
++    case 1:
++      a = x + 1;
++      break;
++    case 2:
++      a = x + x;
++      break;
++    case 3:
++      a = x << 3;
++      break;
++    case 4:
++      a = x >> 1;
++      break;
++    case 5:
++      a = x;
++      break;
++    case 6:
++      a = 0;
++      break;
++    case 7:
++      a = x * x + x;
++      break;
++    }
++
++  bar();
++
++  return a;
++}
++
++/* The following assumes CR7 as the first chosen volatile.  */
++
++/* { dg-final { scan-assembler "crset 30" } } */
++/* { dg-final { scan-assembler "beqctr- 7" } } */
++/* { dg-final { scan-assembler "b ." } } */
+Index: b/src/gcc/testsuite/gcc.target/powerpc/safe-indirect-jump-4.c
+===================================================================
+--- /dev/null
++++ b/src/gcc/testsuite/gcc.target/powerpc/safe-indirect-jump-4.c
+@@ -0,0 +1,25 @@
++/* { dg-do run } */
++/* { dg-additional-options "-mno-speculate-indirect-jumps" } */
++
++/* Test for deliberate misprediction of indirect calls for ELFv2.  */
++
++int (*f)();
++
++int __attribute__((noinline)) bar ()
++{
++  return (*f) ();
++}
++
++int g ()
++{
++  return 26;
++}
++
++int main ()
++{
++  f = &g;
++  if (bar () != 26)
++    __builtin_abort ();
++
++  return 0;
++}
+Index: b/src/gcc/testsuite/gcc.target/powerpc/safe-indirect-jump-5.c
+===================================================================
+--- /dev/null
++++ b/src/gcc/testsuite/gcc.target/powerpc/safe-indirect-jump-5.c
+@@ -0,0 +1,55 @@
++/* { dg-do run } */
++/* { dg-additional-options "-mno-speculate-indirect-jumps -Wno-pedantic" } */
++
++/* Test for deliberate misprediction of computed goto.  */
++
++int __attribute__((noinline)) bar (int i)
++{
++  return 1960 + i;
++}
++
++int __attribute__((noinline)) baz (int i)
++{
++  return i * i;
++}
++
++int __attribute__((noinline)) spaz (int i)
++{
++  return i + 1;
++}
++
++int foo (int x)
++{
++  static void *labptr[] = { &&lab0, &&lab1, &&lab2 };
++
++  if (x < 0 || x > 2)
++    return -1;
++
++  goto *labptr[x];
++
++ lab0:
++  return bar (x);
++
++ lab1:
++  return baz (x) + 1;
++
++ lab2:
++  return spaz (x) / 2;
++}
++
++int main ()
++{
++  if (foo (0) != 1960)
++    __builtin_abort ();
++
++  if (foo (1) != 2)
++    __builtin_abort ();
++
++  if (foo (2) != 1)
++    __builtin_abort ();
++
++  if (foo (3) != -1)
++    __builtin_abort ();
++
++  return 0;
++}
+Index: b/src/gcc/testsuite/gcc.target/powerpc/safe-indirect-jump-6.c
+===================================================================
+--- /dev/null
++++ b/src/gcc/testsuite/gcc.target/powerpc/safe-indirect-jump-6.c
+@@ -0,0 +1,80 @@
++/* { dg-do run } */
++/* { dg-additional-options "-mno-speculate-indirect-jumps" } */
++
++/* Test for deliberate misprediction of jump tables.  */
++
++void __attribute__((noinline)) bar ()
++{
++}
++
++int foo (int x)
++{
++  int a;
++  
++  switch (x)
++    {
++    default:
++      a = -1;
++      break;
++    case 0:
++      a = x * x + 3;
++      break;
++    case 1:
++      a = x + 1;
++      break;
++    case 2:
++      a = x + x;
++      break;
++    case 3:
++      a = x << 3;
++      break;
++    case 4:
++      a = x >> 1;
++      break;
++    case 5:
++      a = x;
++      break;
++    case 6:
++      a = 0;
++      break;
++    case 7:
++      a = x * x + x;
++      break;
++    }
++
++  bar();
++
++  return a;
++}
++
++int main ()
++{
++  if (foo (0) != 3)
++    __builtin_abort ();
++  
++  if (foo (1) != 2)
++    __builtin_abort ();
++  
++  if (foo (2) != 4)
++    __builtin_abort ();
++  
++  if (foo (3) != 24)
++    __builtin_abort ();
++  
++  if (foo (4) != 2)
++    __builtin_abort ();
++  
++  if (foo (5) != 5)
++    __builtin_abort ();
++  
++  if (foo (6) != 0)
++    __builtin_abort ();
++  
++  if (foo (7) != 56)
++    __builtin_abort ();
++  
++  if (foo (8) != -1)
++    __builtin_abort ();
++  
++  return 0;
++}
+Index: b/src/gcc/testsuite/gcc.target/powerpc/safe-indirect-jump-7.c
+===================================================================
+--- /dev/null
++++ b/src/gcc/testsuite/gcc.target/powerpc/safe-indirect-jump-7.c
+@@ -0,0 +1,14 @@
++/* { dg-do compile } */
++/* { dg-additional-options "-mno-speculate-indirect-jumps" } */
++
++/* Test for deliberate misprediction of indirect calls.  */
++
++extern int (*f)();
++
++int bar ()
++{
++  return (*f) () * 53;
++}
++
++/* { dg-final { scan-assembler "crset eq" } } */
++/* { dg-final { scan-assembler "beqctrl-" } } */
+Index: b/src/gcc/testsuite/gcc.target/powerpc/safe-indirect-jump-8.c
+===================================================================
+--- /dev/null
++++ b/src/gcc/testsuite/gcc.target/powerpc/safe-indirect-jump-8.c
+@@ -0,0 +1,15 @@
++/* { dg-do compile { target { ilp32 } } } */
++/* { dg-additional-options "-O2 -mno-speculate-indirect-jumps" } */
++
++/* Test for deliberate misprediction of -m32 sibcalls.  */
++
++extern int (*f)();
++
++int bar ()
++{
++  return (*f) ();
++}
++
++/* { dg-final { scan-assembler "crset eq" } } */
++/* { dg-final { scan-assembler "beqctr-" } } */
++/* { dg-final { scan-assembler "b ." } } */

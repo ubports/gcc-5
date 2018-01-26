@@ -116,7 +116,16 @@ debian_patches += \
 	$(if $(with_linaro_branch),vulcan-to-thunderx2t99) \
 	$(if $(with_linaro_branch),thunderx2t99-improve-cost-table) \
 	$(if $(with_linaro_branch),thunderx2t99-scheduler) \
-	$(if $(with_linaro_branch),thunderx2t99p1)
+	$(if $(with_linaro_branch),thunderx2t99p1) \
+	0001-i386-Move-struct-ix86_frame-to-machine_function \
+	0002-i386-Use-reference-of-struct-ix86_frame-to-avoid-cop \
+	0003-i386-More-use-reference-of-struct-ix86_frame-to-avoi \
+	0004-i386-Don-t-use-reference-of-struct-ix86_frame \
+	0005-x86-Add-mindirect-branch \
+	0006-x86-Add-mfunction-return \
+	0007-x86-Add-mindirect-branch-register \
+	0008-x86-Add-V-register-operand-modifier \
+	0009-x86-Disallow-mindirect-branch-mfunction-return-with- \
 
 # this is still needed on powerpc, e.g. firefox and insighttoolkit4 will ftbfs.
 ifneq (,$(filter $(DEB_TARGET_ARCH),powerpc))
@@ -280,6 +289,7 @@ debian_patches += \
 
 ifeq ($(with_ibm_branch),yes)
   debian_patches += ibm-branch
+  debian_patches += ppc-add-mspeculate-indirect-jumps
 else
   debian_patches += go-use-gold
 endif
