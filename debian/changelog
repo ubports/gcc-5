@@ -1,3 +1,11 @@
+gcc-5 (5.4.0-6ubuntu1~16.04.9) xenial-security; urgency=medium
+
+  * Revert retpoline changes of ppc64el as per the recommendation from
+    Bill Schmidt of IBM.
+    - ppc-add-mspeculate-indirect-jumps: drop.
+
+ -- Steve Beattie <sbeattie@ubuntu.com>  Mon, 05 Feb 2018 15:48:15 -0800
+
 gcc-5 (5.4.0-6ubuntu1~16.04.8) xenial-security; urgency=medium
 
   * Add retpoline support for x86 via adding -mindirect-branch=,

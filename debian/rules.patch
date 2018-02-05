@@ -289,7 +289,6 @@ debian_patches += \
 
 ifeq ($(with_ibm_branch),yes)
   debian_patches += ibm-branch
-  debian_patches += ppc-add-mspeculate-indirect-jumps
 else
   debian_patches += go-use-gold
 endif
