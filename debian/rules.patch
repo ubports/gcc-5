@@ -126,6 +126,7 @@ debian_patches += \
 	0007-x86-Add-mindirect-branch-register \
 	0008-x86-Add-V-register-operand-modifier \
 	0009-x86-Disallow-mindirect-branch-mfunction-return-with- \
+	gcc5-spectre-s390 \
 
 # this is still needed on powerpc, e.g. firefox and insighttoolkit4 will ftbfs.
 ifneq (,$(filter $(DEB_TARGET_ARCH),powerpc))

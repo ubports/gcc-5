@@ -1,3 +1,10 @@
+gcc-5 (5.4.0-6ubuntu1~16.04.10) xenial-security; urgency=medium
+
+  * Backport upstream revision r257489 (Spectre #2 mitigation for s390x).
+    LP: #1759152.
+
+ -- Matthias Klose <doko@ubuntu.com>  Mon, 18 Jun 2018 15:31:24 +0200
+
 gcc-5 (5.4.0-6ubuntu1~16.04.9) xenial-security; urgency=medium
 
   * Revert retpoline changes of ppc64el as per the recommendation from
