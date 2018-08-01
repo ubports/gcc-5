@@ -1,3 +1,11 @@
+gcc-5 (5.4.0-6ubuntu1~16.04.11) xenial; urgency=medium
+
+  * Backport upstream revision r235876 to correct PIC_OFFSET_TABLE_REGNUM
+    on ppc64el.
+    LP: #1783252
+
+ -- Dimitri John Ledkov <xnox@ubuntu.com>  Wed, 01 Aug 2018 22:22:10 +0100
+
 gcc-5 (5.4.0-6ubuntu1~16.04.10) xenial-security; urgency=medium
 
   * Backport upstream revision r257489 (Spectre #2 mitigation for s390x).
