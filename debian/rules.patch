@@ -128,6 +128,7 @@ debian_patches += \
 	0009-x86-Disallow-mindirect-branch-mfunction-return-with- \
 	gcc5-spectre-s390 \
 	lp1783252-ppc64el-pic_offset_table_regnum \
+	tree-vect-last-type \
 
 # this is still needed on powerpc, e.g. firefox and insighttoolkit4 will ftbfs.
 ifneq (,$(filter $(DEB_TARGET_ARCH),powerpc))

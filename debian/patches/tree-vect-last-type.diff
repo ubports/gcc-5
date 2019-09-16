@@ -1,0 +1,16 @@
+--- trunk/gcc/tree-vect-generic.c	2018/06/14 10:55:00	261587
++++ trunk/gcc/tree-vect-generic.c	2018/06/14 10:55:31	261588
+@@ -111,12 +111,8 @@
+       return vector_last_type;
+     }
+ 
+-  /* We build a new type, but we canonicalize it nevertheless,
+-     because it still saves some memory.  */
+   vector_last_nunits = nunits;
+-  vector_last_type = type_hash_canon (nunits,
+-				      build_vector_type (vector_inner_type,
+-							 nunits));
++  vector_last_type = build_vector_type (vector_inner_type, nunits);
+   return vector_last_type;
+ }
+ 
