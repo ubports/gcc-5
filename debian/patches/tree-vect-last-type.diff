@@ -1,6 +1,8 @@
---- trunk/gcc/tree-vect-generic.c	2018/06/14 10:55:00	261587
-+++ trunk/gcc/tree-vect-generic.c	2018/06/14 10:55:31	261588
-@@ -111,12 +111,8 @@
+diff --git a/gcc/tree-vect-generic.c b/gcc/tree-vect-generic.c
+index f33ff51..25492ce 100644
+--- a/gcc/tree-vect-generic.c
++++ b/gcc/tree-vect-generic.c
+@@ -128,12 +128,8 @@ build_word_mode_vector_type (int nunits)
        return vector_last_type;
      }
  
