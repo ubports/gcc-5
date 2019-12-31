@@ -3,10 +3,10 @@
 
 NJOBS :=
 USE_CPUS := 1
-ifneq (,$(filter parallel=%,$(subst $(COMMA), ,$(DEB_BUILD_OPTIONS))))
-  USE_CPUS := $(subst parallel=,,$(filter parallel=%,$(subst $(COMMA), ,$(DEB_BUILD_OPTIONS))))
+#ifneq (,$(filter parallel=%,$(subst $(COMMA), ,$(DEB_BUILD_OPTIONS))))
+#  USE_CPUS := $(subst parallel=,,$(filter parallel=%,$(subst $(COMMA), ,$(DEB_BUILD_OPTIONS))))
   NJOBS := -j $(USE_CPUS)
-endif
+#endif
 
 # common vars
 SHELL		= /bin/bash -e	# brace expansion used in rules file
@@ -1443,7 +1443,7 @@ endif
 # run testsuite ---------------
 with_check := yes
 # if you don't want to run the gcc testsuite, uncomment the next line
-#with_check := disabled by hand
+with_check := disabled by hand
 ifeq ($(with_base_only),yes)
   with_check := no
 endif

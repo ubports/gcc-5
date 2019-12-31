@@ -1,7 +1,7 @@
 diff --git a/gcc/tree-vect-generic.c b/gcc/tree-vect-generic.c
 index f33ff51..25492ce 100644
---- a/gcc/tree-vect-generic.c
-+++ b/gcc/tree-vect-generic.c
+--- a/src/gcc/tree-vect-generic.c
++++ b/src/gcc/tree-vect-generic.c
 @@ -128,12 +128,8 @@ build_word_mode_vector_type (int nunits)
        return vector_last_type;
      }

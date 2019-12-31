@@ -2613,5 +2613,6 @@ source diff:
 	@echo >&2 'source and diff are obsolete - use dpkg-source -b'; false
 
 binary: binary-indep binary-arch
+.NOTPARALLEL:
 .PHONY: build clean binary-indep binary-arch binary 
 .PRECIOUS: $(stampdir)/%-stamp debian/indep_binaries.all debian/arch_binaries.all
