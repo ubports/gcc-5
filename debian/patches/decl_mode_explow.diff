@@ -1,5 +1,5 @@
---- /a/src/gcc/explow.c
-+++ /b/src/gcc/explow.c
+--- a/src/gcc/explow.c
++++ b/src/gcc/explow.c
 @@ -842,7 +842,11 @@
    machine_mode mode = DECL_MODE (decl);
    machine_mode pmode;
