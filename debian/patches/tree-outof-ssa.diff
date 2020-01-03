@@ -1,0 +1,11 @@
+--- a/src/gcc/tree-outof-ssa.c
++++ b/src/gcc/tree-outof-ssa.c
+@@ -717,6 +717,8 @@
+   tree type = TREE_TYPE (var);
+   int unsignedp;
+   machine_mode reg_mode = promote_decl_mode (var, &unsignedp);
++  if (reg_mode == BLKmode)
++    return assign_temp (type, 0, 0);
+   rtx x = gen_reg_rtx (reg_mode);
+   if (POINTER_TYPE_P (type))
+     mark_reg_pointer (x, TYPE_ALIGN (TREE_TYPE (TREE_TYPE (var))));
