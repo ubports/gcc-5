@@ -1,0 +1,11 @@
+--- a/src/gcc/config/arm/arm.c
++++ b/src/gcc/config/arm/arm.c
+@@ -6033,7 +6033,7 @@ arm_needs_doubleword_align (machine_mode
+ 
+   /* Record/aggregate types: Use greatest member alignment of any member.  */ 
+   for (tree field = TYPE_FIELDS (type); field; field = DECL_CHAIN (field))
+-    if (DECL_ALIGN (field) > PARM_BOUNDARY)
++    if (TREE_CODE (field) == FIELD_DECL && DECL_ALIGN (field) > PARM_BOUNDARY)
+       return true;
+ 
+   return false;
